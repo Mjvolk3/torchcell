@@ -3206,9 +3206,151 @@ def target_transfer() -> str | None:
     return write("target_transfer", body, "results/target_transfer_readout.json")
 
 
+def store_baselines() -> str | None:
+    """The CPU ladder over the store representations, both targets (2026-09-23)."""
+    srcs = {
+        "betaxanthin": osp.join(
+            EXPERIMENT_ROOT, "031-betaxanthin-module", "results", "store_baselines_betaxanthin.json"
+        ),
+        "amino acids": osp.join(
+            EXPERIMENT_ROOT, "032-amino-acid-module", "results", "store_baselines_amino_acids.json"
+        ),
+    }
+    present = {k: v for k, v in srcs.items() if osp.isfile(v)}
+    if not present:
+        return None
+    labels = {
+        "pfba_glpk_full": "GLPK parsimonious store (growth, production, total)",
+        "pfba_glpk_growth": "GLPK parsimonious store, growth block",
+        "pfba_highs": "HiGHS parsimonious store",
+        "moma": "linear MOMA store",
+        "gpr_counts": "six gene-rule counts",
+        "flux_stats": "flux statistics of the parsimonious build",
+        "prot_T5_all": "ProtT5 (027's ladder)",
+        "pfba_glpk_full+prot_T5_all": "GLPK store with ProtT5",
+        "pfba_highs+prot_T5_all": "HiGHS store with ProtT5",
+    }
+    rows = []
+    for target, path in present.items():
+        with open(path) as fh:
+            d = json.load(fh)
+        rows.append(f"    \\multicolumn{{5}}{{@{{}}l}}{{\\textit{{{target}}}}} \\\\")
+        for rep, o in d["representations"].items():
+            cells = []
+            for model in ("ridge", "knn", "forest"):
+                tp = o[model]["selected_on_val"]["test_pinned"]
+                cell = f"{tp['mean_spearman']:+.3f}"
+                if tp.get("top50_enrichment") is not None:
+                    cell += f" / {tp['top50_enrichment']:.2f}"
+                cells.append(cell)
+            rows.append(
+                f"    {labels.get(rep, rep)} & {o['dim']} & " + " & ".join(cells) + " \\\\"
+            )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[CPU baselines over the store representations]{Each deleted gene "
+        "represented by one row of a store ($\\log(1+|v|)$ of the flux columns, "
+        "standardized on the training genes; a gene the store does not cover reads the "
+        "wild-type row), fit by the 027 ladder's ridge (rank-swept bilinear for the amino "
+        "acids) and cosine nearest neighbors and by a 300-tree random forest, the "
+        "Flux Cone Learning form on one point. Selected on validation per-feature "
+        "Pearson; the cell is the pinned-test Spearman (for the amino acids the mean over "
+        "19 columns), and for betaxanthin the top-50 enrichment after the slash. Written "
+        "by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/store\\_baselines\\_<target>.json} "
+        "(\\texttt{target\\_store\\_baselines.py}).}\n"
+        "  \\label{tab:store-baselines}\n"
+        "  \\begin{tabular}{@{}p{62mm}rrrr@{}}\n    \\hline\n"
+        "    representation & columns & ridge & kNN & forest \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("store_baselines", body, "results/store_baselines_<target>.json")
+
+
+def store_degeneracy() -> str | None:
+    """No-effect deletions whose vector differs from the wild type's, per store."""
+    src = osp.join(EXPERIMENT_ROOT, "031-betaxanthin-module", "results", "store_degeneracy.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        rows_json = json.load(fh)
+    rows = [
+        f"    {r['label']} & {r['n_genes']} & {r['n_no_effect']} & "
+        f"{r['n_no_effect_vector_differs']} & {r['median_rel_l2_log1p']:.3f} & "
+        f"{r['p90_rel_l2_log1p']:.3f} \\\\"
+        for r in rows_json
+    ]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Degeneracy of the target stores]{Among the deletions whose growth "
+        "ratio is 1, how many carry a vector that differs from the store's own wild-type "
+        "row (relative $\\ell_2$ above $10^{-6}$ in $\\log(1+|v|)$), with the median and "
+        "ninetieth percentile of that distance. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from \\texttt{results/store\\_degeneracy.json} "
+        "(\\texttt{store\\_degeneracy.py}).}\n"
+        "  \\label{tab:store-degeneracy}\n"
+        "  \\begin{tabular}{@{}p{62mm}rrrrr@{}}\n    \\hline\n"
+        "    store & genes & no effect & differ & median & p90 \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("store_degeneracy", body, "results/store_degeneracy.json")
+
+
+def amino_acid_concordance() -> str | None:
+    """Mulleder 2016 against Cooper 2010, the matched pairs (2026-09-23)."""
+    src = osp.join(
+        EXPERIMENT_ROOT, "032-amino-acid-module", "results", "amino_acid_dataset_concordance.json"
+    )
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    mul = d["mulleder_retest"]
+    coo = {r["key"]: r for r in d["cooper_duplicate_retest"]}
+    rows = []
+    for s in d["matched"]:
+        parts = s["mulleder"].split("+")
+        mul_rt = sum(mul[p]["spearman_retest_log10"] for p in parts) / len(parts)
+        coo_rt = coo[s["cooper_peak"]]["spearman"] if s["cooper_peak"] in coo else float("nan")
+        rows.append(
+            f"    {s['cooper_peak'].replace('_', ' ')} & {s['mulleder']} & {s['n']} & "
+            f"${s['spearman']:+.3f}$ & ${s['pearson_log']:+.3f}$ & "
+            f"{s['top5_overlap']} / {s['top5_expected']:.1f} & "
+            f"{mul_rt:.2f} & {coo_rt:.2f} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[M\\\"ulleder 2016 against Cooper 2010]{The two deletion-collection "
+        "amino-acid screens on their "
+        f"{d['n_shared_strains']:,} shared strains, matched on the collection's ORF name. "
+        "Cooper's CE-LIF peaks (a linear ratio to the plate mean; composite peaks list "
+        "their components) against M\\\"ulleder's LC-MS concentrations (mM): the "
+        "Spearman over strains both measured, the Pearson of the two log-scaled "
+        "quantities, the overlap of the top 5 percent of strains against the count "
+        "expected by chance, and the two retest references, M\\\"ulleder's own "
+        "(194 strains measured twice, Spearman on log10) and Cooper's duplicate strains. "
+        "Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/amino\\_acid\\_dataset\\_concordance.json}.}\n"
+        "  \\label{tab:amino-acid-concordance}\n"
+        "  \\begin{tabular}{@{}llrrrrrr@{}}\n    \\hline\n"
+        "    Cooper peak & M\\\"ulleder & strains & Spearman & log Pearson & top 5\\% & "
+        "M\\\"ulleder retest & Cooper retest \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "amino_acid_concordance", body, "results/amino_acid_dataset_concordance.json"
+    )
+
+
 def main() -> None:
     paths = [
         target_transfer(),
+        store_baselines(),
+        store_degeneracy(),
+        amino_acid_concordance(),
         wl_test(),
         solve_tolerance_transfer(),
         solve_tolerance(),

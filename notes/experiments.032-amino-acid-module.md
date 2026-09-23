@@ -43,3 +43,18 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | A7 | 136 | w150 | flux vector with the six gene-rule columns | pending (2786) |
 | A8 | 137 | w151 | cached solve head, hidden 256 | pending (2787) |
 | A9 | 138 | w155 | linear MOMA store in the affine slot | pending (2793) |
+
+## 2026.09.23 - CPU baselines over the store representations, and the second amino-acid screen
+
+- `experiments/031-betaxanthin-module/scripts/target_store_baselines.py --target amino_acids` (results `results/store_baselines_amino_acids.json`, 15 min on 8 threads): every representation, every model, sits between 0.006 and 0.058 mean per-column Spearman on the 564 pinned genes (HiGHS parsimonious store kNN 0.045, ProtT5 forest 0.052, the two concatenated under a forest 0.058), against 0.045 for 027's bilinear ridge and 0.049 to 0.062 for the transformer arms. As on betaxanthin, 3,345 of 3,566 training genotypes are outside the model and read the wild-type row.
+
+| representation | columns | ridge | kNN | forest |
+|---|---|---|---|---|
+| HiGHS parsimonious store (A4's store) | 4131 | +0.006 | +0.045 | +0.020 |
+| linear MOMA store (A9's store) | 4131 | +0.018 | +0.014 | +0.032 |
+| six gene-rule counts | 6 | +0.025 | +0.026 | +0.029 |
+| eight flux statistics of the parsimonious build | 8 | +0.016 | +0.023 | +0.046 |
+| ProtT5 | 1024 | +0.035 | +0.025 | +0.052 |
+| HiGHS store with ProtT5 | 5155 | +0.033 | +0.050 | +0.058 |
+
+- The second screen: Cooper 2010 does not corroborate Mulleder 2016 at the strain level (matched-pair Spearman -0.006 to +0.059 over 4,051 shared strains, Cooper's own duplicate strains at 0.06); full read in [[experiments.032-amino-acid-module.scripts.amino_acid_dataset_concordance]]. Together with Mulleder's retest at 0.20 Spearman, the amino-acid endpoint's strain-level rank is close to its noise floor, which is where every model above sits.

@@ -284,6 +284,85 @@ def ensemble(stem: str, key: str, which: str = "first_six") -> Callable[[], floa
     return run
 
 
+_TARGET_HEAD = {"betaxanthin": "betaxanthin", "amino_acids": "mulleder19"}
+
+
+def physics_store(target: str, variant: str, *keys: str) -> Callable[[], float]:
+    """One field of a target physics-store summary (``target_physics_store.py``)."""
+
+    def run() -> float:
+        path = osp.join(
+            STUDY_RESULTS[_TARGET_HEAD[target]],
+            f"target_physics_store_{target}_{variant}.json",
+        )
+        node: Any = json.load(open(path))
+        for k in keys:
+            node = node[k]
+        return float(node)
+
+    return run
+
+
+def degeneracy(stem: str, key: str) -> Callable[[], float]:
+    """One field of one store's row in ``store_degeneracy.json``."""
+
+    def run() -> float:
+        rows = json.load(open(osp.join(STUDY_RESULTS["betaxanthin"], "store_degeneracy.json")))
+        return float(next(r for r in rows if r["stem"] == stem)[key])
+
+    return run
+
+
+def store_baseline(target: str, rep: str, model: str, key: str) -> Callable[[], float]:
+    """The pinned-test statistic of one selected cell of the store ladder."""
+
+    def run() -> float:
+        path = osp.join(STUDY_RESULTS[_TARGET_HEAD[target]], f"store_baselines_{target}.json")
+        d = json.load(open(path))
+        return float(d["representations"][rep][model]["selected_on_val"]["test_pinned"][key])
+
+    return run
+
+
+def concordance(cooper_peak: str, mulleder: str, key: str) -> Callable[[], float]:
+    """One statistic of one matched pair of the Mulleder-against-Cooper read."""
+
+    def run() -> float:
+        path = osp.join(STUDY_RESULTS["mulleder19"], "amino_acid_dataset_concordance.json")
+        m = json.load(open(path))["matched"]
+        return float(
+            next(s for s in m if s["cooper_peak"] == cooper_peak and s["mulleder"] == mulleder)[key]
+        )
+
+    return run
+
+
+def concordance_summary(key: str) -> Callable[[], float]:
+    """A summary of the concordance read: shared strains, retest means, matrix extremes."""
+
+    def run() -> float:
+        path = osp.join(STUDY_RESULTS["mulleder19"], "amino_acid_dataset_concordance.json")
+        d = json.load(open(path))
+        if key == "n_shared_strains":
+            return float(d["n_shared_strains"])
+        if key == "mulleder_retest_spearman_mean":
+            return float(np.mean([v["spearman_retest_log10"] for v in d["mulleder_retest"].values()]))
+        if key == "mulleder_retest_pearson_mean":
+            return float(np.mean([v["pearson_retest_log10"] for v in d["mulleder_retest"].values()]))
+        if key == "cooper_retest_spearman_mean":
+            return float(np.mean([r["spearman"] for r in d["cooper_duplicate_retest"]]))
+        if key == "cooper_retest_pearson_log_mean":
+            return float(np.mean([r["pearson_log"] for r in d["cooper_duplicate_retest"]]))
+        flat = [abs(v) for row in d["matrix_spearman"] for v in row if v is not None]
+        if key == "matrix_abs_median":
+            return float(np.median(flat))
+        if key == "matrix_abs_max":
+            return float(max(flat))
+        raise KeyError(key)
+
+    return run
+
+
 def simplification(block: str, name: str, key: str) -> Callable[[], float]:
     """One statistic of one named row of the simplification readout."""
 
@@ -3645,6 +3724,131 @@ CHECKS: list[Check] = [
         ),
         tolerance=0.006,
     ),
+    # sec:target-physics -- the direction rule, the MOMA and HiGHS stores, degeneracy.
+    Check(claim="target-physics: bx sign10 fixed forward", stated=1754,
+          recompute=physics_store("betaxanthin", "sign10", "thermo", "n_fixed_forward"), tolerance=0.5),
+    Check(claim="target-physics: bx sign10 fixed reverse", stated=1068,
+          recompute=physics_store("betaxanthin", "sign10", "thermo", "n_fixed_reverse"), tolerance=0.5),
+    Check(claim="target-physics: bx sign10 conflicts", stated=97,
+          recompute=physics_store("betaxanthin", "sign10", "thermo", "n_conflicts_with_plain_wild_type_flux"), tolerance=0.5),
+    Check(claim="target-physics: bx sign10 wild type infeasible", stated=1,
+          recompute=physics_store("betaxanthin", "sign10", "wild_type_infeasible"), tolerance=0.5),
+    Check(claim="target-physics: bx sign30 fixed forward", stated=1071,
+          recompute=physics_store("betaxanthin", "sign30", "thermo", "n_fixed_forward"), tolerance=0.5),
+    Check(claim="target-physics: bx sign30 fixed reverse", stated=905,
+          recompute=physics_store("betaxanthin", "sign30", "thermo", "n_fixed_reverse"), tolerance=0.5),
+    Check(claim="target-physics: bx sign30 conflicts", stated=69,
+          recompute=physics_store("betaxanthin", "sign30", "thermo", "n_conflicts_with_plain_wild_type_flux"), tolerance=0.5),
+    Check(claim="target-physics: aa sign10 conflicts", stated=84,
+          recompute=physics_store("amino_acids", "sign10", "thermo", "n_conflicts_with_plain_wild_type_flux"), tolerance=0.5),
+    Check(claim="target-physics: aa sign30 conflicts", stated=44,
+          recompute=physics_store("amino_acids", "sign30", "thermo", "n_conflicts_with_plain_wild_type_flux"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA lethal", stated=107,
+          recompute=physics_store("betaxanthin", "moma", "n_lethal"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA lethal in the source", stated=93,
+          recompute=physics_store("betaxanthin", "moma", "n_lethal_source"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA ratios moved", stated=59,
+          recompute=physics_store("betaxanthin", "moma", "n_genes_ratio_moved_gt_0.01"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA vectors moved", stated=1056,
+          recompute=physics_store("betaxanthin", "moma", "n_genes_log1p_vector_moved"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA median distance", stated=0.39,
+          recompute=physics_store("betaxanthin", "moma", "median_relative_l2_log1p_to_source"), tolerance=0.005),
+    Check(claim="target-physics: aa MOMA lethal", stated=175,
+          recompute=physics_store("amino_acids", "moma", "n_lethal"), tolerance=0.5),
+    Check(claim="target-physics: aa MOMA lethal in the source", stated=161,
+          recompute=physics_store("amino_acids", "moma", "n_lethal_source"), tolerance=0.5),
+    Check(claim="target-physics: aa MOMA ratios moved", stated=63,
+          recompute=physics_store("amino_acids", "moma", "n_genes_ratio_moved_gt_0.01"), tolerance=0.5),
+    Check(claim="target-physics: aa MOMA vectors moved", stated=567,
+          recompute=physics_store("amino_acids", "moma", "n_genes_log1p_vector_moved"), tolerance=0.5),
+    Check(claim="target-physics: aa MOMA median distance", stated=0.0,
+          recompute=physics_store("amino_acids", "moma", "median_relative_l2_log1p_to_source"), tolerance=0.0005),
+    Check(claim="target-physics: bx HiGHS lethal", stated=93,
+          recompute=physics_store("betaxanthin", "pfba", "n_lethal"), tolerance=0.5),
+    Check(claim="target-physics: bx HiGHS ratios moved", stated=17,
+          recompute=physics_store("betaxanthin", "pfba", "n_genes_ratio_moved_gt_0.01"), tolerance=0.5),
+    Check(claim="target-physics: bx HiGHS median distance to GLPK", stated=0.015,
+          recompute=physics_store("betaxanthin", "pfba", "median_relative_l2_log1p_to_source"), tolerance=0.0005),
+    Check(claim="target-physics: GLPK store no-effect deletions", stated=1031,
+          recompute=degeneracy("YPD_bx", "n_no_effect"), tolerance=0.5),
+    Check(claim="target-physics: GLPK store no-effect vectors differing", stated=1025,
+          recompute=degeneracy("YPD_bx", "n_no_effect_vector_differs"), tolerance=0.5),
+    Check(claim="target-physics: GLPK store no-effect median distance", stated=0.38,
+          recompute=degeneracy("YPD_bx", "median_rel_l2_log1p"), tolerance=0.005),
+    Check(claim="target-physics: HiGHS store no-effect vectors differing", stated=428,
+          recompute=degeneracy("YPD_bx_pfba", "n_no_effect_vector_differs"), tolerance=0.5),
+    Check(claim="target-physics: HiGHS store no-effect p90 distance", stated=0.39,
+          recompute=degeneracy("YPD_bx_pfba", "p90_rel_l2_log1p"), tolerance=0.005),
+    Check(claim="target-physics: SM store no-effect vectors differing", stated=324,
+          recompute=degeneracy("SM_gem", "n_no_effect_vector_differs"), tolerance=0.5),
+    Check(claim="target-physics: SM store no-effect deletions", stated=918,
+          recompute=degeneracy("SM_gem", "n_no_effect"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA store no-effect vectors differing", stated=18,
+          recompute=degeneracy("YPD_bx_moma", "n_no_effect_vector_differs"), tolerance=0.5),
+    Check(claim="target-physics: aa MOMA store no-effect vectors differing", stated=11,
+          recompute=degeneracy("SM_gem_moma", "n_no_effect_vector_differs"), tolerance=0.5),
+    # sec:target-physics -- the store read without the backbone.
+    Check(claim="store-baselines: GLPK growth block ridge", stated=-0.007,
+          recompute=store_baseline("betaxanthin", "pfba_glpk_growth", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: GLPK growth block kNN", stated=-0.004,
+          recompute=store_baseline("betaxanthin", "pfba_glpk_growth", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: GLPK growth block forest", stated=0.009,
+          recompute=store_baseline("betaxanthin", "pfba_glpk_growth", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: GLPK whole vector kNN", stated=0.108,
+          recompute=store_baseline("betaxanthin", "pfba_glpk_full", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: HiGHS store kNN", stated=0.178,
+          recompute=store_baseline("betaxanthin", "pfba_highs", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: HiGHS store kNN top-50", stated=3.39,
+          recompute=store_baseline("betaxanthin", "pfba_highs", "knn", "top50_enrichment"), tolerance=0.006),
+    Check(claim="store-baselines: MOMA store ridge", stated=0.134,
+          recompute=store_baseline("betaxanthin", "moma", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: flux statistics kNN", stated=0.146,
+          recompute=store_baseline("betaxanthin", "flux_stats", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: ProtT5 kNN", stated=0.145,
+          recompute=store_baseline("betaxanthin", "prot_T5_all", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: ProtT5 kNN top-50", stated=4.59,
+          recompute=store_baseline("betaxanthin", "prot_T5_all", "knn", "top50_enrichment"), tolerance=0.006),
+    Check(claim="store-baselines: GLPK store with ProtT5 forest top-50", stated=4.99,
+          recompute=store_baseline("betaxanthin", "pfba_glpk_full+prot_T5_all", "forest", "top50_enrichment"), tolerance=0.006),
+    Check(claim="store-baselines: aa HiGHS store kNN", stated=0.045,
+          recompute=store_baseline("amino_acids", "pfba_highs", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: aa ProtT5 forest", stated=0.052,
+          recompute=store_baseline("amino_acids", "prot_T5_all", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: aa HiGHS store with ProtT5 forest", stated=0.058,
+          recompute=store_baseline("amino_acids", "pfba_highs+prot_T5_all", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: aa lowest cell (HiGHS store ridge)", stated=0.006,
+          recompute=store_baseline("amino_acids", "pfba_highs", "ridge", "mean_spearman"), tolerance=0.0006),
+    # sec:target-physics -- Mulleder 2016 against Cooper 2010.
+    Check(claim="concordance: shared strains", stated=4051,
+          recompute=concordance_summary("n_shared_strains"), tolerance=0.5),
+    Check(claim="concordance: alanine Spearman", stated=-0.006,
+          recompute=concordance("alanine", "alanine", "spearman"), tolerance=0.0006),
+    Check(claim="concordance: glycine Spearman", stated=0.059,
+          recompute=concordance("glycine", "glycine", "spearman"), tolerance=0.0006),
+    Check(claim="concordance: glycine p", stated=0.0002,
+          recompute=concordance("glycine", "glycine", "spearman_p"), tolerance=0.00005),
+    Check(claim="concordance: glutamate Spearman", stated=0.043,
+          recompute=concordance("glutamate", "glutamate", "spearman"), tolerance=0.0006),
+    Check(claim="concordance: aspartate Spearman", stated=0.031,
+          recompute=concordance("aspartate", "aspartate", "spearman"), tolerance=0.0006),
+    Check(claim="concordance: lysine b top-5 overlap", stated=22,
+          recompute=concordance("lysine_b", "lysine", "top5_overlap"), tolerance=0.5),
+    Check(claim="concordance: lysine b top-5 expected", stated=10.1,
+          recompute=concordance("lysine_b", "lysine", "top5_expected"), tolerance=0.06),
+    Check(claim="concordance: lysine b top-5 enrichment", stated=2.2,
+          recompute=concordance("lysine_b", "lysine", "top5_enrichment"), tolerance=0.06),
+    Check(claim="concordance: matrix median |rho|", stated=0.018,
+          recompute=concordance_summary("matrix_abs_median"), tolerance=0.0006),
+    Check(claim="concordance: matrix max |rho|", stated=0.127,
+          recompute=concordance_summary("matrix_abs_max"), tolerance=0.0006),
+    Check(claim="concordance: Mulleder retest Spearman mean", stated=0.20,
+          recompute=concordance_summary("mulleder_retest_spearman_mean"), tolerance=0.005),
+    Check(claim="concordance: Mulleder retest Pearson mean", stated=0.43,
+          recompute=concordance_summary("mulleder_retest_pearson_mean"), tolerance=0.005),
+    Check(claim="concordance: Cooper duplicate Spearman mean", stated=0.06,
+          recompute=concordance_summary("cooper_retest_spearman_mean"), tolerance=0.005),
+    Check(claim="concordance: Cooper duplicate log-Pearson mean", stated=0.10,
+          recompute=concordance_summary("cooper_retest_pearson_log_mean"), tolerance=0.005),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",

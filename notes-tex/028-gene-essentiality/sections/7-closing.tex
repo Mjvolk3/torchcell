@@ -626,6 +626,21 @@ the store reads the same on every measure, which is the size of the store's
 contribution at width 12. Whether the two add is round 128 (w145), the store on the
 corrected graph at width 90.
 
+The wide half of round 123 is read (jobs 2766 and 2767, 7 h 25 min and 7 h 20 min):
+the store affine on 027's backbone, old graph. It reads 0.134 (sd 0.020) against the
+wide control's 0.109, $+0.025$ paired (sd 0.051), above on four of six, and ensembled
+over six seeds 0.153, the highest rank of any cell on this split, above 027's precursor
+readout at 0.131 and the cosine kNN at 0.145. The call moves the other way, as in round
+117: top-50 enrichment 4.09 against the wide control's 4.73 on single seeds and 5.19
+against 5.59 ensembled. The seeds show why. Four of the six were selected on the plateau,
+at validation Pearson $-0.06$ to $0.06$ and epochs 9 to 196, where the wide control had
+no plateau seed at all; the two that escaped were selected at 0.29 and 0.30. So at width
+90 the affine's read of the store carries the rank on its own while the backbone stays
+constant on most seeds, and the top-50 call, which the escaped backbone supplies,
+follows the escape rate. On the old graph the width-12 store had three plateau seeds of
+six and the corrected graph one; round 128 puts the store on the corrected graph at
+width 90.
+
 \input{tables/target_transfer}
 
 \subsection{Round 115: the learned allocation, with the pool made to bind\secstatus{todo}}

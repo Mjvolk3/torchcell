@@ -3303,6 +3303,71 @@ CHECKS: list[Check] = [
         recompute=ensemble("w139_bxwide_h90l2p1_e200", "top50_enrichment"),
         tolerance=0.006,
     ),
+    # sec:target-transfer -- round 123, the store affine at width 90.
+    Check(
+        claim="target-transfer: wide store arm mean",
+        stated=0.134,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: wide store arm sd",
+        stated=0.020,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: wide store paired difference",
+        stated=0.025,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: wide store paired sd",
+        stated=0.051,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: wide store seeds above",
+        stated=4,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: wide store single-seed top-50",
+        stated=4.09,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: wide store six-seed ensemble",
+        stated=0.153,
+        recompute=ensemble("w140_bxwidestore_h90l2p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: wide store ensemble top-50",
+        stated=5.19,
+        recompute=ensemble("w140_bxwidestore_h90l2p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",

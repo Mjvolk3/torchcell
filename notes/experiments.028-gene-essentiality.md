@@ -1678,3 +1678,8 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 - w139 `bxwide` (jobs 2762, 2763; 7 h 11 min and 7 h 23 min for three cells; 16.5 GB peak): 027's backbone (hidden 90, nine heads, two blocks, graph regularizer live), no store, old graph. 0.109 (sd 0.053) vs the width-12 control 0.079 (sd 0.056): +0.030 paired (sd 0.079), 4/6; top-50 4.73 vs 4.06. Ensemble 0.134 / top-50 5.59 (027's three-seed context-only cell: 0.115).
 - Every wide seed escapes the plateau (selected epochs 9 to 107, validation Pearson 0.16 to 0.36); loss minimum at median epoch 42, then +0.01 to +0.11 by epoch 199; two seeds collapse back to a constant by the end. 200 epochs is ~4x what these cells use.
 - The wide control without the store reads the same as the width-12 store on the corrected graph (0.121 / 4.93 / ensemble 0.131 / 5.59) on every measure. Round 128 (w145, jobs 2772/2773) tests whether they stack.
+
+## 2026.09.23 - Round 123 (wide half) read: the store at width 90 gives the best rank and a worse call
+
+- w140_p0/p2 `bxwidestore` (jobs 2766, 2767; 7 h 25 min and 7 h 20 min; 16.7 GB peak): store affine on 027's backbone, old graph. 0.134 (sd 0.020) vs the wide control 0.109: +0.025 paired (sd 0.051), 4/6. Ensemble 0.153, the highest rank of any cell on this split (027 precursor 0.131, kNN 0.145). Top-50: 4.09 vs 4.73 single-seed, 5.19 vs 5.59 ensembled.
+- Four of six seeds selected on the plateau (validation Pearson -0.06 to 0.06); the wide control had none. Same pattern as round 117: the affine carries the rank while the backbone stays constant, and the top-50 call follows the escape rate. Round 128 (w145, jobs 2772/2773) puts the store on the corrected graph at width 90, where the width-12 store had one plateau seed of six.

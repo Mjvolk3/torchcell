@@ -4,14 +4,18 @@
 \begin{table}[H]
   \centering
   \footnotesize
-  \setlength{\tabcolsep}{3pt}
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Rounds 117 to 119: the module on betaxanthin and the amino acids]{The 028 backbone (pathway multi-hot with ProtT5, width 12, CRPS, 200 epochs) trained on the Cachera betaxanthin screen and on the 19 amino acids under the 027 protocol, Merzbacher's 639 genes pinned to test, with the store affine against the same backbone without it, paired by seed. The statistic is the pinned-test Spearman at the epoch selected on validation Pearson (centered five-epoch moving average); for the amino acids the mean per-column Spearman. Columns: seeds paired, the arm and control means with their standard deviations over seeds, the mean paired difference with its standard deviation, the seeds on which the arm scored higher, and for betaxanthin the top-50 enrichment of high producers (arm / control). Written by \texttt{notes\_tex\_tables.py} from \texttt{results/target\_transfer\_readout.json}.}
   \label{tab:target-transfer}
-  \begin{tabular}{@{}lrrrrrr@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{78.5mm}rrrrrr@{}}
     \hline
     arm against control & seeds & arm (sd) & control (sd) & difference (sd) & higher & top-50 \\
     \hline
     betaxanthin: whole-vector store affine against the control & 6 & 0.1210 (0.0111) & 0.0785 (0.0561) & $+0.0425$ (0.0489) & 5/6 & 3.49 / 4.06 \\
+    betaxanthin: two summary columns against the control & 6 & 0.1012 (0.0613) & 0.0785 (0.0561) & $+0.0226$ (0.0723) & 4/6 & 3.03 / 4.06 \\
+    betaxanthin: whole vector, affine decayed and slowed, against the control & 6 & 0.0731 (0.0166) & 0.0785 (0.0561) & $-0.0054$ (0.0575) & 3/6 & 3.59 / 4.06 \\
+    betaxanthin: deletion-only cell graphs against the control & 6 & 0.0582 (0.0746) & 0.0785 (0.0561) & $-0.0204$ (0.0757) & 2/6 & 3.39 / 4.06 \\
+    betaxanthin: six rule-count columns against the control & 6 & 0.0743 (0.0594) & 0.0785 (0.0561) & $-0.0042$ (0.0916) & 2/6 & 2.96 / 4.06 \\
     amino acids: whole-vector store affine against the control & 6 & 0.0248 (0.0149) & 0.0342 (0.0251) & $-0.0094$ (0.0180) & 2/6 & -- \\
     \hline
   \end{tabular}

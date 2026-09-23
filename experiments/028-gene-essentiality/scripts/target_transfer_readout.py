@@ -149,13 +149,13 @@ PAIRS = [
         "w134_bxctx_h12l1p1_e200",
     ),
     (
-        "betaxanthin: width 48, two layers, against the width-12 control",
+        "betaxanthin: width 90, two blocks, against the width-12 control",
         "betaxanthin",
         "w139_bxwide_h90l2p1_e200",
         "w134_bxctx_h12l1p1_e200",
     ),
     (
-        "betaxanthin: width 48 with the store affine against the width-48 control",
+        "betaxanthin: width 90 with the store affine against the width-90 control",
         "betaxanthin",
         "w140_bxwidestore_h90l2p1_e200",
         "w139_bxwide_h90l2p1_e200",
@@ -197,7 +197,7 @@ PAIRS = [
         "w135_aactx_h12l1p1_e200",
     ),
     (
-        "amino acids: width 48, two layers, against the width-12 control",
+        "amino acids: width 90, two blocks, against the width-12 control",
         "mulleder19",
         "w139_aawide_h90l2p1_e200",
         "w135_aactx_h12l1p1_e200",

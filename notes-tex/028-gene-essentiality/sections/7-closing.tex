@@ -503,7 +503,15 @@ and the production ratio, and separately the whole vector with the affine in its
 optimizer group at weight decay 0.1 and a tenth of the rate. Round 120 (w137) is the
 deletion-only graph, and the six rule-count columns of round 77 over every GEM gene.
 Round 121 (w138) is the amino-acid production store, its 19 ratios and the growth ratio
-alone, and the whole vector with all 42 summary statistics.
+alone, and the whole vector with all 42 summary statistics. Round 122 (w139) is the
+affine-free control on the backbone 020 and 027 trained, width 90, nine attention heads,
+two blocks, on both targets, where the graph regularizer is evaluated; a first build at
+width 48 with four heads died in that term on every cell (jobs 2757 and 2758, the
+round-8 failure of Section~\ref{sec:backbone-knobs}). Round 123 (w140) puts the store
+affine on that backbone, and on the deletion-only graph at width 12; round 124 (w141)
+is the deletion-only graph for the amino acids; round 125 (w142) splits the betaxanthin
+store into its growth block and its production block, 4,178 and 4,177 columns, each
+read alone.
 
 Round 117 is read (Table~\ref{tab:target-transfer}). On betaxanthin the whole-vector
 affine reads a pinned Spearman of 0.121 (sd 0.011 over six seeds) against the control's
@@ -534,6 +542,28 @@ width-12 backbone that the essentiality endpoint tuned is under-sized or unstabl
 19 targets at once, and the width arm of round 122 is the test that has to be read
 before any amino-acid affine is. Averaged over seeds the control reads 0.058 and the
 store arm 0.035, so the affine costs a little on this target rather than adding to it.
+
+Rounds 119 and 120 are read, and they locate the round-117 gain in the whole vector
+read through a free affine. The two summary columns read 0.101 (sd 0.061) against the
+control's 0.079, $+0.023$ paired (sd 0.072), above on four of six: three seeds were
+selected at epoch 197 at validation Pearson 0.04 to 0.05 and read 0.13 on test, the
+round-117 pattern, and one seed reads $-0.021$, so the level comes with the control's
+spread rather than the whole vector's. Ensembled over six seeds it reads 0.071, under the
+control's 0.076, and its single-seed top-50 enrichment is 3.03. The whole vector with the
+affine decayed and slowed reads 0.073 (sd 0.017), $-0.005$ paired (sd 0.058), above on
+three of six; three of its seeds were selected at epoch 2 at validation Pearson 0, where
+the affine has taken two steps, and read 0.05 to 0.08. So the rate the affine trains at
+is part of what round 117 measured, and slowing it returns the arm to the control. The
+deletion-only graph without an affine reads 0.058 (sd 0.075), $-0.020$ paired (sd
+0.076), above on two of six, with one seed at $-0.089$ and every selection between
+epochs 3 and 69; the six rule-count columns read 0.074 (sd 0.059), $-0.004$ paired (sd
+0.092), above on two of six. Neither the graph nor the rule counts moves the rank, in
+either direction, beyond the seed spread. One read cuts across all four: the six-seed
+ensemble's top-50 enrichment is 4.8 to 5.2 for every arm of rounds 119 and 120 against
+3.0 to 3.6 for their single seeds, and 4.59 for the control's ensemble, so on the call
+the task is about, averaging seeds is worth more than any of these representations, as
+it was on the essentiality endpoint (Section~\ref{sec:family-ensembles}). Each ensemble is one
+number with no spread, so that ordering among the arms is not a measurement.
 
 \input{tables/target_transfer}
 

@@ -2792,6 +2792,219 @@ CHECKS: list[Check] = [
         stated=0.048,
         recompute=transfer_comparator("mulleder19", "027 pooled"),
     ),
+    # sec:target-transfer -- rounds 119 and 120.
+    Check(
+        claim="target-transfer: two summary columns arm mean",
+        stated=0.101,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: two summary columns arm sd",
+        stated=0.061,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: two summary columns paired difference",
+        stated=0.023,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: two summary columns paired sd",
+        stated=0.072,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control", "sd_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: two summary columns seeds above",
+        stated=4,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: two summary columns single-seed top-50",
+        stated=3.03,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: two summary columns six-seed ensemble",
+        stated=0.071,
+        recompute=ensemble("w136_bxratio_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: decayed affine arm mean",
+        stated=0.073,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: decayed affine arm sd",
+        stated=0.017,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: decayed affine paired difference",
+        stated=-0.005,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: decayed affine paired sd",
+        stated=0.058,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: decayed affine seeds above",
+        stated=3,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: deletion-only graph arm mean",
+        stated=0.058,
+        recompute=transfer(
+            "betaxanthin: deletion-only cell graphs against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only graph arm sd",
+        stated=0.075,
+        recompute=transfer(
+            "betaxanthin: deletion-only cell graphs against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only graph paired difference",
+        stated=-0.020,
+        recompute=transfer(
+            "betaxanthin: deletion-only cell graphs against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only graph paired sd",
+        stated=0.076,
+        recompute=transfer(
+            "betaxanthin: deletion-only cell graphs against the control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only graph seeds above",
+        stated=2,
+        recompute=transfer(
+            "betaxanthin: deletion-only cell graphs against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: rule-count columns arm mean",
+        stated=0.074,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: rule-count columns arm sd",
+        stated=0.059,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: rule-count columns paired difference",
+        stated=-0.004,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: rule-count columns paired sd",
+        stated=0.092,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control", "sd_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: rule-count columns seeds above",
+        stated=2,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: rounds 119/120 ensemble top-50 floor (deletion-only)",
+        stated=4.79,
+        recompute=ensemble("w137_bxdel_h12l1p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: rounds 119/120 ensemble top-50 ceiling (decayed affine)",
+        stated=5.19,
+        recompute=ensemble("w136_bxstorewd_h12l1p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: rounds 119/120 single-seed top-50 floor (rule counts)",
+        stated=2.96,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: rounds 119/120 single-seed top-50 ceiling (decayed affine)",
+        stated=3.59,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",

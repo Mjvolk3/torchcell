@@ -19,6 +19,12 @@ trainer reads through ``ESS_SOLVE_TABLE``:
   LP per gene, :math:`v^{wt}` the source store's parsimonious wild-type growth vector.
   The deletion's flux is the nearest feasible flux to the parent's, not a re-optimized
   one, which is the assumption a knockout does not re-tune its enzyme levels;
+* ``pfba``: the two-stage parsimonious FBA of the essentiality stores
+  (``parsimonious_reference_flux``, HiGHS) on the plain box. The betaxanthin source store
+  was solved by cobra's pFBA through GLPK and is degenerate (1,025 of its 1,031
+  no-effect deletions carry a vector that differs from the wild type's, median relative
+  log1p distance 0.38, measured 2026-09-23); this rebuild anchors every solve to one
+  solver path, so a pair against the source isolates vertex noise;
 * ``sign10`` / ``sign30``: two-stage parsimonious FBA on a box whose reaction directions
   are fixed by the standard reaction energies (eQuilibrator union-external route, the
   028 flux layer's table): a reaction with :math:`\Delta_r G'^\circ\le -T` loses its
@@ -88,7 +94,7 @@ from torchcell.metabolism.parameters import (  # noqa: E402
 from torchcell.metabolism.yeast_GEM import YeastGEM  # noqa: E402
 
 Target = Literal["betaxanthin", "amino_acids"]
-Variant = Literal["moma", "sign10", "sign30"]
+Variant = Literal["moma", "pfba", "sign10", "sign30"]
 TARGETS: dict[str, dict[str, str]] = {
     "betaxanthin": {
         "source_stem": "YPD_bx",
@@ -191,7 +197,9 @@ def main() -> None:
     global _S, _LB, _UB, _BIOMASS, _V_WT, _KNOCKED, _S_CSR
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", required=True, choices=sorted(TARGETS))
-    parser.add_argument("--variant", required=True, choices=["moma", "sign10", "sign30"])
+    parser.add_argument(
+        "--variant", required=True, choices=["moma", "pfba", "sign10", "sign30"]
+    )
     parser.add_argument("--processes", type=int, default=8)
     parser.add_argument("--limit-genes", type=int, default=0, help="Smoke test.")
     parser.add_argument("--out-dir", default=TABLE_DIR)
@@ -297,12 +305,12 @@ def main() -> None:
         wt_growth = float(wt_v[_BIOMASS])
         solve = solve_moma
     else:
-        assert thermo is not None
         try:
             record = parsimonious_reference_flux(
                 gem.s, torch.from_numpy(lb).float(), torch.from_numpy(ub).float(), _BIOMASS
             )
         except ValueError as err:
+            assert thermo is not None, "the plain box admits growth (asserted above)"
             # The direction rule admits no growth for the parent strain: a measured
             # outcome of the rule, recorded in the summary, and NO store is written (a
             # store of zero rows would be read as 1,155 lethal deletions).
@@ -380,6 +388,11 @@ def main() -> None:
             "source store's parsimonious wild-type growth vector"
         )
         if args.variant == "moma"
+        else (
+            "pFBA (parsimonious_reference_flux, two scipy HiGHS LPs) on the plain box, "
+            "the essentiality stores' solver path"
+        )
+        if args.variant == "pfba"
         else (
             f"pFBA (parsimonious_reference_flux, two scipy HiGHS LPs) on the box with "
             f"reaction directions fixed by the standard reaction energies at "

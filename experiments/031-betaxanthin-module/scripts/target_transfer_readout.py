@@ -339,6 +339,18 @@ PAIRS = [
         "w155_aadelmoma_h12l1p1_e200",
         "w143_aadelstore_h12l1p1_e200",
     ),
+    (
+        "betaxanthin: HiGHS parsimonious store on deletion-only graphs against deletion-only graphs",
+        "betaxanthin",
+        "w156_bxdelpfba_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: HiGHS parsimonious store on deletion-only graphs against the GLPK store there",
+        "betaxanthin",
+        "w156_bxdelpfba_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
 ]
 
 

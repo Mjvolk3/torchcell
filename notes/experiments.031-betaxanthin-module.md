@@ -46,3 +46,13 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B12 | 133 | w152 | flux vector with the six gene-rule columns | pending (2789) |
 | B13 | 134 | w153 | cached solve head, hidden 256 | pending (2788) |
 | B14 | 135 | w154 | linear MOMA store in the affine slot | pending (2792) |
+
+### Round B15: the parsimonious store rebuilt on one solver path
+
+- `target_physics_store.py --variant pfba` rebuilds the parsimonious store on the cassette strain through the essentiality stores' HiGHS two-stage solve: 1,155 genes in 78 s, 93 lethal (the same 93), 17 growth ratios moved by more than 0.01 against the GLPK source, the log1p vector moved for 1,062 genes with a median relative distance of 0.015 (`results/target_physics_store_betaxanthin_pfba.json`). Store `ess_solve_encodings_YPD_bx_pfba.npz`.
+- Degeneracy restated with both stores measured: among the 1,031 deletions that leave growth unchanged, the GLPK store's vector differs from its wild type's for 1,025 (median relative log1p distance 0.38), the HiGHS store's for 428 (median 0.0, ninetieth percentile 0.39). So the parsimonious optimum has alternative vertices for a large share of no-effect deletions under either solver, and GLPK lands on a different one almost every time. The MOMA store returns the wild-type vector exactly whenever the knocked reactions carry no wild-type flux.
+- B15 (w156, job 2794): B5's arm with the HiGHS store in the affine slot, six seeds, paired against B3 (w137_bxdel) and B5 (w140_bxdelstore). With B14 this reads whether the B5 gain rests on the vector or on its vertex noise: if B15 matches B5 the solver path is immaterial; if B14 and B15 both fall below B5, the noise is doing work (a hypothesis until measured).
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| B15 | 139 | w156 | HiGHS parsimonious store in the affine slot | pending (2794) |

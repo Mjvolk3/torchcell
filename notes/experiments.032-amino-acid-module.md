@@ -147,3 +147,19 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | round | 028 | pack | arm | status |
 |---|---|---|---|---|
 | A14 | 153 | w170 | del + GO multi-hot affine | pending (2808) |
+
+## 2026.09.24 - Round A12 read (job 2800, 3 h 14 min)
+
+- A12 (w163, the store arm at width 6 with two heads): 0.025 (sd 0.018) vs the width-12 store 0.040 (-0.015, sd 0.017, 1/6); ensemble 0.046. Three seeds near the constant predictor (validation Pearson 0.01 to 0.03). Half the width brings the collapse back; width 12 is the floor for nineteen outputs. Written into the 032 document as round 146 (version 6).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A12 | 146 | w163 | del + store, width 6 | 0.025 (sd 0.018); ens 0.046 |
+
+## 2026.09.24 - Round A13 read (job 2802, 3 h 38 min)
+
+- A13 (w165, the driving-force polytope mean in the affine slot): 0.032 (sd 0.008) vs the deletion-only control 0.049 (-0.017, sd 0.011, 0/6), vs the parsimonious store 0.040 (-0.008, sd 0.012, 1/6) and vs the driving-force point 0.045 (-0.012, sd 0.009, 0/6); ensemble 0.035. Seeds select at epochs 84 to 184, none collapsed. The lowest of the three metabolite-side reads, under every control on every seed, where on betaxanthin it was the best ensemble. Written into the 032 document as round 148.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A13 | 148 | w165 | del + driving-force polytope mean | 0.032 (sd 0.008); ens 0.035 |

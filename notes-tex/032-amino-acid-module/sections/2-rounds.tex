@@ -160,4 +160,34 @@ is the floor at which nineteen outputs train on this backbone: with the width-90
 of round 122 the size axis is read from 6 to 90, the level does not rise on it, and
 the small end loses seeds.
 
+Round 148 is read (job 2802, 3 h 38 min): the probabilistic metabolite side in the
+affine slot, the mean concentration over six draws of each deletion's driving-force
+polytope (Section~\ref{sec:physics}) with the point store's statistics and the count
+of constrained metabolites, on the deletion-only graph. It reads 0.032 (sd 0.008)
+against the affine-free control's 0.049 ($-0.017$ paired, sd 0.011, above on no seed),
+against the parsimonious store's 0.040 ($-0.008$, sd 0.012, one of six) and against
+the driving-force point's 0.045 ($-0.012$, sd 0.009, no seed), ensembled over six
+seeds 0.035 against 0.062, 0.043 and 0.050. The seeds select at epochs 84 to 184 on
+validation Pearson 0.04 to 0.09, none collapsed. So the region's centroid is the lowest
+of the three metabolite-side reads on this target and under every control on every
+seed, where on betaxanthin it was the highest ensemble (the sibling document, round
+147): 2,810 columns whose draws carry the prototroph's region but not this rank cost
+the affine what the ladder read of them (0.016 by ridge), and the metabolite side on
+the amino acids ends where the flux side did, at or under the control.
+
+Round 143 is read (job 2803, 3 h 40 min): the sampled cone in the affine slot, the
+mean of six OptGP draws of each deletion's flux cone at 99 percent of its optimum
+(Section~\ref{sec:physics}), the Flux Cone Learning representation on this backbone,
+on the deletion-only graph. It reads 0.019 (sd 0.007) against the affine-free
+control's 0.049 ($-0.030$ paired, sd 0.007, above on no seed) and against the
+parsimonious store's 0.040 ($-0.021$, sd 0.010, no seed), ensembled over six seeds
+0.023 against 0.062 and 0.043, the lowest arm of the study. The seeds select at epochs
+104 to 196 on validation Pearson 0.05 to 0.07, none collapsed, and the validation loss
+bottoms at epochs 3 to 21, so the arm spends nearly all of training past its minimum.
+So the cone's mean costs the affine more than any other store on this target, on every
+seed against both controls, as it cost the most on betaxanthin (the sibling document,
+round 142) and read at the ladder's floor here ($-0.004$ by ridge): a deletion's
+feasible region averaged over six draws is the weakest representation of the flux
+family on both targets.
+
 \input{tables/target_transfer}

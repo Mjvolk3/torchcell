@@ -2249,6 +2249,426 @@
       ]
     },
     {
+      "name": "amino acids: driving-force polytope mean on deletion-only graphs against deletion-only graphs",
+      "head": "mulleder19",
+      "arm": {
+        "stem": "w165_aadelmdfpoly_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 184,
+            "select_val_pearson": 0.0545074198805531,
+            "spearman": 0.03826963635617751,
+            "pearson": 0.15279277517019133,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 116,
+            "select_val_pearson": 0.051380957452286234,
+            "spearman": 0.026605683418182677,
+            "pearson": 0.12487721423569478,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 176,
+            "select_val_pearson": 0.0713192131370306,
+            "spearman": 0.03445075478319953,
+            "pearson": 0.15152792215935493,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 84,
+            "select_val_pearson": 0.0409101838503327,
+            "spearman": 0.03148350304046854,
+            "pearson": 0.12546048048687608,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 176,
+            "select_val_pearson": 0.09136142571897883,
+            "spearman": 0.020184126827710036,
+            "pearson": 0.14669632847347347,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 96,
+            "select_val_pearson": 0.0634601733304168,
+            "spearman": 0.043185550836859245,
+            "pearson": 0.12509376415982842,
+            "top50_enrichment": null,
+            "top50_hits": null
+          }
+        ],
+        "mean_spearman": 0.03236320921043292,
+        "sd_spearman": 0.008229457336963321,
+        "mean_top50_enrichment": null
+      },
+      "control": {
+        "stem": "w141_aadel_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 135,
+            "select_val_pearson": 0.1142109035151263,
+            "spearman": 0.04204816526285334,
+            "pearson": 0.11087396936981302,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 148,
+            "select_val_pearson": 0.08574005407526304,
+            "spearman": 0.042611093359299974,
+            "pearson": 0.0760303590121973,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 88,
+            "select_val_pearson": 0.07451615168860085,
+            "spearman": 0.05905778505729476,
+            "pearson": 0.08550044922403206,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 75,
+            "select_val_pearson": 0.08738300369709338,
+            "spearman": 0.044800597051616514,
+            "pearson": 0.10588309376525055,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 37,
+            "select_val_pearson": 0.06556358654052019,
+            "spearman": 0.053243590258249075,
+            "pearson": 0.09086131917214707,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 197,
+            "select_val_pearson": 0.07702322706188026,
+            "spearman": 0.053568475263222476,
+            "pearson": 0.1125550722874897,
+            "top50_enrichment": null,
+            "top50_hits": null
+          }
+        ],
+        "mean_spearman": 0.04922161770875602,
+        "sd_spearman": 0.007021744764877032,
+        "mean_top50_enrichment": null
+      },
+      "n": 6,
+      "mean_difference": -0.0168584084983231,
+      "sd_difference": 0.010476630940092494,
+      "n_positive": 0,
+      "differences": [
+        -0.003778528906675835,
+        -0.016005409941117297,
+        -0.024607030274095228,
+        -0.013317094011147973,
+        -0.03305946343053904,
+        -0.010382924426363231
+      ]
+    },
+    {
+      "name": "amino acids: driving-force polytope mean on deletion-only graphs against the parsimonious store there",
+      "head": "mulleder19",
+      "arm": {
+        "stem": "w165_aadelmdfpoly_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 184,
+            "select_val_pearson": 0.0545074198805531,
+            "spearman": 0.03826963635617751,
+            "pearson": 0.15279277517019133,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 116,
+            "select_val_pearson": 0.051380957452286234,
+            "spearman": 0.026605683418182677,
+            "pearson": 0.12487721423569478,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 176,
+            "select_val_pearson": 0.0713192131370306,
+            "spearman": 0.03445075478319953,
+            "pearson": 0.15152792215935493,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 84,
+            "select_val_pearson": 0.0409101838503327,
+            "spearman": 0.03148350304046854,
+            "pearson": 0.12546048048687608,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 176,
+            "select_val_pearson": 0.09136142571897883,
+            "spearman": 0.020184126827710036,
+            "pearson": 0.14669632847347347,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 96,
+            "select_val_pearson": 0.0634601733304168,
+            "spearman": 0.043185550836859245,
+            "pearson": 0.12509376415982842,
+            "top50_enrichment": null,
+            "top50_hits": null
+          }
+        ],
+        "mean_spearman": 0.03236320921043292,
+        "sd_spearman": 0.008229457336963321,
+        "mean_top50_enrichment": null
+      },
+      "control": {
+        "stem": "w143_aadelstore_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 77,
+            "select_val_pearson": 0.0826005816925317,
+            "spearman": 0.03874148836376571,
+            "pearson": 0.1944638899968643,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 95,
+            "select_val_pearson": 0.08085832410908647,
+            "spearman": 0.050041687576018144,
+            "pearson": 0.19388885987236312,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 193,
+            "select_val_pearson": 0.08220892443664764,
+            "spearman": 0.03681063702000857,
+            "pearson": 0.18628308837498098,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 146,
+            "select_val_pearson": 0.06176280101614171,
+            "spearman": 0.04006438357442472,
+            "pearson": 0.19843511283397675,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 99,
+            "select_val_pearson": 0.0708588006412978,
+            "spearman": 0.039712959336125,
+            "pearson": 0.19601330952718854,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 146,
+            "select_val_pearson": 0.07128871928924989,
+            "spearman": 0.0359380508374111,
+            "pearson": 0.17044042781191437,
+            "top50_enrichment": null,
+            "top50_hits": null
+          }
+        ],
+        "mean_spearman": 0.040218201117958874,
+        "sd_spearman": 0.005077236952331321,
+        "mean_top50_enrichment": null
+      },
+      "n": 6,
+      "mean_difference": -0.00785499190752595,
+      "sd_difference": 0.011767460714127907,
+      "n_positive": 1,
+      "differences": [
+        -0.00047185200758820267,
+        -0.023436004157835467,
+        -0.0023598822368090383,
+        -0.008580880533956177,
+        -0.019528832508414966,
+        0.007247499999448147
+      ]
+    },
+    {
+      "name": "amino acids: driving-force polytope mean on deletion-only graphs against the driving-force point",
+      "head": "mulleder19",
+      "arm": {
+        "stem": "w165_aadelmdfpoly_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 184,
+            "select_val_pearson": 0.0545074198805531,
+            "spearman": 0.03826963635617751,
+            "pearson": 0.15279277517019133,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 116,
+            "select_val_pearson": 0.051380957452286234,
+            "spearman": 0.026605683418182677,
+            "pearson": 0.12487721423569478,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 176,
+            "select_val_pearson": 0.0713192131370306,
+            "spearman": 0.03445075478319953,
+            "pearson": 0.15152792215935493,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 84,
+            "select_val_pearson": 0.0409101838503327,
+            "spearman": 0.03148350304046854,
+            "pearson": 0.12546048048687608,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 176,
+            "select_val_pearson": 0.09136142571897883,
+            "spearman": 0.020184126827710036,
+            "pearson": 0.14669632847347347,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 96,
+            "select_val_pearson": 0.0634601733304168,
+            "spearman": 0.043185550836859245,
+            "pearson": 0.12509376415982842,
+            "top50_enrichment": null,
+            "top50_hits": null
+          }
+        ],
+        "mean_spearman": 0.03236320921043292,
+        "sd_spearman": 0.008229457336963321,
+        "mean_top50_enrichment": null
+      },
+      "control": {
+        "stem": "w158_aadelmdf_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 103,
+            "select_val_pearson": 0.05865368467608565,
+            "spearman": 0.04213213048706124,
+            "pearson": 0.13055824461442075,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 89,
+            "select_val_pearson": 0.0734040722937176,
+            "spearman": 0.0380446013788989,
+            "pearson": 0.12076532958369506,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 146,
+            "select_val_pearson": 0.06210422022023091,
+            "spearman": 0.04130393385608807,
+            "pearson": 0.14812790229916573,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 81,
+            "select_val_pearson": 0.04659723636914829,
+            "spearman": 0.04565872784554011,
+            "pearson": 0.11121797243035153,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 32,
+            "select_val_pearson": 0.050090335419793665,
+            "spearman": 0.04810642129987094,
+            "pearson": 0.10740308278534365,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 97,
+            "select_val_pearson": 0.07219340078728764,
+            "spearman": 0.05168241019214951,
+            "pearson": 0.12955028602951452,
+            "top50_enrichment": null,
+            "top50_hits": null
+          }
+        ],
+        "mean_spearman": 0.0444880375099348,
+        "sd_spearman": 0.004968478611352845,
+        "mean_top50_enrichment": null
+      },
+      "n": 6,
+      "mean_difference": -0.012124828299501872,
+      "sd_difference": 0.008525879971495533,
+      "n_positive": 0,
+      "differences": [
+        -0.0038624941308837354,
+        -0.011438917960716225,
+        -0.006853179072888536,
+        -0.014175224805071572,
+        -0.0279222944721609,
+        -0.008496859355290265
+      ]
+    },
+    {
       "name": "amino acids: deletion-only graphs for 300 epochs against 200",
       "head": "mulleder19",
       "arm": {
@@ -2386,6 +2806,286 @@
         0.0,
         0.0,
         0.0017553581241556149
+      ]
+    },
+    {
+      "name": "amino acids: sampled-cone mean store on deletion-only graphs against deletion-only graphs",
+      "head": "mulleder19",
+      "arm": {
+        "stem": "w160_aadelsampled_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 187,
+            "select_val_pearson": 0.07279451269852488,
+            "spearman": 0.009977252901301014,
+            "pearson": 0.08162147213557833,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 104,
+            "select_val_pearson": 0.04893418259330486,
+            "spearman": 0.01389966980320363,
+            "pearson": 0.08807184418056797,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 173,
+            "select_val_pearson": 0.06293467013165355,
+            "spearman": 0.02360173633905386,
+            "pearson": 0.0917880472384001,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 168,
+            "select_val_pearson": 0.05499775391562205,
+            "spearman": 0.02756339987877004,
+            "pearson": 0.09513435645126983,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 196,
+            "select_val_pearson": 0.06938237585372438,
+            "spearman": 0.016576136773399256,
+            "pearson": 0.09173923917114735,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 162,
+            "select_val_pearson": 0.057108458523687566,
+            "spearman": 0.02163210140341778,
+            "pearson": 0.09540884071152265,
+            "top50_enrichment": null,
+            "top50_hits": null
+          }
+        ],
+        "mean_spearman": 0.018875049516524262,
+        "sd_spearman": 0.006551954260227063,
+        "mean_top50_enrichment": null
+      },
+      "control": {
+        "stem": "w141_aadel_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 135,
+            "select_val_pearson": 0.1142109035151263,
+            "spearman": 0.04204816526285334,
+            "pearson": 0.11087396936981302,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 148,
+            "select_val_pearson": 0.08574005407526304,
+            "spearman": 0.042611093359299974,
+            "pearson": 0.0760303590121973,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 88,
+            "select_val_pearson": 0.07451615168860085,
+            "spearman": 0.05905778505729476,
+            "pearson": 0.08550044922403206,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 75,
+            "select_val_pearson": 0.08738300369709338,
+            "spearman": 0.044800597051616514,
+            "pearson": 0.10588309376525055,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 37,
+            "select_val_pearson": 0.06556358654052019,
+            "spearman": 0.053243590258249075,
+            "pearson": 0.09086131917214707,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 197,
+            "select_val_pearson": 0.07702322706188026,
+            "spearman": 0.053568475263222476,
+            "pearson": 0.1125550722874897,
+            "top50_enrichment": null,
+            "top50_hits": null
+          }
+        ],
+        "mean_spearman": 0.04922161770875602,
+        "sd_spearman": 0.007021744764877032,
+        "mean_top50_enrichment": null
+      },
+      "n": 6,
+      "mean_difference": -0.03034656819223176,
+      "sd_difference": 0.007015561752390182,
+      "n_positive": 0,
+      "differences": [
+        -0.03207091236155233,
+        -0.028711423556096342,
+        -0.0354560487182409,
+        -0.017237197172846472,
+        -0.036667453484849816,
+        -0.0319363738598047
+      ]
+    },
+    {
+      "name": "amino acids: sampled-cone mean store on deletion-only graphs against the parsimonious store there",
+      "head": "mulleder19",
+      "arm": {
+        "stem": "w160_aadelsampled_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 187,
+            "select_val_pearson": 0.07279451269852488,
+            "spearman": 0.009977252901301014,
+            "pearson": 0.08162147213557833,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 104,
+            "select_val_pearson": 0.04893418259330486,
+            "spearman": 0.01389966980320363,
+            "pearson": 0.08807184418056797,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 173,
+            "select_val_pearson": 0.06293467013165355,
+            "spearman": 0.02360173633905386,
+            "pearson": 0.0917880472384001,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 168,
+            "select_val_pearson": 0.05499775391562205,
+            "spearman": 0.02756339987877004,
+            "pearson": 0.09513435645126983,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 196,
+            "select_val_pearson": 0.06938237585372438,
+            "spearman": 0.016576136773399256,
+            "pearson": 0.09173923917114735,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 162,
+            "select_val_pearson": 0.057108458523687566,
+            "spearman": 0.02163210140341778,
+            "pearson": 0.09540884071152265,
+            "top50_enrichment": null,
+            "top50_hits": null
+          }
+        ],
+        "mean_spearman": 0.018875049516524262,
+        "sd_spearman": 0.006551954260227063,
+        "mean_top50_enrichment": null
+      },
+      "control": {
+        "stem": "w143_aadelstore_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 77,
+            "select_val_pearson": 0.0826005816925317,
+            "spearman": 0.03874148836376571,
+            "pearson": 0.1944638899968643,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 95,
+            "select_val_pearson": 0.08085832410908647,
+            "spearman": 0.050041687576018144,
+            "pearson": 0.19388885987236312,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 193,
+            "select_val_pearson": 0.08220892443664764,
+            "spearman": 0.03681063702000857,
+            "pearson": 0.18628308837498098,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 146,
+            "select_val_pearson": 0.06176280101614171,
+            "spearman": 0.04006438357442472,
+            "pearson": 0.19843511283397675,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 99,
+            "select_val_pearson": 0.0708588006412978,
+            "spearman": 0.039712959336125,
+            "pearson": 0.19601330952718854,
+            "top50_enrichment": null,
+            "top50_hits": null
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 146,
+            "select_val_pearson": 0.07128871928924989,
+            "spearman": 0.0359380508374111,
+            "pearson": 0.17044042781191437,
+            "top50_enrichment": null,
+            "top50_hits": null
+          }
+        ],
+        "mean_spearman": 0.040218201117958874,
+        "sd_spearman": 0.005077236952331321,
+        "mean_top50_enrichment": null
+      },
+      "n": 6,
+      "mean_difference": -0.02134315160143461,
+      "sd_difference": 0.009707403018367023,
+      "n_positive": 0,
+      "differences": [
+        -0.028764235462464698,
+        -0.03614201777281451,
+        -0.013208900680954712,
+        -0.012500983695654676,
+        -0.023136822562725746,
+        -0.014305949433993319
       ]
     }
   ],

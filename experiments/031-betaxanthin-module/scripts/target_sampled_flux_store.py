@@ -105,6 +105,11 @@ def _init(args: argparse.Namespace) -> None:
     global _MODEL, _ARGS
     _ARGS = args
     _MODEL, _ = build_target_model(args.target)
+    # OptGPSampler copies the model, and optlang re-optimizes the copy from a cold
+    # standard basis; on the prototroph three of 1,161 deletions cycled in glp_simplex
+    # there for two hours with no return (2026-09-23, py-spy). Presolve is cloned into
+    # every copy's configuration and avoids the cycling; a bad status then raises.
+    _MODEL.solver.configuration.presolve = True
 
 
 def sample_model(model: Any, args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray, float, int]:

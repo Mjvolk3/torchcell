@@ -168,6 +168,16 @@ watching for the landing.`). The exit-code table is **your control flow only**.
      it now with a pointer to the landed SHA -- this is wrap-up and belongs
      *before* the banner. Add at most one short summary line only if it genuinely
      helps; otherwise none.
+   - **Then sweep the other worktrees** (the drainer cleaned only this branch):
+     ```bash
+     $PY "$MAIN/scripts/wt_cleanup.py"
+     ```
+     Run it with `timeout: 300000`. It removes every other worktree whose commits
+     are all on `origin/main` and whose tree is clean, with its local and remote
+     branch, and prints the **broom banner** (`/wt-cleanup`). Yellow means landed
+     trees still hold uncommitted files; it lists them, and nothing dirty is ever
+     removed. Do not act on that list here and do not restate it; the dove banner
+     below is still the last output.
    - Then run the banner as the **final command**, and output nothing after it:
      ```bash
      $PY "$MAIN/scripts/merge_queue.py" banner "$BRANCH"

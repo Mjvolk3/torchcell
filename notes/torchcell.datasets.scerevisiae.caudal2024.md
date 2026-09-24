@@ -293,3 +293,51 @@ mechanics and `REFGENE_TAR_SHA256` are unchanged, the served store is not rebuil
 records, stored `sequence_sha256` untouched), and the existing `raw/` symlinks that
 still point at the library key keep working because that copy is retained. A fresh build
 would link to the tier instead. Chromosome list through the tier: 17 (I to XVI plus MT).
+
+## 2026.09.23 - SACE_ header prefix and loud isolate accounting (issue 73)
+
+Issue 73 read `SACE_YAU_YAL001C_TFC3` as a species prefix wrapped around the isolate code
+`YAU` and proposed stripping `SACE_` before splitting on the gene token. **That reading is
+wrong, and the proposed strip would cause the exact silent genotype loss the issue set out
+to prevent.** `SACE_YAU` is the isolate's own code, spelled that way in BOTH sources:
+
+- `genesMatrix_PresenceAbsence.tab.gz` indexes 1,011 isolates, **93** of them
+  `SACE_`-prefixed (`SACE_GAL` ... `SACE_YDO`). All 1,011 index entries are the verbatim
+  header form; none of the 93 stripped codes (`GAL`, `YAU`, ...) appears in the index.
+- Caudal's `Strain` column carries 969 codes; after the 25 `XTRA_*` and `FY4-6` are removed,
+  all **943** are in Peter's index and **78** of them are `SACE_`-prefixed.
+- The 78 are in the served build and carry their variants normally: the served
+  `sequence_variants.parquet` holds `SACE_YAU_YAL001C_TFC3` style tokens under
+  `strain_id = SACE_YAU`. The schema already documents this, `SequenceVariantPerturbation.
+  strain_id` giving `'AAB' | 'SACE_YAU'` as its examples.
+- Stripping is not even ambiguous-safe-but-useless: an exhaustive scan of all **6,015** gene
+  files / **6,081,165** headers shows the current logic recovers all 1,011 codes and keeps
+  `943 x 6,015 = 5,672,145` records, while the strip loses **78 of 943** isolates and
+  **469,170** records (`78 x 6,015`) with no error.
+
+So the prefix is KEPT, with the evidence recorded in `_isolate_and_symbol`, and the real
+half of the issue is implemented: **no isolate is dropped without a count.**
+
+- `_isolate_and_symbol(token, sys_name)` is the parse, factored out and unit-tested on both
+  header forms. It RAISES on a token with no `_<gene>_` key (the old code skipped such a
+  token silently; zero of the 6,081,165 headers lack the key, so nothing changes on the
+  pinned tarball) and on a token naming an empty isolate.
+- `_assert_all_isolates_seen(matched, seen)` runs after the tar loop and raises with the
+  count and the missing codes if any built isolate never appeared in a header. The only
+  records still skipped are the 68 Peter isolates Caudal did not sequence, and this assert
+  proves no built isolate was skipped with them.
+
+**Content unchanged, proved by a separate-root rebuild** (`root=
+$DATA_ROOT/data/torchcell/caudal_pantranscriptome2024_issue73_check`, so the served-from dev
+store was never touched; moved to
+`/scratch/projects/torchcell-deprecated/2026.09.23/` afterwards). Old vs new:
+`sequence_variants.parquet` **4,759,608 rows both sides and the full four-column row set is
+identical**; 943 strains both; LMDB 943 records with per-strain `sequence_variant` counts
+identical (4,759,608 total each); `gene_set.json` and `experiment_reference_index.json`
+byte-identical.
+
+Admission check verdict (read-only, `kg_manifest ... admit --dataset
+CaudalPanTranscriptome2024Dataset`): **BLOCKED**, and for the reassuring reason -- "already
+in the served store and its dev LMDB produces exactly the 943 served experiment ids; nothing
+to add", with 0 schema drift, 0 graph-schema change, unchanged value surface, and the dev
+LMDB reading `fresh`. Nothing to re-serve; no KG rebuild needed.

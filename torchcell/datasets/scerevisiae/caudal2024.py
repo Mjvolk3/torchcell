@@ -37,7 +37,9 @@ rounded mean count per gene) -- an absolute WT-equivalent baseline, NOT a center
 
 STRAIN SET: the 943 isolates that are the intersection of Caudal's ``Strain`` codes (969)
 with Peter's genome panel. The 26 Caudal-only strains (25 ``XTRA_*`` + ``FY4-6``) have no
-Peter genome and are EXCLUDED -- only isolates with a matched genome are built.
+Peter genome and are EXCLUDED -- only isolates with a matched genome are built. An isolate
+code is whatever both sources spell it, including the ``SACE_`` form (78 of the 943, e.g.
+``SACE_YAU``); see ``_isolate_and_symbol``.
 
 Sources (hash-pinned, local library mirror):
   - Caudal expression: ``caudalPantranscriptomeRevealsLarge2024/data/
@@ -176,6 +178,48 @@ def _reference_slice(header: str, chrom: dict[str, str]) -> str:
     if strand == "-":
         seq = _reverse_complement(seq)
     return seq.upper()
+
+
+def _isolate_and_symbol(token: str, sys_name: str) -> tuple[str, str]:
+    """Split a Peter gene-FASTA header token into ``(isolate_code, gene_symbol)``.
+
+    A token is ``<isolate>_<systematic_name>_<symbol>`` and the isolate code appears
+    VERBATIM, in either of two forms: ``AEE_YAL001C_TFC3`` and
+    ``SACE_YAU_YAL001C_TFC3``. ``SACE_YAU`` is that isolate's own code, NOT a species
+    prefix on ``YAU``: 93 of the 1011 codes indexing
+    ``genesMatrix_PresenceAbsence.tab.gz`` carry it (``SACE_GAL`` ... ``SACE_YDO``), and
+    so do 78 of the 943 Caudal ``Strain`` codes we build. Stripping the prefix (the fix
+    proposed in issue 73) leaves those 78 isolates unmatchable and silently discards
+    469,170 of the 5,672,145 gene records, so the prefix is KEPT. Verified by an
+    exhaustive scan of all 6015 gene files / 6,081,165 headers.
+
+    Raises on a token that does not carry ``_<sys_name>_`` or that names an empty
+    isolate; no header is ever skipped silently (zero such headers exist in the pinned
+    tarball).
+    """
+    split_key = f"_{sys_name}_"
+    if split_key not in token:
+        raise ValueError(f"header token {token!r} carries no {split_key!r} gene key")
+    iso, symbol = token.split(split_key, 1)
+    if not iso:
+        raise ValueError(f"header token {token!r} names an empty isolate")
+    return iso, symbol
+
+
+def _assert_all_isolates_seen(matched: set[str], seen: set[str]) -> None:
+    """Fail loudly when a built isolate never appeared in a Peter gene-FASTA header.
+
+    An isolate absent from every header would be assembled with zero sequence variants
+    and so reconstruct as a perfect S288C match, which is the maximally misleading
+    failure: the strain and its phenotype are present, its genotype is silently empty.
+    """
+    missing = sorted(matched - seen)
+    if missing:
+        raise ValueError(
+            f"{len(missing)} of {len(matched)} matched isolates never appeared in a "
+            f"Peter gene-FASTA header, so their genotype would be silently empty: "
+            f"{missing}"
+        )
 
 
 def _demangle_orf(col: str) -> str:
@@ -446,6 +490,10 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         Returns ``strain_id -> [(systematic_gene_name, symbol, header_token), ...]``. The
         result is cached to ``preprocess/sequence_variants.parquet`` so re-assembly need not
         re-diff the ~6015-gene x 1011-isolate store.
+
+        Headers naming a Peter isolate outside ``matched`` (68 isolates Caudal did not
+        sequence) are the only skipped records, and ``_assert_all_isolates_seen`` proves
+        no isolate we DO build was skipped along with them.
         """
         cache = osp.join(self.preprocess_dir, "sequence_variants.parquet")
         if osp.exists(cache):
@@ -464,6 +512,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         sys_col: list[str] = []
         sym_col: list[str] = []
         tok_col: list[str] = []
+        seen_isolates: set[str] = set()
         with tarfile.open(tar_path, "r:gz") as tf:
             for member in tqdm(tf, desc="diffing reference genes"):
                 if not member.isfile():
@@ -476,19 +525,20 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
                 if not records:
                     continue
                 ref = _reference_slice(records[0][0], chrom)
-                split_key = f"_{sys_name}_"
                 for header, seq in records:
                     token = header.split()[0].split("\t")[0]
-                    if split_key not in token:
-                        continue
-                    iso, symbol = token.split(split_key, 1)
+                    iso, symbol = _isolate_and_symbol(token, sys_name)
                     if iso not in matched:
                         continue
+                    seen_isolates.add(iso)
                     if seq.upper() != ref:
                         strain_col.append(iso)
                         sys_col.append(sys_name)
                         sym_col.append(symbol)
                         tok_col.append(token)
+        # Every built isolate must have been read from a header; a missing one would be
+        # assembled with an empty genotype rather than failing.
+        _assert_all_isolates_seen(matched, seen_isolates)
         vdf = pd.DataFrame(
             {
                 "strain_id": strain_col,

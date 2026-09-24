@@ -212,4 +212,51 @@ width 12 against the old-graph control, and none of the four wide cells beats th
 width-12 store on the same graph (0.121, top-50 4.93). Width costs seven hours a cell
 and buys nothing the width-12 store does not have.
 
+Round 134 is read (job 2788, 3 h 42 min): the cached solve head, a hidden layer of 256
+over the store vector in place of the zero-initialized affine, on the deletion-only
+graph. It reads 0.070 (sd 0.049) against the affine-free control's 0.058 ($+0.012$
+paired, sd 0.074, above on three of six) and against the store affine's 0.121
+($-0.051$, sd 0.061, one of six), top-50 3.89 against 3.39 and 4.93, and ensembled over
+six seeds 0.095 with a top-50 of 5.39 against 0.082 and 0.131. Two seeds never leave the
+constant predictor: their validation Pearson peaks at $-0.024$ and 0.003 over the 200
+epochs, they are selected at epoch 2 and read 0.038 and 0.005. The four that escape are
+selected at epochs 43 to 94 with validation Pearson 0.18 to 0.26 and read 0.043 to
+0.136, at the affine's level on two seeds and under it on two. So the head that
+recovered the affine's loss on the amino acids (the sibling document, round 137) loses
+the affine's gain here and brings back the plateau the deletion-only graph had removed:
+a zero-initialized affine contributes 0 until it learns and cannot hold the backbone
+down, and a randomly initialized perceptron over 8,355 columns can. The linear read of
+the store is the one that travels.
+
+Round 135 is read (job 2792, 3 h 37 min): the linear minimization-of-metabolic-adjustment
+store, the nearest feasible flux to the parent's parsimonious flux under each knockout,
+in the affine slot on the deletion-only graph. It reads 0.107 (sd 0.018) against the
+affine-free control's 0.058 ($+0.049$ paired, sd 0.064, above on five of six) and
+against the parsimonious store's 0.121 ($-0.014$, sd 0.029, one of six), with a top-50
+enrichment of 4.99 against 3.39 and 4.93, the highest single-seed call of any arm, and
+ensembled over six seeds 0.115 with a top-50 of 5.79 against 0.082 and 0.131. Five
+seeds are selected off the plateau at epochs 30 to 59 with validation Pearson 0.22 to
+0.26; the sixth is selected on it at epoch 3 and still reads 0.098, the affine's read of
+the store alone, as in round 117. So a store anchored to one wild-type vector, which
+Section~\ref{sec:physics} measures as almost free of the vertex degeneracy (18 no-effect
+rows differ from the wild type's against the parsimonious store's 1,025), reads the
+parsimonious store's rank to within the seed spread with half its spread and a better
+call. The adjustment program is a second physically stated store that carries the
+target in the transformer; whether the degeneracy itself costs rank is round 139, the
+parsimonious store on one solver path.
+
+Round 133 is read (job 2789, 3 h 45 min): the parsimonious vector with the six
+rule-count columns beside it, the essentiality study's best single store, in the affine
+slot on the deletion-only graph. It reads 0.114 (sd 0.019) against the affine-free
+control's 0.058 ($+0.056$ paired, sd 0.056, above on five of six) and against the plain
+store's 0.121 ($-0.007$, sd 0.023, one of six), top-50 3.96 against 3.39 and 4.93, and
+ensembled over six seeds 0.137 with a top-50 of 4.79 against 0.082 and 0.131, the
+highest six-seed rank of any width-12 arm. Five seeds are selected off the plateau at
+epochs 47 to 91 with validation Pearson 0.18 to 0.27; the sixth sits on it to epoch 183
+and reads 0.118, the store's rank without the backbone. So the six columns that lifted
+the essentiality score keep the store's rank here, cost its single-seed call a point of
+enrichment, and add to the seed ensemble what they take from the single seed. On the
+amino acids the same columns read below both controls (the sibling document, round
+136).
+
 \input{tables/target_transfer}

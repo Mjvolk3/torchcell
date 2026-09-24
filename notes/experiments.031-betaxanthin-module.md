@@ -131,3 +131,35 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | status |
 |---|---|---|---|---|
 | B20 | 147 | w164 | driving-force polytope, mean over draws | pending (2801) |
+
+## 2026.09.24 - Round B11 read (jobs 2784 and 2785, 7 h 18 min and 7 h 08 min)
+
+- B11 (w149, width 90 on the deletion-only graph, no store): 0.092 (sd 0.043) vs the old-graph wide control (B4, w139) 0.109 (-0.017, sd 0.080, 2/6); top-50 4.49 vs 4.73; ensemble 0.122 / 5.19 vs 0.134 / 5.59. Every seed off the plateau (val Pearson 0.22 to 0.29, epochs 19 to 56); validation loss rises 0.08 to 0.17 by epoch 199, the largest of any arm. Paired on the square's second diagonal, B8 (w145, the store on this graph at width 90) reads +0.028 (sd 0.037, 4/6) against B11, with top-50 4.43 vs 4.49: the store adds the same 0.03 at width 90 as at width 12, and no wide cell beats the width-12 store (0.121 / 4.93). Written into the 031 document as round 132 (202 checks; version 3).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B11 | 132 | w149 | width 90, deletion-only graph, no store | 0.092 (sd 0.043); ens 0.122 / 5.19 |
+
+## 2026.09.24 - Round B13 read (job 2788, 3 h 42 min)
+
+- B13 (w153, the cached solve head, hidden 256, over the store instead of the affine): 0.070 (sd 0.049) vs the deletion-only control 0.058 (+0.012, sd 0.074, 3/6) and vs the store affine 0.121 (-0.051, sd 0.061, 1/6); top-50 3.89; ensemble 0.095 / 5.39. Seeds 2700 and 2704 never leave the constant predictor (validation Pearson peaks -0.024 and 0.003; selected at epoch 2; 0.038 and 0.005); the four that escape read 0.043 to 0.136. The head that recovered the affine's loss on the amino acids (A8) loses the affine's gain here and brings the plateau back: a zero-init affine cannot hold the backbone down, a random perceptron over 8,355 columns can. Written into the 031 document as round 134.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B13 | 134 | w153 | del + solve head 256 | 0.070 (sd 0.049); ens 0.095 / 5.39 |
+
+## 2026.09.24 - Round B14 read (job 2792, 3 h 37 min)
+
+- B14 (w154, the linear MOMA store in the affine slot): 0.107 (sd 0.018) vs the deletion-only control 0.058 (+0.049, sd 0.064, 5/6) and vs the parsimonious (GLPK) store 0.121 (-0.014, sd 0.029, 1/6); top-50 4.99 (the highest single-seed call of any arm) vs 3.39 and 4.93; ensemble 0.115 / 5.79. Five seeds off the plateau (epochs 30 to 59); seed 2704 on it at epoch 3 still reads 0.098. A store anchored to one wild-type vector (18 no-effect rows differ vs 1,025) reads the parsimonious store's rank within the seed spread with half the spread and a better call. Written into the 031 document as round 135.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B14 | 135 | w154 | del + linear MOMA store | 0.107 (sd 0.018); ens 0.115 / 5.79 |
+
+## 2026.09.24 - Round B12 read (job 2789, 3 h 45 min)
+
+- B12 (w152, the vector with the six rule-count columns, the essentiality best single store): 0.114 (sd 0.019) vs the deletion-only control 0.058 (+0.056, sd 0.056, 5/6) and vs the plain store 0.121 (-0.007, sd 0.023, 1/6); top-50 3.96 vs 3.39 and 4.93; ensemble 0.137 / 4.79, the highest six-seed rank of any width-12 arm. Five seeds off the plateau (epochs 47 to 91); seed 2704 on it to epoch 183 reads 0.118. The columns keep the rank, cost the single-seed call, add to the ensemble. Written into the 031 document as round 133.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B12 | 133 | w152 | del + vector with rule counts | 0.114 (sd 0.019); ens 0.137 / 4.79 |

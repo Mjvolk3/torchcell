@@ -179,3 +179,126 @@ Outcome: **4647 -> 4719 usable ORFs**; unresolved drops fell 85 -> 11 (only the 
 the malformed `YLR287-A`, genuinely AMBIGUOUS common names FEN1/PPA1, and a few retired
 dubious ORFs). Removed the local `_SYSTEMATIC_RE` regex path. The heterologous Btx-cassette
 (CYP76AD1/DOD + ARO4/ARO7 variants) is unaffected (separate fixed constant).
+
+## 2026.09.23 - Issue 195 resolution
+
+Issue [#195](https://github.com/Mjvolk3/torchcell/issues/195) reported that the dev build
+was missing nine genes (RIP1, PRS3, SDH1, APT1, TSL1, PFK2, NRK1, MSF1, ANT1) because the
+LMDB predated the resolver landing in `567fa6aa` (2026-07-15 14:40). That symptom is gone,
+and a second defect was found in its place.
+
+### The nine genes were already present
+
+The dev LMDB at `$DATA_ROOT/data/torchcell/betaxanthin_cachera2023/processed/lmdb` was
+rebuilt 2026-09-14 02:27, owned by `michaelvolk` (`processed/pre_filter.pt` link count 1,
+not the uid-7474 hardlink the issue observed), and holds 4,719 records. All nine genes are
+present by systematic name: YEL024W, YHL011C, YKL148C, YML022W, YML100W, YMR205C, YNL129W,
+YPR047W, YPR128C. A resolution census over the raw file with the current code reproduces
+the count exactly, so the build was current: 4,788 raw rows, minus 28 control/NaN rows,
+minus 11 unresolvable names (AMBIGUOUS FEN1/PPA1 plus 9 retired, including the `WT` control
+and the malformed `YLR287-A`), minus 30 ORF collisions, leaves 4,719.
+
+### The real defect: the varying deletion stored the ORF id twice
+
+Every `kanmx_deletion` in the old build had `perturbed_gene_name == systematic_gene_name`
+(4,719 of 4,719), while the fixed cassette carried standard names (`YBR249C` / `ARO4`). The
+source column `gene` in `raw/GA1_2_4_6.csv` is common-named for most rows, and the loader
+resolved it to an ORF and then discarded the name, so a record could not say what the paper
+reported. Peer metabolite-screen loaders over the YKO collection do not do this: Lopez
+stores `std_map.get(orf, orf)` (`lopez2024.py:279`), Xue stores the source common name
+(`xue2025.py:322`), and the SGD essentiality loader stores `TFC3` for `YAL001C`.
+
+Storing the systematic id in both fields is legal where a source supplies no common name
+(Mulleder, Ozaydin, Sameith, Hillenmeyer, Yeastphenome all do it, and the L1
+`canonical_gene_names` round-trip check in `torchcell/verification/common.py:507-622` passes
+on it because an ORF id resolves back to itself). It is wrong here because the source DID
+supply a name.
+
+The name now comes from the GENOME, not from the source column, via
+`smith2006.canonical_common_names` (the helper Smith 2006, Smith 2016, Mormino and Lian
+already share). Its docstring is the convention: one spelling per gene, taken from the
+genome so the spelling is identical across datasets, and only a standard name that resolves
+BACK to the gene is used. Measured over the 4,719 retained rows:
+
+| quantity | count |
+|---|---|
+| records whose `perturbed_gene_name` is now a common name | 3,930 |
+| ORFs with no round-tripping standard name, id kept in both fields | 789 |
+| rows whose 2023-era source spelling the genome has since superseded | 408 |
+
+The 408 are the reason for preferring the genome: ACN9 is now SDH7 (YDR511W), AIM1 is now
+BOL3 (YAL046C), ADE5,7 is now ADE57 (YGL234W). Every `(systematic_gene_name,
+perturbed_gene_name)` pair stays unique, so the L1 ORF-uniqueness check cannot collapse the
+way it did for Costanzo 2021 (`costanzo2021.py:709-716`); the loader already dedups by ORF
+before writing, which is what guarantees it.
+
+### Rebuild and verification
+
+`processed/` and `preprocess/` were moved to
+`/scratch/projects/torchcell-deprecated/2026.09.23/betaxanthin_cachera2023-{processed,preprocess}-pre-issue195`
+and rebuilt with `python -m torchcell.database.build_dataset_lmdb --dataset
+BetaxanthinCachera2023Dataset`: 4,719 records, gene_set 4,721, 1 reference, in 3 s. The
+metabolite verifier (`torchcell.verification.runners.run_metabolite`) passes all eight L0-L4
+checks on the new build, including L1 genotype uniqueness at 4,719 unique strains and L4
+gene containment 0.990 against Ohya 2005; the report is at
+`$DATA_ROOT/data/torchcell/betaxanthin_cachera2023/preprocess/verification_report.json`.
+
+`test_cachera2023.py` had been asserting 4,735 records and was failing before any change in
+this work, a stale expectation from before `567fa6aa`. It now asserts 4,719 and a second
+test pins the naming convention.
+
+### Admission: BLOCKED, so this waits for the next full KG build
+
+`perturbed_gene_name` is hashed into the experiment, genotype and perturbation node ids
+(`cell_adapter.py:527-528,540-542,595-598`), so changing it changes the content id of every
+record that carries a common name. The check says so verbatim:
+
+```
+Admission check: BetaxanthinCachera2023Dataset  ->  BLOCKED
+  served: yes; superset proof from bolt://localhost:7687: 4719 served ids, 4719 in the
+  dev LMDB, 3930 served ids missing from it, 3930 to add
+  [BLOCK] BetaxanthinCachera2023Dataset is already in the served store and its dev LMDB
+  no longer produces 3930 of the 4719 served experiment ids (full rebuild required:
+  incremental import would leave those nodes beside their replacements).
+```
+
+The served store holds 4,719 Cachera experiments, the same count the pre-change dev build
+produced, so the served graph was not missing the nine genes either. The 789 records whose
+two fields legitimately coincide are unchanged and account for the overlap. This keeps the
+issue's `before-next-kg-build` label: the change is correct in the dev tree now and reaches
+the graph on the next full rebuild, never by increment.
+
+### Other pre-resolver builds: none
+
+`python -m torchcell.provenance.build_manifest --data-root /scratch/projects/torchcell-scratch`
+reports 77 built datasets, 51 fresh, 7 stale, 19 unmanifested. Sixteen loaders call
+`resolve_gene_name`, and every one of their live dev builds is dated 2026-09-12 or later, so
+no other dataset carries the gap this issue describes. The 7 stale are the four Costanzo
+subsamples (`dmf|dmi_costanzo2016_{1e5,5e5}`, 2026-07-16) plus `env_chemgen_auesukaree2009`
+and `env_chemgen_vanacloig2022`, and they are stale on the SCHEMA contract, not on the
+resolver. Note the limit of that tool: it fingerprints the schema closure, so a build that
+predates a RESOLVER change reads `fresh`. Build date against `567fa6aa` is the check for
+that, and it is what was used here.
+
+### Related item: the relative `genome_root` / `go_root` defaults
+
+Half of the issue's footgun is already fixed. `SCerevisiaeGenome.__attrs_post_init__` now
+resolves all four release files through the genomes-tier registry
+(`resolve(self.ASSEMBLY_SET, ...)`, `s288c.py:504-523`), and the download path was deleted,
+so a bare constructor no longer re-downloads a genome tree. See
+[[plan.genomes-tier.2026.09.14]] decision 4.
+
+What remains is real but is NOT a small safe fix, so it was left alone. `go_root` still
+defaults to the relative `"data/go"` (`s288c.py:470`) and `s288c.py:556-561` downloads
+`go.obo` into it with `download_url`, unpinned, which currently 403s; `genome_root` still
+defaults to the relative `"data/sgd/genome"` (`s288c.py:469`) and `data.db` is still written
+under it. Anchoring either default to `DATA_ROOT` would redirect every bare constructor (18
+of them, all in `__main__` demo blocks such as `torchcell/datasets/go.py:166` and
+`torchcell/graph/sgd.py:299`) onto the SHARED genome cache, and because `overwrite` defaults
+to `True` (`s288c.py:471`) such a constructor calls `gffutils.create_db(force=True)` on the
+shared `data.db` that live training jobs hold open. That is the rebuild race recorded in
+[[plan.genomes-tier.2026.09.14]] gotcha 3, and the plan's decision 6 defers the `overwrite`
+default to its own PR at 67 call sites. The honest order is therefore: flip `overwrite` to
+default `False` with a DDP-safe build-when-absent path first, then anchor these two defaults
+in the same PR. The `go.obo` download deserves the same treatment the release files got, a
+sha256-pinned tier entry with no download path, rather than an anchored relative path.

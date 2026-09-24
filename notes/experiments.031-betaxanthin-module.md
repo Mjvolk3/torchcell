@@ -221,3 +221,29 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B18 | 144 | w161 | del + store, width 6 | 0.113 (sd 0.038); ens 0.129 / 5.39 |
+
+## 2026.09.24 - Round B19 read (job 2799, 3 h 34 min)
+
+- B19 (w162, the store arm with transformer dropout 0.3): 0.145 (sd 0.018) vs the store at 0.1 dropout 0.121 (+0.024, sd 0.040, 4/6); top-50 5.03 (best single-seed call); ensemble 0.149 / 5.79 (best width-12 ensemble rank). Five seeds escape at epochs 39 to 81 and read 0.135 to 0.180, the tightest band of any arm; seed 2704 on the plateau reads 0.133. Regularization moves the level where width 6 to 90 did not. Written into the 031 document as round 145 (version 7).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B19 | 145 | w162 | del + store, dropout 0.3 | 0.145 (sd 0.018); ens 0.149 / 5.79 |
+
+## 2026.09.24 - Rounds B26 and B27 queued: the three levers together, and the dropout curve
+
+- B26 (w171, job 2809): the HiGHS store with the affine released on escape and transformer dropout 0.3, the three best single levers on one cell; paired against B25 (w169, the same without dropout) and B19 (w162, the GLPK store at 0.3 without the release). Round 154.
+- B27 (w172, job 2810): the store arm at dropout 0.5; paired against B19 (0.3) and B5 (0.1). Round 155.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| B26 | 154 | w171 | del + HiGHS store, release rule, dropout 0.3 | pending (2809) |
+| B27 | 155 | w172 | del + store, dropout 0.5 | pending (2810) |
+
+## 2026.09.24 - Round B20 read (job 2801, 3 h 39 min)
+
+- B20 (w164, the driving-force polytope mean in the affine slot): 0.125 (sd 0.041) vs the deletion-only control 0.058 (+0.067, sd 0.047, 6/6), vs the GLPK flux store 0.121 (+0.004, sd 0.047, 4/6) and vs the driving-force point 0.118 (+0.008, sd 0.054, 3/6); top-50 3.69; ensemble 0.151 / 5.59, the highest width-12 ensemble rank. Every seed off the plateau (epochs 10 to 76, 0.055 to 0.168). The region's centroid is a third representation at the flux store's level, with more for the ensemble and less for the call; the spread store is unread in the transformer. Written into the 031 document as round 147.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B20 | 147 | w164 | del + driving-force polytope mean | 0.125 (sd 0.041); ens 0.151 / 5.59 |

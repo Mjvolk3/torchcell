@@ -345,4 +345,38 @@ question pointed at, a model too free for 3,494 genotypes, reads as measured. Ro
 154 and 155 (w171, w172) put dropout 0.3 on the HiGHS store under the release rule,
 the three best levers on one cell, and read dropout 0.5 on the store arm.
 
+Round 147 is read (job 2801, 3 h 39 min): the probabilistic metabolite side in the
+affine slot, the mean concentration over six draws of each deletion's driving-force
+polytope (Section~\ref{sec:physics}) with the point store's statistics and the count
+of constrained metabolites, on the deletion-only graph. It reads 0.125 (sd 0.041)
+against the affine-free control's 0.058 ($+0.067$ paired, sd 0.047, above on six of
+six), against the GLPK flux store's 0.121 ($+0.004$, sd 0.047, four of six) and
+against the driving-force point's 0.118 ($+0.008$, sd 0.054, three of six), top-50
+3.69 against 3.39, 4.93 and 4.06, and ensembled over six seeds 0.151 with a top-50 of
+5.59 against 0.082, 0.131 and 0.133, the highest six-seed rank of any width-12 arm.
+Every seed selects off the plateau, at epochs 10 to 76 on validation Pearson 0.15 to
+0.28, and reads 0.055 to 0.168. So the region's mean carries what its point carries
+and what the flux vector carries, on every seed above the control, and averages to the
+best rank a width-12 cell has reached, while its single-seed call is the weakest of the
+three: the second law's region, read as its centroid, is a third representation at the
+flux store's level, with more to give the ensemble than the point and less to give the
+call. The width of the region, the spread store the ladder read at 0.138 by nearest
+neighbors, has not been read in the transformer.
+
+Round 149 is read (job 2804, 3 h 35 min): round 131's release rule on round 135's
+store, the linear adjustment store with the affine frozen until epoch 5 and until the
+trailing validation Pearson reaches 0.15, on the deletion-only graph. It reads 0.106
+(sd 0.034) against the adjustment store with the affine from epoch 0 at 0.107
+($-0.001$ paired, sd 0.038, above on three of six) and against the GLPK store under
+the same rule at 0.110 ($-0.004$, sd 0.063, two of six), top-50 4.53 against 4.99 and
+4.66, and ensembled over six seeds 0.105 with a top-50 of 5.59 against 0.115 and 5.79
+and 0.120 and 6.19. The release came at epochs 5, 5, 22, 30, 9 and 5, and the seeds
+select at 2, 51, 76, 43, 6 and 32, two of them before the release on early validation
+peaks of 0.26 and 0.17, reading 0.117 and 0.058. So the rule that kept the GLPK
+store's level with the best ensemble call (round 131) neither adds to nor takes from
+the adjustment store's level and costs its call a point of enrichment on single seeds
+and on the ensemble: the adjustment store, anchored to one wild-type vector and free of
+the vertex noise, did not need the backbone to escape first, and the release rule's
+gain in round 131 reads as specific to the degenerate store it was measured on.
+
 \input{tables/target_transfer}

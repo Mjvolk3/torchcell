@@ -4,12 +4,15 @@ repos:
     rev: v0.15.20
     hooks:
       # Linter (replaces flake8 + isort + pyupgrade); auto-fixes staged files.
+      # Scope matches the CI gate (.github/workflows/style.yaml): the whole
+      # torchcell/ + tests/ tree, plus experiments numbered >= 016. Experiments
+      # <= 015 stay frozen for reproducibility and are not linted.
       - id: ruff-check
         args: [--fix]
-        files: ^(torchcell|tests/torchcell)/
+        files: ^(torchcell|tests/torchcell|experiments/(01[6-9]|0[2-9][0-9]|[1-9][0-9][0-9])-)
       # Formatter (replaces black).
       - id: ruff-format
-        files: ^(torchcell|tests/torchcell)/
+        files: ^(torchcell|tests/torchcell|experiments/(01[6-9]|0[2-9][0-9]|[1-9][0-9][0-9])-)
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.16.0

@@ -119,3 +119,11 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | round | 028 | pack | arm | status |
 |---|---|---|---|---|
 | A10 | 143 | w160 | sampled-cone mean store | pending (2803) |
+
+## 2026.09.24 - Round A9 read (job 2793, 3 h 40 min)
+
+- A9 (w155, the linear MOMA store in the affine slot): 0.052 (sd 0.006) vs the deletion-only control 0.049 (+0.003, sd 0.011, 4/6) and vs the parsimonious store 0.040 (+0.012, sd 0.008, 5/6); ensemble 0.056 vs 0.062 and 0.043. Seeds select at epochs 86 to 197, none collapsed. The wild-type-anchored store (11 no-effect rows differ vs 324) does not carry the parsimonious store's loss and sits at the control, as the solve head did. Written into the 032 document as round 138.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A9 | 138 | w155 | del + linear MOMA store | 0.052 (sd 0.006); ens 0.056 |

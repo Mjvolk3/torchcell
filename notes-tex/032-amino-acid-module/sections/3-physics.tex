@@ -66,6 +66,24 @@ the wild type's; its mean and spread stores read 0.016, 0.011 and 0.008 and 0.01
 0.009 and 0.001 by ridge, kNN and forest, the floor of the ladder. Round 148 (w165) is
 the transformer read of the polytope mean.
 
+The annotation-only family, on the same split (Table~\ref{tab:go-models};
+\texttt{target\_go\_models.py}, the method in the sibling document): DCell's hierarchy
+with a 19-output head on the root's state, and a perceptron with one hidden layer of
+256 over the propagated GO multi-hot, over the HiGHS store row, over ProtT5 and over
+their concatenations, six seeds at 200 epochs, the epoch selected on validation
+per-feature Pearson. The GO perceptron reads 0.054 (sd 0.002 over seeds), ProtT5 0.054
+(sd 0.008), and the two together 0.065 (sd 0.003), ensembled 0.069, the highest
+single-seed read of anything on this target (the transformer arms 0.033 to 0.053 at
+width 12, the 027 arms 0.049 to 0.062 at width 90); DCell's hierarchy reads 0.035 (sd
+0.015). The store row alone reads 0.019, and appending it lowers every read it joins,
+GO from 0.054 to 0.042 and GO with ProtT5 from 0.065 to 0.045, the same sign the
+transformer's affine gave the parsimonious store (round 126). So on the amino acids the
+flux vector costs a perceptron what it costs the transformer, and annotation with
+sequence sets the level, 0.065 against a strain-level retest of 0.20
+(Section~\ref{sec:concordance}).
+
+\input{tables/go_models}
+
 \input{tables/store_degeneracy}
 
 \input{tables/store_baselines}

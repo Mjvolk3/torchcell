@@ -52,7 +52,64 @@ def polytope(*keys: str):
     return run
 
 
+def go_model(arm: str, key: str):
+    """A value of one arm of the GO-models read (target_go_models.py)."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "go_models_amino_acids.json")))
+        a = next(x for x in d["arms"] if x["arm"] == arm)
+        return float(a[key])
+
+    return run
+
+
 CHECKS: list[Check] = [
+    # sec:physics -- the annotation-only family on the amino acids.
+    Check(claim="go-models: aa GO perceptron", stated=0.054,
+          recompute=go_model("go_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa GO perceptron sd", stated=0.002,
+          recompute=go_model("go_mlp", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa ProtT5 perceptron", stated=0.054,
+          recompute=go_model("prot_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa ProtT5 perceptron sd", stated=0.008,
+          recompute=go_model("prot_mlp", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa GO with ProtT5", stated=0.065,
+          recompute=go_model("go_prot_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa GO with ProtT5 sd", stated=0.003,
+          recompute=go_model("go_prot_mlp", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa GO with ProtT5 ensemble", stated=0.069,
+          recompute=go_model("go_prot_mlp", "ensemble_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa DCell hierarchy", stated=0.035,
+          recompute=go_model("dcell_style_shared", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa DCell hierarchy sd", stated=0.015,
+          recompute=go_model("dcell_style_shared", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa store perceptron", stated=0.019,
+          recompute=go_model("store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa GO with store", stated=0.042,
+          recompute=go_model("go_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: aa all three", stated=0.045,
+          recompute=go_model("go_prot_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    # sec:rounds -- round 138, the linear MOMA store on the amino acids.
+    Check(claim="target-transfer: aa MOMA store arm", stated=0.052,
+          recompute=transfer("amino acids: linear MOMA store on deletion-only graphs against deletion-only graphs", "mean_spearman", "arm"), tolerance=0.0006),
+    Check(claim="target-transfer: aa MOMA store arm sd", stated=0.006,
+          recompute=transfer("amino acids: linear MOMA store on deletion-only graphs against deletion-only graphs", "sd_spearman", "arm"), tolerance=0.0006),
+    Check(claim="target-transfer: aa MOMA store vs control", stated=0.003,
+          recompute=transfer("amino acids: linear MOMA store on deletion-only graphs against deletion-only graphs", "mean_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: aa MOMA store vs control sd", stated=0.011,
+          recompute=transfer("amino acids: linear MOMA store on deletion-only graphs against deletion-only graphs", "sd_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: aa MOMA store vs control seeds above", stated=4,
+          recompute=transfer("amino acids: linear MOMA store on deletion-only graphs against deletion-only graphs", "n_positive"), tolerance=0.5),
+    Check(claim="target-transfer: aa MOMA store vs parsimonious store", stated=0.012,
+          recompute=transfer("amino acids: linear MOMA store on deletion-only graphs against the parsimonious store there", "mean_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: aa MOMA store vs parsimonious store sd", stated=0.008,
+          recompute=transfer("amino acids: linear MOMA store on deletion-only graphs against the parsimonious store there", "sd_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: aa MOMA store vs parsimonious store seeds above", stated=5,
+          recompute=transfer("amino acids: linear MOMA store on deletion-only graphs against the parsimonious store there", "n_positive"), tolerance=0.5),
+    Check(claim="target-transfer: aa MOMA store six-seed ensemble", stated=0.056,
+          recompute=ensemble("w155_aadelmoma_h12l1p1_e200", "spearman"), tolerance=0.0006),
     # sec:physics -- the sampled cone on the prototroph.
     Check(claim="store-baselines: aa sampled cone ridge", stated=-0.004,
           recompute=store_baseline("amino_acids", "sampled_mean", "ridge", "mean_spearman"), tolerance=0.0006),

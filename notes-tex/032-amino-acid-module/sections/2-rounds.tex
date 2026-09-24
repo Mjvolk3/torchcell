@@ -123,4 +123,17 @@ of this study (0.033 to 0.049 for the others) and inside the 027 band (0.049 to 
 The store is not harmful on the amino acids when it is read nonlinearly; it is also not
 helpful, and the ensemble says the same.
 
+Round 138 is read (job 2793, 3 h 40 min): the linear minimization-of-metabolic-adjustment
+store, the nearest feasible flux to the parent's parsimonious flux under each knockout,
+in the affine slot on the deletion-only graph. It reads 0.052 (sd 0.006) against the
+affine-free control's 0.049 ($+0.003$ paired, sd 0.011, above on four of six) and
+against the parsimonious store's 0.040 ($+0.012$, sd 0.008, five of six), ensembled
+over six seeds 0.056 against 0.062 and 0.043. The seeds select at epochs 86 to 197 on
+validation Pearson 0.07 to 0.09, none collapsed. So a store anchored to one wild-type
+vector, which Section~\ref{sec:physics} measures as almost free of the vertex
+degeneracy (11 no-effect rows differ from the wild type's against the parsimonious
+store's 324), does not carry the parsimonious store's loss on this target: the third
+form of the flux vector read here, after the cached solve head (round 137), that
+undoes it, and none rises above the control.
+
 \input{tables/target_transfer}

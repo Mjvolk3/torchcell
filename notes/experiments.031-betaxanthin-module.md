@@ -163,3 +163,37 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B12 | 133 | w152 | del + vector with rule counts | 0.114 (sd 0.019); ens 0.137 / 4.79 |
+
+## 2026.09.24 - Round B21 queued: the release rule on the MOMA store
+
+- B21 (w166, job 2804): B10's schedule (affine frozen until epoch 5 and until the trailing validation Pearson reaches 0.15) on B14's linear MOMA store, deletion-only graph, six seeds; paired against B14 (w154, affine from epoch 0) and B10 (w148, the GLPK store under the same rule). Round 149.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| B21 | 149 | w166 | del + MOMA store, affine on escape | pending (2804) |
+
+## 2026.09.24 - The annotation-only family: GO carries the target
+
+- `experiments/031-betaxanthin-module/scripts/target_go_models.py` (CPU, the ladder's split and selection): DCell's hierarchy (the essentiality shared-input form, a linear head on the root state, auxiliary regressions at 0.3) and a one-hidden-layer perceptron (256) over the propagated GO multi-hot (2,341 columns with train support), the HiGHS store row, ProtT5, and their concatenations; six seeds, 200 epochs, full batch, Adam 1e-3, MSE on standardized targets. MEASURED (`results/go_models_betaxanthin.json`): GO perceptron 0.200 (sd 0.002), top-50 4.79, selected at epoch 21 or 22, three seconds a seed; store row 0.119 / 2.00; ProtT5 0.103 / 4.13; GO + store 0.198 (sd 0.041) / 4.86; GO + ProtT5 0.173 / 4.99 (ensemble 5.39); all three 0.175 / 5.03; DCell hierarchy 0.049 (sd 0.043) / 3.10. GO alone beats every transformer arm (best single 0.121, best ensemble 0.153) and the HiGHS kNN (0.195). Caveat: GO is curated in part from deletion phenotypes (respiratory function among them) and the top hits are respiratory; the split holds out genes, not annotations. A forked two-worker pool deadlocked (torch threads before fork); the runs are in-process, one worker.
+- `target_go_affine_store.py`: the GO multi-hot as affine stores over every annotated gene (6,607 genes, 5,501 annotated), `ess_solve_encodings_YPD_bx_go.npz` (2,362 columns) and `_gopfba.npz` (HiGHS flux vector, wild-type row outside the GEM, plus GO; 6,539 columns). B23 (w167, job 2805): GO alone in the affine slot vs B3 and B5. B24 (w168, job 2806): GO appended to the HiGHS store vs B15 (w156) and B23. Written into the 031 document (`3-physics.tex`, table `go_models`; 256 checks; version 5).
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| B23 | 150 | w167 | del + GO multi-hot affine | pending (2805) |
+| B24 | 151 | w168 | del + HiGHS store with GO appended | pending (2806) |
+
+## 2026.09.24 - Round B15 read (job 2794, 3 h 39 min)
+
+- B15 (w156, the HiGHS parsimonious store in the affine slot): 0.130 (sd 0.034) vs the deletion-only control 0.058 (+0.072, sd 0.067, 5/6) and vs the GLPK store 0.121 (+0.009, sd 0.041, 5/6); top-50 4.46; ensemble 0.148 / 5.79, the highest width-12 ensemble rank (the width-90 store 0.153). Seed 2704 on the plateau (epoch 2) reads 0.160, the highest single cell of any arm: the affine's linear read of the clean vector alone (the GLPK store's plateau cells 0.12 to 0.13). The vertex noise costs about 0.01 on five seeds and 0.02 on the ensemble; one solver path is the right build. Written into the 031 document as round 139.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B15 | 139 | w156 | del + HiGHS parsimonious store | 0.130 (sd 0.034); ens 0.148 / 5.79 |
+
+## 2026.09.24 - Round B25 queued: the release rule on the HiGHS store
+
+- B25 (w169, job 2807): B10's release rule on B15's HiGHS parsimonious store; paired against B15 (w156) and B10 (w148). Round 152.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| B25 | 152 | w169 | del + HiGHS store, affine on escape | pending (2807) |

@@ -259,4 +259,40 @@ enrichment, and add to the seed ensemble what they take from the single seed. On
 amino acids the same columns read below both controls (the sibling document, round
 136).
 
+Round 139 is read (job 2794, 3 h 39 min): the parsimonious store rebuilt on the HiGHS
+two-stage path the essentiality stores use, the vector without the GLPK build's vertex
+noise (Section~\ref{sec:physics}: 428 no-effect rows differ from the wild type's
+against 1,025), in the affine slot on the deletion-only graph. It reads 0.130 (sd
+0.034) against the affine-free control's 0.058 ($+0.072$ paired, sd 0.067, above on
+five of six) and against the GLPK store's 0.121 ($+0.009$, sd 0.041, five of six),
+top-50 4.46 against 3.39 and 4.93, and ensembled over six seeds 0.148 with a top-50 of
+5.79 against 0.082 and 0.131, the highest six-seed rank of any width-12 arm and within
+0.005 of the width-90 store's 0.153. Five seeds select off the plateau at epochs 30 to
+94 with validation Pearson 0.21 to 0.26 and read 0.076 to 0.149; the sixth is selected
+on it at epoch 2 with validation Pearson 0.02 and reads 0.160, the highest single cell
+of any arm, the affine's linear read of the clean vector with nothing from the backbone
+(the GLPK store's plateau cells read 0.12 to 0.13). So the vertex noise costs the
+store about 0.01 of rank on five seeds of six and 0.02 on the ensemble, the clean
+vector read alone carries more than the GLPK vector read alone, and the hypothesis of
+Section~\ref{sec:physics} reads as measured in that direction and small: one solver
+path is the right build, and it is not what separates the store from the width-90
+ensemble.
+
+Round 140 is read (job 2795, 3 h 35 min): the metabolite side in the affine slot, the
+max-min driving-force concentrations of Section~\ref{sec:physics} (2,831 metabolites
+in mM with the driving force, the count of constrained reactions and the count binding,
+under the 100 kJ/mol cap), on the deletion-only graph. It reads 0.118 (sd 0.055) against
+the affine-free control's 0.058 ($+0.059$ paired, sd 0.055, above on five of six) and
+against the GLPK flux store's 0.121 ($-0.003$, sd 0.037, two of six), top-50 4.06
+against 3.39 and 4.93, and ensembled over six seeds 0.133 with a top-50 of 4.99 against
+0.082 and 0.131. The seeds spread more than the flux store's: two read 0.167, selected
+at epochs 23 and 6 (the second on validation Pearson 0.13, before the backbone has
+escaped), and two read 0.058 and 0.040, selected at 106 and 50 after the validation
+loss had risen. So the concentration vector, a different physical quantity from the
+flux vector and derived from it by a program that adds the second law, carries the same
+rank in the transformer as the flux vector it is built on, with twice the spread and a
+weaker call; the ladder read it the same way (0.152 by ridge against the HiGHS store's
+0.195 by nearest neighbors). What the second law adds on this target is a second
+representation at the flux store's level, not a higher one.
+
 \input{tables/target_transfer}

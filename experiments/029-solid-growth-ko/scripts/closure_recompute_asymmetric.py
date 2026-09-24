@@ -135,7 +135,11 @@ def _chosen(entries: pd.DataFrame, policy: LabelPolicy, label: str) -> pd.Series
                 p_value=None if pd.isna(p) else float(p),
             )
             for src, v, sd, n, p in zip(
-                group["source"], group["value"], group["sd"], group["n_samples"], group["p"]
+                group["source"],
+                group["value"],
+                group["sd"],
+                group["n_samples"],
+                group["p"],
             )
         ]
         choice = policy.select(pool, label)
@@ -215,12 +219,12 @@ def main() -> None:
         f_j = f_single.reindex(stored["qj"]).to_numpy()
         f_ik = f_double.reindex(ik).to_numpy()
         f_jk = f_double.reindex(jk).to_numpy()
-        tau_sym = (
-            f_ijk - f_ij * f_k - f_ik * f_j - f_jk * f_i + 2.0 * f_i * f_j * f_k
-        )
+        tau_sym = f_ijk - f_ij * f_k - f_ik * f_j - f_jk * f_i + 2.0 * f_i * f_j * f_k
 
         y = stored["value"].to_numpy()
-        rows.append({"screen": screen, "form": "asymmetric (published)", **_stats(y, tau_asym)})
+        rows.append(
+            {"screen": screen, "form": "asymmetric (published)", **_stats(y, tau_asym)}
+        )
         rows.append({"screen": screen, "form": "symmetric", **_stats(y, tau_sym)})
         rows.append(
             {

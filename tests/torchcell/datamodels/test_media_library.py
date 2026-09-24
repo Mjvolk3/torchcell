@@ -16,6 +16,8 @@ Pure and offline: the pinned compound table plus the live pydantic models, no LM
 
 from __future__ import annotations
 
+import os
+import os.path as osp
 from typing import Any
 
 import pytest
@@ -23,12 +25,16 @@ import pytest
 from torchcell.datamodels import ontology_checks as oc
 from torchcell.datamodels.identity import media_identity
 from torchcell.datamodels.media import (
+    CARBON_FREE_MEDIA,
     HILLENMEYER_DROPOUT_MEDIA,
     MEDIA_LIBRARY,
     SC,
     SC_URA,
     SD_MSG,
     SGA_DM_SELECTION,
+    SM,
+    SM_AGAR,
+    SM_DEFERRED,
     YPD,
     YPD_AGAR,
     YPD_LIQUID,
@@ -49,6 +55,7 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.verification.common import shared_rule_results
+from torchcell.verification.sourced import audit_sourced_value
 
 L3_MEDIA_RULES = ("media_membership", "media_compound_identity")
 
@@ -175,6 +182,92 @@ def test_ypd_agar_adds_only_the_gelling_agent() -> None:
     extra = [c for c in YPD_AGAR.components if c not in YPD.components]
     assert [c.compound.name for c in extra] == ["agar"]
     assert extra[0].role is MediaComponentRole.gelling_agent
+
+
+# --- the SM family ----------------------------------------------------------- #
+def test_the_sm_media_are_composed_and_sourced() -> None:
+    """The three SM objects replace a stub that carried no composition at all.
+
+    Before this, Mulleder, Zelezniak and Messner all emitted
+    ``Media(name="SM", state=..., is_synthetic=True)``: no components, no provenance,
+    joinable only on the four-character string.
+    """
+    for media in (SM, SM_AGAR, SM_DEFERRED):
+        assert media.components, media.name
+        assert media.provenance, media.name
+        assert media.is_synthetic
+        assert media.base_medium in MEDIA_LIBRARY
+
+
+def test_sm_agar_adds_only_the_gelling_agent() -> None:
+    """The plate is the liquid recipe plus agar, which is why they share a base."""
+    extra = [c for c in SM_AGAR.components if c not in SM.components]
+    assert [c.compound.name for c in extra] == ["agar"]
+    assert extra[0].role is MediaComponentRole.gelling_agent
+    assert (SM.state, SM_AGAR.state) == ("liquid", "solid")
+    assert SM.base_medium == SM_AGAR.base_medium == "SM"
+
+
+def test_sm_names_its_carbon_and_nitrogen_sources() -> None:
+    """A minimal medium that resolves neither would reach FBA describing nothing."""
+    roles = {c.role: c.compound.name for c in SM.components}
+    assert roles[MediaComponentRole.carbon_source] == "D-glucose"
+    assert roles[MediaComponentRole.nitrogen_source] == "ammonium sulfate"
+
+
+def test_sm_ammonium_sulfate_is_an_identity_without_an_amount() -> None:
+    """Its mass is already inside the 6.7 g/L YNB line, so no number is recorded.
+
+    The identity is sourced (the paper's nitrogen-starvation medium is a DIFFERENT,
+    ammonium-sulfate-free product), the amount is not, and ``open_gaps`` says so
+    rather than a plausible 5 g/L being written in.
+    """
+    nitrogen = next(
+        c for c in SM.components if c.role is MediaComponentRole.nitrogen_source
+    )
+    assert nitrogen.concentration is None
+    assert nitrogen.definition is ComponentDefinition.defined
+    assert nitrogen.provenance
+    assert "ammonium sulfate" in SM.open_gaps
+
+
+def test_zelezniak_sm_is_a_distinct_node_with_a_deferred_composition() -> None:
+    """Two papers' different SM recipes must not collapse onto one node.
+
+    Zelezniak 2018 states no recipe, so its medium keeps the grams OUT rather than
+    borrowing Mulleder's, and it is a documented carbon-free medium for that reason.
+    """
+    assert media_identity(SM_DEFERRED) != media_identity(SM)
+    assert media_identity(SM_DEFERRED) != media_identity(SM_AGAR)
+    only = SM_DEFERRED.components[0]
+    assert len(SM_DEFERRED.components) == 1
+    assert only.definition is ComponentDefinition.composition_deferred
+    assert only.defers_to == ["mullederPrototrophicDeletionMutant2012"]
+    assert "SM_DEFERRED" in CARBON_FREE_MEDIA
+
+
+def _library_root() -> str | None:
+    data_root = os.environ.get("DATA_ROOT")
+    if data_root is None:
+        return None
+    root = osp.join(data_root, "torchcell-library")
+    return root if osp.isdir(root) else None
+
+
+def test_sm_quotes_are_verbatim_in_the_mirrored_papers() -> None:
+    """Every SM number is a quote that is still a substring of the pinned bytes."""
+    root = _library_root()
+    if root is None:
+        pytest.skip("torchcell-library mirror not mounted")
+    for media in (SM, SM_AGAR, SM_DEFERRED):
+        sourced = [
+            *media.provenance,
+            *(sv for c in media.components for sv in c.provenance),
+        ]
+        assert sourced, media.name
+        for value in sourced:
+            result = audit_sourced_value(value, root)
+            assert result.passed, f"{media.name}: {result.message}"
 
 
 # --- dropouts ---------------------------------------------------------------- #

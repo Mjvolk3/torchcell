@@ -58,13 +58,13 @@ import pandas as pd
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.media import SM_DEFERRED
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
@@ -246,11 +246,11 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
                 )
             ]
         )
-        # SWATH-MS on cells in synthetic minimal (SM) liquid medium, 30 C.
-        environment = Environment(
-            media=Media(name="SM", state="liquid", is_synthetic=True),
-            temperature=Temperature(value=30),
-        )
+        # SWATH-MS on cells in synthetic minimal (SM) liquid medium, 30 C. The
+        # paper states NO recipe for that medium and sources both the strains and the
+        # cultivation to Mulleder 2012, which is not mirrored, so ``SM_DEFERRED`` carries
+        # the deferral rather than borrowing the Mulleder 2016 / Messner 2023 grams.
+        environment = Environment(media=SM_DEFERRED, temperature=Temperature(value=30))
         agg = row["agg"]
         phenotype = ProteinAbundancePhenotype(
             protein_abundance=agg["abundance"],
@@ -503,11 +503,9 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
                 )
             ]
         )
-        # SRM-MS/MS on cells in synthetic minimal (SM) liquid medium, 30 C (as proteome).
-        environment = Environment(
-            media=Media(name="SM", state="liquid", is_synthetic=True),
-            temperature=Temperature(value=30),
-        )
+        # SRM-MS/MS on cells in synthetic minimal (SM) liquid medium, 30 C (as proteome);
+        # same unstated recipe, deferred to Mulleder 2012 on ``SM_DEFERRED``.
+        environment = Environment(media=SM_DEFERRED, temperature=Temperature(value=30))
         phenotype = self._phenotype(row["agg"])
         # Reference = the measured WT baseline RESTRICTED to the metabolites this strain
         # measured. Targeted-metabolomics coverage is sparse and per-strain (WT itself

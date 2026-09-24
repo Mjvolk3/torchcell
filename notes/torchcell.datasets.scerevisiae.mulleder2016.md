@@ -121,3 +121,12 @@ composite peaks (`leucine+isoleucine+citrulline`, `glutamine+valine`, `methionin
 candidate, the author decides), its two lysine peaks need a peak rule, and its
 `lysine_related_peak1`, `gshbiotin`, `n_acetylornithine`, `ornithine` have no partner here.
 Compare by rank or by log ratio to each dataset's own center, never by value.
+
+## 2026.09.23 - SM media components (issue 143)
+
+- Loader now emits `SM_AGAR` (6.7 g/L YNB without amino acids, 2% glucose, 2% agar, sourced
+  from this paper's STAR Methods with a verbatim quote + `paper.md` sha256) instead of the
+  bare `Media(name="SM", state="solid", is_synthetic=True)` stub. Formulation table, the
+  ammonium sulfate gap, and the open question about whether this record's state should be
+  liquid (the amino acids are extracted from the liquid SM subculture the agar spots
+  inoculate) are in [[torchcell.datamodels.media-components]]. LMDB rebuilt + L0-L4 re-run.

@@ -13,6 +13,8 @@ from torchcell.datamodels.media import (
     CARBON_FREE_MEDIA,
     MEDIA_LIBRARY,
     SGA_TM_SELECTION,
+    SM,
+    SM_AGAR,
 )
 from torchcell.datamodels.schema import ComponentDefinition, MediaComponentRole
 from torchcell.metabolism.media import (
@@ -236,6 +238,24 @@ def test_every_library_medium_resolves_or_says_why_not(
             for b in bounds.bounds.values()
         }
         assert carbon & opened, f"{key}: no carbon source reached an exchange"
+
+
+def test_the_ontology_sm_reaches_glucose_and_ammonium(
+    model: cobra.Model, index: ExchangeIndex
+) -> None:
+    """The sourced SM opens the two exchanges a minimal medium exists to supply.
+
+    ``SM_FBA`` in this module already did, but it is a modeling object with the mineral
+    base bolted on; this asserts the BENCH object the loaders now emit resolves too, so
+    the ontology is not handing FBA a medium nothing can grow in.
+    """
+    for media in (SM, SM_AGAR):
+        bounds = media_to_bounds(media, model, index=index)
+        opened = {b.metabolite_name for b in bounds.bounds.values()}
+        assert {"D-glucose", "ammonium"} <= opened, media.name
+        assert bounds.unresolved_names == ["yeast nitrogen base (w/o amino acids)"], (
+            media.name
+        )
 
 
 def test_smith_phosphate_buffer_dissociates(

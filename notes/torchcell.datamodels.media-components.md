@@ -114,3 +114,82 @@ class is adapter-ready without importing cobra.
 - **Cobra/AMICI adapter** module (separate) to consume these media.
 - The `Media` schema relocated below `Compound`/`Concentration` in `schema.py` (its
   component form depends on them); only consumer is `Environment`.
+
+## 2026.09.23 - SM media formulations (issue 143)
+
+`SM` was a stub in four loader sites: `Media(name="SM", state=..., is_synthetic=True)` with
+zero components, zero dropouts, no `base_medium` and no provenance, so two papers' different
+synthetic minimal recipes were joinable only on the two-character string. Issue 143. Three
+named constants now live in `torchcell/datamodels/media.py` and the four sites import them.
+
+### The three formulations
+
+| Dataset | Constant | Base | Carbon | Nitrogen | Supplements | State | Source quote location |
+|---|---|---|---|---|---|---|---|
+| Mulleder 2016 amino-acid metabolome | `SM_AGAR` | `SM` (YNB w/o amino acids, 6.7 g/L, Sigma Y0626) | D-glucose 2% w/v | ammonium sulfate, inside the 6.7 g/L YNB line, amount not printed | none; 2% agar as gelling agent | solid | `mullederFunctionalMetabolomicsDescribes2016/paper.md`, STAR Methods "Yeast", the sentence beginning "The strains were transferred to synthetic minimal (SM) agar medium"; the nitrogen evidence is the SD (-N) sentence in the same section |
+| Messner 2023 genome-wide KO proteome | `SM` | itself (`SM`) | D-glucose 2% w/v | ammonium sulfate, same containment | none, stated: "without amino acid and nucleobase supplementation" | liquid | `messnerProteomicLandscapeGenomewide2023/paper.md`, STAR Methods "Yeast cultivation", the sentence beginning "The thawed stock cultures were spotted with the pinning robot onto SM agar medium", plus the liquid-inoculation sentence that follows |
+| Zelezniak 2018 proteome + metabolome | `SM_DEFERRED` | itself (`SM_DEFERRED`) | inside the deferred line | inside the deferred line | unstated | liquid | `zelezniakMachineLearningPredicts2018/paper.md`, "Strains and Culture": names the medium, states no recipe, defers to Mulleder et al. 2012 |
+
+Every number above is a `SourcedValue` carrying the verbatim OCR quote plus the mirrored
+file's sha256; `paper.md` sha256 is `20412bec...` (Mulleder), `edd0fe28...` (Messner),
+`072bfb2d...` (Zelezniak). The quotes carry the MinerU LaTeX markup verbatim rather than a
+cleaned-up rendering, per the module's existing rule, and
+`test_sm_quotes_are_verbatim_in_the_mirrored_papers` re-audits all of them against the
+mirror through `audit_sourced_value`.
+
+### Why Mulleder and Messner share one recipe and Zelezniak does not
+
+Messner's Methods opens with "The yeast strains were grown as previously published15 with
+slight modifications", and reference 15 is Mulleder et al. 2016 Cell 167:553, the mirrored
+key. So the deferral chain closes inside the mirror, and Messner then restates the identical
+line, 6.7 g/L yeast nitrogen base without amino acids, 2% glucose, 2% agar. Two independent
+statements of one formulation, so one object carries both, with the plate (`SM_AGAR`) as the
+liquid recipe plus agar.
+
+Zelezniak 2018 states no recipe at all. Its "Strains and Culture" section names "minimal
+medium" and "synthetic minimal (SM)" and sources both the strains and the cultivation to
+Mulleder et al. 2012 (Nat Biotechnol 30:1176-1178), which is NOT in the mirror. The medium
+is plausibly the same Ralser-lab formulation, but that identification is nowhere stated, so
+the grams are not copied across. `SM_DEFERRED` carries a single `composition_deferred`
+component with `defers_to=["mullederPrototrophicDeletionMutant2012"]`, and it is registered
+in `CARBON_FREE_MEDIA` because its carbon source sits inside that deferred line. This is the
+same treatment `YP_GLYCEROL_LIQUID` gives Hillenmeyer's unstated glycerol percentage, and
+for the same reason.
+
+### What could not be sourced
+
+- **The ammonium sulfate amount.** Recorded as an identity with `concentration=None`.
+  Neither paper prints a number, and its mass is already counted inside the 6.7 g/L YNB
+  line, so writing one in would double-count the medium. That it is PRESENT is the paper's
+  own statement rather than an inference from a product catalog: the same Methods section
+  defines the nitrogen-starvation medium as a DIFFERENT Sigma product, "yeast nitrogen base
+  without amino acids and ammonium sulfate (Y1251 SIGMA)", at 1.7 g/L against SM's 6.7 g/L
+  "without amino acids". The 5.0 g/L difference between those two lines is the standard
+  ammonium sulfate content of the full-strength product, which corroborates the reading but
+  is not a printed value, so it is recorded in the note field and not as a concentration.
+- **pH.** None of the three papers state one for SM.
+- **The YNB vitamin, trace-metal and salt rows.** They sit inside the commercial YNB line,
+  which stays `composition_deferred` exactly as the SGA and Lian YNB lines do.
+- **Dropouts stay EMPTY, by design, not for lack of sourcing.** SM is a minimal medium, not
+  an edit of a supplemented one, so there is no base medium the amino acids were removed
+  from. Messner states the property directly: "without amino acid and nucleobase
+  supplementation".
+- **Messner's catalog number.** Its Key Resources Table prints `Cat#Y0262` where Mulleder
+  prints `Y0626`, a two-digit transposition of the same Sigma product. Recorded as read, in
+  a note, and not corrected.
+
+### Open question flagged, not decided: Mulleder's state
+
+Mulleder's loader records `state="solid"`, so it now carries `SM_AGAR`. The paper's agar
+plate is the spotting and transfer step: "These spots were used for the inoculation of
+cultures in liquid SM", and the amino acids are extracted from that liquid subculture after
+8 hr. So the measurement environment is arguably `SM` (liquid) rather than `SM_AGAR`. The
+recipe is the same either way and the state was not changed here, because flipping it is a
+claim about the record rather than about the medium. Decide it with the author.
+
+### Rebuild consequence
+
+`media_identity` includes `state`, `is_synthetic`, `base_medium`, `components` and
+`dropouts`, so the media node id changes for all three served datasets. That is a changed
+record, which is the full-KG-rebuild case and not an incremental admission; the issue
+carries the `before-next-kg-build` label for exactly this reason.

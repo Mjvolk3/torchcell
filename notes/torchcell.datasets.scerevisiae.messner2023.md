@@ -86,3 +86,10 @@ multi-strain, expected), L2 value_fidelity (8,466,210 finite values), L2 se_nonn
   are separate phenotypes for later.
 - Model the prototrophy-restoring marker as a `GeneAddition` (shared with Mulleder/Zelezniak).
 - Consider an `impute` variant if a dense matrix is needed downstream.
+
+## 2026.09.23 - SM media components (issue 143)
+
+- Loader now emits the shared `SM` constant (6.7 g/L YNB without amino acids + 2% glucose,
+  liquid). This paper both defers its growth protocol to Mulleder 2016 (its ref 15, which is
+  mirrored) and restates the identical recipe, so one sourced object carries both papers.
+  Table and gaps in [[torchcell.datamodels.media-components]]. LMDB rebuilt + L0-L4 re-run.

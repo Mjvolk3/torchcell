@@ -70,7 +70,8 @@ def test_per_order_metrics_split_rows_by_perturbation_count() -> None:
         assert f"train/n_records/gene_interaction/order{k}" in names
     counts = {n: v for n, v in logged if n.startswith("train/n_records/")}
     assert counts == {
-        f"train/n_records/gene_interaction/order{k}": 2.0 for k in (1, 2, 3)
+        f"train/n_records/gene_interaction/{k}": 2.0
+        for k in ("order1", "order2", "order3", "dmi", "tmi")
     }
     assert task._order_counts["train_order_metrics"] == {1: 0, 2: 0, 3: 0}
 
@@ -110,6 +111,48 @@ def test_single_gene_fitness_is_logged_without_an_interaction_label() -> None:
     counts = {n: v for n, v in logged if n.startswith("train/n_records/")}
     assert counts["train/n_records/fitness/order1"] == 2.0
     assert counts["train/n_records/gene_interaction/order1"] == 0.0
+
+
+def test_per_order_values_are_also_logged_under_phenotype_names() -> None:
+    """smf/dmf/tmf and dmi/tmi carry the same values as order1/2/3, counts included."""
+    task, logged = _task(per_order_metrics=True, fitness_lambda=1.0)
+    gi_mask = torch.tensor([[True], [False], [True]])
+    fit_mask = torch.ones(3, 1, dtype=torch.bool)
+    for preds, targets in [
+        (torch.tensor([[0.1], [0.5], [0.9]]), torch.tensor([[0.2], [0.4], [1.0]])),
+        (torch.tensor([[0.3], [0.7], [0.2]]), torch.tensor([[0.3], [0.6], [0.1]])),
+    ]:
+        task._update_order_metrics(
+            "train", "train_order_metrics", _batch(), 3, preds, targets, gi_mask
+        )
+        task._update_order_metrics(
+            "train",
+            "train_order_fitness_metrics",
+            _batch(),
+            3,
+            preds,
+            targets,
+            fit_mask,
+        )
+    task._log_order_epoch_metrics("train")
+    values = dict(logged)
+    for order, name in [(1, "smf"), (2, "dmf"), (3, "tmf")]:
+        for metric in ("MSE", "RMSE", "Pearson"):
+            assert (
+                values[f"train/fitness/{name}/{metric}"]
+                == values[f"train/fitness/order{order}/{metric}"]
+            )
+        assert values[f"train/n_records/fitness/{name}"] == 2.0
+    for order, name in [(2, "dmi"), (3, "tmi")]:
+        for metric in ("MSE", "RMSE", "Pearson"):
+            assert (
+                values[f"train/gene_interaction/{name}/{metric}"]
+                == values[f"train/gene_interaction/order{order}/{metric}"]
+            )
+        assert values[f"train/n_records/gene_interaction/{name}"] == 2.0
+    # a single has no interaction label, so no interaction name exists for order 1
+    assert not any(n.startswith("train/gene_interaction/smf") for n in values)
+    assert "train/n_records/gene_interaction/order1" in values
 
 
 def test_orders_without_samples_are_not_logged() -> None:

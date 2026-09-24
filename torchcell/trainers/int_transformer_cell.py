@@ -23,6 +23,16 @@ from torchcell.viz.visual_regression import Visualization
 
 log = logging.getLogger(__name__)
 
+# The phenotype name of each (label, perturbation order): single-, double- and
+# triple-mutant fitness, and digenic and trigenic interaction. Per-order metrics are
+# logged once under ``order<k>`` and once under this name, so a chart can be read as
+# ``train/gene_interaction/tmi/Pearson`` without a lookup. A single carries no
+# interaction label, so order 1 has no interaction name.
+ORDER_PHENOTYPE_NAMES: dict[str, dict[int, str]] = {
+    "fitness": {1: "smf", 2: "dmf", 3: "tmf"},
+    "gene_interaction": {2: "dmi", 3: "tmi"},
+}
+
 
 class RegressionTask(L.LightningModule):
     """Lightning module training the transformer cell model on gene interactions."""
@@ -65,7 +75,10 @@ class RegressionTask(L.LightningModule):
         collections split by perturbation order (the number of perturbed genes in the
         record: 1, 2, 3), logged as ``<stage>/gene_interaction/order<k>/<metric>`` and,
         on the joint path, ``<stage>/fitness/order<k>/<metric>``, for the orders that
-        received samples in the epoch. An arm whose training pool mixes doubles and
+        received samples in the epoch. Each value is logged a second time under the
+        phenotype name of that (label, order) from ``ORDER_PHENOTYPE_NAMES``
+        (``<stage>/fitness/smf|dmf|tmf/<metric>``, ``<stage>/gene_interaction/dmi|tmi/
+        <metric>``), as are the record counts. An arm whose training pool mixes doubles and
         triples (the closure and whole-build arms) otherwise reports one training
         Pearson over dmi and tmi together; this separates the trigenic fit from the
         digenic one. Validation and test on the pinned trigenic splits are order 3
@@ -412,16 +425,32 @@ class RegressionTask(L.LightningModule):
             )
             for k in self.metric_orders:
                 collection = collections[str(k)]
+                order_key = f"order{k}"
+                name = ORDER_PHENOTYPE_NAMES[label].get(k)
                 if self._order_counts[attr][k] > 0:
                     for key, value in self._compute_metrics_safely(collection).items():
                         self.log(key, value, sync_dist=True)
+                        if name is not None:
+                            self.log(
+                                key.replace(f"/{order_key}/", f"/{name}/"),
+                                value,
+                                sync_dist=True,
+                            )
                 collection.reset()
+                count = float(self._order_counts[attr][k])
                 self.log(
-                    f"{stage}/n_records/{label}/order{k}",
-                    float(self._order_counts[attr][k]),
+                    f"{stage}/n_records/{label}/{order_key}",
+                    count,
                     sync_dist=True,
                     reduce_fx="sum",
                 )
+                if name is not None:
+                    self.log(
+                        f"{stage}/n_records/{label}/{name}",
+                        count,
+                        sync_dist=True,
+                        reduce_fx="sum",
+                    )
                 self._order_counts[attr][k] = 0
 
     def _log_fitness_epoch_metrics(self, stage: str) -> None:

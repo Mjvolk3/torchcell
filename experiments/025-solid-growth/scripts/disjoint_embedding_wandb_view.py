@@ -41,6 +41,9 @@ ARMS = {
     "cgt_s0_q_kl_fudt_026": "flanks_100ep",
     "cgt_s0_q_kl_fudt_032": "flanks_30ep",
     "cgt_s0_q_kl_embfit_027": "composite_fitness_30ep",
+    "cgt_s0_q_kl_fit_038": "learnable_table_fitness_30ep",
+    "cgt_s3_q_kl_fit_036": "s3_strict_learnable_table_fitness_50ep",
+    "cgt_s3_q_kl_embfit_037": "s3_strict_composite_fitness_50ep",
     "cgt_s0_q_kl_004": "learnable_table_cosine_job1640",
 }
 

@@ -12,4 +12,8 @@
   <a href="https://github.com/Mjvolk3/torchcell/blob/main/pyproject.toml"><img src="https://img.shields.io/badge/python-3.13%2B-blue" alt="Python 3.13+" /></a>
 </p>
 
+<p align="center">
+  <img src="./notes/assets/images/Fig1-torchcell-overview-abc.png" alt="TorchCell overview: literature and public databases feed an ontology and a knowledge graph (a); reference data and experiment data (b); persistent entities, the encoder, perturbation, and decoder path, and contingent observations (c)" />
+</p>
+
 Documentation: <https://mjvolk3.github.io/torchcell/>

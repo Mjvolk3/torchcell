@@ -1860,11 +1860,38 @@
             "pearson": 0.2585248649120331,
             "top50_enrichment": 3.9936507936507937,
             "top50_hits": 20.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 53,
+            "select_val_pearson": 0.28823333978652954,
+            "spearman": 0.11804092268685748,
+            "pearson": 0.32879769802093506,
+            "top50_enrichment": 5.191746031746032,
+            "top50_hits": 26.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 43,
+            "select_val_pearson": 0.25447574257850647,
+            "spearman": 0.0545669257546365,
+            "pearson": 0.18565040826797485,
+            "top50_enrichment": 3.793968253968254,
+            "top50_hits": 19.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 42,
+            "select_val_pearson": 0.2563176155090332,
+            "spearman": 0.15276126632439857,
+            "pearson": 0.37173983454704285,
+            "top50_enrichment": 6.19015873015873,
+            "top50_hits": 31.0
           }
         ],
-        "mean_spearman": 0.0757283969409777,
-        "sd_spearman": 0.03510819669136739,
-        "mean_top50_enrichment": 3.927089947089947
+        "mean_spearman": 0.09209238426480428,
+        "sd_spearman": 0.04249873204283301,
+        "mean_top50_enrichment": 4.492857142857143
       },
       "control": {
         "stem": "w139_bxwide_h90l2p1_e200",
@@ -1928,14 +1955,17 @@
         "sd_spearman": 0.0532597782067377,
         "mean_top50_enrichment": 4.725820105820105
       },
-      "n": 3,
-      "mean_difference": -0.0026837529990996756,
-      "sd_difference": 0.07867953987422273,
-      "n_positive": 1,
+      "n": 6,
+      "mean_difference": -0.01662134603735021,
+      "sd_difference": 0.08008396435029475,
+      "n_positive": 2,
       "differences": [
         0.079748728118161,
         -0.010822289020402269,
-        -0.07697769809505775
+        -0.07697769809505775,
+        -0.029264525626291393,
+        -0.12743040075500064,
+        0.06501810915448981
       ]
     },
     {
@@ -2032,20 +2062,50 @@
             "pearson": 0.2585248649120331,
             "top50_enrichment": 3.9936507936507937,
             "top50_hits": 20.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 53,
+            "select_val_pearson": 0.28823333978652954,
+            "spearman": 0.11804092268685748,
+            "pearson": 0.32879769802093506,
+            "top50_enrichment": 5.191746031746032,
+            "top50_hits": 26.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 43,
+            "select_val_pearson": 0.25447574257850647,
+            "spearman": 0.0545669257546365,
+            "pearson": 0.18565040826797485,
+            "top50_enrichment": 3.793968253968254,
+            "top50_hits": 19.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 42,
+            "select_val_pearson": 0.2563176155090332,
+            "spearman": 0.15276126632439857,
+            "pearson": 0.37173983454704285,
+            "top50_enrichment": 6.19015873015873,
+            "top50_hits": 31.0
           }
         ],
-        "mean_spearman": 0.0757283969409777,
-        "sd_spearman": 0.03510819669136739,
-        "mean_top50_enrichment": 3.927089947089947
+        "mean_spearman": 0.09209238426480428,
+        "sd_spearman": 0.04249873204283301,
+        "mean_top50_enrichment": 4.492857142857143
       },
-      "n": 3,
-      "mean_difference": 0.03880476059626136,
-      "sd_difference": 0.02054514060703849,
-      "n_positive": 3,
+      "n": 6,
+      "mean_difference": 0.027804182517842235,
+      "sd_difference": 0.03679013565914186,
+      "n_positive": 4,
       "differences": [
         0.021313107787442706,
         0.061429865226673354,
-        0.03367130877466802
+        0.03367130877466802,
+        -0.01894924952249792,
+        0.07517625745426418,
+        -0.0058161946134969444
       ]
     },
     {

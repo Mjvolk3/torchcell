@@ -196,4 +196,20 @@ affine held to epoch 40 loses the level because the selected epoch comes first. 
 release rule on the validation curve costs nothing and keeps the gain; a fixed late
 start does not.
 
+Round 132 is read (jobs 2784 and 2785, 7 h 18 min and 7 h 08 min for three cells
+each): the width-90 backbone on the deletion-only graph without the store, the last
+cell of the width-90 two-by-two. It reads 0.092 (sd 0.043) against the old-graph wide
+control's 0.109 ($-0.017$ paired, sd 0.080, above on two of six), top-50 4.49 against
+4.73, and ensembled over six seeds 0.122 with a top-50 of 5.19 against 0.134 and 5.59.
+Every seed is selected off the plateau, at epochs 19 to 56 with validation Pearson 0.22
+to 0.29, and the validation loss bottoms at epochs 26 to 53 and rises by 0.08 to 0.17
+by epoch 199, the largest rise of any arm. The square is now paired on its second
+diagonal: the store on this graph at width 90 (round 128) against this control reads
+$+0.028$ (sd 0.037, above on four of six), with top-50 4.43 against 4.49. So at width
+90 the graph correction takes 0.017 off the control and the store puts 0.028 back, the
+store's contribution on the strain as built is the same 0.03 at width 90 as it is at
+width 12 against the old-graph control, and none of the four wide cells beats the
+width-12 store on the same graph (0.121, top-50 4.93). Width costs seven hours a cell
+and buys nothing the width-12 store does not have.
+
 \input{tables/target_transfer}

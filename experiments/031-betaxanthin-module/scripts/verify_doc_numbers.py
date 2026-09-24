@@ -67,6 +67,33 @@ def polytope(*keys: str):
 
 
 CHECKS: list[Check] = [
+    # sec:rounds -- round 132, the wide control on the deletion-only graph.
+    Check(claim="target-transfer: wide deletion-only control", stated=0.092,
+          recompute=transfer("betaxanthin: width 90 on deletion-only graphs against the width-90 control", "mean_spearman", "arm"), tolerance=0.0006),
+    Check(claim="target-transfer: wide deletion-only control sd", stated=0.043,
+          recompute=transfer("betaxanthin: width 90 on deletion-only graphs against the width-90 control", "sd_spearman", "arm"), tolerance=0.0006),
+    Check(claim="target-transfer: wide deletion-only control vs old-graph wide control", stated=-0.017,
+          recompute=transfer("betaxanthin: width 90 on deletion-only graphs against the width-90 control", "mean_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: wide deletion-only control vs old-graph wide control sd", stated=0.08,
+          recompute=transfer("betaxanthin: width 90 on deletion-only graphs against the width-90 control", "sd_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: wide deletion-only control vs old-graph wide control seeds above", stated=2,
+          recompute=transfer("betaxanthin: width 90 on deletion-only graphs against the width-90 control", "n_positive"), tolerance=0.5),
+    Check(claim="target-transfer: wide deletion-only control top-50", stated=4.49,
+          recompute=transfer("betaxanthin: width 90 on deletion-only graphs against the width-90 control", "mean_top50_enrichment", "arm"), tolerance=0.006),
+    Check(claim="target-transfer: old-graph wide control top-50", stated=4.73,
+          recompute=transfer("betaxanthin: width 90 on deletion-only graphs against the width-90 control", "mean_top50_enrichment", "control"), tolerance=0.006),
+    Check(claim="target-transfer: wide store vs wide control on the deletion-only graph", stated=0.028,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against width 90 on deletion-only graphs", "mean_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: wide store vs wide control on the deletion-only graph sd", stated=0.037,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against width 90 on deletion-only graphs", "sd_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: wide store vs wide control on the deletion-only graph seeds above", stated=4,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against width 90 on deletion-only graphs", "n_positive"), tolerance=0.5),
+    Check(claim="target-transfer: wide store on the deletion-only graph top-50", stated=4.43,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against width 90 on deletion-only graphs", "mean_top50_enrichment", "arm"), tolerance=0.006),
+    Check(claim="target-transfer: wide deletion-only control six-seed ensemble", stated=0.122,
+          recompute=ensemble("w149_bxwidedel_h90l2p1_e200", "spearman"), tolerance=0.0006),
+    Check(claim="target-transfer: wide deletion-only control six-seed ensemble top-50", stated=5.19,
+          recompute=ensemble("w149_bxwidedel_h90l2p1_e200", "top50_enrichment"), tolerance=0.006),
     # sec:physics -- the driving-force polytope sampled.
     Check(claim="physics: polytope wild-type constrained metabolites", stated=234,
           recompute=polytope("wild_type", "n_constrained_metabolites"), tolerance=0.5),

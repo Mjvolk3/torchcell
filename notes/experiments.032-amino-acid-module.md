@@ -131,3 +131,19 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 ## 2026.09.24 - The annotation-only family on the amino acids
 
 - `target_go_models.py --target amino_acids` (`results/go_models_amino_acids.json`): GO perceptron 0.054 (sd 0.002); ProtT5 0.054 (sd 0.008); GO + ProtT5 0.065 (sd 0.003), ensemble 0.069, the highest single-seed read on this target; store row 0.019; GO + store 0.042; all three 0.045; DCell hierarchy 0.035 (sd 0.015). The flux row lowers every read it joins, as the transformer's affine did (A6'). Written into the 032 document (`3-physics.tex`, table `go_models`; 135 checks; version 4).
+
+## 2026.09.24 - Round A11 read (job 2796, 3 h 41 min)
+
+- A11 (w158, the capped driving-force concentration store in the affine slot): 0.045 (sd 0.005) vs the deletion-only control 0.049 (-0.005, sd 0.007, 2/6) and vs the parsimonious store 0.040 (+0.004, sd 0.009, 5/6); ensemble 0.050. Seeds select at epochs 32 to 146, none collapsed. Between the flux vector and the control, inside both spreads. Written into the 032 document as round 141 (version 5).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A11 | 141 | w158 | del + driving-force concentration store | 0.045 (sd 0.005); ens 0.050 |
+
+## 2026.09.24 - Round A14 queued: GO in the affine slot
+
+- GO affine stores on the prototroph (`target_go_affine_store.py --target amino_acids`): `ess_solve_encodings_SM_gem_go.npz` (6,607 genes, 2,362 columns) and `_gopfba.npz` (6,493 columns). A14 (w170, job 2808): GO alone in the affine slot vs A4 (w141) and A6' (w143). Round 153.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| A14 | 153 | w170 | del + GO multi-hot affine | pending (2808) |

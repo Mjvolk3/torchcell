@@ -959,6 +959,86 @@
         "top50_hits": null
       },
       "n_seeds": 6
+    },
+    {
+      "stem": "w163_aadelstoreh6_h6l1p1_e200",
+      "head": "mulleder19",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 639,
+          "spearman": 0.01531711951359262,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.0385068403573592,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.03513535407207295,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.003165865071372056,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.04911544524060061,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.010008643732427831,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_single_spearman": 0.025208211331237542,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 639,
+          "spearman": 0.04643135347834722,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.04023371406590566,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_triple_spearman": 0.04333253377212644,
+      "first_six": {
+        "n": 639,
+        "spearman": 0.04550137689185865,
+        "top50_enrichment": null,
+        "top50_hits": null
+      },
+      "all_seeds": {
+        "n": 639,
+        "spearman": 0.04550137689185865,
+        "top50_enrichment": null,
+        "top50_hits": null
+      },
+      "n_seeds": 6
     }
   ],
   "note": "Mean prediction over seeds on the pinned records, scored as the cells are; every dump resolved through its result file and checked against it."

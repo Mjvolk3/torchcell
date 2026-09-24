@@ -92,3 +92,28 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 ## 2026.09.23 - Round B8 read (jobs 2772 and 2773, 7 h 04 min and 7 h 31 min)
 
 - The store on the corrected graph at width 90: 0.120 (sd 0.024) against the old-graph wide control 0.109 (+0.011, sd 0.067, 3/6) and against B5's width-12 store on the same graph 0.121 (-0.001, sd 0.035, 3/6); top-50 4.43 vs 4.73 and 4.93; six-seed ensemble 0.147 / 4.99 (old-graph wide store 0.153 / 5.19; width-12 corrected store 0.131 / 5.59). Every seed selected off the plateau (epochs 21 to 50, validation Pearson 0.22 to 0.28) where the old-graph wide store had four plateau seeds; validation loss bottoms at epochs 8 to 42 and rises 0.09 to 0.15 by epoch 199. Width and store do not add on the strain as built. Written into `sec:target-transfer` (round 128); result files moved from 028/results to `results/w145_bxwidedelstore_h90l2p1_e200_s27*.json`.
+
+## 2026.09.23 - Round B16: the sampled cone in the affine slot
+
+- The OptGP sampler (`experiments/031-betaxanthin-module/scripts/target_sampled_flux_store.py --target betaxanthin --samples 6 --thinning 10 --growth-fraction 0.99 --processes 12`) finished at 21:20 after 360.8 min nice'd on the node: 1,155 deletions, 93 lethal (zero rows), the median relative distance of the six-sample mean to the parsimonious point 5.6 (`results/target_sampled_flux_store_betaxanthin.json`). Stores `ess_solve_encodings_YPD_bx_sampledmean.npz` (4,177 columns) and `_sampledspread.npz` (8,354: the mean and the spread).
+- B16 (w159, job 2797): the sampled mean in the affine slot, six seeds, paired against B3 (w137_bxdel) and B5 (w140_bxdelstore). Pack `conf/packs/w159_p0.pack`; readouts extended. On essentiality the sampled stores read within noise of the parsimonious point (round 87); on betaxanthin the CPU ladder reads the same store first (`sampled_mean` rows, rerun started 21:22).
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| B16 | 142 | w159 | sampled-cone mean store (six OptGP samples at 99 percent of optimum) | pending (2797) |
+
+## 2026.09.23 - Rounds B9 and B10 read (jobs 2782 and 2783, 3 h 52 min and 3 h 46 min)
+
+- B9 (w147, affine held at zero until epoch 40): 0.074 (sd 0.046) vs the store arm 0.121 (-0.047, 2/6) and vs the affine-free control 0.058 (+0.016, 4/6); top-50 3.86; six-seed ensemble 0.129 / 5.79. `affine_start_epoch_actual` is 40 in every seed and the selected epochs are 10, 32, 76, 34, 25, 38: five of six select BEFORE the affine starts, so the selected cell is the affine-free trajectory in five seeds. The early validation peak is not overtaken once the affine arrives.
+- B10 (w148, affine released from epoch 5 once the trailing validation Pearson reaches 0.15): releases at 5, 6, 25, 31, 6, 40; selected at 2, 57, 35, 32, 78, 38 (four after release). 0.110 (sd 0.050), -0.010 vs the store arm (1/6), +0.052 vs the control (6/6); top-50 4.66; ensemble 0.120 / 6.19 (highest ensemble call of any betaxanthin arm). Seed 2705 released at epoch 40 in B10, so it is the same trajectory as B9's seed 2705 (0.016 at epoch 38 in both): a check that the schedule, not the seed, separates the rounds.
+- Read: the store gain does not come from the first epochs. A release rule on the validation curve keeps the store arm's level and call; a fixed late start loses the level because the selected epoch comes first. Written into `sec:target-transfer` as rounds 130 and 131 (599 verifier checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B9 | 130 | w147 | del + store, affine from epoch 40 | 0.074 (sd 0.046); ens 0.129 / 5.79 |
+| B10 | 131 | w148 | del + store, affine from escape (val Pearson 0.15) | 0.110 (sd 0.050); ens 0.120 / 6.19 |
+
+## 2026.09.23 - The store ladder made reproducible
+
+- Two runs of `target_store_baselines.py --target betaxanthin` disagreed (HiGHS kNN 0.178 then 0.179 with k 10 then 3; capped concentrations kNN 0.082 then 0.108) while the forest rows were bitwise identical. Cause, measured: 57 percent of the pinned genes read a row identical to the wild type's, so (a) a kNN query on the wild-type row has about 2,000 identical training rows and `argsort` picked an arbitrary k of them, (b) ridge predictions on the no-effect rows agree to 1e-12 and reorder inside the tie, (c) the validation target is 98 percent one value, so the grid's validation Pearson tied and the argmax flipped on 1e-13 noise.
+- Fix (same script): every training row tied with the k-th cosine similarity (within 1e-9) is averaged in; predictions are rounded to 1e-9 before ranking; the validation criterion is rounded to 1e-6 with ties going to the later grid point. Two consecutive runs now give identical score lines. New betaxanthin rows: HiGHS store 0.195 by kNN (top-50 3.39), capped driving-force concentrations 0.152 by ridge, MOMA 0.135 by ridge, flux stats 0.145 by kNN, ProtT5 0.144 by kNN; sampled-cone mean 0.007 / 0.064 / 0.102 (ridge / kNN / forest), below the point it is sampled around. Chapter prose and verifier updated; the amino-acid ladder rerun under the same script.

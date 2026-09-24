@@ -85,6 +85,21 @@ ARMS = [
     ("w141_aadel_h12l1p1_e200", "mulleder19", "deletion-only"),
     ("w143_aadelstore_h12l1p1_e200", "mulleder19", "deletion-only + store"),
     ("w139_aawide_h90l2p1_e200", "mulleder19", "width 90"),
+    ("w147_bxdelstore40_h12l1p1_e200", "betaxanthin", "del + store, affine frozen at 40"),
+    ("w148_bxdelstorer15_h12l1p1_e200", "betaxanthin", "del + store, affine from 15"),
+    ("w149_bxwidedel_h90l2p1_e200", "betaxanthin", "width 90 + del"),
+    ("w152_bxdelgpr_h12l1p1_e200", "betaxanthin", "del + rule counts"),
+    ("w153_bxdelhead256_h12l1p1_e200", "betaxanthin", "del + solve head 256"),
+    ("w154_bxdelmoma_h12l1p1_e200", "betaxanthin", "del + MOMA store"),
+    ("w156_bxdelpfba_h12l1p1_e200", "betaxanthin", "del + HiGHS store"),
+    ("w157_bxdelmdf_h12l1p1_e200", "betaxanthin", "del + driving-force store"),
+    ("w159_bxdelsampled_h12l1p1_e200", "betaxanthin", "del + sampled-cone store"),
+    ("w146_aadel_h12l1p1_e300", "mulleder19", "deletion-only, 300 epochs"),
+    ("w150_aadelgpr_h12l1p1_e200", "mulleder19", "del + rule counts"),
+    ("w151_aadelhead256_h12l1p1_e200", "mulleder19", "del + solve head 256"),
+    ("w155_aadelmoma_h12l1p1_e200", "mulleder19", "del + MOMA store"),
+    ("w158_aadelmdf_h12l1p1_e200", "mulleder19", "del + driving-force store"),
+    ("w160_aadelsampled_h12l1p1_e200", "mulleder19", "del + sampled-cone store"),
 ]
 LOG_LINE = re.compile(
     r"\] ep\s+(\d+) loss ([\d.]+) .*?val_loss ([\d.]+) val_r ([-+\d.]+)"

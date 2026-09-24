@@ -377,7 +377,14 @@ def main() -> None:
         }
 
         def select(cells: list[dict[str, Any]], keys: list[str]) -> dict[str, Any]:
-            best = max(cells, key=lambda c: float(c["val"]["per_feature_pearson"]))
+            # The validation criterion is rounded to 1e-6 and ties go to the LATER
+            # grid point (the stronger ridge, the wider neighborhood, the larger leaf):
+            # the validation target is 98 percent one value on betaxanthin, so an
+            # unrounded argmax flipped between runs on 1e-13 float noise (2026-09-23).
+            best = max(
+                enumerate(cells),
+                key=lambda ic: (round(float(ic[1]["val"]["per_feature_pearson"]), 6), ic[0]),
+            )[1]
             return {
                 "selected_on_val": {
                     **{k: best[k] for k in keys},
@@ -399,7 +406,10 @@ def main() -> None:
             for name in ("val", "test"):
                 pred = np.zeros_like(y[name])
                 pred[ok[name]] = pred_fn(p[name][ok[name]])
-                pred = pred + mu
+                # Predictions within 1e-9 are one rank: the no-effect deletions read
+                # rows that differ from the wild type's by float noise, and their
+                # unrounded predictions reordered inside the tie between runs.
+                pred = np.round(pred + mu, 9)
                 cell[name] = score(pred, name, False, ok[name])
                 if name == "test":
                     cell["test_pinned"] = score(pred, name, True, ok[name])
@@ -418,8 +428,15 @@ def main() -> None:
         e_tr = p_tr / (np.linalg.norm(p_tr, axis=1, keepdims=True) + 1e-12)
 
         def knn(q: np.ndarray, k: int) -> np.ndarray:
+            # Every training row tied with the k-th nearest (cosine within 1e-9) is
+            # averaged in: a query on the wild-type row has about two thousand
+            # identical training rows, and taking k of them by argsort order made the
+            # prediction an arbitrary subset that changed between runs.
             e_q = q / (np.linalg.norm(q, axis=1, keepdims=True) + 1e-12)
-            return r_tr[np.argsort(-(e_q @ e_tr.T), axis=1)[:, :k]].mean(axis=1)
+            sims = e_q @ e_tr.T
+            kth = -np.partition(-sims, k - 1, axis=1)[:, k - 1 : k]
+            weights = (sims >= kth - 1e-9).astype(float)
+            return (weights @ r_tr) / weights.sum(axis=1, keepdims=True)
 
         cells = [evaluate(lambda q, k=k: knn(q, k), {"k": k}) for k in KNN_GRID]
         out["knn"] = select(cells, ["k"])

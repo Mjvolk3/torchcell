@@ -73,3 +73,11 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 ## 2026.09.23 - Round A5 read (jobs 2774 and 2775, 7 h 36 min and 7 h 48 min)
 
 - The wide control (width 90, two blocks, old graph): 0.034 (sd 0.010) against the width-12 control 0.034 (sd 0.025), +0.000 paired (sd 0.031, 3/6); six-seed ensemble 0.050 against 0.058 (corrected-graph control 0.062). Every seed escapes weakly (selected at epochs 10 to 59, validation Pearson 0.09 to 0.13); validation loss bottoms at epochs 6 to 21 and rises 0.05 to 0.07 by epoch 199. Width removes the collapsed seeds and tightens the spread, and does nothing to the level; the 027 cells of this form read 0.061 to 0.068 over three seeds, the six here 0.016 to 0.043. Written into `sec:target-transfer` as the amino-acid half of round 122; result files moved to `results/w139_aawide_h90l2p1_e200_s27*.json`.
+
+## 2026.09.23 - Round A6 read (job 2781, 5 h 34 min)
+
+- A6 (w146, deletion-only control for 300 epochs): 0.0485 (sd 0.009) vs the 200-epoch control (w141) 0.0492 (sd 0.007); paired -0.0007 (sd 0.003), 1/6; six-seed ensemble 0.060 vs 0.062. Four seeds select the same epoch and score in both runs (148, 88, 75, 37); the two whose peak moved past 200 (287, 217) read 0.036 vs 0.042 and 0.055 vs 0.054. Validation loss bottoms at epochs 20 to 169, up by at most 0.014 by epoch 299. The 200-epoch budget stands. Written into `sec:target-transfer` as round 129.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A6 | 129 | w146 | deletion-only, 300 epochs | 0.049 (sd 0.009); ens 0.060 |

@@ -743,6 +743,40 @@ arm effect on this target. With the second amino-acid screen agreeing with the f
 amino-acid endpoint's strain-level rank has no headroom to show an arm effect against,
 and the width read closes the amino-acid backbone question rather than opening one.
 
+Round 129 is read (job 2781, 5 h 34 min): the deletion-only amino-acid control run for
+300 epochs instead of 200, the check that the 200-epoch budget is not cutting the
+amino-acid arms short. It reads 0.049 (sd 0.009) against the 200-epoch control's 0.049
+(sd 0.007), $-0.001$ paired (sd 0.003), above on one of six, and ensembled over six
+seeds 0.060 against 0.062. Four of the six seeds select the same epoch with the same
+score in both runs (148, 88, 75 and 37), since the first 200 epochs of one seed are one
+trajectory; the two whose validation peak moved past epoch 200 (to 287 and 217) read
+0.036 against 0.042 and 0.055 against 0.054. The validation loss bottoms at epochs 20
+to 169 and drifts up by at most 0.014 over the remaining epochs. A hundred more epochs
+change nothing on this target, and the 200-epoch budget stands.
+
+Rounds 130 and 131 are read (jobs 2782 and 2783, 3 h 52 min and 3 h 46 min), the two
+schedules for the store affine on the deletion-only graph. Round 130 holds the affine at
+zero until epoch 40: it reads 0.074 (sd 0.046) against the store arm's 0.121 ($-0.047$
+paired, sd 0.053, above on two of six) and against the affine-free control's 0.058
+($+0.016$, sd 0.068, four of six), top-50 3.86 against 4.93 and 3.39, and ensembled over
+six seeds 0.129 with a top-50 of 5.79 against 0.131 and 5.59. The affine started at
+epoch 40 in every seed, and five of the six seeds select their epoch before it (10, 32,
+34, 25 and 38; the sixth at 76), so the selected cell is the affine-free trajectory in
+five seeds of six: the validation peak the affine-free model reaches before epoch 40 is
+not overtaken once the affine arrives. Round 131 releases the affine from epoch 5 once
+the trailing validation Pearson reaches 0.15: the release came at epochs 5, 6, 25, 31, 6
+and 40, and the seeds select at 2, 57, 35, 32, 78 and 38, four of them after the
+release. It reads 0.110 (sd 0.050), $-0.010$ against the store arm (sd 0.052, one of
+six) and $+0.052$ against the control (sd 0.035, six of six), top-50 4.66, ensembled
+0.120 with a top-50 of 6.19, the highest ensemble call of any betaxanthin arm. The seed
+whose release fell at epoch 40 is the same trajectory in both rounds (0.016 at epoch 38
+in each), a check that the schedule and not the seed is what separates them. So the
+store's gain does not come from the first epochs: the affine released after the model
+leaves the constant predictor reads the store arm's level and its best call, and the
+affine held to epoch 40 loses the level because the selected epoch comes first. A
+release rule on the validation curve costs nothing and keeps the gain; a fixed late
+start does not.
+
 \input{tables/target_transfer}
 
 \subsection{Physically constrained stores on the targets, the store read without the backbone, and the second amino-acid screen\secstatus{todo}}
@@ -801,18 +835,29 @@ deletion). Two things frame the numbers. The screen is genome-wide and the store
 the 1,155 GEM genes, so 3,255 of the 3,494 betaxanthin training genotypes read the
 wild-type row and every store baseline learns from about 240 in-model deletions, while
 the pinned test set is inside the model (628 of 629). And a gene's row is one vector
-with no graph, no sequence and no pathway. On betaxanthin the GLPK growth block carries
-nothing (ridge $-0.007$, kNN $-0.004$, forest $+0.009$); the whole GLPK vector, the one
-round 117 read, carries 0.108 by kNN; the HiGHS rebuild of the growth program carries
-0.178 by kNN with a top-50 enrichment of 3.39, the highest rank of any single read on
-this split (the best single transformer arm is 0.121, the best six-seed ensemble 0.153,
-the cosine kNN over ProtT5 0.145, reproduced here at 0.145); the MOMA store 0.134 by
-ridge; the six flux statistics of the parsimonious build 0.146 by kNN. The forest is not
-the best model on any flux representation, so the Flux Cone Learning form does not
-rescue a point representation. Rank and call separate as they did in every transformer
-round: ProtT5 gives the best top-50 (4.59 alone, 4.99 with the GLPK store under a
-forest), the clean flux store the best rank. On the amino acids every representation
-under every model sits between 0.006 and 0.058 (the HiGHS store 0.045 by kNN, ProtT5
+with no graph, no sequence and no pathway. Two of the ladder's reads were fragile to
+this degeneracy and are made exact: a nearest-neighbor query on the wild-type row has
+about two thousand identical training rows, so the $k$ neighbors taken by sort order
+were an arbitrary subset that changed between runs, and every training row tied with
+the $k$-th similarity is now averaged in; predictions within $10^{-9}$ count as one
+rank; and the validation criterion is rounded to $10^{-6}$ before the grid is chosen.
+Two consecutive runs then agree to every printed digit. On betaxanthin the GLPK growth
+block carries nothing (ridge $-0.006$, kNN $-0.004$, forest $+0.009$); the whole GLPK
+vector, the one round 117 read, carries 0.097 by kNN; the HiGHS rebuild of the growth
+program carries 0.195 by kNN with a top-50 enrichment of 3.39, the highest rank of any
+single read on this split (the best single transformer arm is 0.121, the best six-seed
+ensemble 0.153, the cosine kNN over ProtT5 0.145, reproduced here at 0.144); the MOMA
+store 0.135 by ridge; the six flux statistics of the parsimonious build 0.145 by kNN;
+the capped driving-force concentrations of Section~\ref{sec:target-physics} 0.152 by
+ridge with a top-50 of 3.39, the metabolite side carrying rank linearly. The mean of
+six samples of each deletion's flux cone at 99 percent of optimum carries 0.007 by
+ridge, 0.064 by kNN and 0.102 by forest, below the parsimonious point it is sampled
+around, as the sampled stores sat on essentiality (round 87). The forest is not the
+best model on any flux representation, so the Flux Cone Learning form does not rescue a
+point representation. Rank and call separate as they did in every transformer round:
+ProtT5 gives the best top-50 (4.59 alone, 4.99 with the GLPK store under a forest), the
+clean flux store the best rank. On the amino acids every representation
+under every model sits between 0.006 and 0.058 (the HiGHS store 0.022 by kNN, ProtT5
 0.052 by forest, the two concatenated 0.058), where the 027 bilinear ridge read 0.045
 and the transformer arms 0.049 to 0.062.
 

@@ -1,3 +1,11 @@
+---
+id: fv82jyy48rrakfhs4gdrzne
+title: WS15 Env Chemogenomic Ingestion Plan (2026.07.09)
+desc: ''
+updated: 1790239447346
+created: 1790239447346
+---
+
 # WS15 — Environmental / Chemogenomic Ingestion (autonomous, 2026-07-09)
 
 **Goal:** ingest 8 datasets as `deletion genotype × EnvironmentPerturbation → phenotype`
@@ -5,6 +13,7 @@ records on a NEW reusable `EnvironmentPerturbation` schema, each **L0–L4 verif
 Work sequentially. **Stop-on-fail with a written note; NEVER fabricate provenance.**
 
 ## Ground rules
+
 - Work ONLY in this worktree (`ws15-env-chemogenomic`). Never touch primary `main`.
   No parallel git ops. Commit per verified dataset.
 - Interpreter: `~/miniconda3/envs/torchcell/bin/python`. `DATA_ROOT` shared with main.
@@ -16,6 +25,7 @@ Work sequentially. **Stop-on-fail with a written note; NEVER fabricate provenanc
   add the MINIMUM new structure.
 
 ## New schema (design in Phase 1 on Vanacloig; FREEZE after fit-check)
+
 ```
 EnvironmentPerturbation:
   SmallMolecule{ compound_name, compound_id (PubChem CID/ChEBI | None),
@@ -32,6 +42,7 @@ Constant background: drug-sensitized backgrounds (Vanacloig 3ΔAlpha = pdr1Δ pd
 ```
 
 ## Datasets (in order) — citation_key · data source · readout · scale
+
 1. **vanacloig-pedrosComparativeChemicalGenomic2022** — GEO **GSE186866** — log2(inh/ctrl)
    barcode, **n=3 biological triplicate** — 4309 del (3ΔAlpha bg) × 34 inhibitors (incl
    isobutanol, ethanol), anaerobic, IC30. **SCHEMA ANCHOR.**
@@ -56,14 +67,16 @@ Constant background: drug-sensitized backgrounds (Vanacloig 3ΔAlpha = pdr1Δ pd
    for supervised work (do NOT invent a single-cell schema).
 
 ## Per-dataset gates
+
 1. **Fit-check** — does it map to `(deletion × EnvironmentPerturbation → phenotype)`? If not, STOP + note.
 2. **Source provenance** from paper.md / SI. Unsourceable → STOP, don't guess.
 3. **Build loader** — mirror an existing dataset class + the LMDB `experiment_dataset` base.
 4. **L0–L4 verify** (`torchcell/verification`); write `verification_report.json`.
 5. **Commit** `feat(datasets): add <name> env×geno chemogenomic dataset (L0-L4)`.
-6. **Append** pass/fail + notes to `WS15_STATUS.md`.
+6. **Append** pass/fail + notes to [[plan.ws15-env-chemogenomic-ingestion.status.2026.07.09]].
 
 ## Phase 1 (first unit of work)
+
 Design `EnvironmentPerturbation` in `schema.py` on **Vanacloig**; **fit-check** it by reading
 paper.md for #2–#7 and confirming their environment shapes map (compound+conc; het/hom CNV;
 physical stresses; z-score/categorical readouts) — adjust schema BEFORE building more. Build

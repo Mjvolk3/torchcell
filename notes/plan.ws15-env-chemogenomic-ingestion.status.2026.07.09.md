@@ -1,3 +1,11 @@
+---
+id: eki7hmf8trl8db5ea8xj0rx
+title: WS15 Env Chemogenomic Ingestion Status (2026.07.09)
+desc: ''
+updated: 1790239455229
+created: 1790239455229
+---
+
 # WS15 Status — Phase 1 (EnvironmentPerturbation schema + Vanacloig2022)
 
 Date: 2026-07-09 · Branch: `ws15-env-chemogenomic` (worktree only)

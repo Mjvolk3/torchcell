@@ -284,3 +284,6 @@ notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*.svg
 experiments/025-solid-growth/results/dataset_index_summary.json
 experiments/025-solid-growth/results/pinned_splits_from_010_seed_42.json
 experiments/025-solid-growth/results/graph_regularization_how_not_what/
+
+# mypy daemon state (machine-local)
+.dmypy.json

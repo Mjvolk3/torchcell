@@ -1,6 +1,14 @@
+---
+id: 9agyvyytg1bhh3u5wtsvrbg
+title: WS15 Env Chemogenomic Ingestion Handoff (2026.07.10)
+desc: ''
+updated: 1790239462793
+created: 1790239462793
+---
+
 # WS15 Handoff — Environmental/Chemogenomic Ingestion + Ontology Hardening
 
-**For a fresh session.** Read this first, then `WS15_PLAN.md`, `WS15_STATUS.md`, and
+**For a fresh session.** Read this first, then [[plan.ws15-env-chemogenomic-ingestion.2026.07.09]], [[plan.ws15-env-chemogenomic-ingestion.status.2026.07.09]], and
 `notes/paper.database.ontological-enforcement.md`. Memory:
 `environmental-chemogenomic-ingestion-plan` + `paper-r5-chemogenomic-and-inference-thesis`.
 
@@ -73,6 +81,7 @@ loader committed, raw on Dryad `10.5061/dryad.v5m8v`, partial LMDB already delet
 ## APPROVED PLAN (do next)
 
 ### Tier 1 — this branch, before merge
+
 1. **Schema refactor** (`torchcell/datamodels/schema.py`): env perturbations →
    `SmallMoleculePerturbation` (chemical species) + `EnvironmentPhysicalPerturbation`
    (scalar factor: pH/osmolarity/carbon; temperature stays on `Environment`); **DROP**
@@ -93,6 +102,7 @@ loader committed, raw on Dryad `10.5061/dryad.v5m8v`, partial LMDB already delet
 5. Commit incrementally; land via `/enqueue-merge`.
 
 ### Tier 2 — IMMEDIATELY AFTER MERGE (separate branch; touches landed Costanzo/Kuzmin/Kemmeren)
+
 `Sga*` collapse (assay method → experiment/provenance metadata; fixes S5 inherited-tag defect);
 gene-side `suppressor`/`ts` (allowlist as identity-handle vs demote to phenotype — the ts/suppressor
 names are handles to published reagent collections for future sequence population); `CopyNumber`
@@ -109,7 +119,7 @@ output-size reduction).
 - `tests/torchcell/datamodels/test_ontology_invariants.py` (gene-only today; extend to all trees),
   `test_schema_invariants.py`, `test_uncertainty_ontology.py`.
 - `torchcell/datasets/scerevisiae/{vanacloig_...,mota2024,wildenhain2015,auesukaree2009,hoepfner2014}.py`
-  + the deferred nadal loader (not built).
+  - the deferred nadal loader (not built).
 - `torchcell/verification/{environment_response.py,runners.py,levels.py}` — L0–L4.
 - `biocypher/config/torchcell_schema_config.yaml` — external Biolink grounding (`is_a:`), Phase B only.
 - `notes/paper.database.ontological-enforcement.md` — the 16-rule spec (LaTeX + mermaid + detailed
@@ -118,6 +128,7 @@ output-size reduction).
 - `$DATA_ROOT/torchcell-library/<ck>/paper.md` — OCR'd provenance for all 16 env papers.
 
 ## Gotchas
+
 - ONE agent per worktree (shared-git clobber); instruct dataset agents to **build SYNCHRONOUSLY,
   never detach** (a detached Hoepfner build ran away to 116GB + a poll-looping agent had to be
   TaskStop'd).

@@ -442,6 +442,30 @@ PAIRS = [
         "w148_bxdelstorer15_h12l1p1_e200",
     ),
     (
+        "betaxanthin: HiGHS store, release rule and dropout 0.3 against the same without the dropout",
+        "betaxanthin",
+        "w171_bxdelpfbareldrop_h12l1p1_e200",
+        "w169_bxdelpfbarel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: HiGHS store, release rule and dropout 0.3 against the GLPK store at dropout 0.3",
+        "betaxanthin",
+        "w171_bxdelpfbareldrop_h12l1p1_e200",
+        "w162_bxdelstoredrop_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: deletion-only store at dropout 0.5 against 0.3",
+        "betaxanthin",
+        "w172_bxdelstoredrop5_h12l1p1_e200",
+        "w162_bxdelstoredrop_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: deletion-only store at dropout 0.5 against 0.1",
+        "betaxanthin",
+        "w172_bxdelstoredrop5_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
         "betaxanthin: MOMA store with the affine released on escape against the MOMA store",
         "betaxanthin",
         "w166_bxdelmomarel_h12l1p1_e200",

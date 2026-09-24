@@ -32,6 +32,7 @@ STUDY = {
     "amino_acids": {"dir": "032-amino-acid-module", "label": "amino acids"},
 }
 SCRIPT = "experiments/031-betaxanthin-module/scripts/target_notes_tex_tables.py"
+PAIRS_PER_TABLE = 18
 
 
 def results(target: str, name: str) -> str:
@@ -91,23 +92,42 @@ def target_transfer(target: str) -> str | None:
         if target == "betaxanthin"
         else ""
     )
-    body = (
-        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
-        f"  \\caption[The rounds on {label}: arm against control]{{Every arm paired by "
-        "seed against its control on the same split (Merzbacher's 639 genes pinned to "
-        f"test, the 027 protocol). The statistic is {statistic}. Columns: seeds paired, "
-        "the arm and control means with their standard deviations over seeds, the mean "
-        "paired difference with its standard deviation, the seeds on which the arm scored "
-        f"higher{top50}. Written by \\texttt{{target\\_notes\\_tex\\_tables.py}} from "
-        "\\texttt{results/transfer\\_readout.json} "
-        "(\\texttt{target\\_transfer\\_readout.py}).}\n"
-        "  \\label{tab:target-transfer}\n"
+    # The pairs fill more than a page once the rounds pass twenty, so they are split
+    # into tables of at most PAIRS_PER_TABLE rows, the first carrying the label the
+    # prose refers to and the rest continuing it.
+    header = (
         "  \\begin{tabular}{@{}p{58mm}rrrrrr@{}}\n    \\hline\n"
         "    arm against control & seeds & arm (sd) & control (sd) & difference (sd) & "
         "higher & top-50 \\\\\n    \\hline\n"
-        + "\n".join(rows)
-        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n\n"
-        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+    )
+    chunks = [rows[i : i + PAIRS_PER_TABLE] for i in range(0, len(rows), PAIRS_PER_TABLE)]
+    pair_tables = []
+    for k, chunk in enumerate(chunks):
+        if k == 0:
+            caption = (
+                f"  \\caption[The rounds on {label}: arm against control]{{Every arm paired by "
+                "seed against its control on the same split (Merzbacher's 639 genes pinned to "
+                f"test, the 027 protocol). The statistic is {statistic}. Columns: seeds paired, "
+                "the arm and control means with their standard deviations over seeds, the mean "
+                "paired difference with its standard deviation, the seeds on which the arm scored "
+                f"higher{top50}. Written by \\texttt{{target\\_notes\\_tex\\_tables.py}} from "
+                "\\texttt{results/transfer\\_readout.json} "
+                "(\\texttt{target\\_transfer\\_readout.py}).}\n"
+                "  \\label{tab:target-transfer}\n"
+            )
+        else:
+            caption = (
+                f"  \\caption[The rounds on {label}: arm against control, continued]{{"
+                f"Table~\\ref{{tab:target-transfer}}, continued (part {k + 1} of {len(chunks)}).}}\n"
+                f"  \\label{{tab:target-transfer-{k + 1}}}\n"
+            )
+        pair_tables.append(
+            "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n" + caption + header
+            + "\n".join(chunk) + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n\n"
+        )
+    body = (
+        "".join(pair_tables)
+        + "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
         "  \\caption[The 027 comparators]{The pinned-test Spearman of the 027 rounds "
         "on the same split and statistic, read by "
         "\\texttt{target\\_transfer\\_readout.py} from 027's result files: the mean over "

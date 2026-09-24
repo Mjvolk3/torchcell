@@ -526,6 +526,30 @@ PAIRS = [
         "w143_aadelstore_h12l1p1_e200",
     ),
     (
+        "betaxanthin: driving-force polytope mean with the spread against the mean alone",
+        "betaxanthin",
+        "w174_bxdelmdfpolyspread_h12l1p1_e200",
+        "w164_bxdelmdfpoly_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: driving-force polytope mean with the spread against the GLPK store",
+        "betaxanthin",
+        "w174_bxdelmdfpolyspread_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
+        "amino acids: deletion-only store at dropout 0.3 against 0.1",
+        "mulleder19",
+        "w173_aadelstoredrop_h12l1p1_e200",
+        "w143_aadelstore_h12l1p1_e200",
+    ),
+    (
+        "amino acids: deletion-only store at dropout 0.3 against deletion-only graphs",
+        "mulleder19",
+        "w173_aadelstoredrop_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
         "amino acids: deletion-only graphs for 300 epochs against 200",
         "mulleder19",
         "w146_aadel_h12l1p1_e300",

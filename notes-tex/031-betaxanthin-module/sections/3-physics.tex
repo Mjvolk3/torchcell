@@ -1,0 +1,89 @@
+%% notes-tex/031-betaxanthin-module/sections/3-physics.tex
+\section{Physically constrained stores on the strain, and the store read without the backbone\secstatus{todo}}
+\label{sec:physics}
+
+The module so far carries mass balance and nothing else: one parsimonious vector per
+deletion. On the essentiality endpoint the store ladder (the essentiality document's
+round 113) built the same vector under enzyme ceilings, sampled turnover, GECKO pools
+and a minimization of metabolic adjustment, and none moved the score beyond the seed
+spread. None of those programs had been run on the target model, the cassette strain
+with its markers deleted on YPD, which covers every GEM gene rather than the labeled
+ones. On 2026-09-23 they were, on CPU beside the packs, with reads that need no card.
+
+The second law as fixed directions admits no growth. The direction rule of the
+essentiality study's round 114 (a reaction whose standard energy on the union-external
+route is at least $T$ below zero loses its reverse part, at least $T$ above it its
+forward part; unpriced reactions, the cassette's included, keep the GEM box) leaves the
+parent strain infeasible at both thresholds, as it had on the essentiality model. On the
+cassette strain the 10 kJ/mol rule fixes 1,754 directions forward and 1,068 reverse, and
+97 of them run against the parsimonious wild-type flux; at 30 kJ/mol it fixes 1,071 and
+905 with 69 conflicts. No store is written for an infeasible parent (a store of zero rows
+would be read as every deletion lethal), and the outcome is recorded
+(\texttt{results/target\_physics\_store\_betaxanthin\_sign10.json}, \texttt{\_sign30}).
+Standard energies at 1 M cannot be imposed as directions on this model; a
+thermodynamically consistent program needs the concentrations as variables, which is
+what the driving-force store below does with a linear program.
+
+The stores that do exist. The linear MOMA store on the cassette strain (1,155 genes,
+27 s on eight processes) has 107 lethal deletions against the parsimonious store's 93,
+moves the growth ratio by more than 0.01 on 59 genes, and moves the $\log(1+|v|)$ vector
+on 1,056 genes with a median relative distance of 0.39 to the parsimonious deletion
+vector. The parsimonious store rebuilt on the HiGHS path keeps the 93 lethal deletions,
+moves 17 ratios, and sits at a median distance of 0.015 from the GLPK build. The
+max-min driving-force store (\texttt{target\_driving\_force\_store.py}) solves, per
+deletion, for the metabolite concentrations between 1 $\mu$M and 10 mM that maximize the
+smallest driving force over the reactions the parsimonious flux carries, with transport
+and proton-translocating reactions unconstrained and, in the capped variant, reactions
+priced above 100 kJ/mol set aside; the wild type's max-min driving force is $-1.16$
+kJ/mol over 172 constrained reactions with 32 binding, 1,062 of 1,062 viable deletions
+have a negative optimum, and 451 change the concentration vector. The sampled store
+(\texttt{target\_sampled\_flux\_store.py}) draws six OptGP samples of each deletion's
+cone at 99 percent of its optimum, 1,155 deletions in 6 h on twelve processes, and keeps
+the mean over draws and, in a second store, the per-reaction spread.
+
+Why the MOMA store differs so much from the parsimonious one: the GLPK build is
+degenerate (Table~\ref{tab:store-degeneracy}, from
+\texttt{store\_degeneracy.py}). Among the 1,031 deletions that leave growth unchanged,
+the GLPK store's vector differs from its own wild type's for 1,025, at a median relative
+distance of 0.38 in the encoding the affine reads; the HiGHS rebuild differs for 428
+(median 0.0, ninetieth percentile 0.39)
+and the MOMA store, anchored to one wild-type vector, for 18 (the prototroph's stores
+are in the sibling document). So the parsimonious
+optimum has alternative vertices for a large share of no-effect deletions under either
+solver, and the GLPK path lands on a different one almost every time. Hypothesis
+(untested): the vertex noise is what erased the growth block's signal in round 125, and
+round 139 is the transformer read of the same store without it.
+
+The store read without the backbone (Table~\ref{tab:store-baselines};
+\texttt{target\_store\_baselines.py}, the 027 ladder's split, standardization and
+selection, with a random forest added, the Flux Cone Learning form on one point per
+deletion). Two things frame the numbers. The screen is genome-wide and the stores cover
+the 1,155 GEM genes, so 3,255 of the 3,494 betaxanthin training genotypes read the
+wild-type row and every store baseline learns from about 240 in-model deletions, while
+the pinned test set is inside the model (628 of 629). And a gene's row is one vector
+with no graph, no sequence and no pathway. Two of the ladder's reads were fragile to
+this degeneracy and are made exact: a nearest-neighbor query on the wild-type row has
+about two thousand identical training rows, so the $k$ neighbors taken by sort order
+were an arbitrary subset that changed between runs, and every training row tied with
+the $k$-th similarity is now averaged in; predictions within $10^{-9}$ count as one
+rank; and the validation criterion is rounded to $10^{-6}$ before the grid is chosen.
+Two consecutive runs then agree to every printed digit. On betaxanthin the GLPK growth
+block carries nothing (ridge $-0.006$, kNN $-0.004$, forest $+0.009$); the whole GLPK
+vector, the one round 117 read, carries 0.097 by kNN; the HiGHS rebuild of the growth
+program carries 0.195 by kNN with a top-50 enrichment of 3.39, the highest rank of any
+single read on this split (the best single transformer arm is 0.121, the best six-seed
+ensemble 0.153, the cosine kNN over ProtT5 0.145, reproduced here at 0.144); the MOMA
+store 0.135 by ridge; the six flux statistics of the parsimonious build 0.145 by kNN;
+the capped driving-force concentrations 0.152 by
+ridge with a top-50 of 3.39, the metabolite side carrying rank linearly. The mean of
+six samples of each deletion's flux cone at 99 percent of optimum carries 0.007 by
+ridge, 0.064 by kNN and 0.102 by forest, below the parsimonious point it is sampled
+around, as the sampled stores sat on essentiality (the essentiality document's round 87). The forest is not the
+best model on any flux representation, so the Flux Cone Learning form does not rescue a
+point representation. Rank and call separate as they did in every transformer round:
+ProtT5 gives the best top-50 (4.59 alone, 4.99 with the GLPK store under a forest), the
+clean flux store the best rank.
+
+\input{tables/store_degeneracy}
+
+\input{tables/store_baselines}

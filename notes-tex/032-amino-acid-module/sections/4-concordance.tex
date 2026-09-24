@@ -1,0 +1,39 @@
+%% notes-tex/032-amino-acid-module/sections/4-concordance.tex
+\section{The second amino-acid screen\secstatus{todo}}
+\label{sec:concordance}
+
+The second amino-acid screen does not corroborate the first
+(Table~\ref{tab:amino-acid-concordance}; \texttt{amino\_acid\_dataset\_concordance.py}).
+Cooper 2010 profiled the auxotrophic MATa collection after overnight growth in synthetic
+complete medium by capillary electrophoresis, 17 peaks each a linear ratio to its plate
+mean, four of them composites and lysine split in two; M\"ulleder 2016 measured 19 amino
+acids in mM on the prototrophic collection on minimal medium. Over the 4,051 strains both
+screens hold, the matched pairs correlate at $-0.006$ (alanine) to $+0.059$ (glycine,
+$p$ $2\times10^{-4}$), with glutamate at 0.043 and aspartate at 0.031 the only others
+off zero; the top 5 percent of strains overlap at chance on every pair (the largest
+enrichment 2.2, lysine peak b, 22 of 202 against 10 expected); and across all 17 by 19
+cells the median $|\rho|$ is 0.018 and the maximum 0.127, on an unmatched pair, so the
+matched cells do not stand out from the background. The two retest references bound
+this: M\"ulleder's 194 strains measured twice give a mean Spearman of 0.20 (Pearson on
+$\log_{10}$ 0.43, the 027 read), and Cooper's 47 duplicated genes, paired from the
+loader's ledger against the served rows, give 0.06 (log Pearson 0.10). The Cooper pairs
+are the screen's own within-study replicate agreement: the 47 genes the collection
+carries as two deletion strains, grown from fresh colonies and measured in the same
+run, listed on adjacent rows of the released table (each row already the mean of up to
+two traces, so the instrument's repeat precision on one extract is not recoverable).
+Their rows spread as widely as the whole table (the $\log_{10}$ ratio's sd over the 17
+peaks 0.10 to 0.53 against 0.11 to 0.51, medians 0.29 and 0.28), so the low agreement
+is not a restricted range: a typical gene's released value is not reproduced by the
+same study's second measurement of it, and 0.05 is the reliability ceiling of a Cooper
+strain-level value, against M\"ulleder's 0.20 from the same kind of re-measurement.
+A cross-screen
+correlation cannot exceed roughly the geometric mean of the two, about 0.11, and the
+observed 0.00 to 0.06 is at or below it. Cooper's released table carries almost no
+strain-level signal, so it can neither validate the M\"ulleder target strain by strain
+nor serve as a second one; and the medium and the auxotrophy differ between the screens,
+a biological difference that this replicate agreement cannot separate from noise. What
+the read fixes is the amino-acid endpoint's position: its own retest rank is 0.20, the
+second screen agrees with it at 0.03, and every model above, transformer or ladder,
+sits between 0.01 and 0.06.
+
+\input{tables/amino_acid_concordance}

@@ -1,0 +1,57 @@
+%% notes-tex/032-amino-acid-module/sections/3-physics.tex
+\section{Physically constrained stores on the prototroph, and the store read without the backbone\secstatus{todo}}
+\label{sec:physics}
+
+The module so far carries mass balance and nothing else: one parsimonious vector per
+deletion. On the essentiality endpoint the store ladder (the essentiality document's
+round 113) built the same vector under enzyme ceilings, sampled turnover, GECKO pools
+and a minimization of metabolic adjustment, and none moved the score beyond the seed
+spread. None of those programs had been run on the prototroph on minimal medium, which
+covers every GEM gene rather than the labeled ones. On 2026-09-23 they were, on CPU
+beside the packs, with reads that need no card.
+
+The second law as fixed directions admits no growth. The direction rule of the
+essentiality study's round 114 (a reaction whose standard energy on the union-external
+route is at least $T$ below zero loses its reverse part, at least $T$ above it its
+forward part; unpriced reactions keep the GEM box) leaves the prototroph infeasible at
+both thresholds, as it had on the essentiality model, with 84 fixed directions running
+against the parsimonious wild-type flux at 10 kJ/mol and 44 at 30 kJ/mol. No store is
+written for an infeasible parent, and the outcome is recorded
+(\texttt{results/target\_physics\_store\_amino\_acids\_sign10.json}, \texttt{\_sign30}).
+Standard energies at 1 M cannot be imposed as directions on this model; a
+thermodynamically consistent program needs the concentrations as variables, which is
+what the driving-force store below does with a linear program.
+
+The stores that do exist. The linear MOMA store on the prototroph (1,161 genes) has 175
+lethal deletions against the parsimonious store's 161, moves the growth ratio by more
+than 0.01 on 63 genes, and moves the $\log(1+|v|)$ vector on 567 genes with a median
+relative distance of 0.0 to the parsimonious deletion vector. Among the 918 deletions
+that leave growth unchanged, the HiGHS parsimonious store's vector differs from its own
+wild type's for 324 (Table~\ref{tab:store-degeneracy}, from
+\texttt{store\_degeneracy.py}) and the MOMA store's, anchored to one wild-type vector,
+for 11: the parsimonious optimum has alternative vertices for a third of the no-effect
+deletions on this model too, fewer than on the cassette strain (the sibling document).
+The max-min driving-force store (\texttt{target\_driving\_force\_store.py}) solves, per
+deletion, for the metabolite concentrations between 1 $\mu$M and 10 mM that maximize the
+smallest driving force over the reactions the parsimonious flux carries, with transport
+and proton-translocating reactions unconstrained and, in the capped variant, reactions
+priced above 100 kJ/mol set aside; the sampled store
+(\texttt{target\_sampled\_flux\_store.py}) draws six OptGP samples of each deletion's
+cone at 99 percent of its optimum and keeps the mean over draws and the per-reaction
+spread.
+
+The store read without the backbone (Table~\ref{tab:store-baselines};
+\texttt{target\_store\_baselines.py}, the 027 ladder's split, standardization and
+selection, with a random forest added, the Flux Cone Learning form on one point per
+deletion; nearest neighbors average every training row tied at the $k$-th similarity,
+predictions within $10^{-9}$ count as one rank, and the validation criterion is rounded
+to $10^{-6}$, so two runs agree to every digit). The screen is genome-wide and the
+stores cover the GEM genes, so most training genotypes read the wild-type row and a
+gene's row is one vector with no graph, no sequence and no pathway. On the amino acids
+every representation under every model sits between 0.006 and 0.058 (the HiGHS store
+0.022 by kNN, ProtT5 0.052 by forest, the two concatenated 0.058), where the 027
+bilinear ridge read 0.045 and the transformer arms 0.049 to 0.062.
+
+\input{tables/store_degeneracy}
+
+\input{tables/store_baselines}

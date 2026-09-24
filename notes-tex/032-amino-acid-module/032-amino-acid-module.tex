@@ -1,0 +1,61 @@
+%% notes-tex/032-amino-acid-module/032-amino-acid-module.tex
+%% [[experiments.032-amino-acid-module]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/032-amino-acid-module/032-amino-acid-module.tex
+%%
+%% Build:  make            -> 032-amino-acid-module.pdf
+%%         make check      -> formatting / provenance / style gate
+%%
+%% Every number is produced by a committed script under experiments/032-amino-acid-module/ (the readouts
+%% shared with its sibling live under experiments/031-betaxanthin-module/scripts/) and read
+%% back from the results/ tree; the tables under tables/ are generated, and the numbers typed
+%% into prose are checked by experiments/032-amino-acid-module/scripts/verify_doc_numbers.py.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}The Metabolic Module on the Amino Acids\\
+  {\large The offline flux store carried to the M\"ulleder screen,\\and where the endpoint's noise floor sits}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+The metabolic module built for gene essentiality (\texttt{notes-tex/028-gene-essentiality})
+carried to M\"ulleder's 19 intracellular amino acids on the prototrophic deletion
+collection on minimal medium. The module is an offline store, one flux vector per
+deletion from a parsimonious solve on the prototroph with 19 synthesis maxima beside it,
+read through a zero-initialized affine on a 19-output head, and every arm is paired by
+seed against the same backbone without it under the 027 protocol on Merzbacher's pinned
+test genes. The endpoint sits at its noise floor: the screen's own strain-level retest
+rank is 0.20, the second genome-wide screen of the same phenotype (Cooper 2010) agrees
+with it at 0.03 over 4,051 shared strains and reproduces its own value for a typical
+gene at 0.05, and every model, transformer or ladder, at width 12 or 90, with or without
+a store, reads between 0.01 and 0.06. Four forms of the store affine sit at or under
+their control, the cached solve head recovers the affine's loss and lands at the
+control, and width, 100 more epochs and the rule counts change nothing. What the
+campaign fixes is the target's position rather than the module's. Every number is at a
+validation-selected epoch on the pinned test set with the across-seed spread, every
+table is generated from the result files, and the betaxanthin half of the campaign is
+the sibling document \texttt{notes-tex/031-betaxanthin-module}.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-endpoint}
+\input{sections/2-rounds}
+\input{sections/3-physics}
+\input{sections/4-concordance}
+\input{sections/5-standing}
+
+\end{document}

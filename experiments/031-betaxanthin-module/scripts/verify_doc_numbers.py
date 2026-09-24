@@ -1,0 +1,982 @@
+# experiments/031-betaxanthin-module/scripts/verify_doc_numbers.py
+# [[experiments.031-betaxanthin-module.scripts.verify_doc_numbers]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/031-betaxanthin-module/scripts/verify_doc_numbers
+
+"""Every number typed into notes-tex/031-betaxanthin-module's prose, checked against its source file.
+
+The essentiality verifier's rule and helpers, applied to this document: each check names
+the claim, the quantity as the document states it, and how to recompute it from the
+study's results tree. Add one whenever a number is written into prose. Exits non-zero
+on any mismatch. Run from the repo root::
+
+    CUDA_VISIBLE_DEVICES="" PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
+        experiments/031-betaxanthin-module/scripts/verify_doc_numbers.py
+"""
+
+from __future__ import annotations
+
+import os
+import os.path as osp
+import sys
+
+from dotenv import load_dotenv
+
+load_dotenv()
+sys.path.insert(0, osp.join(os.environ["EXPERIMENT_ROOT"], "028-gene-essentiality", "scripts"))
+from verify_doc_numbers import (  # noqa: E402
+    Check,
+    concordance,
+    concordance_summary,
+    degeneracy,
+    ensemble,
+    physics_store,
+    store_baseline,
+    transfer,
+    transfer_comparator,
+)
+
+RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "031-betaxanthin-module", "results")
+
+
+def driving_force(variant: str, *keys: str):
+    """A value of the driving-force store's summary, by key path."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, f"target_driving_force_store_betaxanthin_{variant}.json")))
+        for k in keys:
+            d = d[k]
+        return float(d)
+
+    return run
+
+
+CHECKS: list[Check] = [
+    # sec:physics -- the max-min driving-force store.
+    Check(claim="physics: driving-force wild-type optimum", stated=-1.16,
+          recompute=driving_force("mdfcap100", "wild_type", "mdf_kj_per_mol"), tolerance=0.006),
+    Check(claim="physics: driving-force wild-type constrained reactions", stated=172,
+          recompute=driving_force("mdfcap100", "wild_type", "n_active"), tolerance=0.5),
+    Check(claim="physics: driving-force wild-type binding reactions", stated=32,
+          recompute=driving_force("mdfcap100", "wild_type", "n_binding"), tolerance=0.5),
+    Check(claim="physics: driving-force viable deletions solved", stated=1062,
+          recompute=driving_force("mdfcap100", "n_solved"), tolerance=0.5),
+    Check(claim="physics: driving-force deletions with a negative optimum", stated=1062,
+          recompute=driving_force("mdfcap100", "n_mdf_negative"), tolerance=0.5),
+    Check(claim="physics: driving-force deletions moving the concentrations", stated=451,
+          recompute=driving_force("mdfcap100", "n_conc_moved"), tolerance=0.5),
+    # sec:target-transfer -- rounds 117 and 118.
+    Check(
+        claim="target-transfer: betaxanthin store arm mean",
+        stated=0.121,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store arm sd",
+        stated=0.011,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin control mean",
+        stated=0.079,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "mean_spearman",
+            "control",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin control sd",
+        stated=0.056,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "sd_spearman",
+            "control",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin paired difference",
+        stated=0.043,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin paired sd",
+        stated=0.049,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin seeds above",
+        stated=5,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store top-50 enrichment",
+        stated=3.49,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: betaxanthin control top-50 enrichment",
+        stated=4.06,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "mean_top50_enrichment",
+            "control",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store six-seed ensemble",
+        stated=0.135,
+        recompute=ensemble("w134_bxstore_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store triple 0",
+        stated=0.146,
+        recompute=ensemble("w134_bxstore_h12l1p1_e200", "spearman", "triple0"),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store triple 1",
+        stated=0.133,
+        recompute=ensemble("w134_bxstore_h12l1p1_e200", "spearman", "triple1"),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin control six-seed ensemble",
+        stated=0.076,
+        recompute=ensemble("w134_bxctx_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store ensemble top-50",
+        stated=4.39,
+        recompute=ensemble("w134_bxstore_h12l1p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: betaxanthin control ensemble top-50",
+        stated=4.59,
+        recompute=ensemble("w134_bxctx_h12l1p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: 027 precursor comparator",
+        stated=0.131,
+        recompute=transfer_comparator("betaxanthin", "027 flux precursor"),
+    ),
+    Check(
+        claim="target-transfer: 027 context comparator",
+        stated=0.115,
+        recompute=transfer_comparator("betaxanthin", "027 context-only"),
+    ),
+    Check(
+        claim="target-transfer: kNN comparator",
+        stated=0.145,
+        recompute=transfer_comparator("betaxanthin", "cosine kNN"),
+    ),
+    # sec:target-transfer -- rounds 119 and 120.
+    Check(
+        claim="target-transfer: two summary columns arm mean",
+        stated=0.101,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: two summary columns arm sd",
+        stated=0.061,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: two summary columns paired difference",
+        stated=0.023,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: two summary columns paired sd",
+        stated=0.072,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control", "sd_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: two summary columns seeds above",
+        stated=4,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: two summary columns single-seed top-50",
+        stated=3.03,
+        recompute=transfer(
+            "betaxanthin: two summary columns against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: two summary columns six-seed ensemble",
+        stated=0.071,
+        recompute=ensemble("w136_bxratio_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: decayed affine arm mean",
+        stated=0.073,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: decayed affine arm sd",
+        stated=0.017,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: decayed affine paired difference",
+        stated=-0.005,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: decayed affine paired sd",
+        stated=0.058,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: decayed affine seeds above",
+        stated=3,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: deletion-only graph arm mean",
+        stated=0.058,
+        recompute=transfer(
+            "betaxanthin: deletion-only cell graphs against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only graph arm sd",
+        stated=0.075,
+        recompute=transfer(
+            "betaxanthin: deletion-only cell graphs against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only graph paired difference",
+        stated=-0.020,
+        recompute=transfer(
+            "betaxanthin: deletion-only cell graphs against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only graph paired sd",
+        stated=0.076,
+        recompute=transfer(
+            "betaxanthin: deletion-only cell graphs against the control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only graph seeds above",
+        stated=2,
+        recompute=transfer(
+            "betaxanthin: deletion-only cell graphs against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: rule-count columns arm mean",
+        stated=0.074,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: rule-count columns arm sd",
+        stated=0.059,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: rule-count columns paired difference",
+        stated=-0.004,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: rule-count columns paired sd",
+        stated=0.092,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control", "sd_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: rule-count columns seeds above",
+        stated=2,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: rounds 119/120 ensemble top-50 floor (deletion-only)",
+        stated=4.79,
+        recompute=ensemble("w137_bxdel_h12l1p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: rounds 119/120 ensemble top-50 ceiling (decayed affine)",
+        stated=5.19,
+        recompute=ensemble("w136_bxstorewd_h12l1p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: rounds 119/120 single-seed top-50 floor (rule counts)",
+        stated=2.96,
+        recompute=transfer(
+            "betaxanthin: six rule-count columns against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: rounds 119/120 single-seed top-50 ceiling (decayed affine)",
+        stated=3.59,
+        recompute=transfer(
+            "betaxanthin: whole vector, affine decayed and slowed, against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    # sec:target-transfer -- round 123, the deletion-only graph with the store affine.
+    Check(
+        claim="target-transfer: deletion-only store arm mean",
+        stated=0.121,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store arm sd",
+        stated=0.025,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs deletion-only graph, paired",
+        stated=0.063,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs deletion-only graph, paired sd",
+        stated=0.065,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs deletion-only graph, seeds above",
+        stated=6,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs old-graph store, paired",
+        stated=0.000,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against the store affine",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs old-graph store, paired sd",
+        stated=0.017,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against the store affine",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs old-graph store, seeds above",
+        stated=4,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against the store affine",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: deletion-only store single-seed top-50",
+        stated=4.93,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against the store affine",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: deletion-only store ensemble top-50",
+        stated=5.59,
+        recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: deletion-only store six-seed ensemble",
+        stated=0.131,
+        recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "spearman"),
+    ),
+    # sec:target-transfer -- round 122, the width-90 betaxanthin control.
+    Check(
+        claim="target-transfer: width-90 control arm mean",
+        stated=0.109,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: width-90 control arm sd",
+        stated=0.053,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: width-90 control paired difference",
+        stated=0.030,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: width-90 control paired sd",
+        stated=0.079,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: width-90 control seeds above",
+        stated=4,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: width-90 control single-seed top-50",
+        stated=4.73,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: width-90 control six-seed ensemble",
+        stated=0.134,
+        recompute=ensemble("w139_bxwide_h90l2p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: width-90 control ensemble top-50",
+        stated=5.59,
+        recompute=ensemble("w139_bxwide_h90l2p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    # sec:target-transfer -- round 123, the store affine at width 90.
+    Check(
+        claim="target-transfer: wide store arm mean",
+        stated=0.134,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: wide store arm sd",
+        stated=0.020,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: wide store paired difference",
+        stated=0.025,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: wide store paired sd",
+        stated=0.051,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: wide store seeds above",
+        stated=4,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: wide store single-seed top-50",
+        stated=4.09,
+        recompute=transfer(
+            "betaxanthin: width 90 with the store affine against the width-90 control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: wide store six-seed ensemble",
+        stated=0.153,
+        recompute=ensemble("w140_bxwidestore_h90l2p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: wide store ensemble top-50",
+        stated=5.19,
+        recompute=ensemble("w140_bxwidestore_h90l2p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    # sec:target-transfer -- round 125, the growth and production blocks alone.
+    Check(
+        claim="target-transfer: growth block arm mean",
+        stated=0.033,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the whole vector",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block arm sd",
+        stated=0.021,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the whole vector",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block vs whole vector",
+        stated=-0.088,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the whole vector",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block vs whole vector sd",
+        stated=0.029,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the whole vector",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block vs whole vector seeds above",
+        stated=0,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the whole vector", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: growth block vs control",
+        stated=-0.046,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the control", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block vs control sd",
+        stated=0.064,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the control", "sd_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block vs control seeds above",
+        stated=1,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: growth block single-seed top-50",
+        stated=3.06,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: growth block six-seed ensemble",
+        stated=0.059,
+        recompute=ensemble("w142_bxgrowth_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: production block arm mean",
+        stated=0.091,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the whole vector",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block arm sd",
+        stated=0.040,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the whole vector",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block vs whole vector",
+        stated=-0.030,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the whole vector",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block vs whole vector sd",
+        stated=0.034,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the whole vector",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block vs whole vector seeds above",
+        stated=1,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the whole vector",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: production block vs control",
+        stated=0.013,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block vs control sd",
+        stated=0.021,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the control", "sd_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block vs control seeds above",
+        stated=5,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: production block single-seed top-50",
+        stated=3.63,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: production block six-seed ensemble",
+        stated=0.112,
+        recompute=ensemble("w142_bxprod_h12l1p1_e200", "spearman"),
+    ),
+    # sec:target-transfer -- round 127, twelve seeds of the deletion-only store.
+    Check(
+        claim="target-transfer: deletion-only store twelve-seed single mean",
+        stated=0.116,
+        recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "mean_single_spearman", "arm"),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store twelve-seed count",
+        stated=12,
+        recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "n_seeds", "arm"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: deletion-only store twelve-seed ensemble",
+        stated=0.129,
+        recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "spearman", "all_seeds"),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store twelve-seed ensemble top-50",
+        stated=5.39,
+        recompute=ensemble(
+            "w140_bxdelstore_h12l1p1_e200", "top50_enrichment", "all_seeds"
+        ),
+        tolerance=0.006,
+    ),
+    # sec:target-transfer -- round 128, the wide store on the deletion-only graph.
+    Check(claim="target-transfer: wide corrected-graph store arm", stated=0.120,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against the width-90 control", "mean_spearman", "arm"), tolerance=0.0006),
+    Check(claim="target-transfer: wide corrected-graph store arm sd", stated=0.024,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against the width-90 control", "sd_spearman", "arm"), tolerance=0.0006),
+    Check(claim="target-transfer: wide corrected-graph store vs wide control", stated=0.011,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against the width-90 control", "mean_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: wide corrected-graph store vs wide control sd", stated=0.067,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against the width-90 control", "sd_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: wide corrected-graph store vs wide control seeds above", stated=3,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against the width-90 control", "n_positive"), tolerance=0.5),
+    Check(claim="target-transfer: wide corrected-graph store vs width-12 store", stated=-0.001,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against the width-12 one", "mean_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: wide corrected-graph store vs width-12 store sd", stated=0.035,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against the width-12 one", "sd_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: wide corrected-graph store top-50", stated=4.43,
+          recompute=transfer("betaxanthin: width 90 with the store affine on deletion-only graphs against the width-90 control", "mean_top50_enrichment", "arm"), tolerance=0.006),
+    Check(claim="target-transfer: wide corrected-graph store six-seed ensemble", stated=0.147,
+          recompute=ensemble("w145_bxwidedelstore_h90l2p1_e200", "spearman"), tolerance=0.0006),
+    Check(claim="target-transfer: wide corrected-graph store six-seed ensemble top-50", stated=4.99,
+          recompute=ensemble("w145_bxwidedelstore_h90l2p1_e200", "top50_enrichment"), tolerance=0.006),
+    # sec:target-transfer -- rounds 130 and 131, the two affine schedules.
+    Check(claim="target-transfer: affine at 40 arm", stated=0.074,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against the deletion-only store", "mean_spearman", "arm"), tolerance=0.0006),
+    Check(claim="target-transfer: affine at 40 arm sd", stated=0.046,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against the deletion-only store", "sd_spearman", "arm"), tolerance=0.0006),
+    Check(claim="target-transfer: affine at 40 store level", stated=0.121,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against the deletion-only store", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="target-transfer: affine at 40 vs store", stated=-0.047,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against the deletion-only store", "mean_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: affine at 40 vs store sd", stated=0.053,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against the deletion-only store", "sd_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: affine at 40 vs store seeds above", stated=2,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against the deletion-only store", "n_positive"), tolerance=0.5),
+    Check(claim="target-transfer: affine at 40 control level", stated=0.058,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against deletion-only graphs", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="target-transfer: affine at 40 vs control", stated=0.016,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against deletion-only graphs", "mean_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: affine at 40 vs control sd", stated=0.068,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against deletion-only graphs", "sd_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: affine at 40 vs control seeds above", stated=4,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against deletion-only graphs", "n_positive"), tolerance=0.5),
+    Check(claim="target-transfer: affine at 40 top-50", stated=3.86,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against the deletion-only store", "mean_top50_enrichment", "arm"), tolerance=0.006),
+    Check(claim="target-transfer: affine at 40 store top-50", stated=4.93,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against the deletion-only store", "mean_top50_enrichment", "control"), tolerance=0.006),
+    Check(claim="target-transfer: affine at 40 control top-50", stated=3.39,
+          recompute=transfer("betaxanthin: deletion-only store, affine frozen to epoch 40, against deletion-only graphs", "mean_top50_enrichment", "control"), tolerance=0.006),
+    Check(claim="target-transfer: affine at 40 six-seed ensemble", stated=0.129,
+          recompute=ensemble("w147_bxdelstore40_h12l1p1_e200", "spearman"), tolerance=0.0006),
+    Check(claim="target-transfer: affine at 40 six-seed ensemble top-50", stated=5.79,
+          recompute=ensemble("w147_bxdelstore40_h12l1p1_e200", "top50_enrichment"), tolerance=0.006),
+    Check(claim="target-transfer: affine from escape arm", stated=0.11,
+          recompute=transfer("betaxanthin: deletion-only store, affine from escape, against the deletion-only store", "mean_spearman", "arm"), tolerance=0.0006),
+    Check(claim="target-transfer: affine from escape arm sd", stated=0.05,
+          recompute=transfer("betaxanthin: deletion-only store, affine from escape, against the deletion-only store", "sd_spearman", "arm"), tolerance=0.0006),
+    Check(claim="target-transfer: affine from escape vs store", stated=-0.01,
+          recompute=transfer("betaxanthin: deletion-only store, affine from escape, against the deletion-only store", "mean_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: affine from escape vs store sd", stated=0.052,
+          recompute=transfer("betaxanthin: deletion-only store, affine from escape, against the deletion-only store", "sd_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: affine from escape vs store seeds above", stated=1,
+          recompute=transfer("betaxanthin: deletion-only store, affine from escape, against the deletion-only store", "n_positive"), tolerance=0.5),
+    Check(claim="target-transfer: affine from escape vs control", stated=0.052,
+          recompute=transfer("betaxanthin: deletion-only store, affine from escape, against deletion-only graphs", "mean_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: affine from escape vs control sd", stated=0.035,
+          recompute=transfer("betaxanthin: deletion-only store, affine from escape, against deletion-only graphs", "sd_difference"), tolerance=0.0006),
+    Check(claim="target-transfer: affine from escape vs control seeds above", stated=6,
+          recompute=transfer("betaxanthin: deletion-only store, affine from escape, against deletion-only graphs", "n_positive"), tolerance=0.5),
+    Check(claim="target-transfer: affine from escape top-50", stated=4.66,
+          recompute=transfer("betaxanthin: deletion-only store, affine from escape, against the deletion-only store", "mean_top50_enrichment", "arm"), tolerance=0.006),
+    Check(claim="target-transfer: affine from escape six-seed ensemble", stated=0.120,
+          recompute=ensemble("w148_bxdelstorer15_h12l1p1_e200", "spearman"), tolerance=0.0006),
+    Check(claim="target-transfer: affine from escape six-seed ensemble top-50", stated=6.19,
+          recompute=ensemble("w148_bxdelstorer15_h12l1p1_e200", "top50_enrichment"), tolerance=0.006),
+    # sec:target-physics -- the direction rule, the MOMA and HiGHS stores, degeneracy.
+    Check(claim="target-physics: bx sign10 fixed forward", stated=1754,
+          recompute=physics_store("betaxanthin", "sign10", "thermo", "n_fixed_forward"), tolerance=0.5),
+    Check(claim="target-physics: bx sign10 fixed reverse", stated=1068,
+          recompute=physics_store("betaxanthin", "sign10", "thermo", "n_fixed_reverse"), tolerance=0.5),
+    Check(claim="target-physics: bx sign10 conflicts", stated=97,
+          recompute=physics_store("betaxanthin", "sign10", "thermo", "n_conflicts_with_plain_wild_type_flux"), tolerance=0.5),
+    Check(claim="target-physics: bx sign10 wild type infeasible", stated=1,
+          recompute=physics_store("betaxanthin", "sign10", "wild_type_infeasible"), tolerance=0.5),
+    Check(claim="target-physics: bx sign30 fixed forward", stated=1071,
+          recompute=physics_store("betaxanthin", "sign30", "thermo", "n_fixed_forward"), tolerance=0.5),
+    Check(claim="target-physics: bx sign30 fixed reverse", stated=905,
+          recompute=physics_store("betaxanthin", "sign30", "thermo", "n_fixed_reverse"), tolerance=0.5),
+    Check(claim="target-physics: bx sign30 conflicts", stated=69,
+          recompute=physics_store("betaxanthin", "sign30", "thermo", "n_conflicts_with_plain_wild_type_flux"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA lethal", stated=107,
+          recompute=physics_store("betaxanthin", "moma", "n_lethal"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA lethal in the source", stated=93,
+          recompute=physics_store("betaxanthin", "moma", "n_lethal_source"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA ratios moved", stated=59,
+          recompute=physics_store("betaxanthin", "moma", "n_genes_ratio_moved_gt_0.01"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA vectors moved", stated=1056,
+          recompute=physics_store("betaxanthin", "moma", "n_genes_log1p_vector_moved"), tolerance=0.5),
+    Check(claim="target-physics: bx MOMA median distance", stated=0.39,
+          recompute=physics_store("betaxanthin", "moma", "median_relative_l2_log1p_to_source"), tolerance=0.005),
+    Check(claim="target-physics: bx HiGHS lethal", stated=93,
+          recompute=physics_store("betaxanthin", "pfba", "n_lethal"), tolerance=0.5),
+    Check(claim="target-physics: bx HiGHS ratios moved", stated=17,
+          recompute=physics_store("betaxanthin", "pfba", "n_genes_ratio_moved_gt_0.01"), tolerance=0.5),
+    Check(claim="target-physics: bx HiGHS median distance to GLPK", stated=0.015,
+          recompute=physics_store("betaxanthin", "pfba", "median_relative_l2_log1p_to_source"), tolerance=0.0005),
+    Check(claim="target-physics: GLPK store no-effect deletions", stated=1031,
+          recompute=degeneracy("YPD_bx", "n_no_effect"), tolerance=0.5),
+    Check(claim="target-physics: GLPK store no-effect vectors differing", stated=1025,
+          recompute=degeneracy("YPD_bx", "n_no_effect_vector_differs"), tolerance=0.5),
+    Check(claim="target-physics: GLPK store no-effect median distance", stated=0.38,
+          recompute=degeneracy("YPD_bx", "median_rel_l2_log1p"), tolerance=0.005),
+    Check(claim="target-physics: HiGHS store no-effect vectors differing", stated=428,
+          recompute=degeneracy("YPD_bx_pfba", "n_no_effect_vector_differs"), tolerance=0.5),
+    Check(claim="target-physics: HiGHS store no-effect p90 distance", stated=0.39,
+          recompute=degeneracy("YPD_bx_pfba", "p90_rel_l2_log1p"), tolerance=0.005),
+    Check(claim="target-physics: bx MOMA store no-effect vectors differing", stated=18,
+          recompute=degeneracy("YPD_bx_moma", "n_no_effect_vector_differs"), tolerance=0.5),
+    # sec:target-physics -- the store read without the backbone.
+    Check(claim="store-baselines: GLPK growth block ridge", stated=-0.006,
+          recompute=store_baseline("betaxanthin", "pfba_glpk_growth", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: GLPK growth block kNN", stated=-0.004,
+          recompute=store_baseline("betaxanthin", "pfba_glpk_growth", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: GLPK growth block forest", stated=0.009,
+          recompute=store_baseline("betaxanthin", "pfba_glpk_growth", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: GLPK whole vector kNN", stated=0.097,
+          recompute=store_baseline("betaxanthin", "pfba_glpk_full", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: HiGHS store kNN", stated=0.195,
+          recompute=store_baseline("betaxanthin", "pfba_highs", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: HiGHS store kNN top-50", stated=3.39,
+          recompute=store_baseline("betaxanthin", "pfba_highs", "knn", "top50_enrichment"), tolerance=0.006),
+    Check(claim="store-baselines: MOMA store ridge", stated=0.135,
+          recompute=store_baseline("betaxanthin", "moma", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: flux statistics kNN", stated=0.145,
+          recompute=store_baseline("betaxanthin", "flux_stats", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: ProtT5 kNN", stated=0.144,
+          recompute=store_baseline("betaxanthin", "prot_T5_all", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: ProtT5 kNN top-50", stated=4.59,
+          recompute=store_baseline("betaxanthin", "prot_T5_all", "knn", "top50_enrichment"), tolerance=0.006),
+    Check(claim="store-baselines: GLPK store with ProtT5 forest top-50", stated=4.99,
+          recompute=store_baseline("betaxanthin", "pfba_glpk_full+prot_T5_all", "forest", "top50_enrichment"), tolerance=0.006),
+    Check(claim="store-baselines: capped driving-force concentrations ridge", stated=0.152,
+          recompute=store_baseline("betaxanthin", "mdfcap100_conc", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: capped driving-force concentrations ridge top-50", stated=3.39,
+          recompute=store_baseline("betaxanthin", "mdfcap100_conc", "ridge", "top50_enrichment"), tolerance=0.006),
+    Check(claim="store-baselines: sampled-cone mean ridge", stated=0.007,
+          recompute=store_baseline("betaxanthin", "sampled_mean", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: sampled-cone mean kNN", stated=0.064,
+          recompute=store_baseline("betaxanthin", "sampled_mean", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: sampled-cone mean forest", stated=0.102,
+          recompute=store_baseline("betaxanthin", "sampled_mean", "forest", "mean_spearman"), tolerance=0.0006),
+]
+
+
+def main() -> None:
+    failed = 0
+    for check in CHECKS:
+        got = check.recompute()
+        agrees = abs(got - check.stated) < check.tolerance
+        failed += 0 if agrees else 1
+        mark = "ok  " if agrees else "WRONG"
+        print(f"{mark} {check.claim:58s} document {check.stated:,g}  files {got:,.4f}")
+    print(f"\n{len(CHECKS)} checks, {failed} disagreeing with the document")
+    sys.exit(1 if failed else 0)
+
+
+if __name__ == "__main__":
+    main()

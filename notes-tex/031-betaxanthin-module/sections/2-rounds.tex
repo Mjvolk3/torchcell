@@ -1,0 +1,199 @@
+%% notes-tex/031-betaxanthin-module/sections/2-rounds.tex
+\section{The rounds\secstatus{todo}}
+\label{sec:rounds}
+
+Round 117 (jobs 2741 and 2742, w134) reads the whole betaxanthin vector through the
+zero-initialized affine. Round 119 (jobs 2749 and 2750, w136) reads two summary columns
+only, the growth ratio and the production ratio, and separately the whole vector with
+the affine in its own optimizer group at weight decay 0.1 and a tenth of the rate. Round
+120 (w137) is the deletion-only graph, and the six rule-count columns of the
+essentiality study's round 77 over every GEM gene. Round 122 (w139) is the affine-free
+control on the backbone 020 and 027 trained, width 90, nine attention heads, two
+blocks, where the graph regularizer is evaluated; a first build at width 48 with four
+heads died in that term on every cell (jobs 2757 and 2758, the round-8 failure the
+essentiality document records). Round 123 (w140) puts the store affine on that backbone,
+and on the deletion-only graph at width 12; round 125 (w142) splits the store into its
+growth block and its production block, 4,178 and 4,177 columns, each read alone. Round
+127 (w144) adds six seeds to the best cell. Round 128 (w145) is the store on the
+deletion-only graph at width 90, and round 132 (w149) the wide control on that graph
+without the store, which completes the width-90 two-by-two of graph against store.
+Rounds 130 and 131 (w147, w148) answer the plateau finding of rounds 117, 123 and 125
+directly: the store on the deletion-only graph with the affine's parameters frozen
+(\texttt{--ess-affine-start-epoch}) until epoch 40, and separately until the trailing
+five-epoch mean of validation Pearson reaches 0.15
+(\texttt{--ess-affine-start-val-pearson}), so the backbone escapes before the affine can
+carry the target. A zero-initialized affine without gradient contributes exactly 0, so
+each cell is its control until the start epoch, which the result records. Rounds 133 to
+142 screen the essentiality finalists and the physically constrained stores of
+Section~\ref{sec:physics}, every one at width 12 on the deletion-only graph over six
+seeds, paired against round 120's control on that graph and against round 123's store on
+it: round 133 (w152) the vector with the six rule-count columns beside it, the
+essentiality study's best single model; round 134 (w153) the cached solve head, a
+hidden-256 perceptron over the store, in place of the affine; round 135 (w154) the linear
+minimization-of-metabolic-adjustment store; round 139 (w156) the parsimonious store
+rebuilt on the HiGHS two-stage path the essentiality stores use; round 140 (w157) the
+max-min driving-force concentration store; round 142 (w159) the mean of six samples of
+each deletion's flux cone. Rounds 144 and 145 (w161, w162) read the size question on the
+best cell, width 6 with two heads and transformer dropout 0.3 against the incumbent
+width 12 at 0.1. The stores are written on the target model over the source store's
+genes and reaction order, with the growth-ratio column unchanged, so each pair isolates
+the vector.
+
+Round 117 is read (Table~\ref{tab:target-transfer}). On betaxanthin the whole-vector
+affine reads a pinned Spearman of 0.121 (sd 0.011 over six seeds) against the control's
+0.079 (sd 0.056): $+0.043$ paired by seed (sd 0.049), above on five of six. What the
+seeds show is a change of character more than of level: the control's score depends on
+whether its seed leaves the plateau (0.024 to 0.174), the store arm's does not (0.102 to
+0.133). Three store seeds were selected on the plateau, at validation Pearson $-0.02$
+and epochs 127 to 181, and still read 0.12 to 0.13 on test, so the affine's linear read
+of the strain's flux vector carries that rank on its own, on a test set that is 636 of
+639 GEM genes. The selection rule cannot see it: the pool the validation set is drawn
+from holds 275 GEM genes in 4,082, and the affine reads a constant row on every other
+gene, so validation Pearson is nearly blind to the one term that scores on the pinned
+test. Averaged over the six seeds the store arm reads 0.135 (the two seed triples 0.146
+and 0.133) and the control 0.076, against 027's precursor readout at 0.131 over three
+seeds at width 90, its context-only control at 0.115, and the cosine kNN at 0.145. On
+the metric the task is about, the top-50 enrichment of the highest producers, the order
+reverses: 3.49 for the store arm against 4.06 for the control on single seeds, 4.39
+against 4.59 ensembled (a 10 percent base rate, so 35 to 46 percent precision). The
+vector lifts the rank correlation of a small backbone to where 027's larger one sat and
+does not lift its top-50 call.
+
+Rounds 119 and 120 are read, and they locate the round-117 gain in the whole vector
+read through a free affine. The two summary columns read 0.101 (sd 0.061) against the
+control's 0.079, $+0.023$ paired (sd 0.072), above on four of six: three seeds were
+selected at epoch 197 at validation Pearson 0.04 to 0.05 and read 0.13 on test, the
+round-117 pattern, and one seed reads $-0.021$, so the level comes with the control's
+spread rather than the whole vector's. Ensembled over six seeds it reads 0.071, under the
+control's 0.076, and its single-seed top-50 enrichment is 3.03. The whole vector with the
+affine decayed and slowed reads 0.073 (sd 0.017), $-0.005$ paired (sd 0.058), above on
+three of six; three of its seeds were selected at epoch 2 at validation Pearson 0, where
+the affine has taken two steps, and read 0.05 to 0.08. So the rate the affine trains at
+is part of what round 117 measured, and slowing it returns the arm to the control. The
+deletion-only graph without an affine reads 0.058 (sd 0.075), $-0.020$ paired (sd
+0.076), above on two of six, with one seed at $-0.089$ and every selection between
+epochs 3 and 69; the six rule-count columns read 0.074 (sd 0.059), $-0.004$ paired (sd
+0.092), above on two of six. Neither the graph nor the rule counts moves the rank, in
+either direction, beyond the seed spread. One read cuts across all four: the six-seed
+ensemble's top-50 enrichment is 4.8 to 5.2 for every arm of rounds 119 and 120 against
+3.0 to 3.6 for their single seeds, and 4.59 for the control's ensemble, so on the call
+the task is about, averaging seeds is worth more than any of these representations, as
+it was on the essentiality endpoint (the essentiality document's fold-ensemble section). Each ensemble is one
+number with no spread, so that ordering among the arms is not a measurement.
+
+The deletion-only half of round 123 is read (job 2760, 3 h 34 min for six cells at a
+32.6 GB peak): the store affine on the graph that carries the two alleles, the strain as
+built. Against the deletion-only graph without the affine it reads 0.121 (sd 0.025)
+against 0.058, $+0.063$ paired (sd 0.065), above on six of six; against the round-117
+store arm on the old graph it reads $-0.000$ paired (sd 0.017), above on four of six, so
+the rank the affine carries is the same on either graph. What changes is where the
+seeds are selected and what the call is worth. Five of six were selected off the
+plateau, at validation Pearson 0.20 to 0.27 and epochs 46 to 105, where round 117's
+seeds sat on it at $-0.02$; the sixth (seed 2704) was selected on the plateau at epoch
+149 and its pinned predictions are rank-identical to round 117's seed 2704 (Spearman 1.0
+between the two arms, largest difference 0.004), which is what a plateau cell is: the
+affine's read of the store and nothing from the graph. The top-50 enrichment is 4.93 on
+single seeds against 3.49 for the store on the old graph, 3.39 for the deletion-only
+graph alone and 4.06 for the control, and 5.59 ensembled over six seeds, the highest of
+any arm; the six-seed rank is 0.131. So the strain represented as built is the first
+cell where the store lifts both the rank and the call, and it is the arm the width and
+block rounds are now measured against.
+
+The betaxanthin half of round 122 is read (jobs 2762 and 2763, 7 h 11 min and 7 h 23
+min for three cells each at a 16.5 GB peak): the affine-free control on 027's backbone,
+width 90, nine heads, two blocks, on the old graph. It reads 0.109 (sd 0.053) against
+the width-12 control's 0.079, $+0.030$ paired (sd 0.079), above on four of six, with a
+top-50 enrichment of 4.73 against 4.06; ensembled over six seeds 0.134 and 5.59, where
+027's own three-seed cell of this form read 0.115. Every wide seed leaves the plateau,
+selected at epochs 9 to 107 with validation Pearson 0.16 to 0.36, where the width-12
+arms lose a third of their seeds to it; the validation loss bottoms at a median epoch of
+42 and then rises by 0.01 to 0.11 to epoch 199, and two seeds fall back to a constant
+predictor by the end. So width buys the escape and the early peak, and 200 epochs is
+four times what these cells use. Against the width-12 store affine on the corrected
+graph (0.121, 4.93, ensembled 0.131 and 5.59), the seven-times-wider backbone without
+the store reads the same on every measure, which is the size of the store's
+contribution at width 12. Whether the two add is round 128 (w145), the store on the
+corrected graph at width 90.
+
+The wide half of round 123 is read (jobs 2766 and 2767, 7 h 25 min and 7 h 20 min):
+the store affine on 027's backbone, old graph. It reads 0.134 (sd 0.020) against the
+wide control's 0.109, $+0.025$ paired (sd 0.051), above on four of six, and ensembled
+over six seeds 0.153, the highest rank of any cell on this split, above 027's precursor
+readout at 0.131 and the cosine kNN at 0.145. The call moves the other way, as in round
+117: top-50 enrichment 4.09 against the wide control's 4.73 on single seeds and 5.19
+against 5.59 ensembled. The seeds show why. Four of the six were selected on the plateau,
+at validation Pearson $-0.06$ to $0.06$ and epochs 9 to 196, where the wide control had
+no plateau seed at all; the two that escaped were selected at 0.29 and 0.30. So at width
+90 the affine's read of the store carries the rank on its own while the backbone stays
+constant on most seeds, and the top-50 call, which the escaped backbone supplies,
+follows the escape rate. On the old graph the width-12 store had three plateau seeds of
+six and the corrected graph one; round 128 puts the store on the corrected graph at
+width 90.
+
+Round 125 is read (jobs 2768 and 2769, 4 h 29 min and 4 h 38 min): the whole vector's
+two blocks read alone, at width 12 on the old graph, each paired against the whole
+vector of round 117 and against the control. The growth block alone, 4,178 columns,
+reads 0.033 (sd 0.021): $-0.088$ paired against the whole vector (sd 0.029), above on
+no seed, and $-0.046$ against the control (sd 0.064), above on one of six, with a top-50
+enrichment of 3.06; ensembled 0.059. The production block alone, 4,177 columns, reads
+0.091 (sd 0.040): $-0.030$ against the whole vector (sd 0.034), above on one of six, and
+$+0.013$ against the control (sd 0.021), above on five of six, top-50 3.63; ensembled
+0.112. So the rank the affine carries lives in the production half, the parsimonious
+solve at 90 percent of the knockout's own growth with the betaxanthin demand as the
+objective, and the growth half carries none of it on its own and costs the control
+0.046 when read alone; yet the whole vector beats the production half by 0.030 on five
+of six seeds, so the growth columns add to the production columns what they subtract
+from the backbone. Three seeds of each half were selected on the plateau, as with the
+whole vector, and the validation loss bottoms at a median epoch of 53 on both.
+
+Round 127 is read (job 2771, 3 h 40 min): six more seeds, 2706 to 2711, of the store on
+the corrected graph, so the best betaxanthin cell has twelve. The new six read 0.058 to
+0.138, mean 0.111, every one selected off the plateau at validation Pearson 0.15 to
+0.22, so over twelve seeds the arm reads 0.116 (sd 0.027, standard error 0.008) with a
+top-50 enrichment of 4.86. Averaging all twelve reads 0.129 and 5.39 against 0.131 and
+5.59 for the first six, so the ensemble has saturated at six on this cell: the second
+six seeds add nothing to the rank or the call, and the ensemble numbers of the transfer
+arms, one draw each, are read as sitting within about 0.02 and 0.2 of where more seeds
+would put them.
+
+Round 128 is read (jobs 2772 and 2773, 7 h 04 min and 7 h 31 min for three cells each):
+the store affine on 027's backbone, width 90, on the deletion-only graph, the fourth cell
+of the width-90 two-by-two. It reads 0.120 (sd 0.024) against the wide control on the old
+graph at 0.109, $+0.011$ paired (sd 0.067), above on three of six, and against the
+width-12 store on the same graph at 0.121, $-0.001$ paired (sd 0.035), above on three
+of six; top-50 enrichment 4.43 against 4.73 and 4.93. Ensembled over six seeds it reads
+0.147 and 4.99, under the old-graph wide store's 0.153 and the width-12 corrected-graph
+store's 5.59. What the graph correction changes at width 90 is the plateau, as it did at
+width 12: every seed is selected off it, at epochs 21 to 50 with validation Pearson 0.22
+to 0.28, where the old-graph wide store had four plateau seeds of six. The rank does not
+follow. Width buys the escape (round 122), the store buys the rank at width 12 (round
+123), and put together on the strain as built they read what either reads alone, so the
+two contributions do not add, and the seed spread (sd 0.024) is the smallest of the four
+wide cells. The validation loss bottoms at epochs 8 to 42 and rises 0.09 to 0.15 by epoch
+199 on every seed, the round-122 pattern, so these seven-hour cells spend six hours past
+their minimum. Round 132 (w149), the wide control on this graph, completes the square.
+
+Rounds 130 and 131 are read (jobs 2782 and 2783, 3 h 52 min and 3 h 46 min), the two
+schedules for the store affine on the deletion-only graph. Round 130 holds the affine at
+zero until epoch 40: it reads 0.074 (sd 0.046) against the store arm's 0.121 ($-0.047$
+paired, sd 0.053, above on two of six) and against the affine-free control's 0.058
+($+0.016$, sd 0.068, four of six), top-50 3.86 against 4.93 and 3.39, and ensembled over
+six seeds 0.129 with a top-50 of 5.79 against 0.131 and 5.59. The affine started at
+epoch 40 in every seed, and five of the six seeds select their epoch before it (10, 32,
+34, 25 and 38; the sixth at 76), so the selected cell is the affine-free trajectory in
+five seeds of six: the validation peak the affine-free model reaches before epoch 40 is
+not overtaken once the affine arrives. Round 131 releases the affine from epoch 5 once
+the trailing validation Pearson reaches 0.15: the release came at epochs 5, 6, 25, 31, 6
+and 40, and the seeds select at 2, 57, 35, 32, 78 and 38, four of them after the
+release. It reads 0.110 (sd 0.050), $-0.010$ against the store arm (sd 0.052, one of
+six) and $+0.052$ against the control (sd 0.035, six of six), top-50 4.66, ensembled
+0.120 with a top-50 of 6.19, the highest ensemble call of any betaxanthin arm. The seed
+whose release fell at epoch 40 is the same trajectory in both rounds (0.016 at epoch 38
+in each), a check that the schedule and not the seed is what separates them. So the
+store's gain does not come from the first epochs: the affine released after the model
+leaves the constant predictor reads the store arm's level and its best call, and the
+affine held to epoch 40 loses the level because the selected epoch comes first. A
+release rule on the validation curve costs nothing and keeps the gain; a fixed late
+start does not.
+
+\input{tables/target_transfer}

@@ -1,0 +1,126 @@
+%% notes-tex/032-amino-acid-module/sections/2-rounds.tex
+\section{The rounds\secstatus{todo}}
+\label{sec:rounds}
+
+Round 118 (jobs 2743 and 2744, w135) reads the essentiality store's growth vector on
+the amino-acid medium into the 19-output affine on the mean channel. Round 121 (w138) is
+the amino-acid production store, its 19 ratios and the growth ratio alone, and the whole
+vector with all 42 summary statistics. Round 122 (w139) is the affine-free control on
+the backbone 020 and 027 trained, width 90, nine attention heads, two blocks, where the
+graph regularizer is evaluated. Round 124 (w141) is the deletion-only graph; round 126
+(w143) the whole-vector store affine on it, paired against round 124's control on that
+graph and against round 118's affine on the old one. Round 129 (w146) runs the
+deletion-only control for 300 epochs. Rounds 136 to 143 screen the essentiality
+finalists and the physically constrained stores of Section~\ref{sec:physics}, every one
+at width 12 on the deletion-only graph over six seeds, paired against round 124's
+control and round 126's store: round 136 (w150) the vector with the six rule-count
+columns beside it, the essentiality study's best single model; round 137 (w151) the
+cached solve head, a hidden-256 perceptron over the store, in place of the affine;
+round 138 (w155) the linear minimization-of-metabolic-adjustment store; round 141 (w158)
+the max-min driving-force concentration store; round 143 (w160) the mean of six samples
+of each deletion's flux cone. Round 146 (w163) reads the size question, width 6 with two
+heads against width 12, on the store arm. The stores are written on the prototroph over
+the source store's genes and reaction order, with the growth-ratio column unchanged, so
+each pair isolates the vector.
+
+Round 118 is read. On the amino acids the whole-vector affine into the 19-output mean
+reads 0.025 (sd 0.015) against the control's 0.034 (sd 0.025): $-0.009$ (sd 0.018),
+above on two of six, and both sit under every 027 arm on the same split (0.068, 0.061,
+0.048 at width 90). Two seeds of each arm stayed near a constant predictor (validation
+Pearson 0.01 to 0.02 at selection; one control selected at epoch 2 and scores 0), so the
+width-12 backbone that the essentiality endpoint tuned is under-sized or unstable for
+19 targets at once, and the width arm of round 122 is the test that has to be read
+before any amino-acid affine is. Averaged over seeds the control reads 0.058 and the
+store arm 0.035, so the affine costs a little on this target rather than adding to it.
+
+Round 124 is read (job 2761, 3 h 38 min): the amino-acid control on the deletion-only
+graph, the M\"ulleder strain without the two alleles and the BTS1 copy it never carried.
+It reads 0.049 (sd 0.007) against the old-graph control's 0.034 (sd 0.025), $+0.015$
+paired (sd 0.026), above on five of six. The level is modest; the spread is the finding.
+Every seed of the corrected graph escapes the constant predictor and reads 0.042 to
+0.059, where two seeds of the old graph sat at 0.000 and 0.010, so the collapse round
+118 attributed to the width-12 backbone was in part the graph carrying three genes the
+strain does not have. Ensembled over six seeds it reads 0.062 against 0.058, under 027's
+best at 0.068 and above its context-only cell at 0.061, both at width 90. The
+amino-acid affine arms of rounds 118 and 121 are paired against the old graph; the
+corrected control is the one any further affine on this target is paired against.
+
+Round 121 is read (jobs 2755 and 2756, 4 h 34 min and 4 h 35 min): the amino-acid
+production store, on the old graph. The 19 synthesis ratios with the growth ratio read
+0.031 (sd 0.004) against the control's 0.034, $-0.003$ paired (sd 0.025), above on two
+of six; the growth vector with all 42 summary columns reads 0.023 (sd 0.009), $-0.011$
+paired (sd 0.027), above on two of six. Four of the 20-column arm's seeds were selected
+at validation Pearson 0.005 to 0.025 and still read 0.025 to 0.037 on test, the
+selection blindness of round 117 on a target where the affine has 19 outputs to fill
+from 20 columns. Ensembled over six seeds the two arms read 0.030 and 0.026 against the
+control's 0.058, so neither production summary carries rank the control does not, and
+the amino-acid affine has now been tried three ways on the old graph (the growth vector,
+20 summaries, the vector with 42 summaries) without a gain. Round 126 is the same
+whole-vector affine on the corrected graph, against round 124's control.
+
+Round 126 is read (job 2770, 3 h 40 min): the amino-acid whole-vector affine on the
+corrected graph, the first amino-acid affine paired on the strain as built. It reads
+0.040 (sd 0.005) against the corrected-graph control's 0.049 (sd 0.007), $-0.009$ paired
+(sd 0.011), above on one of six, and ensembled 0.043 against 0.062. Against the old-graph
+affine of round 118 it reads $+0.015$ (sd 0.014), above on six of six, which is the size
+of the graph correction round 124 measured on the control, so the graph and not the
+store is what moved. The affine does on this target what it did on betaxanthin (the sibling
+document) to the seed spread, sd 0.005 against 0.007, and nothing to the level. Four forms of the
+amino-acid store have now been read, the growth vector on either graph and the two
+production summaries, against two controls, and none is above its control; the
+amino-acid module has no gain to report at width 12, and round 122's wide control is
+what says whether width changes that.
+
+The amino-acid half of round 122 is read (jobs 2774 and 2775, 7 h 36 min and 7 h 48
+min): the affine-free control on 027's backbone, width 90, on the old graph, the cell
+round 118 said had to be read before any amino-acid affine. It reads 0.034 (sd 0.010)
+against the width-12 control's 0.034 (sd 0.025), $+0.000$ paired (sd 0.031), above on
+three of six, and ensembled over six seeds 0.050 against 0.058, under the corrected-graph
+control's 0.062 at width 12 and under every 027 arm at this width (0.068, 0.061, 0.048).
+Every wide seed leaves the constant predictor, selected at epochs 10 to 59 with
+validation Pearson 0.09 to 0.13, and the validation loss bottoms at epochs 6 to 21 and
+rises 0.05 to 0.07 by epoch 199. So width does for the amino acids what the graph
+correction did (round 124): it removes the collapsed seeds and tightens the spread (sd
+0.010 against 0.025), and it does nothing to the level. The 027 cells of this form read
+0.061 to 0.068 over three seeds on the same split; the six seeds here read 0.016 to
+0.043, and the difference between the two runs of one architecture is as large as any
+arm effect on this target. With the second amino-acid screen agreeing with the first at
+0.03 and the first's own retest at 0.20 (Section~\ref{sec:physics}), the
+amino-acid endpoint's strain-level rank has no headroom to show an arm effect against,
+and the width read closes the amino-acid backbone question rather than opening one.
+
+Round 129 is read (job 2781, 5 h 34 min): the deletion-only amino-acid control run for
+300 epochs instead of 200, the check that the 200-epoch budget is not cutting the
+amino-acid arms short. It reads 0.049 (sd 0.009) against the 200-epoch control's 0.049
+(sd 0.007), $-0.001$ paired (sd 0.003), above on one of six, and ensembled over six
+seeds 0.060 against 0.062. Four of the six seeds select the same epoch with the same
+score in both runs (148, 88, 75 and 37), since the first 200 epochs of one seed are one
+trajectory; the two whose validation peak moved past epoch 200 (to 287 and 217) read
+0.036 against 0.042 and 0.055 against 0.054. The validation loss bottoms at epochs 20
+to 169 and drifts up by at most 0.014 over the remaining epochs. A hundred more epochs
+change nothing on this target, and the 200-epoch budget stands.
+
+Round 136 is read (job 2786, 3 h 40 min): the essentiality study's best single store,
+the parsimonious vector with the six rule counts (0.934 there), in the affine slot on
+the amino-acid deletion-only graph. It reads 0.033 (sd 0.009) against the affine-free
+control's 0.049 ($-0.016$ paired, sd 0.012, above on one of six) and against the plain
+store affine's 0.040 ($-0.007$, sd 0.013, two of six), ensembled over six seeds 0.037
+against 0.062 and 0.043. The seeds select late (epochs 47 to 186, five of six past
+100) on validation Pearson 0.06 to 0.09, so the arm neither collapses nor escapes
+further than the control does. The rule counts that separate essential from
+non-essential genes carry nothing for the amino-acid rank, and the store affine's small
+loss on this target (round 125) is not recovered by them.
+
+Round 137 is read (job 2787, 3 h 38 min): the cached solve head, a hidden layer of 256
+on the store vector in place of the zero-initialized affine, on the amino-acid
+deletion-only graph. It reads 0.053 (sd 0.008) against the affine-free control's 0.049
+($+0.004$ paired, sd 0.011, above on four of six) and against the store affine's 0.040
+($+0.013$, sd 0.008, six of six), ensembled over six seeds 0.063 against 0.062 and
+0.043. The seeds select at epochs 24 to 192 on validation Pearson 0.07 to 0.10 with the
+validation loss bottoming at 25 to 105. So the head recovers on every seed what the
+affine lost on this target and lands at the control, the highest single amino-acid arm
+of this study (0.033 to 0.049 for the others) and inside the 027 band (0.049 to 0.062).
+The store is not harmful on the amino acids when it is read nonlinearly; it is also not
+helpful, and the ensemble says the same.
+
+\input{tables/target_transfer}

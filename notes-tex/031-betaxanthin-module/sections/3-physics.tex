@@ -111,6 +111,41 @@ gives kNN 0.195 but forest 0.117), and the spread store 0.096, 0.138 and 0.128, 
 width of the region carries rank the mean does not under nearest neighbors. Round 147
 (w164) is the transformer read of the polytope mean, paired against the point.
 
+The annotation-only family, on the same split (Table~\ref{tab:go-models};
+\texttt{target\_go\_models.py}). The essentiality study read DCell's ontology hierarchy
+and a graph convolution over the GO multi-hot beside the transformer; neither had a
+target head, so both are given one here on the ladder's split: DCell's hierarchy in the
+essentiality script's shared-input form with a linear head on the root's state and
+auxiliary regressions, and a perceptron with one hidden layer of 256 over the gene's
+propagated GO multi-hot (2,341 of 2,366 columns with training support), which is what
+the GO graph convolution reduces to on one deletion per instance; the same perceptron
+over the HiGHS parsimonious store row, over ProtT5 and over their concatenations
+separates the annotation, the sequence and the flux families on one model. Full batch,
+Adam at $10^{-3}$, a masked squared error on standardized targets, 200 epochs, the
+epoch selected on validation per-feature Pearson, six seeds. The GO perceptron reads
+0.200 (sd 0.002 over seeds) with a top-50 enrichment of 4.79, selected at epoch 21 or
+22 on every seed and trained in three seconds a seed: above every transformer arm (the
+best single 0.121, the best six-seed ensemble 0.153), above the HiGHS store's nearest
+neighbors (0.195) and with a call at the best transformer arms' level. The store row
+through the same perceptron reads 0.119 with a top-50 of 2.00, ProtT5 0.103 and 4.13,
+so the two inputs the transformer arms read, ProtT5 with the pathway multi-hot, are
+the weaker two of the three families on this target and the pathway multi-hot is a
+weaker annotation than propagated GO. Concatenation adds no rank: GO with the store
+0.198 (sd 0.041), GO with ProtT5 0.173 with the best calls (4.99 single, 5.39
+ensembled), all three 0.175 and 5.03. DCell's hierarchy over the same columns reads
+0.049 (sd 0.043), selected at epochs 8 to 13, under the perceptron on every seed: the
+one-subsystem-per-term wiring costs three quarters of what the flat annotation carries.
+Two things bound the reading. GO annotation is curated in part from deletion
+phenotypes, respiratory function among them, and the screen's top hits are respiratory
+(the 027 read), so an annotation input can carry the target through the literature the
+target itself produced; the split holds out genes, not annotations. And the transformer
+arms were never given this input: the annotation the backbone reads is the pathway
+multi-hot, and rounds 150 and 151 (w167, w168) put the GO multi-hot in the affine
+slot, alone and appended to the HiGHS store, over every annotated gene, the interface
+every other input has entered through.
+
+\input{tables/go_models}
+
 \input{tables/store_degeneracy}
 
 \input{tables/store_baselines}

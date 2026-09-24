@@ -406,6 +406,30 @@ PAIRS = [
         "w143_aadelstore_h12l1p1_e200",
     ),
     (
+        "betaxanthin: GO multi-hot in the affine slot on deletion-only graphs against deletion-only graphs",
+        "betaxanthin",
+        "w167_bxdelgo_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: GO multi-hot in the affine slot on deletion-only graphs against the GLPK store there",
+        "betaxanthin",
+        "w167_bxdelgo_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: HiGHS store with GO appended against the HiGHS store alone",
+        "betaxanthin",
+        "w168_bxdelgopfba_h12l1p1_e200",
+        "w156_bxdelpfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: HiGHS store with GO appended against GO alone",
+        "betaxanthin",
+        "w168_bxdelgopfba_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
         "betaxanthin: MOMA store with the affine released on escape against the MOMA store",
         "betaxanthin",
         "w166_bxdelmomarel_h12l1p1_e200",

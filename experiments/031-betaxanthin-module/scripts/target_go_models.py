@@ -17,7 +17,10 @@ the CPU ladder's split, so the reads sit in the same column as ``target_store_ba
   alpha 0.3, batch normalization over the training rows in every pass;
 * ``go_mlp``: the gene's propagated GO multi-hot through one hidden layer of 256 and a
   linear head, the perceptron the GO graph convolution reduces to on one deletion per
-  instance.
+  instance; and the same perceptron over the HiGHS parsimonious store row
+  (``store_mlp``), over ProtT5 (``prot_mlp``), and over their concatenations
+  (``go_store_mlp``, ``go_prot_mlp``, ``go_prot_store_mlp``), which separate the
+  annotation, the sequence and the flux families on one model.
 
 The instance is a genotype: its GO multi-hot is the OR over its deleted genes' rows of the
 ``go_term_hot`` store, columns with no training support zeroed (the essentiality rule).
@@ -32,7 +35,7 @@ Run from the repo root::
     PYTHONHASHSEED=0 CUDA_VISIBLE_DEVICES="" PYTHONPATH=$PWD \
         ~/miniconda3/envs/torchcell/bin/python \
         experiments/031-betaxanthin-module/scripts/target_go_models.py \
-        --target betaxanthin --workers 2 --threads 8
+        --target betaxanthin --workers 1 --threads 16
 """
 
 from __future__ import annotations
@@ -71,18 +74,31 @@ from dcell_style_baseline import (  # noqa: E402
 )
 from linear_baselines_bx import (  # noqa: E402
     TARGETS,
+    embedding_matrix,
     open_dataset,
     per_feature_pearson,
     read_targets,
     record_genes,
 )
-from target_store_baselines import STUDY, arm_targets, top50_enrichment  # noqa: E402
+from target_store_baselines import STUDY, arm_targets, load_store, top50_enrichment  # noqa: E402
 
 from torchcell.datamodules import CellDataModule  # noqa: E402
 from torchcell.graph import SCerevisiaeGraph  # noqa: E402
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 
-ARMS = ("dcell_style_shared", "go_mlp")
+ARMS = ("dcell_style_shared", "go_mlp", "store_mlp", "prot_mlp", "go_store_mlp", "go_prot_mlp", "go_prot_store_mlp")
+#: The perceptron arms' input blocks: the GO multi-hot (binary), the HiGHS parsimonious
+#: store row (log(1+|v|), standardized on the training genes; a gene the store does not
+#: cover reads the wild-type row) and ProtT5 (standardized), concatenated.
+ARM_INPUTS = {
+    "go_mlp": ("go",),
+    "store_mlp": ("store",),
+    "prot_mlp": ("prot",),
+    "go_store_mlp": ("go", "store"),
+    "go_prot_mlp": ("go", "prot"),
+    "go_prot_store_mlp": ("go", "prot", "store"),
+}
+STORE_SPEC = {"betaxanthin": "YPD_bx_pfba", "amino_acids": "SM_gem"}
 HIDDEN_MLP = 256
 
 
@@ -171,6 +187,7 @@ _Y: np.ndarray | None = None
 _ROWS: dict[str, np.ndarray] | None = None
 _PINNED: np.ndarray | None = None
 _HIER: Hierarchy | None = None
+_BLOCKS: dict[str, np.ndarray] | None = None
 
 
 def masked_mse(pred: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -194,6 +211,8 @@ def run_task(task: Task) -> SeedRead:
         assert _HIER is not None
         net: nn.Module = TargetDCell(_HIER, x, _HIER.widths(Config(width=task.width)), "tanh_bn", n_out)
     else:
+        assert _BLOCKS is not None
+        x = torch.from_numpy(np.concatenate([_BLOCKS[b] for b in ARM_INPUTS[task.arm]], axis=1))
         net = nn.Sequential(nn.Linear(x.shape[1], HIDDEN_MLP), nn.ReLU(), nn.Linear(HIDDEN_MLP, n_out))
     params = list(net.parameters())
     opt = torch.optim.Adam(params, lr=1e-3)
@@ -258,14 +277,18 @@ def run_task(task: Task) -> SeedRead:
 
 
 def main() -> None:
-    global _X, _Y, _ROWS, _PINNED, _HIER
+    global _X, _Y, _ROWS, _PINNED, _HIER, _BLOCKS
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--target", required=True, choices=sorted(STUDY))
     ap.add_argument("--arms", nargs="+", default=list(ARMS), choices=ARMS)
     ap.add_argument("--seeds", nargs="+", type=int, default=list(range(2700, 2706)))
     ap.add_argument("--epochs", type=int, default=200)
     ap.add_argument("--width", type=int, default=8)
-    ap.add_argument("--workers", type=int, default=2)
+    # MEASURED 2026-09-24: a forked pool of two workers sat idle for 77 min with no cell
+    # finished (the parent had initialized torch's thread pool before forking, the
+    # deadlock the fork warning names); in-process with 16 threads a DCell cell takes
+    # minutes, so one worker is the default.
+    ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--threads", type=int, default=8)
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
@@ -350,6 +373,33 @@ def main() -> None:
     print(f"  identity check: {shared} pinned targets match the dump; {int(support.sum())} GO columns with train support", flush=True)
     _X, _Y, _HIER, _PINNED = x, y, hierarchy, pinned
     _ROWS = {k: np.array(v) for k, v in rows.items()}
+    # The perceptron arms' other blocks, per genotype: the store row of the deleted gene
+    # (the first gene the store covers, else the wild-type row) and ProtT5 (the mean over
+    # the genotype's genes), each standardized on the training rows.
+    all_genes = [gs for name in ("train", "val", "test") for gs in
+                 [idx_to_genes.get(i, []) for i in splits[name]]]
+    kept_genes = []
+    for name, indices in splits.items():
+        values = read_targets(base, indices, spec["label"], columns)
+        genes = [idx_to_genes.get(i, []) for i in indices]
+        has = np.isfinite(values).any(axis=1) & np.array([len(g) > 0 for g in genes])
+        kept_genes.extend(genes[i] for i in np.where(has)[0])
+    del all_genes
+    store_rows, store_wild, _ = load_store({"store": STORE_SPEC[args.target], "block": "v_deletion", "flux": True})
+    store = np.stack([next((store_rows[g] for g in gs if g in store_rows), store_wild) for gs in kept_genes]).astype(np.float32)
+    emb = embedding_matrix(("prot_T5_all",), DATA_ROOT, genome, graph)
+    dim_emb = len(next(iter(emb.values())))
+    prot = np.stack([np.mean([emb[g] for g in gs if g in emb], axis=0) if any(g in emb for g in gs) else np.zeros(dim_emb)
+                     for gs in kept_genes]).astype(np.float32)
+
+    def standardized(block: np.ndarray) -> np.ndarray:
+        tr = block[_ROWS["train"]]
+        m, sd = tr.mean(axis=0), tr.std(axis=0)
+        sd[sd == 0] = 1.0
+        return ((block - m) / sd).astype(np.float32)
+
+    _BLOCKS = {"go": x, "store": standardized(store), "prot": standardized(prot)}
+    print(f"  blocks: go {x.shape[1]}, store {store.shape[1]}, prot {prot.shape[1]}", flush=True)
     tasks = [Task(arm=a, seed=s, epochs=args.epochs, width=args.width) for a in args.arms for s in args.seeds]
     if args.workers > 1:
         with ProcessPoolExecutor(args.workers, initializer=set_threads, initargs=(args.threads,)) as pool:
@@ -397,6 +447,16 @@ def main() -> None:
         seconds=time.time() - started,
     )
     out = args.out or osp.join(EXPERIMENT_ROOT, STUDY[args.target], "results", f"go_models_{args.target}.json")
+    # Arms already in the file and not rerun are kept, so a cheap arm can be added
+    # without retraining the hierarchy; a rerun arm replaces its earlier read.
+    if osp.exists(out):
+        with open(out) as fh:
+            previous = Report.model_validate_json(fh.read())
+        assert previous.epochs == report.epochs and previous.width == report.width, "settings differ from the file's"
+        kept = [a for a in previous.arms if a.arm not in {b.arm for b in report.arms}]
+        order = {a: i for i, a in enumerate(ARMS)}
+        report.arms = sorted(kept + report.arms, key=lambda a: order[a.arm])
+        report.seconds += previous.seconds
     with open(out, "w") as fh:
         fh.write(report.model_dump_json(indent=2))
     print(f"wrote {out} in {(time.time() - started) / 60:.1f} min")

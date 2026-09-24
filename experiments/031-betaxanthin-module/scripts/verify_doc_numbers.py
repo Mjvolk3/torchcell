@@ -66,7 +66,69 @@ def polytope(*keys: str):
     return run
 
 
+def go_model(arm: str, key: str):
+    """A value of one arm of the GO-models read (target_go_models.py)."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "go_models_betaxanthin.json")))
+        a = next(x for x in d["arms"] if x["arm"] == arm)
+        if key == "n_columns_with_train_support":
+            return float(d["n_columns_with_train_support"])
+        if key == "select_epoch_min":
+            return float(min(r["select_epoch"] for r in a["seeds"]))
+        if key == "select_epoch_max":
+            return float(max(r["select_epoch"] for r in a["seeds"]))
+        return float(a[key])
+
+    return run
+
+
 CHECKS: list[Check] = [
+    # sec:physics -- the annotation-only family.
+    Check(claim="go-models: GO columns with train support", stated=2341,
+          recompute=go_model("go_mlp", "n_columns_with_train_support"), tolerance=0.5),
+    Check(claim="go-models: GO perceptron", stated=0.200,
+          recompute=go_model("go_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: GO perceptron sd", stated=0.002,
+          recompute=go_model("go_mlp", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="go-models: GO perceptron top-50", stated=4.79,
+          recompute=go_model("go_mlp", "single_mean_top50"), tolerance=0.006),
+    Check(claim="go-models: GO perceptron earliest selected epoch", stated=21,
+          recompute=go_model("go_mlp", "select_epoch_min"), tolerance=0.5),
+    Check(claim="go-models: GO perceptron latest selected epoch", stated=22,
+          recompute=go_model("go_mlp", "select_epoch_max"), tolerance=0.5),
+    Check(claim="go-models: store perceptron", stated=0.119,
+          recompute=go_model("store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: store perceptron top-50", stated=2.00,
+          recompute=go_model("store_mlp", "single_mean_top50"), tolerance=0.006),
+    Check(claim="go-models: ProtT5 perceptron", stated=0.103,
+          recompute=go_model("prot_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: ProtT5 perceptron top-50", stated=4.13,
+          recompute=go_model("prot_mlp", "single_mean_top50"), tolerance=0.006),
+    Check(claim="go-models: GO with store", stated=0.198,
+          recompute=go_model("go_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: GO with store sd", stated=0.041,
+          recompute=go_model("go_store_mlp", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="go-models: GO with ProtT5", stated=0.173,
+          recompute=go_model("go_prot_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: GO with ProtT5 top-50", stated=4.99,
+          recompute=go_model("go_prot_mlp", "single_mean_top50"), tolerance=0.006),
+    Check(claim="go-models: GO with ProtT5 ensemble top-50", stated=5.39,
+          recompute=go_model("go_prot_mlp", "ensemble_top50"), tolerance=0.006),
+    Check(claim="go-models: all three", stated=0.175,
+          recompute=go_model("go_prot_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: all three top-50", stated=5.03,
+          recompute=go_model("go_prot_store_mlp", "single_mean_top50"), tolerance=0.006),
+    Check(claim="go-models: DCell hierarchy", stated=0.049,
+          recompute=go_model("dcell_style_shared", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models: DCell hierarchy sd", stated=0.043,
+          recompute=go_model("dcell_style_shared", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="go-models: DCell earliest selected epoch", stated=8,
+          recompute=go_model("dcell_style_shared", "select_epoch_min"), tolerance=0.5),
+    Check(claim="go-models: DCell latest selected epoch", stated=13,
+          recompute=go_model("dcell_style_shared", "select_epoch_max"), tolerance=0.5),
     # sec:rounds -- round 132, the wide control on the deletion-only graph.
     Check(claim="target-transfer: wide deletion-only control", stated=0.092,
           recompute=transfer("betaxanthin: width 90 on deletion-only graphs against the width-90 control", "mean_spearman", "arm"), tolerance=0.0006),

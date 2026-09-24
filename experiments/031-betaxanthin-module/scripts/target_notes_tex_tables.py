@@ -261,6 +261,66 @@ def amino_acid_concordance() -> str | None:
     return write("amino_acids", "amino_acid_concordance", body, "results/amino_acid_dataset_concordance.json")
 
 
+GO_LABELS = {
+    "dcell_style_shared": "DCell-style hierarchy, shared gene input, root head",
+    "go_mlp": "perceptron over the GO multi-hot",
+    "store_mlp": "perceptron over the HiGHS parsimonious store row",
+    "prot_mlp": "perceptron over ProtT5",
+    "go_store_mlp": "perceptron over GO with the store row",
+    "go_prot_mlp": "perceptron over GO with ProtT5",
+    "go_prot_store_mlp": "perceptron over GO, ProtT5 and the store row",
+}
+
+
+def go_models(target: str) -> str | None:
+    """DCell's hierarchy and the GO perceptron on one target, six seeds and their ensemble."""
+    src = results(target, f"go_models_{target}.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    rows = []
+    for a in d["arms"]:
+        single = f"{a['single_mean_spearman']:+.3f} ({a['single_sd_spearman']:.3f})"
+        ens = f"{a['ensemble_spearman']:+.3f}"
+        if a.get("single_mean_top50") is not None:
+            single += f" / {a['single_mean_top50']:.2f}"
+            ens += f" / {a['ensemble_top50']:.2f}"
+        epochs = ", ".join(str(r["select_epoch"]) for r in a["seeds"])
+        rows.append(
+            f"    {GO_LABELS.get(a['arm'], a['arm'])} & {a['seeds'][0]['n_parameters']:,} & "
+            f"{single} & {ens} & {epochs} \\\\"
+        )
+    label = STUDY[target]["label"]
+    cell = (
+        "the pinned-test Spearman with the standard deviation over seeds and, after the "
+        "slash, the top-50 enrichment"
+        if target == "betaxanthin"
+        else "the mean pinned-test Spearman over the 19 amino acids with the standard "
+        "deviation over seeds"
+    )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        f"  \\caption[The annotation-only family on {label}]{{DCell's ontology hierarchy "
+        "(the essentiality study's shared-input form, a linear head on the root's state, "
+        "auxiliary regressions at alpha 0.3) and a perceptron over the propagated GO "
+        f"multi-hot, on the ladder's split ({d['n_columns_with_train_support']:,} GO "
+        f"columns with training support), full batch, Adam at $10^{{-3}}$, {d['epochs']} "
+        "epochs, the epoch selected by a five-epoch moving average of the validation "
+        f"per-feature Pearson. Columns: parameters, the single-seed read ({cell}), the "
+        "six-seed ensemble scored the same way, and the selected epochs. Written by "
+        "\\texttt{target\\_notes\\_tex\\_tables.py} from "
+        f"\\texttt{{results/go\\_models\\_{target.replace('_', '\\_')}.json}} "
+        "(\\texttt{target\\_go\\_models.py}).}\n"
+        "  \\label{tab:go-models}\n"
+        "  \\begin{tabular}{@{}p{58mm}rrrp{34mm}@{}}\n    \\hline\n"
+        "    model & parameters & single seed (sd) & ensemble & selected epochs \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(target, "go_models", body, f"results/go_models_{target}.json")
+
+
 def main() -> None:
     paths = [
         target_transfer("betaxanthin"),
@@ -270,6 +330,8 @@ def main() -> None:
         store_degeneracy("betaxanthin"),
         store_degeneracy("amino_acids"),
         amino_acid_concordance(),
+        go_models("betaxanthin"),
+        go_models("amino_acids"),
     ]
     for path in paths:
         if path is not None:

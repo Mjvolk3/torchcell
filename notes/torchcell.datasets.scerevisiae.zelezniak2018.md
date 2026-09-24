@@ -141,3 +141,11 @@ clean.
 
 - [x] MetaboliteZelezniak2018Dataset + s_NNNN mapping + build + L0-L4 + registration (WS9)
 - [ ] pHLUM prototrophy-restoring markers as GeneAddition (shared with proteome)
+
+## 2026.09.23 - SM media components (issue 143)
+
+- Both loaders now emit `SM_DEFERRED`, a DISTINCT media node from the Mulleder/Messner `SM`:
+  this paper's "Strains and Culture" names the medium and states no recipe, deferring to
+  Mulleder et al. 2012 (not mirrored), so the composition is a single
+  `composition_deferred` component and the grams are not borrowed from the other papers.
+  Reasoning in [[torchcell.datamodels.media-components]]. Both LMDBs rebuilt + L0-L4 re-run.

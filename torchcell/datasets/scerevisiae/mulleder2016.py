@@ -43,13 +43,13 @@ import pandas as pd
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.media import SM_AGAR
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
@@ -236,11 +236,13 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
                 )
             ]
         )
-        # Synthetic minimal (SM) agar, 30 C, exponential growth (Methods "Yeast").
-        environment = Environment(
-            media=Media(name="SM", state="solid", is_synthetic=True),
-            temperature=Temperature(value=30),
-        )
+        # Synthetic minimal (SM) agar, 30 C, exponential growth (Methods "Yeast"):
+        # 6.7 g/L YNB without amino acids (Sigma Y0626) + 2% glucose + 2% agar, sourced
+        # and quoted on ``SM_AGAR``. The spots on that agar inoculate a liquid SM
+        # subculture, which is what the amino acids are extracted from, so whether this
+        # record's state should be liquid (``SM``) is an open question flagged in
+        # [[torchcell.datamodels.media-components]]; the recipe is the same either way.
+        environment = Environment(media=SM_AGAR, temperature=Temperature(value=30))
         phenotype = MetabolitePhenotype(
             metabolite_level={aa: row[aa] for aa in AMINO_ACIDS},
             metabolite_level_se=None,  # genome-wide screen is n=1 per strain; no per-strain SE

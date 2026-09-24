@@ -11,7 +11,8 @@
   "policy": {
     "carbon_uptake": 3.3,
     "supplement_uptake": 0.165,
-    "unlimited_uptake": 1000.0
+    "unlimited_uptake": 1000.0,
+    "organic_nitrogen_uptake": 0.165
   },
   "policy_note": "supplement_uptake is Suthers 2020 sec2.5's ABSOLUTE 0.165 mmol/gDW/h, anchored to their default 3.3 carbon uptake; it does NOT rescale with carbon_uptake, which is where torchcell's older setup_media_conditions.py diverges from the source",
   "media": {
@@ -174,7 +175,8 @@
       "unresolved": [],
       "excluded_by_role": [],
       "match_channels": {
-        "name": 47
+        "name": 46,
+        "annotation": 1
       },
       "n_bounds": 47,
       "bounds": {
@@ -431,7 +433,8 @@
       "unresolved": [],
       "excluded_by_role": [],
       "match_channels": {
-        "name": 46
+        "name": 45,
+        "annotation": 1
       },
       "n_bounds": 46,
       "bounds": {
@@ -683,7 +686,8 @@
       "unresolved": [],
       "excluded_by_role": [],
       "match_channels": {
-        "name": 45
+        "name": 44,
+        "annotation": 1
       },
       "n_bounds": 45,
       "bounds": {
@@ -916,6 +920,529 @@
       "fba": {
         "status": "optimal",
         "growth_rate_per_h": 0.535202
+      }
+    },
+    "SGA_DM": {
+      "label": "SGA_DM",
+      "media_name": "SGA double-mutant selection (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT) [FBA expansion]",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 49,
+      "n_resolved": 44,
+      "n_excluded_by_role": 5,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "agar",
+          "role": "gelling_agent",
+          "reason": "role 'gelling_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "L-canavanine",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "thialysine (S-(2-aminoethyl)-L-cysteine)",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "G418 (geneticin)",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "nourseothricin (clonNAT)",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 43,
+        "annotation": 1
+      },
+      "n_bounds": 43,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1832": {
+          "metabolite": "H+",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1861": {
+          "metabolite": "iron(2+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1992": {
+          "metabolite": "oxygen",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2005": {
+          "metabolite": "phosphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2020": {
+          "metabolite": "potassium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2049": {
+          "metabolite": "sodium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2060": {
+          "metabolite": "sulphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2100": {
+          "metabolite": "H2O",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4593": {
+          "metabolite": "chloride",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4594": {
+          "metabolite": "Cu2(+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4595": {
+          "metabolite": "Mn(2+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4596": {
+          "metabolite": "Zn(2+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4597": {
+          "metabolite": "Mg(2+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4600": {
+          "metabolite": "Ca(2+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.499947
+      }
+    },
+    "SGA_TM": {
+      "label": "SGA_TM",
+      "media_name": "SGA triple-mutant selection (SD-MSG, -His/Arg/Lys/Ura, +canavanine/thialysine/G418/clonNAT) [FBA expansion]",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 48,
+      "n_resolved": 43,
+      "n_excluded_by_role": 5,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "agar",
+          "role": "gelling_agent",
+          "reason": "role 'gelling_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "L-canavanine",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "thialysine (S-(2-aminoethyl)-L-cysteine)",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "G418 (geneticin)",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "nourseothricin (clonNAT)",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 42,
+        "annotation": 1
+      },
+      "n_bounds": 42,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1832": {
+          "metabolite": "H+",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1861": {
+          "metabolite": "iron(2+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1992": {
+          "metabolite": "oxygen",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2005": {
+          "metabolite": "phosphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2020": {
+          "metabolite": "potassium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2049": {
+          "metabolite": "sodium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2060": {
+          "metabolite": "sulphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2100": {
+          "metabolite": "H2O",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4593": {
+          "metabolite": "chloride",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4594": {
+          "metabolite": "Cu2(+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4595": {
+          "metabolite": "Mn(2+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4596": {
+          "metabolite": "Zn(2+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4597": {
+          "metabolite": "Mg(2+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_4600": {
+          "metabolite": "Ca(2+)",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.496605
       }
     }
   },
@@ -1193,6 +1720,178 @@
       },
       "differing": {}
     },
+    "SM|SGA_DM": {
+      "n_differences": 20,
+      "only_in_left": {
+        "r_1654": {
+          "metabolite": "ammonium",
+          "uptake_bound": 1000.0
+        }
+      },
+      "only_in_right": {
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165
+        }
+      },
+      "differing": {}
+    },
+    "SM|SGA_TM": {
+      "n_differences": 19,
+      "only_in_left": {
+        "r_1654": {
+          "metabolite": "ammonium",
+          "uptake_bound": 1000.0
+        }
+      },
+      "only_in_right": {
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165
+        }
+      },
+      "differing": {}
+    },
     "SC|SC-URA": {
       "n_differences": 1,
       "only_in_left": {
@@ -1219,11 +1918,183 @@
       "only_in_right": {},
       "differing": {}
     },
+    "SC|SGA_DM": {
+      "n_differences": 4,
+      "only_in_left": {
+        "r_1654": {
+          "metabolite": "ammonium",
+          "uptake_bound": 1000.0
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165
+        }
+      },
+      "only_in_right": {},
+      "differing": {}
+    },
+    "SC|SGA_TM": {
+      "n_differences": 5,
+      "only_in_left": {
+        "r_1654": {
+          "metabolite": "ammonium",
+          "uptake_bound": 1000.0
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165
+        }
+      },
+      "only_in_right": {},
+      "differing": {}
+    },
     "SC-URA|YPD": {
       "n_differences": 1,
       "only_in_left": {
         "r_1639": {
           "metabolite": "adenine",
+          "uptake_bound": 0.165
+        }
+      },
+      "only_in_right": {},
+      "differing": {}
+    },
+    "SC-URA|SGA_DM": {
+      "n_differences": 5,
+      "only_in_left": {
+        "r_1654": {
+          "metabolite": "ammonium",
+          "uptake_bound": 1000.0
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165
+        }
+      },
+      "only_in_right": {
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165
+        }
+      },
+      "differing": {}
+    },
+    "SC-URA|SGA_TM": {
+      "n_differences": 4,
+      "only_in_left": {
+        "r_1654": {
+          "metabolite": "ammonium",
+          "uptake_bound": 1000.0
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165
+        }
+      },
+      "only_in_right": {},
+      "differing": {}
+    },
+    "YPD|SGA_DM": {
+      "n_differences": 6,
+      "only_in_left": {
+        "r_1654": {
+          "metabolite": "ammonium",
+          "uptake_bound": 1000.0
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165
+        }
+      },
+      "only_in_right": {
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165
+        }
+      },
+      "differing": {}
+    },
+    "YPD|SGA_TM": {
+      "n_differences": 5,
+      "only_in_left": {
+        "r_1654": {
+          "metabolite": "ammonium",
+          "uptake_bound": 1000.0
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165
+        }
+      },
+      "only_in_right": {
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165
+        }
+      },
+      "differing": {}
+    },
+    "SGA_DM|SGA_TM": {
+      "n_differences": 1,
+      "only_in_left": {
+        "r_2090": {
+          "metabolite": "uracil",
           "uptake_bound": 0.165
         }
       },
@@ -1258,10 +2129,60 @@
       "YPD": {
         "sourced": 1.176074,
         "rescaled": 1.629234
+      },
+      "SGA_DM": {
+        "sourced": 0.604141,
+        "rescaled": 1.52284
+      },
+      "SGA_TM": {
+        "sourced": 0.582358,
+        "rescaled": 1.512568
       }
     }
   },
   "ontology_library_media": {
+    "SD_MSG": {
+      "label": "SD_MSG",
+      "media_name": "SD/MSG base (YNB w/o amino acids and ammonium sulfate + MSG; carbon source added per recipe)",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 2,
+      "n_resolved": 1,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 1,
+      "unresolved": [
+        {
+          "component": "yeast nitrogen base (w/o amino acids and ammonium sulfate)",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "yeast nitrogen base (w/o amino acids and ammonium sulfate)",
+            "l-yeast nitrogen base (w/o amino acids and ammonium sulfate)"
+          ]
+        }
+      ],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 2,
+      "bounds": {
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2049": {
+          "metabolite": "sodium",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
     "SGA_DM_SELECTION": {
       "label": "SGA_DM_SELECTION",
       "media_name": "SGA double-mutant selection (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT)",
@@ -1284,7 +2205,7 @@
         {
           "component": "SC amino-acid supplement powder (DO -His/Arg/Lys)",
           "role": "amino_acid",
-          "reason": "no model exchange matched by annotation or by any chemical name variant",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
           "candidates_tried": [
             "sc amino-acid supplement powder (do -his/arg/lys)",
             "l-sc amino-acid supplement powder (do -his/arg/lys)"
@@ -1330,12 +2251,12 @@
         },
         "r_1889": {
           "metabolite": "L-glutamate",
-          "uptake_bound": 1000.0,
+          "uptake_bound": 0.165,
           "unit": "mmol/gDW/h"
         },
         "r_2049": {
           "metabolite": "sodium",
-          "uptake_bound": 1000.0,
+          "uptake_bound": 0.165,
           "unit": "mmol/gDW/h"
         }
       },
@@ -1366,7 +2287,7 @@
         {
           "component": "SC amino-acid supplement powder (DO -His/Arg/Lys)",
           "role": "amino_acid",
-          "reason": "no model exchange matched by annotation or by any chemical name variant",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
           "candidates_tried": [
             "sc amino-acid supplement powder (do -his/arg/lys)",
             "l-sc amino-acid supplement powder (do -his/arg/lys)"
@@ -1412,12 +2333,94 @@
         },
         "r_1889": {
           "metabolite": "L-glutamate",
-          "uptake_bound": 1000.0,
+          "uptake_bound": 0.165,
           "unit": "mmol/gDW/h"
         },
         "r_2049": {
           "metabolite": "sodium",
-          "uptake_bound": 1000.0,
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "SGA_DM_SELECTION_GALACTOSE": {
+      "label": "SGA_DM_SELECTION_GALACTOSE",
+      "media_name": "SGA double-mutant selection, 2% galactose (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT)",
+      "is_synthetic": true,
+      "state": "solid",
+      "n_components": 9,
+      "n_resolved": 2,
+      "n_excluded_by_role": 5,
+      "n_unresolved": 2,
+      "unresolved": [
+        {
+          "component": "yeast nitrogen base (w/o amino acids and ammonium sulfate)",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "yeast nitrogen base (w/o amino acids and ammonium sulfate)",
+            "l-yeast nitrogen base (w/o amino acids and ammonium sulfate)"
+          ]
+        },
+        {
+          "component": "SC amino-acid supplement powder (DO -His/Arg/Lys)",
+          "role": "amino_acid",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "sc amino-acid supplement powder (do -his/arg/lys)",
+            "l-sc amino-acid supplement powder (do -his/arg/lys)"
+          ]
+        }
+      ],
+      "excluded_by_role": [
+        {
+          "component": "agar",
+          "role": "gelling_agent",
+          "reason": "role 'gelling_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "L-canavanine",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "thialysine (S-(2-aminoethyl)-L-cysteine)",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "G418 (geneticin)",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "nourseothricin (clonNAT)",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 2
+      },
+      "n_bounds": 3,
+      "bounds": {
+        "r_1710": {
+          "metabolite": "D-galactose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2049": {
+          "metabolite": "sodium",
+          "uptake_bound": 0.165,
           "unit": "mmol/gDW/h"
         }
       },
@@ -1464,6 +2467,87 @@
         "growth_rate_per_h": 0.0
       }
     },
+    "YPD_LIQUID": {
+      "label": "YPD_LIQUID",
+      "media_name": "YPD (yeast extract / peptone / dextrose), liquid",
+      "is_synthetic": false,
+      "state": "liquid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "YPD_AGAR": {
+      "label": "YPD_AGAR",
+      "media_name": "YPD (solid, 2% agar)",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 4,
+      "n_resolved": 1,
+      "n_excluded_by_role": 3,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "agar",
+          "role": "gelling_agent",
+          "reason": "role 'gelling_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
     "YPAD": {
       "label": "YPAD",
       "media_name": "YPAD (YPD + adenine)",
@@ -1487,7 +2571,8 @@
         }
       ],
       "match_channels": {
-        "name": 2
+        "name": 1,
+        "annotation": 1
       },
       "n_bounds": 2,
       "bounds": {
@@ -1504,11 +2589,11 @@
       },
       "fba": {
         "status": "optimal",
-        "growth_rate_per_h": 0.0
+        "growth_rate_per_h": -0.0
       }
     },
-    "SD_MINIMAL": {
-      "label": "SD_MINIMAL",
+    "SD": {
+      "label": "SD",
       "media_name": "SD minimal (YNB + ammonium sulfate + glucose)",
       "is_synthetic": true,
       "state": "liquid",
@@ -1623,19 +2708,20 @@
     },
     "SC": {
       "label": "SC",
-      "media_name": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine)",
+      "media_name": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
       "is_synthetic": true,
       "state": "liquid",
-      "n_components": 31,
-      "n_resolved": 31,
+      "n_components": 32,
+      "n_resolved": 32,
       "n_excluded_by_role": 0,
       "n_unresolved": 0,
       "unresolved": [],
       "excluded_by_role": [],
       "match_channels": {
-        "name": 31
+        "name": 29,
+        "annotation": 3
       },
-      "n_bounds": 31,
+      "n_bounds": 32,
       "bounds": {
         "r_1548": {
           "metabolite": "(R)-pantothenate",
@@ -1655,6 +2741,11 @@
         "r_1671": {
           "metabolite": "biotin",
           "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
           "unit": "mmol/gDW/h"
         },
         "r_1792": {
@@ -1795,7 +2886,7 @@
       },
       "fba": {
         "status": "optimal",
-        "growth_rate_per_h": -0.0
+        "growth_rate_per_h": 0.0
       }
     },
     "SC_URA": {
@@ -1803,16 +2894,17 @@
       "media_name": "SC-Ura (synthetic complete minus uracil; URA3 plasmid selection)",
       "is_synthetic": true,
       "state": "liquid",
-      "n_components": 30,
-      "n_resolved": 30,
+      "n_components": 31,
+      "n_resolved": 31,
       "n_excluded_by_role": 0,
       "n_unresolved": 0,
       "unresolved": [],
       "excluded_by_role": [],
       "match_channels": {
-        "name": 30
+        "name": 29,
+        "annotation": 2
       },
-      "n_bounds": 30,
+      "n_bounds": 31,
       "bounds": {
         "r_1548": {
           "metabolite": "(R)-pantothenate",
@@ -1832,6 +2924,11 @@
         "r_1671": {
           "metabolite": "biotin",
           "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
           "unit": "mmol/gDW/h"
         },
         "r_1792": {
@@ -1967,6 +3064,3890 @@
       },
       "fba": {
         "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "SYNH3_MINUS": {
+      "label": "SYNH3_MINUS",
+      "media_name": "SynH3- (defined synthetic hydrolysate base)",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 1,
+      "n_resolved": 0,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 1,
+      "unresolved": [
+        {
+          "component": "SynH3- defined hydrolysate base",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "synh3- defined hydrolysate base",
+            "l-synh3- defined hydrolysate base"
+          ]
+        }
+      ],
+      "excluded_by_role": [],
+      "match_channels": {},
+      "n_bounds": 0,
+      "bounds": {},
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "SYNBASE": {
+      "label": "SYNBASE",
+      "media_name": "SynBase (SynH3- minus acetamide/sodium acetate/cellobiose, MSG for ammonium sulfate)",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 2,
+      "n_resolved": 1,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 1,
+      "unresolved": [
+        {
+          "component": "SynH3- defined hydrolysate base",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "synh3- defined hydrolysate base",
+            "l-synh3- defined hydrolysate base"
+          ]
+        }
+      ],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 2,
+      "bounds": {
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2049": {
+          "metabolite": "sodium",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "YPB": {
+      "label": "YPB",
+      "media_name": "YPB (yeast extract / peptone / potassium phosphate buffer, pH 6.0)",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 2,
+      "bounds": {
+        "r_2005": {
+          "metabolite": "phosphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2020": {
+          "metabolite": "potassium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "YPBO": {
+      "label": "YPBO",
+      "media_name": "YPBO (YPB + 0.2% Tween 40 + 0.1% oleic acid, solid)",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 6,
+      "n_resolved": 2,
+      "n_excluded_by_role": 3,
+      "n_unresolved": 1,
+      "unresolved": [
+        {
+          "component": "Tween 40",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "tween 40",
+            "l-tween 40"
+          ]
+        }
+      ],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "agar",
+          "role": "gelling_agent",
+          "reason": "role 'gelling_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 2
+      },
+      "n_bounds": 3,
+      "bounds": {
+        "r_2005": {
+          "metabolite": "phosphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2020": {
+          "metabolite": "potassium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2189": {
+          "metabolite": "oleate",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "YNB_YE_B": {
+      "label": "YNB_YE_B",
+      "media_name": "YNB-YE-B (YNB w/o amino acids + yeast extract + potassium phosphate buffer, pH 6.0)",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 1,
+      "n_unresolved": 1,
+      "unresolved": [
+        {
+          "component": "yeast nitrogen base (w/o amino acids)",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "yeast nitrogen base (w/o amino acids)",
+            "l-yeast nitrogen base (w/o amino acids)"
+          ]
+        }
+      ],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 2,
+      "bounds": {
+        "r_2005": {
+          "metabolite": "phosphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2020": {
+          "metabolite": "potassium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "YPBM": {
+      "label": "YPBM",
+      "media_name": "YPBM (YNB-YE-B + 0.5% Tween 40 + 0.125% myristic acid, solid)",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 6,
+      "n_resolved": 2,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 2,
+      "unresolved": [
+        {
+          "component": "yeast nitrogen base (w/o amino acids)",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "yeast nitrogen base (w/o amino acids)",
+            "l-yeast nitrogen base (w/o amino acids)"
+          ]
+        },
+        {
+          "component": "Tween 40",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "tween 40",
+            "l-tween 40"
+          ]
+        }
+      ],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "agar",
+          "role": "gelling_agent",
+          "reason": "role 'gelling_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 2
+      },
+      "n_bounds": 3,
+      "bounds": {
+        "r_2005": {
+          "metabolite": "phosphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2020": {
+          "metabolite": "potassium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2193": {
+          "metabolite": "myristate",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "YPBA": {
+      "label": "YPBA",
+      "media_name": "YPBA (YNB-YE-B + 2% acetate, solid)",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 5,
+      "n_resolved": 2,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 1,
+      "unresolved": [
+        {
+          "component": "yeast nitrogen base (w/o amino acids)",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "yeast nitrogen base (w/o amino acids)",
+            "l-yeast nitrogen base (w/o amino acids)"
+          ]
+        }
+      ],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "agar",
+          "role": "gelling_agent",
+          "reason": "role 'gelling_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 2
+      },
+      "n_bounds": 3,
+      "bounds": {
+        "r_1634": {
+          "metabolite": "acetate",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2005": {
+          "metabolite": "phosphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2020": {
+          "metabolite": "potassium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "SED_URA": {
+      "label": "SED_URA",
+      "media_name": "SED-URA (YNB + monosodium glutamate + CSM-URA + 2% glucose)",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 4,
+      "n_resolved": 2,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 2,
+      "unresolved": [
+        {
+          "component": "yeast nitrogen base (w/o amino acids)",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "yeast nitrogen base (w/o amino acids)",
+            "l-yeast nitrogen base (w/o amino acids)"
+          ]
+        },
+        {
+          "component": "CSM-URA (complete supplement mixture minus uracil)",
+          "role": "amino_acid",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "csm-ura (complete supplement mixture minus uracil)",
+            "l-csm-ura (complete supplement mixture minus uracil)"
+          ]
+        }
+      ],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 2
+      },
+      "n_bounds": 3,
+      "bounds": {
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2049": {
+          "metabolite": "sodium",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "SED_URA_G418": {
+      "label": "SED_URA_G418",
+      "media_name": "SED-URA + 200 ug/mL G418",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 5,
+      "n_resolved": 2,
+      "n_excluded_by_role": 1,
+      "n_unresolved": 2,
+      "unresolved": [
+        {
+          "component": "yeast nitrogen base (w/o amino acids)",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "yeast nitrogen base (w/o amino acids)",
+            "l-yeast nitrogen base (w/o amino acids)"
+          ]
+        },
+        {
+          "component": "CSM-URA (complete supplement mixture minus uracil)",
+          "role": "amino_acid",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "csm-ura (complete supplement mixture minus uracil)",
+            "l-csm-ura (complete supplement mixture minus uracil)"
+          ]
+        }
+      ],
+      "excluded_by_role": [
+        {
+          "component": "G418 (geneticin)",
+          "role": "selection_agent",
+          "reason": "role 'selection_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 2
+      },
+      "n_bounds": 3,
+      "bounds": {
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2049": {
+          "metabolite": "sodium",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "YP": {
+      "label": "YP",
+      "media_name": "YP (yeast extract / peptone, no added carbon source)",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 2,
+      "n_resolved": 0,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {},
+      "n_bounds": 0,
+      "bounds": {},
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "YP_FRUCTOSE": {
+      "label": "YP_FRUCTOSE",
+      "media_name": "YP + 2% fructose",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1709": {
+          "metabolite": "D-fructose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "YP_GALACTOSE": {
+      "label": "YP_GALACTOSE",
+      "media_name": "YP + 2% galactose",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1710": {
+          "metabolite": "D-galactose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "YP_LACTATE": {
+      "label": "YP_LACTATE",
+      "media_name": "YP + 2% lactate",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1551": {
+          "metabolite": "(S)-lactate",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "YP_MALTOSE": {
+      "label": "YP_MALTOSE",
+      "media_name": "YP + 2% maltose",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1931": {
+          "metabolite": "maltose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "YP_MANNOSE": {
+      "label": "YP_MANNOSE",
+      "media_name": "YP + 2% mannose",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1715": {
+          "metabolite": "D-mannose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "YP_RAFFINOSE": {
+      "label": "YP_RAFFINOSE",
+      "media_name": "YP + 2% raffinose",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "annotation": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_4043": {
+          "metabolite": "raffinose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "YP_SUCROSE": {
+      "label": "YP_SUCROSE",
+      "media_name": "YP + 2% sucrose",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_2058": {
+          "metabolite": "sucrose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "YP_TREHALOSE": {
+      "label": "YP_TREHALOSE",
+      "media_name": "YP + 2% trehalose",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1650": {
+          "metabolite": "trehalose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "YP_XYLOSE": {
+      "label": "YP_XYLOSE",
+      "media_name": "YP + 2% xylose",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1718": {
+          "metabolite": "D-xylose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "YP_GLYCEROL": {
+      "label": "YP_GLYCEROL",
+      "media_name": "YP + 3% glycerol",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1808": {
+          "metabolite": "glycerol",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "YP_GLYCEROL_LIQUID": {
+      "label": "YP_GLYCEROL_LIQUID",
+      "media_name": "YP + glycerol, liquid (Hillenmeyer 2008 'YP glycerol'; percentage not stated)",
+      "is_synthetic": false,
+      "state": "liquid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1808": {
+          "metabolite": "glycerol",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "YP_ETHANOL": {
+      "label": "YP_ETHANOL",
+      "media_name": "YP + 2% ethanol (no glucose)",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 3,
+      "n_resolved": 1,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "annotation": 1
+      },
+      "n_bounds": 1,
+      "bounds": {
+        "r_1761": {
+          "metabolite": "ethanol",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "YPD_ETHANOL": {
+      "label": "YPD_ETHANOL",
+      "media_name": "YPD + 2% ethanol (2% glucose + 2% ethanol)",
+      "is_synthetic": false,
+      "state": "solid",
+      "n_components": 4,
+      "n_resolved": 2,
+      "n_excluded_by_role": 2,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [
+        {
+          "component": "yeast extract",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        },
+        {
+          "component": "peptone",
+          "role": "complex_ingredient",
+          "reason": "role 'complex_ingredient' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 1,
+        "annotation": 1
+      },
+      "n_bounds": 2,
+      "bounds": {
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1761": {
+          "metabolite": "ethanol",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "YNB_GLUCOSE_SOLID": {
+      "label": "YNB_GLUCOSE_SOLID",
+      "media_name": "YNB + 2% glucose (solid; Bloom 2019 minimal-medium plates)",
+      "is_synthetic": true,
+      "state": "solid",
+      "n_components": 10,
+      "n_resolved": 10,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 10
+      },
+      "n_bounds": 10,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": -0.0
+      }
+    },
+    "SM": {
+      "label": "SM",
+      "media_name": "SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 3,
+      "n_resolved": 2,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 1,
+      "unresolved": [
+        {
+          "component": "yeast nitrogen base (w/o amino acids)",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "yeast nitrogen base (w/o amino acids)",
+            "l-yeast nitrogen base (w/o amino acids)"
+          ]
+        }
+      ],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 2
+      },
+      "n_bounds": 3,
+      "bounds": {
+        "r_1654": {
+          "metabolite": "ammonium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2060": {
+          "metabolite": "sulphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SM_AGAR": {
+      "label": "SM_AGAR",
+      "media_name": "SM agar (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose + 2% agar)",
+      "is_synthetic": true,
+      "state": "solid",
+      "n_components": 4,
+      "n_resolved": 2,
+      "n_excluded_by_role": 1,
+      "n_unresolved": 1,
+      "unresolved": [
+        {
+          "component": "yeast nitrogen base (w/o amino acids)",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "yeast nitrogen base (w/o amino acids)",
+            "l-yeast nitrogen base (w/o amino acids)"
+          ]
+        }
+      ],
+      "excluded_by_role": [
+        {
+          "component": "agar",
+          "role": "gelling_agent",
+          "reason": "role 'gelling_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+        }
+      ],
+      "match_channels": {
+        "name": 2
+      },
+      "n_bounds": 3,
+      "bounds": {
+        "r_1654": {
+          "metabolite": "ammonium",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2060": {
+          "metabolite": "sulphate",
+          "uptake_bound": 1000.0,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SM_DEFERRED": {
+      "label": "SM_DEFERRED",
+      "media_name": "SM (synthetic minimal, composition deferred to Mulleder 2012), liquid",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 1,
+      "n_resolved": 0,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 1,
+      "unresolved": [
+        {
+          "component": "synthetic minimal (SM) medium, prototrophic-collection formulation",
+          "role": "other",
+          "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+          "candidates_tried": [
+            "synthetic minimal (sm) medium, prototrophic-collection formulation",
+            "l-synthetic minimal (sm) medium, prototrophic-collection formulation"
+          ]
+        }
+      ],
+      "excluded_by_role": [],
+      "match_channels": {},
+      "n_bounds": 0,
+      "bounds": {},
+      "fba": {
+        "status": "infeasible",
+        "growth_rate_per_h": null
+      }
+    },
+    "SC_MINUS_ADENINE": {
+      "label": "SC_MINUS_ADENINE",
+      "media_name": "SC - adenine (Hillenmeyer 2008 'adenine dropout')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 29,
+        "annotation": 2
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_L_ARGININE": {
+      "label": "SC_MINUS_L_ARGININE",
+      "media_name": "SC - L-arginine (Hillenmeyer 2008 'arginine dropout')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_L_ISOLEUCINE": {
+      "label": "SC_MINUS_L_ISOLEUCINE",
+      "media_name": "SC - L-isoleucine (Hillenmeyer 2008 'isoleucine dropout')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_L_LYSINE": {
+      "label": "SC_MINUS_L_LYSINE",
+      "media_name": "SC - L-lysine (Hillenmeyer 2008 'lysine dropout')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_L_THREONINE": {
+      "label": "SC_MINUS_L_THREONINE",
+      "media_name": "SC - L-threonine (Hillenmeyer 2008 'threonine dropout')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_L_TRYPTOPHAN": {
+      "label": "SC_MINUS_L_TRYPTOPHAN",
+      "media_name": "SC - L-tryptophan (Hillenmeyer 2008 'tryptophan dropout')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_L_TYROSINE": {
+      "label": "SC_MINUS_L_TYROSINE",
+      "media_name": "SC - L-tyrosine (Hillenmeyer 2008 'tyrosine dropout')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_4_AMINOBENZOIC_ACID": {
+      "label": "SC_MINUS_4_AMINOBENZOIC_ACID",
+      "media_name": "SC - 4-aminobenzoic acid (Hillenmeyer 2008 'PABA drop-out')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_FOLIC_ACID": {
+      "label": "SC_MINUS_FOLIC_ACID",
+      "media_name": "SC - folic acid (Hillenmeyer 2008 'folic acid drop-out')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_MYO_INOSITOL": {
+      "label": "SC_MINUS_MYO_INOSITOL",
+      "media_name": "SC - myo-inositol (Hillenmeyer 2008 'inositol drop-out')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_NIACIN": {
+      "label": "SC_MINUS_NIACIN",
+      "media_name": "SC - niacin (Hillenmeyer 2008 'niacin drop-out')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_MINUS_THIAMINE_HYDROCHLORIDE": {
+      "label": "SC_MINUS_THIAMINE_HYDROCHLORIDE",
+      "media_name": "SC - thiamine hydrochloride (Hillenmeyer 2008 'thiamine HCl drop-out')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 31,
+      "n_resolved": 31,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 28,
+        "annotation": 3
+      },
+      "n_bounds": 31,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_PARTIAL_BIOTIN": {
+      "label": "SC_PARTIAL_BIOTIN",
+      "media_name": "SC, partial biotin drop-out (Hillenmeyer 2008 'biotin partial drop-out')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 32,
+      "n_resolved": 32,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 29,
+        "annotation": 3
+      },
+      "n_bounds": 32,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_PARTIAL_CALCIUM_PANTOTHENATE": {
+      "label": "SC_PARTIAL_CALCIUM_PANTOTHENATE",
+      "media_name": "SC, partial calcium pantothenate drop-out (Hillenmeyer 2008 'calcium pantothenate partial drop-out')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 32,
+      "n_resolved": 32,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 29,
+        "annotation": 3
+      },
+      "n_bounds": 32,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
+        "growth_rate_per_h": 0.0
+      }
+    },
+    "SC_PARTIAL_PYRIDOXINE_HYDROCHLORIDE": {
+      "label": "SC_PARTIAL_PYRIDOXINE_HYDROCHLORIDE",
+      "media_name": "SC, partial pyridoxine hydrochloride drop-out (Hillenmeyer 2008 'pyridoxine HCl partial drop-out')",
+      "is_synthetic": true,
+      "state": "liquid",
+      "n_components": 32,
+      "n_resolved": 32,
+      "n_excluded_by_role": 0,
+      "n_unresolved": 0,
+      "unresolved": [],
+      "excluded_by_role": [],
+      "match_channels": {
+        "name": 29,
+        "annotation": 3
+      },
+      "n_bounds": 32,
+      "bounds": {
+        "r_1548": {
+          "metabolite": "(R)-pantothenate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1604": {
+          "metabolite": "4-aminobenzoate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1639": {
+          "metabolite": "adenine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1671": {
+          "metabolite": "biotin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1714": {
+          "metabolite": "D-glucose",
+          "uptake_bound": 3.3,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1792": {
+          "metabolite": "folate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1810": {
+          "metabolite": "L-glycine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1873": {
+          "metabolite": "L-alanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1879": {
+          "metabolite": "L-arginine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1880": {
+          "metabolite": "L-asparagine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1881": {
+          "metabolite": "L-aspartate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1883": {
+          "metabolite": "L-cysteine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1889": {
+          "metabolite": "L-glutamate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1891": {
+          "metabolite": "L-glutamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1893": {
+          "metabolite": "L-histidine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1897": {
+          "metabolite": "L-isoleucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1899": {
+          "metabolite": "L-leucine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1900": {
+          "metabolite": "L-lysine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1902": {
+          "metabolite": "L-methionine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1903": {
+          "metabolite": "L-phenylalanine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1904": {
+          "metabolite": "L-proline",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1906": {
+          "metabolite": "L-serine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1911": {
+          "metabolite": "L-threonine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1912": {
+          "metabolite": "L-tryptophan",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1913": {
+          "metabolite": "L-tyrosine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1914": {
+          "metabolite": "L-valine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1947": {
+          "metabolite": "myo-inositol",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_1967": {
+          "metabolite": "nicotinate",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2028": {
+          "metabolite": "pyridoxine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2038": {
+          "metabolite": "riboflavin",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2067": {
+          "metabolite": "thiamine",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        },
+        "r_2090": {
+          "metabolite": "uracil",
+          "uptake_bound": 0.165,
+          "unit": "mmol/gDW/h"
+        }
+      },
+      "fba": {
+        "status": "optimal",
         "growth_rate_per_h": 0.0
       }
     }
@@ -2056,35 +7037,286 @@
     },
     {
       "dataset": "mulleder2016 (amino acids)",
-      "source": "torchcell/datasets/scerevisiae/mulleder2016.py:241",
-      "emitted_literal": "media=Media(name=\"SM\", state=\"solid\", is_synthetic=True),",
+      "source": "torchcell/datasets/scerevisiae/mulleder2016.py:245",
+      "emitted_literal": "environment = Environment(media=SM_AGAR, temperature=Temperature(value=30))",
       "emitted": {
-        "name": "SM",
+        "name": "SM agar (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose + 2% agar)",
         "state": "solid",
         "is_synthetic": true,
-        "base_medium": null,
-        "components": [],
+        "base_medium": "SM",
+        "components": [
+          {
+            "compound": {
+              "provenance_gaps": [],
+              "name": "yeast nitrogen base (w/o amino acids)",
+              "inchikey": null,
+              "inchi": null,
+              "smiles": null,
+              "pubchem_cid": null,
+              "chebi_id": null,
+              "roles": []
+            },
+            "role": "other",
+            "concentration": {
+              "value": 6.7,
+              "unit": "g/L",
+              "basis": null
+            },
+            "definition": "composition_deferred",
+            "provenance": [
+              {
+                "value": "6.7 g/L",
+                "provenance": {
+                  "source_uri": "paper.md",
+                  "citation_key": "mullederFunctionalMetabolomicsDescribes2016",
+                  "sha256": "20412bec5b930d1fa43d326d8f9baca267130ddef5fdaa804f19e1209f925e6e",
+                  "method": null,
+                  "page": null,
+                  "retrieved": null
+                },
+                "quote": "The strains were transferred to synthetic minimal (SM) agar medium $\\left( 6 . 7 ~ \\mathfrak { g } / \\right.$ yeast nitrogen base without amino acids (Y0626, SIGMA), $2 \\%$ glucose, $2 \\%$ agar)",
+                "note": null
+              },
+              {
+                "value": "6.7 g/L",
+                "provenance": {
+                  "source_uri": "paper.md",
+                  "citation_key": "messnerProteomicLandscapeGenomewide2023",
+                  "sha256": "edd0fe288641b9c4775f8972f2a13bcf09dfbf3bcd98d3e444e548d5cf4b3c15",
+                  "method": null,
+                  "page": null,
+                  "retrieved": null
+                },
+                "quote": "The thawed stock cultures were spotted with the pinning robot onto SM agar medium $( 6 . 7 \\ : \\mathfrak { g } / |$ yeast nitrogen base without amino acids, $2 \\%$ glucose, $2 \\%$ agar)",
+                "note": "the same product and the same amount, stated independently seven years later; Messner's Key Resources Table prints the catalog number as Cat#Y0262 against Mulleder's Y0626, a two-digit transposition of the same Sigma YNB-without-amino-acids product, recorded as read and not corrected"
+              }
+            ],
+            "defers_to": [
+              "mullederPrototrophicDeletionMutant2012"
+            ],
+            "note": "6.7 g/L is the full-strength commercial YNB-without-amino-acids line, four times the 1.7 g/L amino-acid- AND ammonium-sulfate-free product the same Methods section uses for its nitrogen-starvation medium; the vitamins, trace metals and salts sit inside it (expand from the Sigma/Difco YNB spec)"
+          },
+          {
+            "compound": {
+              "provenance_gaps": [],
+              "name": "ammonium sulfate",
+              "inchikey": "BFNBIHQBYMNNAN-UHFFFAOYSA-N",
+              "inchi": null,
+              "smiles": "[NH4+].[NH4+].[O-]S(=O)(=O)[O-]",
+              "pubchem_cid": 6097028,
+              "chebi_id": "CHEBI:62946",
+              "roles": []
+            },
+            "role": "nitrogen_source",
+            "concentration": null,
+            "definition": "defined",
+            "provenance": [
+              {
+                "value": "present inside the 6.7 g/L YNB line; amount not printed",
+                "provenance": {
+                  "source_uri": "paper.md",
+                  "citation_key": "mullederFunctionalMetabolomicsDescribes2016",
+                  "sha256": "20412bec5b930d1fa43d326d8f9baca267130ddef5fdaa804f19e1209f925e6e",
+                  "method": null,
+                  "page": null,
+                  "retrieved": null
+                },
+                "quote": "Starvation medium, SD $( - N )$ , was prepared with $1 . 7 ~ { \\mathfrak { g } } / { \\mathfrak { l } }$ yeast nitrogen base without amino acids and ammonium sulfate (Y1251 SIGMA) and $2 \\%$ glucose.",
+                "note": "the nitrogen source is recorded as an IDENTITY with no concentration, on purpose. Neither paper prints an ammonium sulfate amount, and its mass is already counted in the 6.7 g/L YNB line, so giving it a number here would double-count the medium. That it is present at all is the paper's own statement, not an assumption: this sentence defines the nitrogen-starvation medium as a DIFFERENT product, 'without amino acids and ammonium sulfate' at 1.7 g/L, against SM's 6.7 g/L 'without amino acids'. The 5.0 g/L difference between the two lines is the standard ammonium sulfate content of the full-strength product, which is corroboration and not a sourced number, so it is not recorded as one"
+              }
+            ],
+            "defers_to": [],
+            "note": "the only nitrogen source in SM; a prototrophic collection grows on it with no amino acid or nucleobase supplement"
+          },
+          {
+            "compound": {
+              "provenance_gaps": [],
+              "name": "D-glucose",
+              "inchikey": "WQZGKKKJIJFFOK-GASJEMHNSA-N",
+              "inchi": null,
+              "smiles": "C(C1C(C(C(C(O1)O)O)O)O)O",
+              "pubchem_cid": 5793,
+              "chebi_id": null,
+              "roles": []
+            },
+            "role": "carbon_source",
+            "concentration": {
+              "value": 2.0,
+              "unit": "percent_w/v",
+              "basis": null
+            },
+            "definition": "defined",
+            "provenance": [
+              {
+                "value": "2% (20 g/L)",
+                "provenance": {
+                  "source_uri": "paper.md",
+                  "citation_key": "mullederFunctionalMetabolomicsDescribes2016",
+                  "sha256": "20412bec5b930d1fa43d326d8f9baca267130ddef5fdaa804f19e1209f925e6e",
+                  "method": null,
+                  "page": null,
+                  "retrieved": null
+                },
+                "quote": "The strains were transferred to synthetic minimal (SM) agar medium $\\left( 6 . 7 ~ \\mathfrak { g } / \\right.$ yeast nitrogen base without amino acids (Y0626, SIGMA), $2 \\%$ glucose, $2 \\%$ agar)",
+                "note": "the source writes '%' with no w/v or v/v basis; recorded as w/v, which is the basis for every other percentage in this library"
+              },
+              {
+                "value": "2% (20 g/L)",
+                "provenance": {
+                  "source_uri": "paper.md",
+                  "citation_key": "messnerProteomicLandscapeGenomewide2023",
+                  "sha256": "edd0fe288641b9c4775f8972f2a13bcf09dfbf3bcd98d3e444e548d5cf4b3c15",
+                  "method": null,
+                  "page": null,
+                  "retrieved": null
+                },
+                "quote": "The thawed stock cultures were spotted with the pinning robot onto SM agar medium $( 6 . 7 \\ : \\mathfrak { g } / |$ yeast nitrogen base without amino acids, $2 \\%$ glucose, $2 \\%$ agar)",
+                "note": null
+              }
+            ],
+            "defers_to": [],
+            "note": null
+          },
+          {
+            "compound": {
+              "provenance_gaps": [
+                {
+                  "field": "inchikey",
+                  "reason": "not_reported_by_primary",
+                  "looked_in": null,
+                  "resolve_with": null,
+                  "note": null
+                }
+              ],
+              "name": "agar",
+              "inchikey": null,
+              "inchi": null,
+              "smiles": null,
+              "pubchem_cid": 71571511,
+              "chebi_id": "CHEBI:2509",
+              "roles": []
+            },
+            "role": "gelling_agent",
+            "concentration": {
+              "value": 2.0,
+              "unit": "percent_w/v",
+              "basis": null
+            },
+            "definition": "defined",
+            "provenance": [
+              {
+                "value": "2%",
+                "provenance": {
+                  "source_uri": "paper.md",
+                  "citation_key": "mullederFunctionalMetabolomicsDescribes2016",
+                  "sha256": "20412bec5b930d1fa43d326d8f9baca267130ddef5fdaa804f19e1209f925e6e",
+                  "method": null,
+                  "page": null,
+                  "retrieved": null
+                },
+                "quote": "The strains were transferred to synthetic minimal (SM) agar medium $\\left( 6 . 7 ~ \\mathfrak { g } / \\right.$ yeast nitrogen base without amino acids (Y0626, SIGMA), $2 \\%$ glucose, $2 \\%$ agar)",
+                "note": "the source writes '%' with no w/v or v/v basis; recorded as w/v, which is the basis for every other percentage in this library"
+              },
+              {
+                "value": "2%",
+                "provenance": {
+                  "source_uri": "paper.md",
+                  "citation_key": "messnerProteomicLandscapeGenomewide2023",
+                  "sha256": "edd0fe288641b9c4775f8972f2a13bcf09dfbf3bcd98d3e444e548d5cf4b3c15",
+                  "method": null,
+                  "page": null,
+                  "retrieved": null
+                },
+                "quote": "The thawed stock cultures were spotted with the pinning robot onto SM agar medium $( 6 . 7 \\ : \\mathfrak { g } / |$ yeast nitrogen base without amino acids, $2 \\%$ glucose, $2 \\%$ agar)",
+                "note": null
+              }
+            ],
+            "defers_to": [],
+            "note": null
+          }
+        ],
         "dropouts": [],
-        "provenance": []
+        "provenance": [
+          {
+            "value": "SM agar recipe",
+            "provenance": {
+              "source_uri": "paper.md",
+              "citation_key": "mullederFunctionalMetabolomicsDescribes2016",
+              "sha256": "20412bec5b930d1fa43d326d8f9baca267130ddef5fdaa804f19e1209f925e6e",
+              "method": null,
+              "page": null,
+              "retrieved": null
+            },
+            "quote": "The strains were transferred to synthetic minimal (SM) agar medium $\\left( 6 . 7 ~ \\mathfrak { g } / \\right.$ yeast nitrogen base without amino acids (Y0626, SIGMA), $2 \\%$ glucose, $2 \\%$ agar)",
+            "note": null
+          },
+          {
+            "value": "SM agar recipe",
+            "provenance": {
+              "source_uri": "paper.md",
+              "citation_key": "messnerProteomicLandscapeGenomewide2023",
+              "sha256": "edd0fe288641b9c4775f8972f2a13bcf09dfbf3bcd98d3e444e548d5cf4b3c15",
+              "method": null,
+              "page": null,
+              "retrieved": null
+            },
+            "quote": "The thawed stock cultures were spotted with the pinning robot onto SM agar medium $( 6 . 7 \\ : \\mathfrak { g } / |$ yeast nitrogen base without amino acids, $2 \\%$ glucose, $2 \\%$ agar)",
+            "note": null
+          }
+        ]
       },
-      "n_components_emitted": 0,
+      "n_components_emitted": 4,
       "coverage": {
         "label": "mulleder2016 (amino acids) as emitted",
-        "media_name": "SM",
+        "media_name": "SM agar (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose + 2% agar)",
         "is_synthetic": true,
         "state": "solid",
-        "n_components": 0,
-        "n_resolved": 0,
-        "n_excluded_by_role": 0,
-        "n_unresolved": 0,
-        "unresolved": [],
-        "excluded_by_role": [],
-        "match_channels": {},
-        "n_bounds": 0,
-        "bounds": {},
+        "n_components": 4,
+        "n_resolved": 2,
+        "n_excluded_by_role": 1,
+        "n_unresolved": 1,
+        "unresolved": [
+          {
+            "component": "yeast nitrogen base (w/o amino acids)",
+            "role": "other",
+            "reason": "no model exchange matched by annotation or by any chemical name variant; component identity is 'composition_deferred' so it names a mixture rather than a single species",
+            "candidates_tried": [
+              "yeast nitrogen base (w/o amino acids)",
+              "l-yeast nitrogen base (w/o amino acids)"
+            ]
+          }
+        ],
+        "excluded_by_role": [
+          {
+            "component": "agar",
+            "role": "gelling_agent",
+            "reason": "role 'gelling_agent' has no constraint-based representation (gel matrix, genotype-dependent selection agent, or undefined biological digest)"
+          }
+        ],
+        "match_channels": {
+          "name": 2
+        },
+        "n_bounds": 3,
+        "bounds": {
+          "r_1654": {
+            "metabolite": "ammonium",
+            "uptake_bound": 1000.0,
+            "unit": "mmol/gDW/h"
+          },
+          "r_1714": {
+            "metabolite": "D-glucose",
+            "uptake_bound": 3.3,
+            "unit": "mmol/gDW/h"
+          },
+          "r_2060": {
+            "metabolite": "sulphate",
+            "uptake_bound": 1000.0,
+            "unit": "mmol/gDW/h"
+          }
+        },
         "fba": {
-          "status": "infeasible",
-          "growth_rate_per_h": null
+          "status": "optimal",
+          "growth_rate_per_h": 0.0
         }
       },
       "matching_recipe": {

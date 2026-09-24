@@ -1436,6 +1436,268 @@ YNB_GLUCOSE_SOLID = Media(
 )
 """Solid YNB + 2% glucose as pinned for the Bloom 2019 YNB / pH 3 / pH 8 plates."""
 
+# --------------------------------------------------------------------------- #
+# SM (synthetic minimal) -- the Ralser-lab prototrophic-collection medium.
+#
+# "Synthetic minimal" is not one recipe across papers, which is why these are three
+# objects rather than one ``Media(name="SM")`` stub. Two of the three are the SAME
+# formulation, stated independently: Mulleder 2016 writes it out, and Messner 2023
+# both defers to Mulleder ("grown as previously published15", ref 15 = Mulleder 2016
+# Cell) AND restates the identical 6.7 g/L YNB + 2% glucose + 2% agar line. So they
+# share the object, and the agar plate is the derived medium of the liquid culture.
+#
+# Zelezniak 2018 is the third case and it is NOT the same object: that paper states no
+# recipe at all. It names the medium ("minimal medium", "synthetic minimal (SM)") and
+# sources the strains to the same prototrophic collection, deferring to Mulleder 2012
+# (Nat Biotechnol 30:1176-1178), which is not mirrored. Copying Mulleder 2016's grams
+# onto it would be a guess dressed as provenance, exactly what ``YP_GLYCEROL_LIQUID``
+# refuses to do with Bloom's 3% glycerol, so the composition stays deferred.
+#
+# Documented gaps, all three: no pH is stated by any of the three papers; the YNB
+# trace-metal, salt and vitamin rows sit inside the commercial YNB line; and the
+# ammonium sulfate amount is recorded as an identity without a number (see below).
+# --------------------------------------------------------------------------- #
+_MULLEDER2016 = "mullederFunctionalMetabolomicsDescribes2016"
+_MULLEDER2016_SHA = "20412bec5b930d1fa43d326d8f9baca267130ddef5fdaa804f19e1209f925e6e"
+_MESSNER2023 = "messnerProteomicLandscapeGenomewide2023"
+_MESSNER2023_SHA = "edd0fe288641b9c4775f8972f2a13bcf09dfbf3bcd98d3e444e548d5cf4b3c15"
+_ZELEZNIAK2018 = "zelezniakMachineLearningPredicts2018"
+_ZELEZNIAK2018_SHA = "072bfb2d5b601d578dd5370ed25bfe2709bba0273843c87b5580e248573ce196"
+
+#: Zelezniak 2018's deferral target, and NOT mirrored: the prototrophic-collection
+#: paper its "Strains and Culture" section sources the strains and the medium to.
+_MULLEDER2012 = "mullederPrototrophicDeletionMutant2012"
+
+_MULLEDER_SM_QUOTE = (
+    "The strains were transferred to synthetic minimal (SM) agar medium "
+    "$\\left( 6 . 7 ~ \\mathfrak { g } / \\right.$ yeast nitrogen base without amino "
+    "acids (Y0626, SIGMA), $2 \\%$ glucose, $2 \\%$ agar)"
+)
+_MULLEDER_LIQUID_QUOTE = (
+    "These spots were used for the inoculation of cultures in liquid SM"
+)
+#: The nitrogen-starvation medium of the SAME Methods section. It is quoted here because
+#: it is what establishes, from the paper's own words, that the SM's YNB carries the
+#: ammonium sulfate: the nitrogen-FREE medium is a DIFFERENT Sigma product, named "without
+#: amino acids and ammonium sulfate", at 1.7 g/L against SM's 6.7 g/L.
+_MULLEDER_SDN_QUOTE = (
+    "Starvation medium, SD $( - N )$ , was prepared with $1 . 7 ~ { \\mathfrak { g } } / "
+    "{ \\mathfrak { l } }$ yeast nitrogen base without amino acids and ammonium sulfate "
+    "(Y1251 SIGMA) and $2 \\%$ glucose."
+)
+_MESSNER_SM_QUOTE = (
+    "The thawed stock cultures were spotted with the pinning robot onto SM agar medium "
+    "$( 6 . 7 \\ : \\mathfrak { g } / |$ yeast nitrogen base without amino acids, "
+    "$2 \\%$ glucose, $2 \\%$ agar)"
+)
+_MESSNER_LIQUID_QUOTE = (
+    "Subsequently, these cells were used for inoculation in "
+    "$2 0 0 \\mu \\ S \\mathsf { M }$ liquid medium in 96-well plates"
+)
+_MESSNER_NO_SUPPLEMENT_QUOTE = (
+    "We grew a prototrophic derivative of the yeast gene deletion collection in a "
+    "synthetic minimal (SM) medium without amino acid and nucleobase supplementation"
+)
+_MESSNER_DEFERRAL_QUOTE = (
+    "The yeast strains were grown as previously published15 with slight modifications."
+)
+_ZELEZNIAK_STRAIN_QUOTE = (
+    "Yeast strains used in this study were obtained from our published prototrophic "
+    "gene deletion collection (Mulleder et al., 2012 € )."
+)
+_ZELEZNIAK_CULTURE_QUOTE = (
+    "97 of the strains grew in triplicates $\\scriptstyle ( \\mathsf { n } = 3 )$ in "
+    "minimal medium without a substantial growth defect (Figure S1), were pre-cultured "
+    "overnight in $1 0 ~ \\mathsf { m l }$ minimal medium, at "
+    "$_ { 3 0 ^ { \\circ } \\mathrm { C } }$ ,"
+)
+
+
+def _mulleder_sv(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
+    return _sv(
+        value, quote, ck=_MULLEDER2016, sha=_MULLEDER2016_SHA, uri="paper.md", note=note
+    )
+
+
+def _messner_sv(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
+    return _sv(
+        value, quote, ck=_MESSNER2023, sha=_MESSNER2023_SHA, uri="paper.md", note=note
+    )
+
+
+_SM_YNB = _mixture(
+    "yeast nitrogen base (w/o amino acids)",
+    MediaComponentRole.other,
+    _DEFERRED,
+    concentration=_c(6.7, _GL),
+    provenance=[
+        _mulleder_sv("6.7 g/L", _MULLEDER_SM_QUOTE),
+        _messner_sv(
+            "6.7 g/L",
+            _MESSNER_SM_QUOTE,
+            note="the same product and the same amount, stated independently seven "
+            "years later; Messner's Key Resources Table prints the catalog number as "
+            "Cat#Y0262 against Mulleder's Y0626, a two-digit transposition of the same "
+            "Sigma YNB-without-amino-acids product, recorded as read and not corrected",
+        ),
+    ],
+    note="6.7 g/L is the full-strength commercial YNB-without-amino-acids line, four "
+    "times the 1.7 g/L amino-acid- AND ammonium-sulfate-free product the same Methods "
+    "section uses for its nitrogen-starvation medium; the vitamins, trace metals and "
+    "salts sit inside it (expand from the Sigma/Difco YNB spec)",
+    defers_to=[_MULLEDER2012],
+)
+_SM_AMMONIUM_SULFATE = _defined(
+    "ammonium sulfate",
+    MediaComponentRole.nitrogen_source,
+    provenance=[
+        _mulleder_sv(
+            "present inside the 6.7 g/L YNB line; amount not printed",
+            _MULLEDER_SDN_QUOTE,
+            note="the nitrogen source is recorded as an IDENTITY with no concentration, "
+            "on purpose. Neither paper prints an ammonium sulfate amount, and its mass "
+            "is already counted in the 6.7 g/L YNB line, so giving it a number here "
+            "would double-count the medium. That it is present at all is the paper's "
+            "own statement, not an assumption: this sentence defines the "
+            "nitrogen-starvation medium as a DIFFERENT product, 'without amino acids "
+            "and ammonium sulfate' at 1.7 g/L, against SM's 6.7 g/L 'without amino "
+            "acids'. The 5.0 g/L difference between the two lines is the standard "
+            "ammonium sulfate content of the full-strength product, which is "
+            "corroboration and not a sourced number, so it is not recorded as one",
+        )
+    ],
+    note="the only nitrogen source in SM; a prototrophic collection grows on it with "
+    "no amino acid or nucleobase supplement",
+)
+_SM_GLUCOSE = _defined(
+    "D-glucose",
+    MediaComponentRole.carbon_source,
+    concentration=_c(2.0, _PCT),
+    provenance=[
+        _mulleder_sv("2% (20 g/L)", _MULLEDER_SM_QUOTE, note=_PERCENT_BASIS_NOTE),
+        _messner_sv("2% (20 g/L)", _MESSNER_SM_QUOTE),
+    ],
+)
+
+SM = Media(
+    name="SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="SM",
+    components=[_SM_YNB, _SM_AMMONIUM_SULFATE, _SM_GLUCOSE],
+    provenance=[
+        _mulleder_sv(
+            "6.7 g/L YNB w/o amino acids + 2% glucose, no agar",
+            _MULLEDER_LIQUID_QUOTE,
+            note="the recipe sentence gives 'SM agar medium (... 2% agar)', so the "
+            "liquid SM this sentence inoculates is that recipe without the agar; both "
+            "papers name the two media 'SM agar' and 'SM liquid' off one formulation",
+        ),
+        _messner_sv("SM liquid medium", _MESSNER_LIQUID_QUOTE),
+        _messner_sv(
+            "no amino acid or nucleobase supplement",
+            _MESSNER_NO_SUPPLEMENT_QUOTE,
+            note="why ``dropouts`` is empty rather than listing the 20 amino acids: SM "
+            "is a minimal medium, not an edit of a supplemented one, so there is no "
+            "base medium the supplements were removed FROM",
+        ),
+        _messner_sv(
+            "Messner's growth protocol defers to Mulleder 2016",
+            _MESSNER_DEFERRAL_QUOTE,
+            note="reference 15 of Messner 2023 is Mulleder et al. 2016 Cell 167:553, "
+            "the mirrored key this object's other quotes come from, so the deferral "
+            "chain closes inside the mirror instead of leaving the mirror",
+        ),
+    ],
+)
+"""Liquid SM: the medium the Mulleder 2016 and Messner 2023 cultures were grown in.
+
+Both papers state the same formulation independently, and Messner's protocol also
+defers to Mulleder, so one object carries both. ``open_gaps`` reports the commercial
+YNB line (composition deferred) and the ammonium sulfate amount; no paper states a pH.
+"""
+
+SM_AGAR = Media(
+    name="SM agar (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose "
+    "+ 2% agar)",
+    state="solid",
+    is_synthetic=True,
+    base_medium="SM",
+    components=[
+        *SM.components,
+        _defined(
+            "agar",
+            MediaComponentRole.gelling_agent,
+            concentration=_c(2.0, _PCT),
+            provenance=[
+                _mulleder_sv("2%", _MULLEDER_SM_QUOTE, note=_PERCENT_BASIS_NOTE),
+                _messner_sv("2%", _MESSNER_SM_QUOTE),
+            ],
+        ),
+    ],
+    provenance=[
+        _mulleder_sv("SM agar recipe", _MULLEDER_SM_QUOTE),
+        _messner_sv("SM agar recipe", _MESSNER_SM_QUOTE),
+    ],
+)
+"""Solid SM: the spotting/transfer plates of both screens, liquid ``SM`` plus 2% agar.
+
+Mulleder's loader records the screen environment as ``state="solid"``, which is this
+object. The paper's amino-acid measurements are taken from the LIQUID subculture the
+spots inoculate ("These spots were used for the inoculation of cultures in liquid SM"),
+so whether that loader should carry ``SM`` instead of ``SM_AGAR`` is a separate question
+about the record, not about the recipe, and it is not decided here.
+"""
+
+SM_DEFERRED = Media(
+    name="SM (synthetic minimal, composition deferred to Mulleder 2012), liquid",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="SM_DEFERRED",
+    components=[
+        _mixture(
+            "synthetic minimal (SM) medium, prototrophic-collection formulation",
+            MediaComponentRole.other,
+            _DEFERRED,
+            provenance=[
+                _sv(
+                    "composition deferred to Mulleder 2012",
+                    _ZELEZNIAK_STRAIN_QUOTE,
+                    ck=_ZELEZNIAK2018,
+                    sha=_ZELEZNIAK2018_SHA,
+                    uri="paper.md",
+                )
+            ],
+            note="Zelezniak 2018 states NO recipe: its Strains and Culture section "
+            "names 'minimal medium' and 'synthetic minimal (SM)' and sources both the "
+            "strains and the cultivation to Mulleder et al. 2012, Nat Biotechnol "
+            "30:1176-1178, which is not mirrored. The medium is plausibly the same "
+            "6.7 g/L YNB + 2% glucose formulation the same lab writes out in Mulleder "
+            "2016 and Messner 2023 restates, but that identification is nowhere stated, "
+            "so the grams are NOT copied in and the carbon source stays inside this "
+            "deferred line",
+            defers_to=[_MULLEDER2012],
+        )
+    ],
+    provenance=[
+        _sv(
+            "minimal medium, no composition given",
+            _ZELEZNIAK_CULTURE_QUOTE,
+            ck=_ZELEZNIAK2018,
+            sha=_ZELEZNIAK2018_SHA,
+            uri="paper.md",
+            note="the pre-culture and the 30 mL main culture are both 'minimal medium'; "
+            "the 30 C is a Temperature on the Environment, not a Media field",
+        )
+    ],
+)
+"""Zelezniak 2018's SM, kept a DISTINCT object because its recipe is unstated.
+
+Separating it is the whole point of the component treatment: with empty components, this
+medium and the Mulleder/Messner SM were indistinguishable strings. They are still not
+joined on composition here, and that is the honest state until Mulleder 2012 is mirrored.
+"""
+
 # Registry of the canonical media (name -> object), for discovery/migration.
 MEDIA_LIBRARY: dict[str, Media] = {
     "SD_MSG": SD_MSG,
@@ -1474,6 +1736,9 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "YP_ETHANOL": YP_ETHANOL,
     "YPD_ETHANOL": YPD_ETHANOL,
     "YNB_GLUCOSE_SOLID": YNB_GLUCOSE_SOLID,
+    "SM": SM,
+    "SM_AGAR": SM_AGAR,
+    "SM_DEFERRED": SM_DEFERRED,
 } | {
     _hm_key(compound, partial): HILLENMEYER_DROPOUT_MEDIA[label]
     for label, compound, partial in _HILLENMEYER_DROPOUTS
@@ -1492,6 +1757,8 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "SYNH3_MINUS": "the hydrolysate sugars sit inside a composition deferred to "
     "Zhang 2019, which is not mirrored",
     "SYNBASE": "same deferral as its SynH3- base",
+    "SM_DEFERRED": "Zelezniak 2018 states no recipe, so the carbon source sits inside "
+    "a composition deferred to Mulleder 2012, which is not mirrored",
 }
 
 

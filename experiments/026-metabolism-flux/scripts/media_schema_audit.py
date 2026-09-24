@@ -29,9 +29,12 @@ What this measures, and why each part is here
 5. **Growth.** Plain FBA under each medium, so a bound vector that produces a dead cell
    cannot pass as a successful mapping.
 6. **What the loaders actually emit.** The four datasets' ``Media`` objects are read back
-   out of their loader source (literal + line number verified at run time, so this cannot
-   drift silently) and mapped through the same path as the recipes. The gap between a
-   loader's object and its recipe is the finding, not a detail.
+   from their loader source (the exact line + its number verified at run time, so this
+   cannot drift silently) and mapped through the same path as the recipes. The gap between
+   a loader's object and its recipe is the finding, not a detail. A loader that emits a
+   bare ``Media(...)`` literal is parsed out of that literal; one that imports a shared
+   library constant (``mulleder2016`` since issue 143) is read from ``MEDIA_LIBRARY`` by
+   the key its ``library_key`` names, which is the same object the loader imports.
 7. **Sourced vs rescaled supplements.** Suthers' absolute 0.165 mmol/gDW/h against the
    ``glucose_rate * 0.05`` our older scripts compute, at the glucose rate those scripts
    use, so the size of the divergence is a measured number rather than an assertion.
@@ -64,9 +67,12 @@ REPO_ROOT = osp.dirname(osp.dirname(osp.dirname(osp.dirname(osp.abspath(__file__
 RESULTS_DIR = osp.join(os.environ["EXPERIMENT_ROOT"], "026-metabolism-flux", "results")
 OUT_PATH = osp.join(RESULTS_DIR, "media_schema_audit.json")
 
-#: The four datasets whose medium matters here, with the EXACT ``Media(...)`` literal
-#: their loader constructs. The literal is verified against the file at run time, so a
-#: loader edit surfaces as a hard failure instead of a stale claim in a report.
+#: The four datasets whose medium matters here, with the EXACT source line their loader
+#: carries. The line is verified against the file at run time, so a loader edit surfaces
+#: as a hard failure instead of a stale claim in a report. ``library_key`` marks a loader
+#: that has been migrated to a shared ``MEDIA_LIBRARY`` constant: its medium comes from
+#: the library rather than from parsing the literal, because the literal is now an import
+#: reference with no fields in it.
 DATASET_MEDIA_LITERALS: list[dict[str, str]] = [
     {
         "dataset": "cachera2023 (betaxanthin)",
@@ -83,7 +89,11 @@ DATASET_MEDIA_LITERALS: list[dict[str, str]] = [
     {
         "dataset": "mulleder2016 (amino acids)",
         "path": "torchcell/datasets/scerevisiae/mulleder2016.py",
-        "literal": 'media=Media(name="SM", state="solid", is_synthetic=True),',
+        "literal": (
+            "environment = Environment(media=SM_AGAR, "
+            "temperature=Temperature(value=30))"
+        ),
+        "library_key": "SM_AGAR",
         "recipe_key": "SM",
     },
     {
@@ -115,9 +125,10 @@ def media_from_literal(literal: str) -> Media:
     """Rebuild the loader's ``Media`` from its own source line.
 
     Parsing the literal rather than retyping its fields is what makes the audited object
-    the loader's object. The loaders build ``Media`` with three keyword arguments and
-    nothing else, which is itself the finding, so the parser deliberately accepts only
-    that form and raises on anything richer.
+    the loader's object. An unmigrated loader builds ``Media`` with three keyword arguments
+    and nothing else, which is itself the finding, so the parser deliberately accepts only
+    that form and raises on anything richer. A migrated loader names a ``library_key``
+    instead and never reaches here.
     """
     match = _MEDIA_KWARGS.search(literal)
     if match is None:
@@ -362,7 +373,11 @@ def main() -> None:
 
     for spec in DATASET_MEDIA_LITERALS:
         line = locate_literal(spec["path"], spec["literal"])
-        emitted = media_from_literal(spec["literal"])
+        emitted = (
+            MEDIA_LIBRARY[spec["library_key"]]
+            if "library_key" in spec
+            else media_from_literal(spec["literal"])
+        )
         record, _ = coverage_record(
             f"{spec['dataset']} as emitted", emitted, model, index, policy
         )

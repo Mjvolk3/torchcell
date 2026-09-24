@@ -69,13 +69,13 @@ import pandas as pd
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.media import SM
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     ProteinAbundanceExperiment,
     ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
@@ -339,11 +339,10 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
                 )
             ]
         )
-        # Grown in synthetic minimal (SM) liquid medium at 30 C.
-        environment = Environment(
-            media=Media(name="SM", state="liquid", is_synthetic=True),
-            temperature=Temperature(value=30),
-        )
+        # Grown in synthetic minimal (SM) liquid medium at 30 C: 6.7 g/L YNB without
+        # amino acids + 2% glucose, restated by this paper and deferred by it to
+        # Mulleder 2016 (its ref 15), both quoted on ``SM``.
+        environment = Environment(media=SM, temperature=Temperature(value=30))
         # Single-replicate KO: n=1 per protein, per-strain SE undefined.
         abundance = row["abundance"]
         phenotype = ProteinAbundancePhenotype(

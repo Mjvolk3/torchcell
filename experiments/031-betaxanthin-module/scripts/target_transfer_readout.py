@@ -406,6 +406,18 @@ PAIRS = [
         "w143_aadelstore_h12l1p1_e200",
     ),
     (
+        "betaxanthin: MOMA store with the affine released on escape against the MOMA store",
+        "betaxanthin",
+        "w166_bxdelmomarel_h12l1p1_e200",
+        "w154_bxdelmoma_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: MOMA store with the affine released on escape against the GLPK store under the rule",
+        "betaxanthin",
+        "w166_bxdelmomarel_h12l1p1_e200",
+        "w148_bxdelstorer15_h12l1p1_e200",
+    ),
+    (
         "betaxanthin: driving-force polytope mean on deletion-only graphs against deletion-only graphs",
         "betaxanthin",
         "w164_bxdelmdfpoly_h12l1p1_e200",

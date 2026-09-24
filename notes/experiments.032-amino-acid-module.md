@@ -69,3 +69,7 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | A11 | 141 | w158 | max-min driving-force concentration store (cap 100 kJ/mol) | pending (2796) |
 
 - MEASURED, the ladder rerun with the concentration stores (`results/store_baselines_amino_acids.json`, 22 min): the driving-force concentrations read 0.013 to 0.019 under every model (capped 0.016 ridge, 0.016 kNN, 0.017 forest), inside the same 0.01 to 0.06 band as every other representation on this target.
+
+## 2026.09.23 - Round A5 read (jobs 2774 and 2775, 7 h 36 min and 7 h 48 min)
+
+- The wide control (width 90, two blocks, old graph): 0.034 (sd 0.010) against the width-12 control 0.034 (sd 0.025), +0.000 paired (sd 0.031, 3/6); six-seed ensemble 0.050 against 0.058 (corrected-graph control 0.062). Every seed escapes weakly (selected at epochs 10 to 59, validation Pearson 0.09 to 0.13); validation loss bottoms at epochs 6 to 21 and rises 0.05 to 0.07 by epoch 199. Width removes the collapsed seeds and tightens the spread, and does nothing to the level; the 027 cells of this form read 0.061 to 0.068 over three seeds, the six here 0.016 to 0.043. Written into `sec:target-transfer` as the amino-acid half of round 122; result files moved to `results/w139_aawide_h90l2p1_e200_s27*.json`.

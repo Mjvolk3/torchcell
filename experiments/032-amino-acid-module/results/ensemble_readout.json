@@ -401,6 +401,86 @@
       "n_seeds": 6
     },
     {
+      "stem": "w139_aawide_h90l2p1_e200",
+      "head": "mulleder19",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 639,
+          "spearman": 0.015638601112711873,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.03915624756956239,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.03136705893312593,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.03838407661107938,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.03765075655142947,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.043388156465728384,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_single_spearman": 0.034264149540606234,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 639,
+          "spearman": 0.03256122529458196,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.0530826059432688,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_triple_spearman": 0.042821915618925385,
+      "first_six": {
+        "n": 639,
+        "spearman": 0.05029586451836813,
+        "top50_enrichment": null,
+        "top50_hits": null
+      },
+      "all_seeds": {
+        "n": 639,
+        "spearman": 0.05029586451836813,
+        "top50_enrichment": null,
+        "top50_hits": null
+      },
+      "n_seeds": 6
+    },
+    {
       "stem": "w143_aadelstore_h12l1p1_e200",
       "head": "mulleder19",
       "seeds": [

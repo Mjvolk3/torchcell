@@ -725,6 +725,24 @@ wide cells. The validation loss bottoms at epochs 8 to 42 and rises 0.09 to 0.15
 199 on every seed, the round-122 pattern, so these seven-hour cells spend six hours past
 their minimum. Round 132 (w149), the wide control on this graph, completes the square.
 
+The amino-acid half of round 122 is read (jobs 2774 and 2775, 7 h 36 min and 7 h 48
+min): the affine-free control on 027's backbone, width 90, on the old graph, the cell
+round 118 said had to be read before any amino-acid affine. It reads 0.034 (sd 0.010)
+against the width-12 control's 0.034 (sd 0.025), $+0.000$ paired (sd 0.031), above on
+three of six, and ensembled over six seeds 0.050 against 0.058, under the corrected-graph
+control's 0.062 at width 12 and under every 027 arm at this width (0.068, 0.061, 0.048).
+Every wide seed leaves the constant predictor, selected at epochs 10 to 59 with
+validation Pearson 0.09 to 0.13, and the validation loss bottoms at epochs 6 to 21 and
+rises 0.05 to 0.07 by epoch 199. So width does for the amino acids what the graph
+correction did (round 124): it removes the collapsed seeds and tightens the spread (sd
+0.010 against 0.025), and it does nothing to the level. The 027 cells of this form read
+0.061 to 0.068 over three seeds on the same split; the six seeds here read 0.016 to
+0.043, and the difference between the two runs of one architecture is as large as any
+arm effect on this target. With the second amino-acid screen agreeing with the first at
+0.03 and the first's own retest at 0.20 (Section~\ref{sec:target-physics}), the
+amino-acid endpoint's strain-level rank has no headroom to show an arm effect against,
+and the width read closes the amino-acid backbone question rather than opening one.
+
 \input{tables/target_transfer}
 
 \subsection{Physically constrained stores on the targets, the store read without the backbone, and the second amino-acid screen\secstatus{todo}}

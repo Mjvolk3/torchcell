@@ -127,3 +127,7 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | A9 | 138 | w155 | del + linear MOMA store | 0.052 (sd 0.006); ens 0.056 |
+
+## 2026.09.24 - The annotation-only family on the amino acids
+
+- `target_go_models.py --target amino_acids` (`results/go_models_amino_acids.json`): GO perceptron 0.054 (sd 0.002); ProtT5 0.054 (sd 0.008); GO + ProtT5 0.065 (sd 0.003), ensemble 0.069, the highest single-seed read on this target; store row 0.019; GO + store 0.042; all three 0.045; DCell hierarchy 0.035 (sd 0.015). The flux row lowers every read it joins, as the transformer's affine did (A6'). Written into the 032 document (`3-physics.tex`, table `go_models`; 135 checks; version 4).

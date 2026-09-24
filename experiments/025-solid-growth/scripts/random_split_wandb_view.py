@@ -41,19 +41,27 @@ EXCLUDED_RUN_IDS = {"kj03xx8y", "0kaadgdu", "bekoxpor", "ztfcxu37"}
 KEEP_STATES = {"finished", "running"}
 
 # config tag -> arm label; ctrl_013 is split further by graph_reg_lambda (the
-# regularization ladder ran under that one config with the weight swept).
+# regularization ladder ran under that one config with the weight swept). The
+# epoch budget is appended from each run's own config (``trainer.max_epochs``),
+# since one config runs under several budgets: fit_031 seed 1 at 130 epochs, seeds
+# 2 and 3 at the 50-epoch cap set after seed 1 peaked at epoch 32.
 ARMS = {
-    "cgt_s3_r_kl_fit_031": "s3_closure_fitness1.0_130ep",
-    "cgt_s0_r_kl_fit_014": "s0_fitness1.0_30ep",
-    "cgt_s0_r_kl_fit_015": "s0_fitness0.1_30ep",
-    "cgt_s0_r_kl_ctrl_013": "s0_control_30ep",
-    "cgt_s0_r_mask_028": "s0_hardmask_30ep",
+    "cgt_s3_r_kl_fit_031": "s3_closure_fitness1.0",
+    "cgt_s3_r_kl_embfit_034": "s3_closure_composite_fitness1.0",
+    "cgt_s4_r_kl_fit_039": "s4_random_doubles_fitness1.0",
+    "cgt_s0_r_kl_embfit_035": "s0_composite_fitness1.0",
+    "cgt_s0_r_kl_fit_014": "s0_fitness1.0",
+    "cgt_s0_r_kl_fit_015": "s0_fitness0.1",
+    "cgt_s0_r_kl_ctrl_013": "s0_control",
+    "cgt_s0_r_mask_028": "s0_hardmask",
 }
-LAMBDA_ARMS = {0.0: "s0_lambda0_30ep", 0.01: "s0_lambda1e-2_30ep"}
+LAMBDA_ARMS = {0.0: "s0_lambda0", 0.01: "s0_lambda1e-2"}
 
 
 def _line(y: list[str], title: str, w: int = 6, h: int = 6) -> wr.LinePlot:
-    return wr.LinePlot(x=X, y=y, title=title, title_x="epoch", layout=wr.Layout(w=w, h=h))
+    return wr.LinePlot(
+        x=X, y=y, title=title, title_x="epoch", layout=wr.Layout(w=w, h=h)
+    )
 
 
 # Sections in rank order. Each (title, panels); a panel is (y keys, title).
@@ -74,7 +82,10 @@ SECTIONS: list[tuple[str, list[tuple[list[str], str]]]] = [
         "2 fitness",
         [
             (["val/fitness/Pearson"], "val fitness Pearson"),
-            (["train/fitness/Pearson", "val/fitness/Pearson"], "train and val fitness Pearson"),
+            (
+                ["train/fitness/Pearson", "val/fitness/Pearson"],
+                "train and val fitness Pearson",
+            ),
             (["train/fitness/Pearson"], "train fitness Pearson"),
             (["train/fitness_loss", "val/fitness_loss"], "train and val fitness loss"),
         ],
@@ -120,23 +131,42 @@ SECTIONS: list[tuple[str, list[tuple[list[str], str]]]] = [
         [
             (["train/loss"], "train loss"),
             (["train/point_loss", "val/point_loss"], "train and val point loss"),
-            (["train/graph_reg_loss", "val/graph_reg_loss"], "train and val graph penalty"),
+            (
+                ["train/graph_reg_loss", "val/graph_reg_loss"],
+                "train and val graph penalty",
+            ),
             (["train/dist_loss", "val/dist_loss"], "train and val distribution loss"),
         ],
     ),
     (
         "5 operator and gradient probe",
         [
-            (["train/cls_pert_strain_sd", "val/cls_pert_strain_sd"], "perturbed CLS across-strain sd"),
-            (["probe/grad_norm/point", "probe/grad_norm/fitness", "probe/grad_norm/graph_reg"], "gradient norms by term"),
-            (["probe/grad_ratio/graph_reg_to_point"], "graph penalty to point gradient ratio"),
+            (
+                ["train/cls_pert_strain_sd", "val/cls_pert_strain_sd"],
+                "perturbed CLS across-strain sd",
+            ),
+            (
+                [
+                    "probe/grad_norm/point",
+                    "probe/grad_norm/fitness",
+                    "probe/grad_norm/graph_reg",
+                ],
+                "gradient norms by term",
+            ),
+            (
+                ["probe/grad_ratio/graph_reg_to_point"],
+                "graph penalty to point gradient ratio",
+            ),
             (["val/residual_update_ratio"], "val residual update ratio"),
         ],
     ),
     (
         "6 bookkeeping",
         [
-            (["train/cuda_peak_allocated_gb", "val/cuda_peak_allocated_gb"], "peak GPU memory (GB)"),
+            (
+                ["train/cuda_peak_allocated_gb", "val/cuda_peak_allocated_gb"],
+                "peak GPU memory (GB)",
+            ),
             (["learning_rate"], "learning rate"),
             (["arm/n_subset"], "records in the pool"),
             (["arm/n_train_pinned"], "pinned train triples"),
@@ -154,7 +184,8 @@ def _arm_of(run: wandb.apis.public.Run) -> str | None:
         model = run.config.get("model") or {}
         lam = (model.get("graph_regularization") or {}).get("graph_reg_lambda")
         arm = LAMBDA_ARMS.get(float(lam) if lam is not None else -1.0, arm)
-    return arm
+    max_epochs = (run.config.get("trainer") or {})["max_epochs"]
+    return f"{arm}_{max_epochs}ep"
 
 
 def label_runs(api: wandb.Api) -> int:
@@ -172,7 +203,10 @@ def label_runs(api: wandb.Api) -> int:
     for (arm, seed), seed_runs in by_arm_seed.items():
         ranked = sorted(
             seed_runs,
-            key=lambda r: (0 if "val/gene_interaction/Pearson" in r.summary else 1, r.id),
+            key=lambda r: (
+                0 if "val/gene_interaction/Pearson" in r.summary else 1,
+                r.id,
+            ),
         )
         for i, run in enumerate(ranked):
             rank0 = "val/gene_interaction/Pearson" in run.summary

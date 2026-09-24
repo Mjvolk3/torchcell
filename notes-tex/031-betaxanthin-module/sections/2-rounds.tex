@@ -295,4 +295,54 @@ weaker call; the ladder read it the same way (0.152 by ridge against the HiGHS s
 0.195 by nearest neighbors). What the second law adds on this target is a second
 representation at the flux store's level, not a higher one.
 
+Round 142 is read (job 2797, 3 h 39 min): the sampled cone in the affine slot, the mean
+of six OptGP draws of each deletion's flux cone at 99 percent of its optimum
+(Section~\ref{sec:physics}), the Flux Cone Learning representation on this backbone,
+on the deletion-only graph. It reads 0.088 (sd 0.022) against the affine-free control's
+0.058 ($+0.030$ paired, sd 0.070, above on four of six) and against the GLPK
+parsimonious store's 0.121 ($-0.033$, sd 0.024, above on no seed), top-50 2.90 against
+3.39 and 4.93, and ensembled over six seeds 0.083 with a top-50 of 3.00 against 0.082
+and 0.131. Every seed selects off the plateau, at epochs 35 to 138 with validation
+Pearson 0.11 to 0.25, and reads 0.072 to 0.131. So the cone's mean carries less rank
+than the optimum it is sampled around, on every seed, and takes the call below the
+control's, the same order the ladder read without a backbone (0.007 by ridge, 0.064 by
+nearest neighbors against the point's 0.195): on this target a deletion's feasible
+region averaged over six draws is a worse representation than one optimum inside it,
+as the sampled stores were on the essentiality endpoint (the essentiality document,
+round 87), and the representation the Flux Cone Learning comparison rests on does not
+travel to the transformer.
+
+Round 144 is read (job 2798, 3 h 12 min): the size question from the small side, the
+store arm on the deletion-only graph at width 6 with two attention heads, half the
+incumbent's width, paired against the width-12 store. It reads 0.113 (sd 0.038)
+against 0.121 ($-0.008$ paired, sd 0.055, above on four of six), top-50 4.19 against
+4.93, and ensembled over six seeds 0.129 with a top-50 of 5.39 against 0.131 and 5.59.
+Four seeds select off the plateau at epochs 39 to 86 with validation Pearson 0.20 to
+0.25 and read 0.110 to 0.137; two never leave it, selected at epochs 185 and 197 on
+validation Pearson $-0.02$ and 0.02, and read 0.136 and 0.039, the first the affine's
+read of the store alone and the second the collapse. So at half the width the level is
+the width-12 store's within the seed spread and the plateau the deletion-only graph had
+removed returns on a third of the seeds, as it did under the solve head (round 134): the
+backbone is not too big for this target at width 12, and width 6 is where the escape
+starts to fail. With the width-90 reads of rounds 122 to 132 the size axis is now read
+from 6 to 90 and the level does not move on it.
+
+Round 145 is read (job 2799, 3 h 34 min): the size question from the regularization
+side, the store arm on the deletion-only graph with the transformer's dropout raised
+from the incumbent 0.1 to 0.3, paired against the store at 0.1. It reads 0.145 (sd
+0.018) against 0.121 ($+0.024$ paired, sd 0.040, above on four of six), the highest
+single-seed rank of any arm on this target (the HiGHS store 0.130, the width-90 store
+0.134), with a top-50 enrichment of 5.03 against 4.93, the highest single-seed call,
+and ensembled over six seeds 0.149 with a top-50 of 5.79 against 0.131 and 5.59, the
+highest width-12 ensemble rank by 0.001 over the HiGHS store. Five seeds select off the
+plateau at epochs 39 to 81 with validation Pearson 0.20 to 0.25 and read 0.135 to
+0.180, the tightest escaped band of any arm; the sixth sits on the plateau to epoch 149
+and reads 0.133, the affine alone. So the backbone that every width from 6 to 90 left
+at one level moves when it is regularized harder: the paired gain is inside the seed
+spread on the mean and on four seeds of six, but the level, the call and the ensemble
+are each the best a single width-12 arm has read, and the direction the user's
+question pointed at, a model too free for 3,494 genotypes, reads as measured. Rounds
+154 and 155 (w171, w172) put dropout 0.3 on the HiGHS store under the release rule,
+the three best levers on one cell, and read dropout 0.5 on the store arm.
+
 \input{tables/target_transfer}

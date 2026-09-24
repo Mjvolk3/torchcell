@@ -197,3 +197,27 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | status |
 |---|---|---|---|---|
 | B25 | 152 | w169 | del + HiGHS store, affine on escape | pending (2807) |
+
+## 2026.09.24 - Round B17 read (job 2795, 3 h 35 min)
+
+- B17 (w157, the capped driving-force concentration store in the affine slot): 0.118 (sd 0.055) vs the deletion-only control 0.058 (+0.059, sd 0.055, 5/6) and vs the GLPK flux store 0.121 (-0.003, sd 0.037, 2/6); top-50 4.06; ensemble 0.133 / 4.99. Two seeds at 0.167 (epochs 23 and 6), two at 0.058 and 0.040 (epochs 106 and 50). The metabolite side carries the flux vector's rank with twice the spread and a weaker call. Written into the 031 document as round 140 (version 6).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B17 | 140 | w157 | del + driving-force concentration store | 0.118 (sd 0.055); ens 0.133 / 4.99 |
+
+## 2026.09.24 - Round B16 read (job 2797, 3 h 39 min)
+
+- B16 (w159, the sampled-cone mean in the affine slot): 0.088 (sd 0.022) vs the deletion-only control 0.058 (+0.030, sd 0.070, 4/6) and vs the GLPK store 0.121 (-0.033, sd 0.024, 0/6); top-50 2.90 (below the control's 3.39); ensemble 0.083 / 3.00. Every seed off the plateau (epochs 35 to 138). The cone's mean carries less than the optimum it is sampled around on every seed and takes the call below the control; the FCL representation does not travel to the transformer. Written into the 031 document as round 142.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B16 | 142 | w159 | del + sampled-cone mean store | 0.088 (sd 0.022); ens 0.083 / 3.00 |
+
+## 2026.09.24 - Round B18 read (job 2798, 3 h 12 min)
+
+- B18 (w161, the store arm at width 6 with two heads): 0.113 (sd 0.038) vs the width-12 store 0.121 (-0.008, sd 0.055, 4/6); top-50 4.19; ensemble 0.129 / 5.39. Four seeds escape (epochs 39 to 86, 0.110 to 0.137); two never leave the plateau (selected at 185 and 197; 0.136 = the affine alone, 0.039 = the collapse). Half the width: the same level within the spread, and the plateau returns on a third of the seeds. The size axis is read from 6 to 90 and the level does not move on it. Written into the 031 document as round 144.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B18 | 144 | w161 | del + store, width 6 | 0.113 (sd 0.038); ens 0.129 / 5.39 |

@@ -1641,6 +1641,246 @@
         "top50_hits": 25.0
       },
       "n_seeds": 6
+    },
+    {
+      "stem": "w159_bxdelsampled_h12l1p1_e200",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.07159893394438167,
+          "top50_enrichment": 2.9952380952380953,
+          "top50_hits": 15.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.13088724602683607,
+          "top50_enrichment": 3.194920634920635,
+          "top50_hits": 16.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.07598277655960287,
+          "top50_enrichment": 3.194920634920635,
+          "top50_hits": 16.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.07974784509901539,
+          "top50_enrichment": 2.7955555555555556,
+          "top50_hits": 14.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.08497467461880533,
+          "top50_enrichment": 2.396190476190476,
+          "top50_hits": 12.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.08252354479405809,
+          "top50_enrichment": 2.7955555555555556,
+          "top50_hits": 14.0
+        }
+      ],
+      "mean_single_spearman": 0.08761917017378323,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.09357733797598915,
+          "top50_enrichment": 2.7955555555555556,
+          "top50_hits": 14.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.07656852377721617,
+          "top50_enrichment": 2.7955555555555556,
+          "top50_hits": 14.0
+        }
+      ],
+      "mean_triple_spearman": 0.08507293087660266,
+      "first_six": {
+        "n": 629,
+        "spearman": 0.08331850557403198,
+        "top50_enrichment": 2.9952380952380953,
+        "top50_hits": 15.0
+      },
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.08331850557403198,
+        "top50_enrichment": 2.9952380952380953,
+        "top50_hits": 15.0
+      },
+      "n_seeds": 6
+    },
+    {
+      "stem": "w161_bxdelstoreh6_h6l1p1_e200",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.13511369149680208,
+          "top50_enrichment": 4.992063492063492,
+          "top50_hits": 25.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.03937209498158866,
+          "top50_enrichment": 2.7955555555555556,
+          "top50_hits": 14.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.13645570821897202,
+          "top50_enrichment": 2.595873015873016,
+          "top50_hits": 13.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.12108893135494858,
+          "top50_enrichment": 5.79079365079365,
+          "top50_hits": 29.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.10958212246479584,
+          "top50_enrichment": 3.3946031746031746,
+          "top50_hits": 17.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.13682536481029964,
+          "top50_enrichment": 5.591111111111111,
+          "top50_hits": 28.0
+        }
+      ],
+      "mean_single_spearman": 0.1130729855545678,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.1137087108831499,
+          "top50_enrichment": 4.393015873015873,
+          "top50_hits": 22.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.13293397234948376,
+          "top50_enrichment": 5.9904761904761905,
+          "top50_hits": 30.0
+        }
+      ],
+      "mean_triple_spearman": 0.12332134161631683,
+      "first_six": {
+        "n": 629,
+        "spearman": 0.1291833931024639,
+        "top50_enrichment": 5.3914285714285715,
+        "top50_hits": 27.0
+      },
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.1291833931024639,
+        "top50_enrichment": 5.3914285714285715,
+        "top50_hits": 27.0
+      },
+      "n_seeds": 6
+    },
+    {
+      "stem": "w162_bxdelstoredrop_h12l1p1_e200",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.1384665581654384,
+          "top50_enrichment": 4.992063492063492,
+          "top50_hits": 25.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.13547118279227682,
+          "top50_enrichment": 5.3914285714285715,
+          "top50_hits": 27.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.14581021883250736,
+          "top50_enrichment": 5.191746031746032,
+          "top50_hits": 26.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.17952959114442812,
+          "top50_enrichment": 5.9904761904761905,
+          "top50_hits": 30.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.13289499718790504,
+          "top50_enrichment": 2.595873015873016,
+          "top50_hits": 13.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.1360536404011434,
+          "top50_enrichment": 5.9904761904761905,
+          "top50_hits": 30.0
+        }
+      ],
+      "mean_single_spearman": 0.14470436475394988,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.14280246097406082,
+          "top50_enrichment": 5.591111111111111,
+          "top50_hits": 28.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.15502362074111792,
+          "top50_enrichment": 6.38984126984127,
+          "top50_hits": 32.0
+        }
+      ],
+      "mean_triple_spearman": 0.14891304085758938,
+      "first_six": {
+        "n": 629,
+        "spearman": 0.1487196290118733,
+        "top50_enrichment": 5.79079365079365,
+        "top50_hits": 29.0
+      },
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.1487196290118733,
+        "top50_enrichment": 5.79079365079365,
+        "top50_hits": 29.0
+      },
+      "n_seeds": 6
     }
   ],
   "note": "Mean prediction over seeds on the pinned records, scored as the cells are; every dump resolved through its result file and checked against it."

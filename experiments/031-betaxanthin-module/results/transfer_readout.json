@@ -4347,6 +4347,566 @@
         0.03369194346128862,
         -0.059399816503041804
       ]
+    },
+    {
+      "name": "betaxanthin: sampled-cone mean store on deletion-only graphs against deletion-only graphs",
+      "head": "betaxanthin",
+      "arm": {
+        "stem": "w159_bxdelsampled_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 45,
+            "select_val_pearson": 0.23145972192287445,
+            "spearman": 0.07159893394438167,
+            "pearson": 0.1961219757795334,
+            "top50_enrichment": 2.9952380952380953,
+            "top50_hits": 15.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 74,
+            "select_val_pearson": 0.21499988436698914,
+            "spearman": 0.13088724602683607,
+            "pearson": 0.2522141933441162,
+            "top50_enrichment": 3.194920634920635,
+            "top50_hits": 16.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 84,
+            "select_val_pearson": 0.24137580394744873,
+            "spearman": 0.07598277655960287,
+            "pearson": 0.25015416741371155,
+            "top50_enrichment": 3.194920634920635,
+            "top50_hits": 16.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 138,
+            "select_val_pearson": 0.21175870299339294,
+            "spearman": 0.07974784509901539,
+            "pearson": 0.2104448676109314,
+            "top50_enrichment": 2.7955555555555556,
+            "top50_hits": 14.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 41,
+            "select_val_pearson": 0.11340594291687012,
+            "spearman": 0.08497467461880533,
+            "pearson": 0.18450306355953217,
+            "top50_enrichment": 2.396190476190476,
+            "top50_hits": 12.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 35,
+            "select_val_pearson": 0.24597521126270294,
+            "spearman": 0.08252354479405809,
+            "pearson": 0.23643480241298676,
+            "top50_enrichment": 2.7955555555555556,
+            "top50_hits": 14.0
+          }
+        ],
+        "mean_spearman": 0.08761917017378323,
+        "sd_spearman": 0.02172140200999451,
+        "mean_top50_enrichment": 2.895396825396825
+      },
+      "control": {
+        "stem": "w137_bxdel_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 16,
+            "select_val_pearson": 0.2601664662361145,
+            "spearman": 0.07334041208151361,
+            "pearson": 0.21324001252651215,
+            "top50_enrichment": 3.3946031746031746,
+            "top50_hits": 17.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 3,
+            "select_val_pearson": 0.24961666762828827,
+            "spearman": 0.12624267624711916,
+            "pearson": 0.20709733664989471,
+            "top50_enrichment": 3.793968253968254,
+            "top50_hits": 19.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 69,
+            "select_val_pearson": 0.28159183263778687,
+            "spearman": 0.0820333848808933,
+            "pearson": 0.3256893754005432,
+            "top50_enrichment": 4.792380952380952,
+            "top50_hits": 24.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 45,
+            "select_val_pearson": 0.27226758003234863,
+            "spearman": 0.07914493736899131,
+            "pearson": 0.3106706738471985,
+            "top50_enrichment": 4.792380952380952,
+            "top50_hits": 24.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 22,
+            "select_val_pearson": 0.26403021812438965,
+            "spearman": 0.07694223153196551,
+            "pearson": 0.11765517294406891,
+            "top50_enrichment": 3.594285714285714,
+            "top50_hits": 18.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 35,
+            "select_val_pearson": 0.17867739498615265,
+            "spearman": -0.08873080649026695,
+            "pearson": -0.015077796764671803,
+            "top50_enrichment": 0.0,
+            "top50_hits": 0.0
+          }
+        ],
+        "mean_spearman": 0.05816213927003599,
+        "sd_spearman": 0.07457302869430597,
+        "mean_top50_enrichment": 3.3946031746031746
+      },
+      "n": 6,
+      "mean_difference": 0.02945703090374725,
+      "sd_difference": 0.06963885566420769,
+      "n_positive": 4,
+      "differences": [
+        -0.0017414781371319354,
+        0.004644569779716917,
+        -0.006050608321290438,
+        0.0006029077300240826,
+        0.008032443086839813,
+        0.17125435128432503
+      ]
+    },
+    {
+      "name": "betaxanthin: sampled-cone mean store on deletion-only graphs against the GLPK store there",
+      "head": "betaxanthin",
+      "arm": {
+        "stem": "w159_bxdelsampled_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 45,
+            "select_val_pearson": 0.23145972192287445,
+            "spearman": 0.07159893394438167,
+            "pearson": 0.1961219757795334,
+            "top50_enrichment": 2.9952380952380953,
+            "top50_hits": 15.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 74,
+            "select_val_pearson": 0.21499988436698914,
+            "spearman": 0.13088724602683607,
+            "pearson": 0.2522141933441162,
+            "top50_enrichment": 3.194920634920635,
+            "top50_hits": 16.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 84,
+            "select_val_pearson": 0.24137580394744873,
+            "spearman": 0.07598277655960287,
+            "pearson": 0.25015416741371155,
+            "top50_enrichment": 3.194920634920635,
+            "top50_hits": 16.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 138,
+            "select_val_pearson": 0.21175870299339294,
+            "spearman": 0.07974784509901539,
+            "pearson": 0.2104448676109314,
+            "top50_enrichment": 2.7955555555555556,
+            "top50_hits": 14.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 41,
+            "select_val_pearson": 0.11340594291687012,
+            "spearman": 0.08497467461880533,
+            "pearson": 0.18450306355953217,
+            "top50_enrichment": 2.396190476190476,
+            "top50_hits": 12.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 35,
+            "select_val_pearson": 0.24597521126270294,
+            "spearman": 0.08252354479405809,
+            "pearson": 0.23643480241298676,
+            "top50_enrichment": 2.7955555555555556,
+            "top50_hits": 14.0
+          }
+        ],
+        "mean_spearman": 0.08761917017378323,
+        "sd_spearman": 0.02172140200999451,
+        "mean_top50_enrichment": 2.895396825396825
+      },
+      "control": {
+        "stem": "w140_bxdelstore_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 53,
+            "select_val_pearson": 0.20820659399032593,
+            "spearman": 0.12663615596918557,
+            "pearson": 0.29615163803100586,
+            "top50_enrichment": 4.992063492063492,
+            "top50_hits": 25.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 46,
+            "select_val_pearson": 0.2255835235118866,
+            "spearman": 0.14779428039075845,
+            "pearson": 0.35141563415527344,
+            "top50_enrichment": 5.9904761904761905,
+            "top50_hits": 30.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 92,
+            "select_val_pearson": 0.2651004493236542,
+            "spearman": 0.13592011569415505,
+            "pearson": 0.39678671956062317,
+            "top50_enrichment": 5.79079365079365,
+            "top50_hits": 29.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 105,
+            "select_val_pearson": 0.2014838010072708,
+            "spearman": 0.08196315463869962,
+            "pearson": 0.2566803991794586,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 149,
+            "select_val_pearson": -0.020059289410710335,
+            "spearman": 0.1328954971613712,
+            "pearson": 0.19221638143062592,
+            "top50_enrichment": 2.595873015873016,
+            "top50_hits": 13.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 46,
+            "select_val_pearson": 0.19942013919353485,
+            "spearman": 0.09960541845461603,
+            "pearson": 0.3444848656654358,
+            "top50_enrichment": 5.79079365079365,
+            "top50_hits": 29.0
+          }
+        ],
+        "mean_spearman": 0.12080243705146432,
+        "sd_spearman": 0.024880440708970934,
+        "mean_top50_enrichment": 4.925502645502645
+      },
+      "n": 6,
+      "mean_difference": -0.03318326687768108,
+      "sd_difference": 0.024057249530801572,
+      "n_positive": 0,
+      "differences": [
+        -0.05503722202480389,
+        -0.01690703436392238,
+        -0.05993733913455218,
+        -0.0022153095396842265,
+        -0.04792082254256587,
+        -0.01708187366055794
+      ]
+    },
+    {
+      "name": "betaxanthin: deletion-only store at width 6 against width 12",
+      "head": "betaxanthin",
+      "arm": {
+        "stem": "w161_bxdelstoreh6_h6l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 71,
+            "select_val_pearson": 0.19959208369255066,
+            "spearman": 0.13511369149680208,
+            "pearson": 0.3284936547279358,
+            "top50_enrichment": 4.992063492063492,
+            "top50_hits": 25.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 197,
+            "select_val_pearson": 0.022969864308834076,
+            "spearman": 0.03937209498158866,
+            "pearson": 0.15582558512687683,
+            "top50_enrichment": 2.7955555555555556,
+            "top50_hits": 14.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 185,
+            "select_val_pearson": -0.01944119483232498,
+            "spearman": 0.13645570821897202,
+            "pearson": 0.19539275765419006,
+            "top50_enrichment": 2.595873015873016,
+            "top50_hits": 13.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 83,
+            "select_val_pearson": 0.23714475333690643,
+            "spearman": 0.12108893135494858,
+            "pearson": 0.3583325743675232,
+            "top50_enrichment": 5.79079365079365,
+            "top50_hits": 29.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 39,
+            "select_val_pearson": 0.19933480024337769,
+            "spearman": 0.10958212246479584,
+            "pearson": 0.17319582402706146,
+            "top50_enrichment": 3.3946031746031746,
+            "top50_hits": 17.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 86,
+            "select_val_pearson": 0.24768050014972687,
+            "spearman": 0.13682536481029964,
+            "pearson": 0.3880203068256378,
+            "top50_enrichment": 5.591111111111111,
+            "top50_hits": 28.0
+          }
+        ],
+        "mean_spearman": 0.1130729855545678,
+        "sd_spearman": 0.037696107866401866,
+        "mean_top50_enrichment": 4.1933333333333325
+      },
+      "control": {
+        "stem": "w140_bxdelstore_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 53,
+            "select_val_pearson": 0.20820659399032593,
+            "spearman": 0.12663615596918557,
+            "pearson": 0.29615163803100586,
+            "top50_enrichment": 4.992063492063492,
+            "top50_hits": 25.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 46,
+            "select_val_pearson": 0.2255835235118866,
+            "spearman": 0.14779428039075845,
+            "pearson": 0.35141563415527344,
+            "top50_enrichment": 5.9904761904761905,
+            "top50_hits": 30.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 92,
+            "select_val_pearson": 0.2651004493236542,
+            "spearman": 0.13592011569415505,
+            "pearson": 0.39678671956062317,
+            "top50_enrichment": 5.79079365079365,
+            "top50_hits": 29.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 105,
+            "select_val_pearson": 0.2014838010072708,
+            "spearman": 0.08196315463869962,
+            "pearson": 0.2566803991794586,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 149,
+            "select_val_pearson": -0.020059289410710335,
+            "spearman": 0.1328954971613712,
+            "pearson": 0.19221638143062592,
+            "top50_enrichment": 2.595873015873016,
+            "top50_hits": 13.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 46,
+            "select_val_pearson": 0.19942013919353485,
+            "spearman": 0.09960541845461603,
+            "pearson": 0.3444848656654358,
+            "top50_enrichment": 5.79079365079365,
+            "top50_hits": 29.0
+          }
+        ],
+        "mean_spearman": 0.12080243705146432,
+        "sd_spearman": 0.024880440708970934,
+        "mean_top50_enrichment": 4.925502645502645
+      },
+      "n": 6,
+      "mean_difference": -0.007729451496896513,
+      "sd_difference": 0.05464196827408477,
+      "n_positive": 4,
+      "differences": [
+        0.008477535527616514,
+        -0.10842218540916979,
+        0.0005355925248169691,
+        0.039125776716248964,
+        -0.02331337469657535,
+        0.03721994635568361
+      ]
+    },
+    {
+      "name": "betaxanthin: deletion-only store at dropout 0.3 against 0.1",
+      "head": "betaxanthin",
+      "arm": {
+        "stem": "w162_bxdelstoredrop_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 46,
+            "select_val_pearson": 0.197921484708786,
+            "spearman": 0.1384665581654384,
+            "pearson": 0.3316253423690796,
+            "top50_enrichment": 4.992063492063492,
+            "top50_hits": 25.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 50,
+            "select_val_pearson": 0.25031018257141113,
+            "spearman": 0.13547118279227682,
+            "pearson": 0.2903723120689392,
+            "top50_enrichment": 5.3914285714285715,
+            "top50_hits": 27.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 77,
+            "select_val_pearson": 0.24006175994873047,
+            "spearman": 0.14581021883250736,
+            "pearson": 0.37433791160583496,
+            "top50_enrichment": 5.191746031746032,
+            "top50_hits": 26.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 39,
+            "select_val_pearson": 0.1999809741973877,
+            "spearman": 0.17952959114442812,
+            "pearson": 0.3882250189781189,
+            "top50_enrichment": 5.9904761904761905,
+            "top50_hits": 30.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 149,
+            "select_val_pearson": -0.01999477483332157,
+            "spearman": 0.13289499718790504,
+            "pearson": 0.19208453595638275,
+            "top50_enrichment": 2.595873015873016,
+            "top50_hits": 13.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 81,
+            "select_val_pearson": 0.24998117983341217,
+            "spearman": 0.1360536404011434,
+            "pearson": 0.3760029971599579,
+            "top50_enrichment": 5.9904761904761905,
+            "top50_hits": 30.0
+          }
+        ],
+        "mean_spearman": 0.14470436475394988,
+        "sd_spearman": 0.017620881820739606,
+        "mean_top50_enrichment": 5.025343915343916
+      },
+      "control": {
+        "stem": "w140_bxdelstore_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 53,
+            "select_val_pearson": 0.20820659399032593,
+            "spearman": 0.12663615596918557,
+            "pearson": 0.29615163803100586,
+            "top50_enrichment": 4.992063492063492,
+            "top50_hits": 25.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 46,
+            "select_val_pearson": 0.2255835235118866,
+            "spearman": 0.14779428039075845,
+            "pearson": 0.35141563415527344,
+            "top50_enrichment": 5.9904761904761905,
+            "top50_hits": 30.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 92,
+            "select_val_pearson": 0.2651004493236542,
+            "spearman": 0.13592011569415505,
+            "pearson": 0.39678671956062317,
+            "top50_enrichment": 5.79079365079365,
+            "top50_hits": 29.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 105,
+            "select_val_pearson": 0.2014838010072708,
+            "spearman": 0.08196315463869962,
+            "pearson": 0.2566803991794586,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 149,
+            "select_val_pearson": -0.020059289410710335,
+            "spearman": 0.1328954971613712,
+            "pearson": 0.19221638143062592,
+            "top50_enrichment": 2.595873015873016,
+            "top50_hits": 13.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 46,
+            "select_val_pearson": 0.19942013919353485,
+            "spearman": 0.09960541845461603,
+            "pearson": 0.3444848656654358,
+            "top50_enrichment": 5.79079365079365,
+            "top50_hits": 29.0
+          }
+        ],
+        "mean_spearman": 0.12080243705146432,
+        "sd_spearman": 0.024880440708970934,
+        "mean_top50_enrichment": 4.925502645502645
+      },
+      "n": 6,
+      "mean_difference": 0.023901927702485542,
+      "sd_difference": 0.039520882629325536,
+      "n_positive": 4,
+      "differences": [
+        0.011830402196252837,
+        -0.01232309759848163,
+        0.009890103138352313,
+        0.09756643650572851,
+        -4.999734661559341e-7,
+        0.03644822194652737
+      ]
     }
   ],
   "note": "Pinned-test Spearman at the validation-selected epoch (centered five-epoch moving average of validation Pearson), paired by seed; the amino-acid statistic is the mean per-column Spearman over the 19 amino acids. Comparators are read from 027's result files on the same split and statistic."

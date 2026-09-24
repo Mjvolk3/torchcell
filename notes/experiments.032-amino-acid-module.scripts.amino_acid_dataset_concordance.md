@@ -27,6 +27,6 @@ MEASURED, they do not agree at the strain level. Over the shared strains the mat
 
 The retest references bound this. Mulleder's own retest over 194 strains averages Spearman 0.20 (Pearson on log10 0.43; 027's read). Cooper's 47 duplicate strains average Spearman 0.06 (log-Pearson 0.10; the ledger rows against the served rows, 19 to 47 pairs per peak). A cross-screen Spearman cannot exceed roughly the geometric mean of the two retests, about 0.11, and the observed 0.00 to 0.06 sits at or below that. Reading: Cooper 2010 carries almost no strain-level signal in its released table (its replicate agreement is near zero), so it cannot corroborate Mulleder strain by strain; and the two screens also measure different things (minimal versus complete medium, prototroph versus auxotroph), which is a biological difference rather than noise and cannot be separated from the noise with this replicate agreement. Cooper 2010 is therefore not a second target for the amino-acid module and not a validation set for it.
 
-![](./assets/images/032-amino-acid-module/amino_acid_dataset_concordance_2026-09-23-15-08-41.svg)
+![](./assets/images/032-amino-acid-module/amino_acid_dataset_concordance_2026-09-24-00-27-59.svg)
 
 Figure. **a**, Spearman over the shared strains for every Cooper peak (rows) against every Mulleder amino acid (columns); matched pairs outlined. **b**, The matched pairs' cross-screen Spearman (bars) beside Mulleder's retest Spearman (194 strains, circles) and Cooper's duplicate-strain Spearman (squares).

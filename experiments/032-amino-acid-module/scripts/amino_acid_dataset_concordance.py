@@ -138,6 +138,18 @@ class Retest(BaseModel):
     pearson_log: float
 
 
+class Spread(BaseModel):
+    """The log10 ratio's spread over all served rows and over the duplicate pairs."""
+
+    key: str
+    sd_log10_all: float
+    sd_log10_duplicates: float
+    frac_beyond_twofold_all: float
+    frac_beyond_twofold_duplicates: float
+    n_all: int
+    n_duplicates: int
+
+
 class Report(BaseModel):
     mulleder_manifest: dict[str, Any]
     cooper_manifest: dict[str, Any]
@@ -152,6 +164,9 @@ class Report(BaseModel):
     mulleder_keys: list[str]
     mulleder_retest: dict[str, dict[str, float]]
     cooper_duplicate_retest: list[Retest]
+    #: Whether the duplicated genes are typical strains: the spread of the released
+    #: value over every row against the spread over the duplicate pairs' rows.
+    cooper_duplicate_spread: list[Spread]
     figure: str
     note: str
 
@@ -322,6 +337,36 @@ def main() -> None:
     ax.text(-0.16, 1.01, "a", transform=ax.transAxes, fontsize=8, fontweight="bold",
             ha="left", va="bottom")
 
+    # Are the duplicated genes typical strains? The spread of the released value over
+    # every served row against the spread over the duplicate pairs' rows (both members).
+    cooper_spread: list[Spread] = []
+    for key in COOPER_KEYS:
+        dup = [float(row["levels"][key]) for row in ledger if key in row["levels"]]
+        kept = [
+            float(served.loc[row["kept_row_index"], key]) for row in ledger if key in row["levels"]
+        ]
+        pair_vals = np.array(dup + kept, float)
+        pair_vals = np.log10(pair_vals[np.isfinite(pair_vals) & (pair_vals > 0)])
+        all_vals = coo[key].to_numpy(float)
+        all_vals = np.log10(all_vals[np.isfinite(all_vals) & (all_vals > 0)])
+        if len(pair_vals) < 10:
+            continue
+        cooper_spread.append(
+            Spread(
+                key=key,
+                sd_log10_all=float(all_vals.std(ddof=1)),
+                sd_log10_duplicates=float(pair_vals.std(ddof=1)),
+                frac_beyond_twofold_all=float(np.mean(np.abs(all_vals) > np.log10(2))),
+                frac_beyond_twofold_duplicates=float(np.mean(np.abs(pair_vals) > np.log10(2))),
+                n_all=int(all_vals.size),
+                n_duplicates=int(pair_vals.size),
+            )
+        )
+    print(
+        "Cooper duplicate spread (sd log10 all / duplicates):",
+        [(x.key, round(x.sd_log10_all, 3), round(x.sd_log10_duplicates, 3)) for x in cooper_spread],
+    )
+
     # b: the matched pairs beside both retest references.
     ax2 = fig.add_axes([left, b_labels / fig_h, (fig_w - 34.0 - 8.0) / fig_w, bar_h / fig_h])
     labels = [f"{short(s.cooper_peak)} : {short(s.mulleder)}" for s in matched]
@@ -376,6 +421,7 @@ def main() -> None:
         mulleder_keys=MULLEDER_KEYS,
         mulleder_retest=mulleder_retest,
         cooper_duplicate_retest=cooper_retest,
+        cooper_duplicate_spread=cooper_spread,
         figure=svg,
         note=(
             "Spearman over the strains both screens measured; Pearson on log10 of both "

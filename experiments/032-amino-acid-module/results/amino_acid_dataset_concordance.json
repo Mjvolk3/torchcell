@@ -4,10 +4,10 @@
     "dataset_name": "amino_acid_mulleder2016",
     "loader_class": "AminoAcidMulleder2016Dataset",
     "loader_module": "torchcell.datasets.scerevisiae.mulleder2016",
-    "built_at": "2026-09-14T07:28:30.074716+00:00",
+    "built_at": "2026-09-24T00:14:47.756402+00:00",
     "hostname": "gilahyper",
-    "torchcell_commit": "f77f6c157fff4cf99828ae2e0b9612915b5a74c9",
-    "torchcell_dirty": false
+    "torchcell_commit": "875bb4336966a65720278e9f690caff7e3da8c24",
+    "torchcell_dirty": true
   },
   "cooper_manifest": {
     "manifest_schema_version": 1,
@@ -1409,6 +1409,161 @@
       "pearson_log": 0.041837274958859264
     }
   ],
-  "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/032-amino-acid-module/amino_acid_dataset_concordance_2026-09-23-15-08-41.svg",
+  "cooper_duplicate_spread": [
+    {
+      "key": "lysine_related_peak1",
+      "sd_log10_all": 0.5104319249885937,
+      "sd_log10_duplicates": 0.4339523651346148,
+      "frac_beyond_twofold_all": 0.4259567387687188,
+      "frac_beyond_twofold_duplicates": 0.3333333333333333,
+      "n_all": 1803,
+      "n_duplicates": 30
+    },
+    {
+      "key": "arginine",
+      "sd_log10_all": 0.251442065029482,
+      "sd_log10_duplicates": 0.2611482018833786,
+      "frac_beyond_twofold_all": 0.19628339140534262,
+      "frac_beyond_twofold_duplicates": 0.24468085106382978,
+      "n_all": 4305,
+      "n_duplicates": 94
+    },
+    {
+      "key": "gshbiotin",
+      "sd_log10_all": 0.4003183968213089,
+      "sd_log10_duplicates": 0.5296228105703834,
+      "frac_beyond_twofold_all": 0.42954220314735336,
+      "frac_beyond_twofold_duplicates": 0.46,
+      "n_all": 2796,
+      "n_duplicates": 50
+    },
+    {
+      "key": "n_acetylornithine",
+      "sd_log10_all": 0.406643701406477,
+      "sd_log10_duplicates": 0.37800707700983915,
+      "frac_beyond_twofold_all": 0.4710286458333333,
+      "frac_beyond_twofold_duplicates": 0.4,
+      "n_all": 3072,
+      "n_duplicates": 70
+    },
+    {
+      "key": "leucine+isoleucine+citrulline",
+      "sd_log10_all": 0.11676622817632491,
+      "sd_log10_duplicates": 0.12354579377050863,
+      "frac_beyond_twofold_all": 0.023693379790940768,
+      "frac_beyond_twofold_duplicates": 0.031914893617021274,
+      "n_all": 4305,
+      "n_duplicates": 94
+    },
+    {
+      "key": "glutamine+valine",
+      "sd_log10_all": 0.11190195186189966,
+      "sd_log10_duplicates": 0.10380921554508364,
+      "frac_beyond_twofold_all": 0.01879350348027842,
+      "frac_beyond_twofold_duplicates": 0.0,
+      "n_all": 4310,
+      "n_duplicates": 94
+    },
+    {
+      "key": "methionine+proline",
+      "sd_log10_all": 0.20507437572481668,
+      "sd_log10_duplicates": 0.25866239492802906,
+      "frac_beyond_twofold_all": 0.13497789155224577,
+      "frac_beyond_twofold_duplicates": 0.19148936170212766,
+      "n_all": 4297,
+      "n_duplicates": 94
+    },
+    {
+      "key": "threonine",
+      "sd_log10_all": 0.30991614421758684,
+      "sd_log10_duplicates": 0.36597388009294485,
+      "frac_beyond_twofold_all": 0.2911616161616162,
+      "frac_beyond_twofold_duplicates": 0.36904761904761907,
+      "n_all": 3960,
+      "n_duplicates": 84
+    },
+    {
+      "key": "alanine",
+      "sd_log10_all": 0.16724457625196312,
+      "sd_log10_duplicates": 0.19066659018305207,
+      "frac_beyond_twofold_all": 0.06451612903225806,
+      "frac_beyond_twofold_duplicates": 0.0851063829787234,
+      "n_all": 4309,
+      "n_duplicates": 94
+    },
+    {
+      "key": "serine",
+      "sd_log10_all": 0.27458993013863897,
+      "sd_log10_duplicates": 0.30585901597072557,
+      "frac_beyond_twofold_all": 0.26186830015313933,
+      "frac_beyond_twofold_duplicates": 0.3058823529411765,
+      "n_all": 3918,
+      "n_duplicates": 85
+    },
+    {
+      "key": "asparagine+tyrosine",
+      "sd_log10_all": 0.1472850414035144,
+      "sd_log10_duplicates": 0.17249971815960716,
+      "frac_beyond_twofold_all": 0.041356877323420076,
+      "frac_beyond_twofold_duplicates": 0.10638297872340426,
+      "n_all": 4304,
+      "n_duplicates": 94
+    },
+    {
+      "key": "glycine",
+      "sd_log10_all": 0.19439519520047613,
+      "sd_log10_duplicates": 0.20343980303696954,
+      "frac_beyond_twofold_all": 0.10383275261324042,
+      "frac_beyond_twofold_duplicates": 0.10638297872340426,
+      "n_all": 4305,
+      "n_duplicates": 94
+    },
+    {
+      "key": "lysine_a",
+      "sd_log10_all": 0.3097669248680915,
+      "sd_log10_duplicates": 0.31782816071974535,
+      "frac_beyond_twofold_all": 0.2992802414673787,
+      "frac_beyond_twofold_duplicates": 0.3333333333333333,
+      "n_all": 4307,
+      "n_duplicates": 93
+    },
+    {
+      "key": "ornithine",
+      "sd_log10_all": 0.27685071851728,
+      "sd_log10_duplicates": 0.36661373899240757,
+      "frac_beyond_twofold_all": 0.23385077616424638,
+      "frac_beyond_twofold_duplicates": 0.39325842696629215,
+      "n_all": 3994,
+      "n_duplicates": 89
+    },
+    {
+      "key": "lysine_b",
+      "sd_log10_all": 0.3042663375765112,
+      "sd_log10_duplicates": 0.2834317180585268,
+      "frac_beyond_twofold_all": 0.3292171481826654,
+      "frac_beyond_twofold_duplicates": 0.2826086956521739,
+      "n_all": 4292,
+      "n_duplicates": 92
+    },
+    {
+      "key": "glutamate",
+      "sd_log10_all": 0.34371164041467084,
+      "sd_log10_duplicates": 0.28728391256097396,
+      "frac_beyond_twofold_all": 0.3929824561403509,
+      "frac_beyond_twofold_duplicates": 0.3723404255319149,
+      "n_all": 4275,
+      "n_duplicates": 94
+    },
+    {
+      "key": "aspartate",
+      "sd_log10_all": 0.3744738378863001,
+      "sd_log10_duplicates": 0.40039823409799663,
+      "frac_beyond_twofold_all": 0.4230079426082501,
+      "frac_beyond_twofold_duplicates": 0.4430379746835443,
+      "n_all": 3903,
+      "n_duplicates": 79
+    }
+  ],
+  "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/032-amino-acid-module/amino_acid_dataset_concordance_2026-09-24-00-27-59.svg",
   "note": "Spearman over the strains both screens measured; Pearson on log10 of both quantities over strains with positive values in both; top-5-percent overlap with the hypergeometric tail probability. Cooper composite peaks are matched to the sum of their components' mM and to each component."
 }

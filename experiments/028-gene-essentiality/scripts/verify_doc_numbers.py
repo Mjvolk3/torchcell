@@ -353,6 +353,21 @@ def concordance_summary(key: str) -> Callable[[], float]:
             return float(np.mean([r["spearman"] for r in d["cooper_duplicate_retest"]]))
         if key == "cooper_retest_pearson_log_mean":
             return float(np.mean([r["pearson_log"] for r in d["cooper_duplicate_retest"]]))
+        spread = d["cooper_duplicate_spread"]
+        if key == "cooper_spread_n_peaks":
+            return float(len(spread))
+        if key == "cooper_spread_sd_all_min":
+            return float(min(x["sd_log10_all"] for x in spread))
+        if key == "cooper_spread_sd_all_max":
+            return float(max(x["sd_log10_all"] for x in spread))
+        if key == "cooper_spread_sd_dup_min":
+            return float(min(x["sd_log10_duplicates"] for x in spread))
+        if key == "cooper_spread_sd_dup_max":
+            return float(max(x["sd_log10_duplicates"] for x in spread))
+        if key == "cooper_spread_sd_all_median":
+            return float(np.median([x["sd_log10_all"] for x in spread]))
+        if key == "cooper_spread_sd_dup_median":
+            return float(np.median([x["sd_log10_duplicates"] for x in spread]))
         flat = [abs(v) for row in d["matrix_spearman"] for v in row if v is not None]
         if key == "matrix_abs_median":
             return float(np.median(flat))
@@ -3961,6 +3976,20 @@ CHECKS: list[Check] = [
           recompute=concordance_summary("mulleder_retest_spearman_mean"), tolerance=0.005),
     Check(claim="concordance: Mulleder retest Pearson mean", stated=0.43,
           recompute=concordance_summary("mulleder_retest_pearson_mean"), tolerance=0.005),
+    Check(claim="concordance: Cooper duplicate spread peaks", stated=17,
+          recompute=concordance_summary("cooper_spread_n_peaks"), tolerance=0.5),
+    Check(claim="concordance: Cooper duplicate rows sd min", stated=0.1,
+          recompute=concordance_summary("cooper_spread_sd_dup_min"), tolerance=0.006),
+    Check(claim="concordance: Cooper duplicate rows sd max", stated=0.53,
+          recompute=concordance_summary("cooper_spread_sd_dup_max"), tolerance=0.006),
+    Check(claim="concordance: Cooper all rows sd min", stated=0.11,
+          recompute=concordance_summary("cooper_spread_sd_all_min"), tolerance=0.006),
+    Check(claim="concordance: Cooper all rows sd max", stated=0.51,
+          recompute=concordance_summary("cooper_spread_sd_all_max"), tolerance=0.006),
+    Check(claim="concordance: Cooper duplicate rows sd median", stated=0.29,
+          recompute=concordance_summary("cooper_spread_sd_dup_median"), tolerance=0.006),
+    Check(claim="concordance: Cooper all rows sd median", stated=0.28,
+          recompute=concordance_summary("cooper_spread_sd_all_median"), tolerance=0.006),
     Check(claim="concordance: Cooper duplicate Spearman mean", stated=0.06,
           recompute=concordance_summary("cooper_retest_spearman_mean"), tolerance=0.005),
     Check(claim="concordance: Cooper duplicate log-Pearson mean", stated=0.10,

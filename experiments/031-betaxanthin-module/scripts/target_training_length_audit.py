@@ -103,6 +103,8 @@ ARMS = [
     ("w161_bxdelstoreh6_h6l1p1_e200", "betaxanthin", "del + store, width 6"),
     ("w162_bxdelstoredrop_h12l1p1_e200", "betaxanthin", "del + store, dropout 0.3"),
     ("w163_aadelstoreh6_h6l1p1_e200", "mulleder19", "del + store, width 6"),
+    ("w164_bxdelmdfpoly_h12l1p1_e200", "betaxanthin", "del + driving-force polytope mean"),
+    ("w165_aadelmdfpoly_h12l1p1_e200", "mulleder19", "del + driving-force polytope mean"),
 ]
 LOG_LINE = re.compile(
     r"\] ep\s+(\d+) loss ([\d.]+) .*?val_loss ([\d.]+) val_r ([-+\d.]+)"

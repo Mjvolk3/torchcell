@@ -406,6 +406,42 @@ PAIRS = [
         "w143_aadelstore_h12l1p1_e200",
     ),
     (
+        "betaxanthin: driving-force polytope mean on deletion-only graphs against deletion-only graphs",
+        "betaxanthin",
+        "w164_bxdelmdfpoly_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: driving-force polytope mean on deletion-only graphs against the GLPK store there",
+        "betaxanthin",
+        "w164_bxdelmdfpoly_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: driving-force polytope mean on deletion-only graphs against the driving-force point",
+        "betaxanthin",
+        "w164_bxdelmdfpoly_h12l1p1_e200",
+        "w157_bxdelmdf_h12l1p1_e200",
+    ),
+    (
+        "amino acids: driving-force polytope mean on deletion-only graphs against deletion-only graphs",
+        "mulleder19",
+        "w165_aadelmdfpoly_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
+        "amino acids: driving-force polytope mean on deletion-only graphs against the parsimonious store there",
+        "mulleder19",
+        "w165_aadelmdfpoly_h12l1p1_e200",
+        "w143_aadelstore_h12l1p1_e200",
+    ),
+    (
+        "amino acids: driving-force polytope mean on deletion-only graphs against the driving-force point",
+        "mulleder19",
+        "w165_aadelmdfpoly_h12l1p1_e200",
+        "w158_aadelmdf_h12l1p1_e200",
+    ),
+    (
         "amino acids: deletion-only graphs for 300 epochs against 200",
         "mulleder19",
         "w146_aadel_h12l1p1_e300",

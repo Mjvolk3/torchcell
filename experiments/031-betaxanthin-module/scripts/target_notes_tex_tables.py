@@ -135,6 +135,8 @@ STORE_LABELS = {
     "mdf_conc": "driving-force concentrations, every priced reaction",
     "mdfcap100_conc": "driving-force concentrations, cap 100 kJ/mol",
     "sampled_mean": "sampled cone, mean over draws",
+    "mdfcap100_poly_mean": "driving-force polytope, mean concentration over draws",
+    "mdfcap100_poly_spread": "driving-force polytope, mean with the spread of ln c",
 }
 
 

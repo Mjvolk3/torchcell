@@ -93,6 +93,8 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         "mdf_conc": {"store": "YPD_bx_mdf", "block": "v_deletion", "flux": True},
         "mdfcap100_conc": {"store": "YPD_bx_mdfcap100", "block": "v_deletion", "flux": True},
         "sampled_mean": {"store": "YPD_bx_sampledmean", "block": "v_deletion", "flux": True},
+        "mdfcap100_poly_mean": {"store": "YPD_bx_mdfcap100polymean", "block": "v_deletion", "flux": True},
+        "mdfcap100_poly_spread": {"store": "YPD_bx_mdfcap100polyspread", "block": "v_deletion", "flux": True},
     },
     "amino_acids": {
         "pfba_highs": {"store": "SM_gem", "block": "v_deletion", "flux": True},
@@ -102,6 +104,8 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         "mdf_conc": {"store": "SM_gem_mdf", "block": "v_deletion", "flux": True},
         "mdfcap100_conc": {"store": "SM_gem_mdfcap100", "block": "v_deletion", "flux": True},
         "sampled_mean": {"store": "SM_gem_sampledmean", "block": "v_deletion", "flux": True},
+        "mdfcap100_poly_mean": {"store": "SM_gem_mdfcap100polymean", "block": "v_deletion", "flux": True},
+        "mdfcap100_poly_spread": {"store": "SM_gem_mdfcap100polyspread", "block": "v_deletion", "flux": True},
     },
 }
 PRIMARY_STORE = {"betaxanthin": "pfba_glpk_full", "amino_acids": "pfba_highs"}

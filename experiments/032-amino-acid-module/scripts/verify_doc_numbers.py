@@ -53,6 +53,17 @@ def polytope(*keys: str):
 
 
 CHECKS: list[Check] = [
+    # sec:physics -- the sampled cone on the prototroph.
+    Check(claim="store-baselines: aa sampled cone ridge", stated=-0.004,
+          recompute=store_baseline("amino_acids", "sampled_mean", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: aa sampled cone kNN", stated=0.031,
+          recompute=store_baseline("amino_acids", "sampled_mean", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: aa sampled cone forest", stated=0.023,
+          recompute=store_baseline("amino_acids", "sampled_mean", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="physics: aa sampled cone lethal deletions", stated=161,
+          recompute=lambda: float(__import__("json").load(open(osp.join(RESULTS, "target_sampled_flux_store_amino_acids.json")))["n_lethal"]), tolerance=0.5),
+    Check(claim="physics: aa sampled cone distance to point", stated=5.9,
+          recompute=lambda: float(__import__("json").load(open(osp.join(RESULTS, "target_sampled_flux_store_amino_acids.json")))["median_rel_l2_log1p_mean_vs_source"]), tolerance=0.06),
     # sec:physics -- the driving-force polytope sampled on the prototroph.
     Check(claim="physics: polytope wild-type constrained reactions", stated=249,
           recompute=polytope("wild_type", "n_active"), tolerance=0.5),

@@ -48,9 +48,14 @@ predictions within $10^{-9}$ count as one rank, and the validation criterion is 
 to $10^{-6}$, so two runs agree to every digit). The screen is genome-wide and the
 stores cover the GEM genes, so most training genotypes read the wild-type row and a
 gene's row is one vector with no graph, no sequence and no pathway. On the amino acids
-every representation under every model sits between 0.001 and 0.058 (the HiGHS store
-0.022 by kNN, ProtT5 0.052 by forest, the two concatenated 0.058), where the 027
-bilinear ridge read 0.045 and the transformer arms 0.049 to 0.062. The driving-force
+every representation under every model sits between $-0.004$ and 0.058 (the HiGHS
+store 0.022 by kNN, ProtT5 0.052 by forest, the two concatenated 0.058), where the 027
+bilinear ridge read 0.045 and the transformer arms 0.049 to 0.062. The sampled cone
+(1,161 deletions, 161 lethal, six OptGP draws each at 99 percent of optimum, 4.3 h on
+twelve processes after the model copy's simplex cycling was removed with presolve and
+the warm-up's warm starts kept) reads $-0.004$, 0.031 and 0.023 by ridge, kNN and
+forest, its mean a median 5.9 relative distance from the parsimonious point; round 143
+(w160) is its transformer read. The driving-force
 polytope sampled per deletion (\texttt{target\_concentration\_polytope\_store.py}, the
 method in the sibling document: the region below the max-min optimum by 1 kJ/mol,
 coordinate hit-and-run, six draws, the chain seeded from a hash of the polytope) has on

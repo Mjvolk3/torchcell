@@ -110,3 +110,12 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | round | 028 | pack | arm | status |
 |---|---|---|---|---|
 | A13 | 148 | w165 | driving-force polytope, mean over draws | pending (2802) |
+
+## 2026.09.24 - The sampled-cone store on the prototroph
+
+- `target_sampled_flux_store.py --target amino_acids --samples 6 --thinning 10 --processes 12`: the first run hung after 7.7 h with three workers cycling in GLPK's simplex inside the model copy OptGPSampler makes (py-spy; the cycling hang in memory); presolve on the source model removes the cycling but made the flux-variability warm-up (about 8,000 LPs per deletion) a cold solve, over an hour per deletion; the fix keeps presolve for the copy and restores warm starts for the warm-up (`HRSampler.generate_fva_warmup` wrapped). Third run: 1,161 deletions, 161 lethal, 260.5 min on twelve processes, median relative distance of the six-sample mean to the parsimonious point 5.9 (`results/target_sampled_flux_store_amino_acids.json`). Stores `ess_solve_encodings_SM_gem_sampledmean.npz` (4,131 columns) and `_sampledspread.npz`.
+- A10 (w160, job 2803): the sampled mean in the affine slot, paired against A4 (w141_aadel) and A6' (w143_aadelstore). Ladder rerun with the `sampled_mean` row started 05:25.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| A10 | 143 | w160 | sampled-cone mean store | pending (2803) |

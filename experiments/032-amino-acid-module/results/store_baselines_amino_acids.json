@@ -43,9 +43,7 @@
  "selection": "validation per-feature Pearson, as the 027 ladder",
  "statistic": "pinned test mean Spearman over columns; betaxanthin also the top-50 enrichment of true top-10-percent producers among the 50 highest predictions",
  "slurm_job_id": null,
- "not_built": [
-  "sampled_mean"
- ],
+ "not_built": [],
  "representations": {
   "pfba_highs": {
    "dim": 4131,
@@ -15443,6 +15441,2572 @@
     ]
    }
   },
+  "sampled_mean": {
+   "dim": 4131,
+   "store": "SM_gem_sampledmean",
+   "filled_wild_type": {
+    "train": 3345,
+    "val": 255,
+    "test": 262
+   },
+   "n_scored": {
+    "val": 270,
+    "test": 842
+   },
+   "ridge": {
+    "selected_on_val": {
+     "k_gene": 1,
+     "ridge": 1.0,
+     "val": {
+      "per_feature_pearson": 0.010911155972467244,
+      "nmse": 1.1038321100850865,
+      "n": 270,
+      "mean_spearman": 0.01849815949635672,
+      "per_feature": {
+       "alanine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 5.817860094,
+        "max": 6.42376532,
+        "spearman": 0.0126643766008801,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.2,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 6.814859035781031,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "arginine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": -1.089913829,
+        "max": 3.936070693,
+        "spearman": 0.0203714582909579,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.3163161831481345,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "asparagine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.1561115,
+        "max": 1.646944168,
+        "spearman": 0.10501825085119862,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.3157799972000557,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "aspartate": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 4.894750634,
+        "max": 6.24936644,
+        "spearman": -0.13495323058504632,
+        "topk_precision": {
+         "10": 0.5,
+         "25": 0.36,
+         "50": 0.26
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.7627820858800085,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamate": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 19.069251778,
+        "max": 37.662386717,
+        "spearman": -0.0032221918067496143,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.16,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 23.547114454745813,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 23.471113988,
+        "max": 53.566510712,
+        "spearman": -0.01987578751450918,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.2,
+         "50": 0.16
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 30.657399317131247,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glycine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.436907564,
+        "max": 2.167656959,
+        "spearman": -0.0371499652591543,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.1
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.206048885798401,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "histidine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 4.179664768,
+        "max": 4.924745075,
+        "spearman": 0.04678684160611098,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.26
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.608598499699123,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "isoleucine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.304546507,
+        "max": 0.417015338,
+        "spearman": 0.033435780531783074,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.28,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.41791562705468394,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "leucine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.242244941,
+        "max": 0.271771484,
+        "spearman": 0.059303733316567527,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.12
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.30372989247933435,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "lysine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.396084033,
+        "max": 0.888829493,
+        "spearman": 0.002224924209949294,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.2,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.9816082288430769,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "methionine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.118651531,
+        "max": 0.152210677,
+        "spearman": 0.09948971111822905,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.1
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.14291287335398156,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "phenylalanine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.155620544,
+        "max": 0.303409753,
+        "spearman": 0.05267147532193142,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.3114697393125649,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "proline": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.009142144,
+        "max": 1.779581871,
+        "spearman": 0.05499056696322768,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.12,
+         "50": 0.16
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.2443840279559375,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "serine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 2.235642036,
+        "max": 2.561396207,
+        "spearman": -0.030782786132792218,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.08,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.498908564195285,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "threonine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 3.98662788,
+        "max": 4.207728055,
+        "spearman": 0.043246783792290105,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.24,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.265503695676334,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tryptophan": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.022018314,
+        "max": 0.041852931,
+        "spearman": 0.03528143129714888,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.08,
+         "50": 0.1
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.04307522503785801,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tyrosine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.308926789,
+        "max": 3.307179193,
+        "spearman": 0.04814141854102597,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 3.3300565329672316,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "valine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.915578855,
+        "max": 1.45011692,
+        "spearman": -0.03617776071227127,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.08,
+         "50": 0.12
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.4288102420776048,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       }
+      }
+     },
+     "test_pinned": {
+      "per_feature_pearson": -0.014159640857141118,
+      "nmse": 179.4773969508658,
+      "n": 564,
+      "mean_spearman": -0.0036579490960816376,
+      "per_feature": {
+       "alanine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -8.039949088,
+        "max": 19.282308622,
+        "spearman": -0.006353411429865864,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.24,
+         "50": 0.28
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 6.6752654440659684,
+        "permutation_p": 0.8855,
+        "permutation_null_sd": 0.04183745813668091,
+        "bootstrap_ci95": [
+         -0.09355315739211188,
+         0.08245133590433662
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "arginine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -116.040456438,
+        "max": 110.597701722,
+        "spearman": -0.021630906071042014,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.12
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.199496005540891,
+        "permutation_p": 0.619,
+        "permutation_null_sd": 0.04232111099986561,
+        "bootstrap_ci95": [
+         -0.10252219118842007,
+         0.061313652466281496
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "asparagine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -9.260357691,
+        "max": 12.87290025,
+        "spearman": -0.060865639631578546,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.16,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.302176496717958,
+        "permutation_p": 0.1465,
+        "permutation_null_sd": 0.041803494030001415,
+        "bootstrap_ci95": [
+         -0.14403094920330106,
+         0.026882932549844262
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "aspartate": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -23.852956541,
+        "max": 37.23112161,
+        "spearman": -0.05328483506405073,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.2,
+         "50": 0.12
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.546759518845171,
+        "permutation_p": 0.2165,
+        "permutation_null_sd": 0.04290275223782405,
+        "bootstrap_ci95": [
+         -0.13733618848266088,
+         0.029988835349265976
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamate": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -375.514951538,
+        "max": 462.910602394,
+        "spearman": -0.010686705013142103,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.16,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 23.354183056052076,
+        "permutation_p": 0.784,
+        "permutation_null_sd": 0.04097565788840095,
+        "bootstrap_ci95": [
+         -0.09589068906880435,
+         0.07096235483186811
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -615.214518014,
+        "max": 741.885817731,
+        "spearman": 0.04581956382476682,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.2,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 30.624134438116172,
+        "permutation_p": 0.274,
+        "permutation_null_sd": 0.04214530058057478,
+        "bootstrap_ci95": [
+         -0.04043169110760887,
+         0.1329480459249351
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glycine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -39.147492498,
+        "max": 38.897685178,
+        "spearman": 0.01557313910900915,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.2
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.2130113684991053,
+        "permutation_p": 0.7095,
+        "permutation_null_sd": 0.04091984722339614,
+        "bootstrap_ci95": [
+         -0.06560240893684671,
+         0.10106752877825538
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "histidine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -12.861252319,
+        "max": 20.736867135,
+        "spearman": 0.01309901018814667,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.550689052463757,
+        "permutation_p": 0.768,
+        "permutation_null_sd": 0.04185955744032031,
+        "bootstrap_ci95": [
+         -0.0723286435547084,
+         0.10202780805626481
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "isoleucine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -2.267756118,
+        "max": 2.803833071,
+        "spearman": -0.036079542294709,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.12,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.4218144755479133,
+        "permutation_p": 0.4025,
+        "permutation_null_sd": 0.04296280319401105,
+        "bootstrap_ci95": [
+         -0.12461003930546163,
+         0.05176814120110524
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "leucine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -0.433063966,
+        "max": 0.898384876,
+        "spearman": -0.023914335626603885,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.31277735176318305,
+        "permutation_p": 0.574,
+        "permutation_null_sd": 0.042304124300568915,
+        "bootstrap_ci95": [
+         -0.10297556468791631,
+         0.06377905104486793
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "lysine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -10.873619982,
+        "max": 11.34589202,
+        "spearman": 0.01302319404923148,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.2,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.9707024589416638,
+        "permutation_p": 0.776,
+        "permutation_null_sd": 0.04256055503212753,
+        "bootstrap_ci95": [
+         -0.06652165599023892,
+         0.09659642801229071
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "methionine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -0.593541921,
+        "max": 0.91975026,
+        "spearman": 0.013388419921548532,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.12
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.143874697708126,
+        "permutation_p": 0.756,
+        "permutation_null_sd": 0.041854741363067174,
+        "bootstrap_ci95": [
+         -0.06654402506799467,
+         0.09877865672174979
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "phenylalanine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -3.224503248,
+        "max": 3.439797877,
+        "spearman": -0.009531454282993203,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.3140100328833233,
+        "permutation_p": 0.823,
+        "permutation_null_sd": 0.04216765325696696,
+        "bootstrap_ci95": [
+         -0.09294994748590044,
+         0.07474414673905432
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "proline": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -15.341158484,
+        "max": 19.400500574,
+        "spearman": -0.04654107932150275,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.2076026816598369,
+        "permutation_p": 0.26,
+        "permutation_null_sd": 0.04199800957729162,
+        "bootstrap_ci95": [
+         -0.12752906819764126,
+         0.03637486102120268
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "serine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -4.67752514,
+        "max": 10.011800915,
+        "spearman": 0.06554987229285857,
+        "topk_precision": {
+         "10": 0.5,
+         "25": 0.28,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.4722168702084377,
+        "permutation_p": 0.1325,
+        "permutation_null_sd": 0.043299311962460195,
+        "bootstrap_ci95": [
+         -0.02270919198648633,
+         0.1540280780406378
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "threonine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -0.705568291,
+        "max": 9.264565183,
+        "spearman": -0.032568208194784065,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.24,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.295199361312904,
+        "permutation_p": 0.4455,
+        "permutation_null_sd": 0.042108369562030776,
+        "bootstrap_ci95": [
+         -0.11556100728146348,
+         0.055582786617821574
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tryptophan": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -0.431624137,
+        "max": 0.462783904,
+        "spearman": 0.037211398525919516,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.2
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.04479021944383623,
+        "permutation_p": 0.3935,
+        "permutation_null_sd": 0.04296655536420505,
+        "bootstrap_ci95": [
+         -0.04552663255851937,
+         0.12158437653878018
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tyrosine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -68.264849983,
+        "max": 66.936203557,
+        "spearman": 0.01285300526337321,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.08,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 3.2660416095510643,
+        "permutation_p": 0.7585,
+        "permutation_null_sd": 0.04176311663716324,
+        "bootstrap_ci95": [
+         -0.07255108994288292,
+         0.10096498819668383
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "valine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": -11.309974239,
+        "max": 12.794103679,
+        "spearman": 0.015437480929867103,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.08,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.4237215382625203,
+        "permutation_p": 0.7125,
+        "permutation_null_sd": 0.04194527607308197,
+        "bootstrap_ci95": [
+         -0.06837332686596488,
+         0.09581671972140585
+        ],
+        "n_bootstrap_used": 2000
+       }
+      }
+     }
+    },
+    "cells": [
+     {
+      "k_gene": 1,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.010911468913859468,
+      "test_pinned_mean_spearman": -0.0036579490960816376
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.010911467127516415,
+      "test_pinned_mean_spearman": -0.0036579490960816376
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.010911438776190769,
+      "test_pinned_mean_spearman": -0.0036579490960816376
+     },
+     {
+      "k_gene": 1,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.010911155972467244,
+      "test_pinned_mean_spearman": -0.0036579490960816376
+     },
+     {
+      "k_gene": 1,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.010908328214955876,
+      "test_pinned_mean_spearman": -0.003670361772876848
+     },
+     {
+      "k_gene": 1,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.010880316581348816,
+      "test_pinned_mean_spearman": -0.0022973773163296315
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.0076309381222815584,
+      "test_pinned_mean_spearman": 0.004494495168042907
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.007630941565345439,
+      "test_pinned_mean_spearman": 0.004494263305929236
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.007630940039691513,
+      "test_pinned_mean_spearman": 0.004496180845122269
+     },
+     {
+      "k_gene": 2,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.007630924920729179,
+      "test_pinned_mean_spearman": 0.00449516876054108
+     },
+     {
+      "k_gene": 2,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.007630774816966587,
+      "test_pinned_mean_spearman": 0.0047274369958552375
+     },
+     {
+      "k_gene": 2,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.007629354075261285,
+      "test_pinned_mean_spearman": 0.004705730897727078
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.0010938771571894624,
+      "test_pinned_mean_spearman": 0.031174448645360436
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.0010938837197389062,
+      "test_pinned_mean_spearman": 0.031174448645360436
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.001093911731378932,
+      "test_pinned_mean_spearman": 0.031173937084618575
+     },
+     {
+      "k_gene": 4,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.0010941914387112826,
+      "test_pinned_mean_spearman": 0.031168323563351044
+     },
+     {
+      "k_gene": 4,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.0010969841153733902,
+      "test_pinned_mean_spearman": 0.031055085121425286
+     },
+     {
+      "k_gene": 4,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.001124589433201611,
+      "test_pinned_mean_spearman": 0.031220809597613666
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.008442596453042713,
+      "test_pinned_mean_spearman": 0.02531430601323377
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.008442600805219955,
+      "test_pinned_mean_spearman": 0.02531430601323377
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.008442596890558285,
+      "test_pinned_mean_spearman": 0.02531430601323377
+     },
+     {
+      "k_gene": 8,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.008442553323070057,
+      "test_pinned_mean_spearman": 0.025317373788099368
+     },
+     {
+      "k_gene": 8,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.00844211653282482,
+      "test_pinned_mean_spearman": 0.025334886571616085
+     },
+     {
+      "k_gene": 8,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.008437695758823844,
+      "test_pinned_mean_spearman": 0.024776998242036174
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.009408731846112904,
+      "test_pinned_mean_spearman": 0.0159068616885847
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.009408730440377001,
+      "test_pinned_mean_spearman": 0.0159068616885847
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.009408727136991174,
+      "test_pinned_mean_spearman": 0.01590823447007132
+     },
+     {
+      "k_gene": 16,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.009408694882678205,
+      "test_pinned_mean_spearman": 0.015908558321955316
+     },
+     {
+      "k_gene": 16,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.00940835955287672,
+      "test_pinned_mean_spearman": 0.01591827176682808
+     },
+     {
+      "k_gene": 16,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.009404020804183713,
+      "test_pinned_mean_spearman": 0.016385632918758414
+     },
+     {
+      "k_gene": 19,
+      "ridge": 0.001,
+      "val_per_feature_pearson": -0.002149384270172056,
+      "test_pinned_mean_spearman": 0.016724219120684426
+     },
+     {
+      "k_gene": 19,
+      "ridge": 0.01,
+      "val_per_feature_pearson": -0.0021493842122690928,
+      "test_pinned_mean_spearman": 0.016724219120684426
+     },
+     {
+      "k_gene": 19,
+      "ridge": 0.1,
+      "val_per_feature_pearson": -0.002149378433287046,
+      "test_pinned_mean_spearman": 0.016724528306184844
+     },
+     {
+      "k_gene": 19,
+      "ridge": 1.0,
+      "val_per_feature_pearson": -0.002149319993232435,
+      "test_pinned_mean_spearman": 0.016726110952101594
+     },
+     {
+      "k_gene": 19,
+      "ridge": 10.0,
+      "val_per_feature_pearson": -0.002148732827247493,
+      "test_pinned_mean_spearman": 0.016724102564402786
+     },
+     {
+      "k_gene": 19,
+      "ridge": 100.0,
+      "val_per_feature_pearson": -0.0021430176232343353,
+      "test_pinned_mean_spearman": 0.016752969053284102
+     }
+    ]
+   },
+   "knn": {
+    "selected_on_val": {
+     "k": 1,
+     "val": {
+      "per_feature_pearson": 0.008151991740431394,
+      "nmse": 1.0311465408292417,
+      "n": 270,
+      "mean_spearman": 0.03097969627037601,
+      "per_feature": {
+       "alanine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 5.296581724,
+        "max": 7.550437142,
+        "spearman": 0.07912527999267809,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.32,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 6.814859035781031,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "arginine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 2.414221759,
+        "max": 15.665147202,
+        "spearman": 0.07158081157746085,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.3163161831481345,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "asparagine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.127374946,
+        "max": 1.464447422,
+        "spearman": 0.14139952683159793,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.3157799972000557,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "aspartate": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 4.544760083,
+        "max": 5.58208491,
+        "spearman": -0.12426978198229524,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.32,
+         "50": 0.22
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.7627820858800085,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamate": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 19.241032649,
+        "max": 22.52736688,
+        "spearman": -0.04087920623290136,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.2,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 23.547114454745813,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 18.747984473,
+        "max": 30.090103656,
+        "spearman": 0.032960917788388625,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 30.657399317131247,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glycine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.197859349,
+        "max": 2.663848191,
+        "spearman": 0.044917734141978444,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.1
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.206048885798401,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "histidine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 4.80424602,
+        "max": 5.511713592,
+        "spearman": 0.050032482418130624,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.608598499699123,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "isoleucine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.378612,
+        "max": 0.426477346,
+        "spearman": -0.05087271984136886,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.41791562705468394,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "leucine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.221144248,
+        "max": 0.376448026,
+        "spearman": 0.07008050508830271,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.30372989247933435,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "lysine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.15971415,
+        "max": 0.909281416,
+        "spearman": -0.007433566250638321,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.28
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.9816082288430769,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "methionine": {
+        "n": 270,
+        "n_distinct_values": 7,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.070410089,
+        "max": 0.135202473,
+        "spearman": -0.06094563865545417,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.12,
+         "50": 0.12
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.14291287335398156,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "phenylalanine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.215302943,
+        "max": 0.350391945,
+        "spearman": 0.03492973105711834,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.3114697393125649,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "proline": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.747358292,
+        "max": 1.214382966,
+        "spearman": 0.08196321695063785,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.12,
+         "50": 0.16
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.2443840279559375,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "serine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.728916252,
+        "max": 2.427087595,
+        "spearman": 0.019458863209900274,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.24,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.498908564195285,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "threonine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 3.420185228,
+        "max": 4.838816954,
+        "spearman": 0.04656559973712682,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.24,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.265503695676334,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tryptophan": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.033936857,
+        "max": 0.049740306,
+        "spearman": -0.014583401241732139,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.04,
+         "50": 0.1
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.04307522503785801,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tyrosine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.899957061,
+        "max": 4.825170229,
+        "spearman": 0.13554908639601324,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.36,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 3.3300565329672316,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "valine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.29445588,
+        "max": 1.618648316,
+        "spearman": 0.07903478815220048,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.16,
+         "50": 0.12
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.4288102420776048,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       }
+      }
+     },
+     "test_pinned": {
+      "per_feature_pearson": 0.10487981821258756,
+      "nmse": 1.6974590298135661,
+      "n": 564,
+      "mean_spearman": 0.03131498059758909,
+      "per_feature": {
+       "alanine": {
+        "n": 564,
+        "n_distinct_values": 87,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 4.728718001,
+        "max": 12.996156014,
+        "spearman": 0.010740990482665278,
+        "topk_precision": {
+         "10": 0.5,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 6.6752654440659684,
+        "permutation_p": 0.8055,
+        "permutation_null_sd": 0.042230652335555965,
+        "bootstrap_ci95": [
+         -0.07470733600080517,
+         0.09925857312453862
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "arginine": {
+        "n": 564,
+        "n_distinct_values": 93,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.850723051,
+        "max": 8.304663006,
+        "spearman": 0.05863112513338176,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.199496005540891,
+        "permutation_p": 0.164,
+        "permutation_null_sd": 0.04181483868253417,
+        "bootstrap_ci95": [
+         -0.028876324141427916,
+         0.14346437028148107
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "asparagine": {
+        "n": 564,
+        "n_distinct_values": 90,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.76298385,
+        "max": 1.657169108,
+        "spearman": -0.06608298044484331,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.302176496717958,
+        "permutation_p": 0.1145,
+        "permutation_null_sd": 0.041412727035433146,
+        "bootstrap_ci95": [
+         -0.15506299596721632,
+         0.019533366736813832
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "aspartate": {
+        "n": 564,
+        "n_distinct_values": 94,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 2.386295744,
+        "max": 8.34859479,
+        "spearman": 0.07786154707689005,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.2,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.546759518845171,
+        "permutation_p": 0.062,
+        "permutation_null_sd": 0.04235070196230698,
+        "bootstrap_ci95": [
+         -0.004681876086396093,
+         0.16201729902504167
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamate": {
+        "n": 564,
+        "n_distinct_values": 95,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 8.374045787,
+        "max": 31.358510459,
+        "spearman": 0.014983978209675727,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.04,
+         "50": 0.08
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 23.354183056052076,
+        "permutation_p": 0.719,
+        "permutation_null_sd": 0.04244222487778053,
+        "bootstrap_ci95": [
+         -0.06844241156486526,
+         0.09424655461163202
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamine": {
+        "n": 564,
+        "n_distinct_values": 91,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 6.708359446,
+        "max": 35.871362406,
+        "spearman": 0.10778896186055555,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.08,
+         "50": 0.12
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 30.624134438116172,
+        "permutation_p": 0.0105,
+        "permutation_null_sd": 0.04140443213683617,
+        "bootstrap_ci95": [
+         0.021578049545782272,
+         0.1902240653447385
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glycine": {
+        "n": 564,
+        "n_distinct_values": 94,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.020275479,
+        "max": 10.065673258,
+        "spearman": 0.09178431341213882,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.2130113684991053,
+        "permutation_p": 0.027,
+        "permutation_null_sd": 0.04253775129065679,
+        "bootstrap_ci95": [
+         0.012965723013710295,
+         0.17544951336154047
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "histidine": {
+        "n": 564,
+        "n_distinct_values": 95,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 2.67900884,
+        "max": 7.595073903,
+        "spearman": 0.053750243323150454,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.550689052463757,
+        "permutation_p": 0.2,
+        "permutation_null_sd": 0.04184543586474607,
+        "bootstrap_ci95": [
+         -0.031601103897971175,
+         0.13757813202601138
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "isoleucine": {
+        "n": 564,
+        "n_distinct_values": 86,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.289387819,
+        "max": 0.613876929,
+        "spearman": -0.029655264193164214,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.28,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.4218144755479133,
+        "permutation_p": 0.468,
+        "permutation_null_sd": 0.04151366986405937,
+        "bootstrap_ci95": [
+         -0.11446155916333575,
+         0.055147511142132656
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "leucine": {
+        "n": 564,
+        "n_distinct_values": 91,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.0556841,
+        "max": 0.392509776,
+        "spearman": -0.008111984520779993,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.08,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.31277735176318305,
+        "permutation_p": 0.8395,
+        "permutation_null_sd": 0.041524977042471815,
+        "bootstrap_ci95": [
+         -0.09206549132544219,
+         0.07479286400582462
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "lysine": {
+        "n": 564,
+        "n_distinct_values": 94,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.493528213,
+        "max": 2.443669238,
+        "spearman": 0.06621643130395097,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.36,
+         "50": 0.28
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.9707024589416638,
+        "permutation_p": 0.117,
+        "permutation_null_sd": 0.041743289155535115,
+        "bootstrap_ci95": [
+         -0.016954673079563883,
+         0.15060069114356672
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "methionine": {
+        "n": 564,
+        "n_distinct_values": 87,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.032384644,
+        "max": 0.187217874,
+        "spearman": 0.026241230273119743,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.143874697708126,
+        "permutation_p": 0.5145,
+        "permutation_null_sd": 0.040533147204934256,
+        "bootstrap_ci95": [
+         -0.05712012380900005,
+         0.10758295264459528
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "phenylalanine": {
+        "n": 564,
+        "n_distinct_values": 95,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.190846641,
+        "max": 0.519002672,
+        "spearman": 0.029282352679986398,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.3140100328833233,
+        "permutation_p": 0.492,
+        "permutation_null_sd": 0.04224756954930587,
+        "bootstrap_ci95": [
+         -0.05314382900717247,
+         0.11107134470631483
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "proline": {
+        "n": 564,
+        "n_distinct_values": 93,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.348304935,
+        "max": 1.409763301,
+        "spearman": 0.10990758253813908,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.2076026816598369,
+        "permutation_p": 0.007,
+        "permutation_null_sd": 0.04193965405833155,
+        "bootstrap_ci95": [
+         0.02485551375196011,
+         0.19231663571727983
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "serine": {
+        "n": 564,
+        "n_distinct_values": 90,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.989986522,
+        "max": 3.445599143,
+        "spearman": 0.01499922630889546,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.4722168702084377,
+        "permutation_p": 0.7385,
+        "permutation_null_sd": 0.04233000309354785,
+        "bootstrap_ci95": [
+         -0.07247353967320766,
+         0.1065809626998853
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "threonine": {
+        "n": 564,
+        "n_distinct_values": 86,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 2.876966336,
+        "max": 5.024806577,
+        "spearman": 0.0348913939243477,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.2,
+         "50": 0.28
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.295199361312904,
+        "permutation_p": 0.4135,
+        "permutation_null_sd": 0.0427999278763734,
+        "bootstrap_ci95": [
+         -0.055356026978162116,
+         0.12177615596905945
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tryptophan": {
+        "n": 564,
+        "n_distinct_values": 91,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.020187,
+        "max": 0.064778769,
+        "spearman": -0.06147087814587927,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.1
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.04479021944383623,
+        "permutation_p": 0.149,
+        "permutation_null_sd": 0.04243644966070675,
+        "bootstrap_ci95": [
+         -0.14158918600108092,
+         0.01837242824761889
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tyrosine": {
+        "n": 564,
+        "n_distinct_values": 95,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 0.973189067,
+        "max": 8.553158054,
+        "spearman": 0.00803923157398586,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 3.2660416095510643,
+        "permutation_p": 0.8635,
+        "permutation_null_sd": 0.04232029130933875,
+        "bootstrap_ci95": [
+         -0.07891941856826834,
+         0.09831099868863004
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "valine": {
+        "n": 564,
+        "n_distinct_values": 91,
+        "frac_at_mode": 0.5319148936170213,
+        "min": 1.18021412,
+        "max": 5.283323023,
+        "spearman": 0.05518713055797648,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.2,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.4237215382625203,
+        "permutation_p": 0.1895,
+        "permutation_null_sd": 0.04175296975099905,
+        "bootstrap_ci95": [
+         -0.030960874977730382,
+         0.14175989870647498
+        ],
+        "n_bootstrap_used": 2000
+       }
+      }
+     }
+    },
+    "cells": [
+     {
+      "k": 1,
+      "val_per_feature_pearson": 0.008151991740431394,
+      "test_pinned_mean_spearman": 0.03131498059758909
+     },
+     {
+      "k": 3,
+      "val_per_feature_pearson": -0.00946721748893383,
+      "test_pinned_mean_spearman": 0.024024590148992674
+     },
+     {
+      "k": 5,
+      "val_per_feature_pearson": -0.0016899237275318038,
+      "test_pinned_mean_spearman": 0.02098787105578848
+     },
+     {
+      "k": 10,
+      "val_per_feature_pearson": -0.010046506415425357,
+      "test_pinned_mean_spearman": 0.015793669402722924
+     },
+     {
+      "k": 25,
+      "val_per_feature_pearson": -0.0079068099363658,
+      "test_pinned_mean_spearman": 0.026750910224130633
+     }
+    ]
+   },
+   "forest": {
+    "selected_on_val": {
+     "min_samples_leaf": 20,
+     "n_estimators": 300,
+     "val": {
+      "per_feature_pearson": 0.009783472930079971,
+      "nmse": 1.004492647228998,
+      "n": 270,
+      "mean_spearman": 0.0027820244572657037,
+      "per_feature": {
+       "alanine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 6.173970379,
+        "max": 6.732259663,
+        "spearman": -0.019973140487954823,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 6.814859035781031,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "arginine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 3.182237263,
+        "max": 3.44101862,
+        "spearman": 0.06733371772829978,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.3163161831481345,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "asparagine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.196657716,
+        "max": 1.230006222,
+        "spearman": 0.10251264063567497,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.16
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.3157799972000557,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "aspartate": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 5.039174457,
+        "max": 5.155262324,
+        "spearman": -0.08575099590571925,
+        "topk_precision": {
+         "10": 0.5,
+         "25": 0.36,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.7627820858800085,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamate": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 20.664650083,
+        "max": 22.05009799,
+        "spearman": -0.030529787304619044,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.16
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 23.547114454745813,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 25.160845113,
+        "max": 27.99129806,
+        "spearman": -0.042540498956258097,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 30.657399317131247,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glycine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.886617278,
+        "max": 2.358171056,
+        "spearman": -0.016030911596914013,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.206048885798401,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "histidine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 4.81208798,
+        "max": 4.89457912,
+        "spearman": 0.08731203873981395,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.16,
+         "50": 0.12
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.608598499699123,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "isoleucine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.399979873,
+        "max": 0.416587208,
+        "spearman": -0.08118954832464906,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.2,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.41791562705468394,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "leucine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.255428159,
+        "max": 0.27483375,
+        "spearman": 0.04735650828228072,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.30372989247933435,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "lysine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.812459354,
+        "max": 0.963086968,
+        "spearman": 0.029059184443165846,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.2,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.9816082288430769,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "methionine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.11378887,
+        "max": 0.124701286,
+        "spearman": -0.0941241775496583,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.04,
+         "50": 0.1
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.14291287335398156,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "phenylalanine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.281063424,
+        "max": 0.294274686,
+        "spearman": 0.024146437140322868,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.16,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.3114697393125649,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "proline": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.029985655,
+        "max": 1.124903256,
+        "spearman": 0.09987637436255001,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.2443840279559375,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "serine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 2.186088572,
+        "max": 2.288905621,
+        "spearman": -0.027946427691047503,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.12,
+         "50": 0.12
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.498908564195285,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "threonine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 3.98681984,
+        "max": 4.02020194,
+        "spearman": 0.026151808698654314,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.265503695676334,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tryptophan": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 0.038849449,
+        "max": 0.040574656,
+        "spearman": -0.0024125171591236456,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.04,
+         "50": 0.1
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.04307522503785801,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tyrosine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 2.854407659,
+        "max": 3.24963724,
+        "spearman": 0.005622630141168278,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 3.3300565329672316,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "valine": {
+        "n": 270,
+        "n_distinct_values": 8,
+        "frac_at_mode": 0.9444444444444444,
+        "min": 1.36461651,
+        "max": 1.718911762,
+        "spearman": -0.03601487050793865,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.16,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.4288102420776048,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       }
+      }
+     },
+     "test_pinned": {
+      "per_feature_pearson": 0.08175193444980489,
+      "nmse": 1.0129153037556375,
+      "n": 564,
+      "mean_spearman": 0.022677496058625433,
+      "per_feature": {
+       "alanine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 6.173970379,
+        "max": 6.898510644,
+        "spearman": 0.11099829571046774,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.32,
+         "50": 0.26
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 6.6752654440659684,
+        "permutation_p": 0.008,
+        "permutation_null_sd": 0.04163799680751686,
+        "bootstrap_ci95": [
+         0.02833366364194747,
+         0.19730652025106651
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "arginine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 3.100183679,
+        "max": 3.508837401,
+        "spearman": 0.009244095888540785,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.2,
+         "50": 0.2
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.199496005540891,
+        "permutation_p": 0.821,
+        "permutation_null_sd": 0.041388680029825764,
+        "bootstrap_ci95": [
+         -0.07850137070449842,
+         0.09266493559440482
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "asparagine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 1.187979903,
+        "max": 1.231175338,
+        "spearman": -0.05970036823839614,
+        "topk_precision": {
+         "10": 0.5,
+         "25": 0.2,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.302176496717958,
+        "permutation_p": 0.152,
+        "permutation_null_sd": 0.041558360225975116,
+        "bootstrap_ci95": [
+         -0.14488711821284914,
+         0.02475983383569302
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "aspartate": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 4.991676223,
+        "max": 5.184128582,
+        "spearman": -0.018739390794520923,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.1
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.546759518845171,
+        "permutation_p": 0.6635,
+        "permutation_null_sd": 0.04288135184546959,
+        "bootstrap_ci95": [
+         -0.10283704089838872,
+         0.06448690628539173
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamate": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 20.214501746,
+        "max": 22.20910965,
+        "spearman": 0.06558322490750404,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.1
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 23.354183056052076,
+        "permutation_p": 0.1215,
+        "permutation_null_sd": 0.04176686882162485,
+        "bootstrap_ci95": [
+         -0.018293516625699214,
+         0.14773884153085617
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 24.264152811,
+        "max": 28.185543661,
+        "spearman": 0.068905675959313,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.04,
+         "50": 0.08
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 30.624134438116172,
+        "permutation_p": 0.107,
+        "permutation_null_sd": 0.04210425681694303,
+        "bootstrap_ci95": [
+         -0.014054176803806748,
+         0.15095177281432504
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glycine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 1.881951984,
+        "max": 2.528059237,
+        "spearman": 0.05435527592569282,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.2130113684991053,
+        "permutation_p": 0.188,
+        "permutation_null_sd": 0.041898244302864054,
+        "bootstrap_ci95": [
+         -0.030432288492789943,
+         0.1362521897117014
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "histidine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 4.81208798,
+        "max": 4.913324294,
+        "spearman": -0.04806450558065087,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.550689052463757,
+        "permutation_p": 0.2725,
+        "permutation_null_sd": 0.043186600902868466,
+        "bootstrap_ci95": [
+         -0.13061887967919814,
+         0.03532611547119908
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "isoleucine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 0.39884279,
+        "max": 0.422592294,
+        "spearman": 0.030760830994567282,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.4218144755479133,
+        "permutation_p": 0.469,
+        "permutation_null_sd": 0.04215603206609047,
+        "bootstrap_ci95": [
+         -0.049728955776235775,
+         0.11732871071654367
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "leucine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 0.250881889,
+        "max": 0.27483375,
+        "spearman": 0.07900106637644908,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.08,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.31277735176318305,
+        "permutation_p": 0.0635,
+        "permutation_null_sd": 0.04239632091600669,
+        "bootstrap_ci95": [
+         -0.0039123004811786825,
+         0.16372879435836601
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "lysine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 0.812459354,
+        "max": 0.99874316,
+        "spearman": -0.06920050793519672,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.9707024589416638,
+        "permutation_p": 0.098,
+        "permutation_null_sd": 0.04144105269262325,
+        "bootstrap_ci95": [
+         -0.1547250290445416,
+         0.012153704727001849
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "methionine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 0.111786662,
+        "max": 0.124701286,
+        "spearman": 0.012176769098691538,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.32,
+         "50": 0.2
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.143874697708126,
+        "permutation_p": 0.7675,
+        "permutation_null_sd": 0.042073568610112924,
+        "bootstrap_ci95": [
+         -0.07322084698383571,
+         0.0957339171358975
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "phenylalanine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 0.281063424,
+        "max": 0.294274686,
+        "spearman": -0.029676800841704917,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.08,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.3140100328833233,
+        "permutation_p": 0.462,
+        "permutation_null_sd": 0.04163785733980997,
+        "bootstrap_ci95": [
+         -0.11015466703697997,
+         0.0547780326080371
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "proline": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 1.002305188,
+        "max": 1.124952129,
+        "spearman": 0.060256185737316496,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.2,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.2076026816598369,
+        "permutation_p": 0.161,
+        "permutation_null_sd": 0.04299021887319627,
+        "bootstrap_ci95": [
+         -0.02265551739947241,
+         0.1396080363589904
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "serine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 2.155516938,
+        "max": 2.288905621,
+        "spearman": 0.009079879190721396,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.4722168702084377,
+        "permutation_p": 0.824,
+        "permutation_null_sd": 0.03985749601425385,
+        "bootstrap_ci95": [
+         -0.07727439801474573,
+         0.0966211787061341
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "threonine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 3.984008734,
+        "max": 4.025305313,
+        "spearman": 0.08062132092918615,
+        "topk_precision": {
+         "10": 0.5,
+         "25": 0.4,
+         "50": 0.34
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.295199361312904,
+        "permutation_p": 0.051,
+        "permutation_null_sd": 0.042071316607634836,
+        "bootstrap_ci95": [
+         -0.004990793553075523,
+         0.1658140045463268
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tryptophan": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 0.038849449,
+        "max": 0.040574656,
+        "spearman": -0.07458509986365823,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.2,
+         "50": 0.12
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.04479021944383623,
+        "permutation_p": 0.0775,
+        "permutation_null_sd": 0.04216283690853306,
+        "bootstrap_ci95": [
+         -0.15168483410340997,
+         0.0005178192393141998
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tyrosine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 2.854407659,
+        "max": 3.39745992,
+        "spearman": 0.09840303429293092,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.44,
+         "50": 0.36
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 3.2660416095510643,
+        "permutation_p": 0.021,
+        "permutation_null_sd": 0.04195488257223361,
+        "bootstrap_ci95": [
+         0.01199530706599138,
+         0.18227951038590343
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "valine": {
+        "n": 564,
+        "n_distinct_values": 283,
+        "frac_at_mode": 0.4397163120567376,
+        "min": 1.36461651,
+        "max": 1.829213751,
+        "spearman": 0.05145344335662982,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.36,
+         "50": 0.28
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.4237215382625203,
+        "permutation_p": 0.2225,
+        "permutation_null_sd": 0.04174775055131638,
+        "bootstrap_ci95": [
+         -0.030089137632252325,
+         0.13365293302510445
+        ],
+        "n_bootstrap_used": 2000
+       }
+      }
+     }
+    },
+    "cells": [
+     {
+      "min_samples_leaf": 1,
+      "n_estimators": 300,
+      "val_per_feature_pearson": -0.009827309459131468,
+      "test_pinned_mean_spearman": 0.028207211379695875
+     },
+     {
+      "min_samples_leaf": 5,
+      "n_estimators": 300,
+      "val_per_feature_pearson": -0.00027810789737755403,
+      "test_pinned_mean_spearman": 0.02320286634625419
+     },
+     {
+      "min_samples_leaf": 20,
+      "n_estimators": 300,
+      "val_per_feature_pearson": 0.009783472930079971,
+      "test_pinned_mean_spearman": 0.022677496058625433
+     }
+    ]
+   }
+  },
   "mdfcap100_poly_mean": {
    "dim": 2810,
    "store": "SM_gem_mdfcap100polymean",
@@ -15810,11 +18374,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.612,
-        "permutation_null_sd": 0.041343469555709896,
+        "permutation_p": 0.597,
+        "permutation_null_sd": 0.04173172080766604,
         "bootstrap_ci95": [
-         -0.05935938283756924,
-         0.10006028689983879
+         -0.06350254612599367,
+         0.10774514176877681
         ],
         "n_bootstrap_used": 2000
        },
@@ -15832,11 +18396,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.222,
-        "permutation_null_sd": 0.042556267984293676,
+        "permutation_p": 0.214,
+        "permutation_null_sd": 0.04265960667660939,
         "bootstrap_ci95": [
-         -0.13952364944422266,
-         0.029257155759357792
+         -0.1314734694914048,
+         0.031123735615845263
         ],
         "n_bootstrap_used": 2000
        },
@@ -15854,11 +18418,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.201,
-        "permutation_null_sd": 0.04333268110223201,
+        "permutation_p": 0.1845,
+        "permutation_null_sd": 0.04230092376850475,
         "bootstrap_ci95": [
-         -0.028492366421936074,
-         0.13816004173545657
+         -0.034247080529506035,
+         0.13971160182173817
         ],
         "n_bootstrap_used": 2000
        },
@@ -15876,11 +18440,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.1705,
-        "permutation_null_sd": 0.042676401866785306,
+        "permutation_p": 0.17,
+        "permutation_null_sd": 0.04169805432647248,
         "bootstrap_ci95": [
-         -0.14908943515232212,
-         0.03071129972597481
+         -0.1444536465198778,
+         0.03259886372512718
         ],
         "n_bootstrap_used": 2000
        },
@@ -15898,11 +18462,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.6055,
-        "permutation_null_sd": 0.043600438137912687,
+        "permutation_p": 0.58,
+        "permutation_null_sd": 0.04144980790283587,
         "bootstrap_ci95": [
-         -0.10518455731635645,
-         0.06011206755769432
+         -0.10711510912366205,
+         0.06179874294857626
         ],
         "n_bootstrap_used": 2000
        },
@@ -15920,11 +18484,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.19,
-        "permutation_null_sd": 0.041285292584589905,
+        "permutation_p": 0.2,
+        "permutation_null_sd": 0.04160331880344671,
         "bootstrap_ci95": [
-         -0.031566757944305274,
-         0.1364623360620069
+         -0.029740079733650133,
+         0.13999105962479735
         ],
         "n_bootstrap_used": 2000
        },
@@ -15942,11 +18506,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.7385,
-        "permutation_null_sd": 0.04197492251070149,
+        "permutation_p": 0.7735,
+        "permutation_null_sd": 0.04305577445075724,
         "bootstrap_ci95": [
-         -0.07451878647157886,
-         0.09637057175401885
+         -0.07010617959006517,
+         0.09469105189529954
         ],
         "n_bootstrap_used": 2000
        },
@@ -15964,11 +18528,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.736,
-        "permutation_null_sd": 0.04247346555829309,
+        "permutation_p": 0.7485,
+        "permutation_null_sd": 0.04167678944444923,
         "bootstrap_ci95": [
-         -0.100194860293786,
-         0.07261268111162182
+         -0.1044506602270759,
+         0.07356678609367276
         ],
         "n_bootstrap_used": 2000
        },
@@ -15986,11 +18550,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.33,
-        "permutation_null_sd": 0.04091661676399592,
+        "permutation_p": 0.351,
+        "permutation_null_sd": 0.04205093272540543,
         "bootstrap_ci95": [
-         -0.04232437162414919,
-         0.1212407624106951
+         -0.04234846045927849,
+         0.12183419427971083
         ],
         "n_bootstrap_used": 2000
        },
@@ -16008,11 +18572,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.6405,
-        "permutation_null_sd": 0.04212142620756329,
+        "permutation_p": 0.633,
+        "permutation_null_sd": 0.04223702203600875,
         "bootstrap_ci95": [
-         -0.09870209285894023,
-         0.062363712492508674
+         -0.10254579684192246,
+         0.06055241333408691
         ],
         "n_bootstrap_used": 2000
        },
@@ -16030,11 +18594,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.933,
-        "permutation_null_sd": 0.041793138105920453,
+        "permutation_p": 0.943,
+        "permutation_null_sd": 0.04243957544843918,
         "bootstrap_ci95": [
-         -0.08032093093496255,
-         0.0883116368113013
+         -0.0760927857619054,
+         0.08719801000490389
         ],
         "n_bootstrap_used": 2000
        },
@@ -16052,11 +18616,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.42,
-        "permutation_null_sd": 0.0425012733129207,
+        "permutation_p": 0.4375,
+        "permutation_null_sd": 0.04219323349373986,
         "bootstrap_ci95": [
-         -0.047288731269313405,
-         0.11479813382150844
+         -0.04570127858324751,
+         0.11296256408883533
         ],
         "n_bootstrap_used": 2000
        },
@@ -16074,11 +18638,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.1955,
-        "permutation_null_sd": 0.041964378244178584,
+        "permutation_p": 0.198,
+        "permutation_null_sd": 0.04134335719738185,
         "bootstrap_ci95": [
-         -0.03018396655753857,
-         0.1374874783434563
+         -0.028131680823854605,
+         0.13847325622329532
         ],
         "n_bootstrap_used": 2000
        },
@@ -16096,11 +18660,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.7285,
-        "permutation_null_sd": 0.042002257779800094,
+        "permutation_p": 0.714,
+        "permutation_null_sd": 0.0434184634644771,
         "bootstrap_ci95": [
-         -0.07259982164837336,
-         0.10539231335510219
+         -0.06678839814605277,
+         0.10483800152055109
         ],
         "n_bootstrap_used": 2000
        },
@@ -16118,11 +18682,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.596,
-        "permutation_null_sd": 0.041775405360706945,
+        "permutation_p": 0.605,
+        "permutation_null_sd": 0.04285025379717505,
         "bootstrap_ci95": [
-         -0.07105406816617282,
-         0.10811224152879365
+         -0.06831415894177628,
+         0.11378836383825766
         ],
         "n_bootstrap_used": 2000
        },
@@ -16140,11 +18704,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.314,
-        "permutation_null_sd": 0.04179647747366113,
+        "permutation_p": 0.2915,
+        "permutation_null_sd": 0.04112269435985661,
         "bootstrap_ci95": [
-         -0.12606857507907357,
-         0.046212164674703536
+         -0.12997986804359565,
+         0.0459060460453724
         ],
         "n_bootstrap_used": 2000
        },
@@ -16162,11 +18726,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.014,
-        "permutation_null_sd": 0.04254701701583169,
+        "permutation_p": 0.017,
+        "permutation_null_sd": 0.04276741233755573,
         "bootstrap_ci95": [
-         0.02019252907998797,
-         0.1830012881412287
+         0.01971854195999331,
+         0.19064691942036877
         ],
         "n_bootstrap_used": 2000
        },
@@ -16184,11 +18748,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.074,
-        "permutation_null_sd": 0.04217264924284961,
+        "permutation_p": 0.0855,
+        "permutation_null_sd": 0.04262490572147697,
         "bootstrap_ci95": [
-         -0.010529792785148605,
-         0.1634386616475125
+         -0.00984698914178894,
+         0.15468773090786572
         ],
         "n_bootstrap_used": 2000
        },
@@ -16206,11 +18770,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.5675,
-        "permutation_null_sd": 0.04354480585315428,
+        "permutation_p": 0.5495,
+        "permutation_null_sd": 0.042909719082861085,
         "bootstrap_ci95": [
-         -0.06398634542394936,
-         0.11275701663757122
+         -0.06420364672886125,
+         0.11059061523726525
         ],
         "n_bootstrap_used": 2000
        }
@@ -16790,11 +19354,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.0275,
-        "permutation_null_sd": 0.04180389755912663,
+        "permutation_p": 0.028,
+        "permutation_null_sd": 0.04216877305779928,
         "bootstrap_ci95": [
-         0.004736837176016845,
-         0.17364149971157242
+         0.008842073740848116,
+         0.17755906736433186
         ],
         "n_bootstrap_used": 2000
        },
@@ -16812,11 +19376,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.3645,
-        "permutation_null_sd": 0.04398205738217587,
+        "permutation_p": 0.3545,
+        "permutation_null_sd": 0.042132624053258676,
         "bootstrap_ci95": [
-         -0.03849753620737264,
-         0.12593928760603235
+         -0.0434412508041058,
+         0.12031272216682021
         ],
         "n_bootstrap_used": 2000
        },
@@ -16834,11 +19398,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.8645,
-        "permutation_null_sd": 0.042403251450144105,
+        "permutation_p": 0.8665,
+        "permutation_null_sd": 0.04201230907089779,
         "bootstrap_ci95": [
-         -0.08109015535095662,
-         0.0931605971609836
+         -0.08216136544320841,
+         0.09347065012621675
         ],
         "n_bootstrap_used": 2000
        },
@@ -16856,11 +19420,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.082,
-        "permutation_null_sd": 0.041502903702066454,
+        "permutation_p": 0.096,
+        "permutation_null_sd": 0.04230520630458796,
         "bootstrap_ci95": [
-         -0.015606290477662722,
-         0.15778411779820342
+         -0.016567656041912012,
+         0.15617460665449462
         ],
         "n_bootstrap_used": 2000
        },
@@ -16878,11 +19442,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.7825,
-        "permutation_null_sd": 0.04244746934303845,
+        "permutation_p": 0.7705,
+        "permutation_null_sd": 0.04195866175191139,
         "bootstrap_ci95": [
-         -0.07937261372222518,
-         0.0970800745679801
+         -0.07431909797968897,
+         0.09512711219971831
         ],
         "n_bootstrap_used": 2000
        },
@@ -16900,11 +19464,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.3135,
-        "permutation_null_sd": 0.04191034551603038,
+        "permutation_p": 0.3285,
+        "permutation_null_sd": 0.04266832507771016,
         "bootstrap_ci95": [
-         -0.03800983483979857,
-         0.12520042062772535
+         -0.0470691799329396,
+         0.13150448575223175
         ],
         "n_bootstrap_used": 2000
        },
@@ -16922,11 +19486,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.9965,
-        "permutation_null_sd": 0.040586218986764434,
+        "permutation_p": 0.994,
+        "permutation_null_sd": 0.04181203762029924,
         "bootstrap_ci95": [
-         -0.08952527742638053,
-         0.08590974784464742
+         -0.08653790525837086,
+         0.08559551986698201
         ],
         "n_bootstrap_used": 2000
        },
@@ -16944,11 +19508,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.499,
-        "permutation_null_sd": 0.04135945035593776,
+        "permutation_p": 0.505,
+        "permutation_null_sd": 0.04317900359794709,
         "bootstrap_ci95": [
-         -0.11559991549141845,
-         0.05711615050639753
+         -0.11622845589510365,
+         0.05696779080800932
         ],
         "n_bootstrap_used": 2000
        },
@@ -16966,11 +19530,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.4035,
-        "permutation_null_sd": 0.041257108818070945,
+        "permutation_p": 0.4185,
+        "permutation_null_sd": 0.042870104164443444,
         "bootstrap_ci95": [
-         -0.12422335501492048,
-         0.05739275774412317
+         -0.1231958513717226,
+         0.04931140077133763
         ],
         "n_bootstrap_used": 2000
        },
@@ -16988,11 +19552,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.6025,
-        "permutation_null_sd": 0.042756501696969554,
+        "permutation_p": 0.5795,
+        "permutation_null_sd": 0.04131598012220037,
         "bootstrap_ci95": [
-         -0.10645367651590353,
-         0.06070702951734905
+         -0.10362723025690578,
+         0.05891140989603602
         ],
         "n_bootstrap_used": 2000
        },
@@ -17010,11 +19574,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.2745,
-        "permutation_null_sd": 0.04274714216724258,
+        "permutation_p": 0.2715,
+        "permutation_null_sd": 0.04207474613663762,
         "bootstrap_ci95": [
-         -0.12723510376402372,
-         0.03979547558573428
+         -0.12850428046228682,
+         0.03717828596524105
         ],
         "n_bootstrap_used": 2000
        },
@@ -17032,11 +19596,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.4435,
-        "permutation_null_sd": 0.041764478768134834,
+        "permutation_p": 0.4445,
+        "permutation_null_sd": 0.0421904553820369,
         "bootstrap_ci95": [
-         -0.11932679881767921,
-         0.04773463551868064
+         -0.1161525451892343,
+         0.04520240970046339
         ],
         "n_bootstrap_used": 2000
        },
@@ -17055,10 +19619,10 @@
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
         "permutation_p": 0.317,
-        "permutation_null_sd": 0.041511426775977626,
+        "permutation_null_sd": 0.041533792615808106,
         "bootstrap_ci95": [
-         -0.04624992794762374,
-         0.13031369872901985
+         -0.03856733520750021,
+         0.1270924418624186
         ],
         "n_bootstrap_used": 2000
        },
@@ -17076,11 +19640,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.7275,
-        "permutation_null_sd": 0.04377430754459909,
+        "permutation_p": 0.73,
+        "permutation_null_sd": 0.04260571431933959,
         "bootstrap_ci95": [
-         -0.0715933054310917,
-         0.10377620155619213
+         -0.06890594203980806,
+         0.10124728509653456
         ],
         "n_bootstrap_used": 2000
        },
@@ -17098,11 +19662,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.505,
-        "permutation_null_sd": 0.0427174713120441,
+        "permutation_p": 0.4845,
+        "permutation_null_sd": 0.040883294648857545,
         "bootstrap_ci95": [
-         -0.061977483037246664,
-         0.11495447263612679
+         -0.05854129654588106,
+         0.11936509675119424
         ],
         "n_bootstrap_used": 2000
        },
@@ -17120,11 +19684,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.072,
-        "permutation_null_sd": 0.04268313285345815,
+        "permutation_p": 0.0715,
+        "permutation_null_sd": 0.04281930293686682,
         "bootstrap_ci95": [
-         -0.1663445548120359,
-         0.010622178387435077
+         -0.1660289324718565,
+         0.00862041868006629
         ],
         "n_bootstrap_used": 2000
        },
@@ -17142,11 +19706,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.2525,
-        "permutation_null_sd": 0.04242301669963208,
+        "permutation_p": 0.2585,
+        "permutation_null_sd": 0.04313203291393692,
         "bootstrap_ci95": [
-         -0.03158588670043249,
-         0.13224654308699685
+         -0.034683654217225406,
+         0.13154454213370123
         ],
         "n_bootstrap_used": 2000
        },
@@ -17164,11 +19728,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.839,
-        "permutation_null_sd": 0.04236537150350222,
+        "permutation_p": 0.8255,
+        "permutation_null_sd": 0.04242529303916511,
         "bootstrap_ci95": [
-         -0.08009354092950156,
-         0.10129159071858061
+         -0.07861156433887459,
+         0.09364158951780877
         ],
         "n_bootstrap_used": 2000
        },
@@ -17186,11 +19750,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.25,
-        "permutation_null_sd": 0.04367988596514126,
+        "permutation_p": 0.2385,
+        "permutation_null_sd": 0.043092855013084,
         "bootstrap_ci95": [
-         -0.04027574465254543,
-         0.13844204021993137
+         -0.03874577255665307,
+         0.14061038150448313
         ],
         "n_bootstrap_used": 2000
        }
@@ -17580,11 +20144,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.802,
-        "permutation_null_sd": 0.041456756515443886,
+        "permutation_p": 0.7745,
+        "permutation_null_sd": 0.041437163277045955,
         "bootstrap_ci95": [
-         -0.07256355646919518,
-         0.09447670035609665
+         -0.06976871476449373,
+         0.09632508248027419
         ],
         "n_bootstrap_used": 2000
        },
@@ -17602,11 +20166,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.79,
-        "permutation_null_sd": 0.041833188540030236,
+        "permutation_p": 0.8235,
+        "permutation_null_sd": 0.04220824712157218,
         "bootstrap_ci95": [
-         -0.09829850748503574,
-         0.07417221094388485
+         -0.09118340944175121,
+         0.07530396581202764
         ],
         "n_bootstrap_used": 2000
        },
@@ -17624,11 +20188,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.303,
-        "permutation_null_sd": 0.041421154635296484,
+        "permutation_p": 0.3325,
+        "permutation_null_sd": 0.04295969309643922,
         "bootstrap_ci95": [
-         -0.03978319351112348,
-         0.12840244350782512
+         -0.04355289266727104,
+         0.12952822103354497
         ],
         "n_bootstrap_used": 2000
        },
@@ -17646,11 +20210,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.388,
-        "permutation_null_sd": 0.04186201729292401,
+        "permutation_p": 0.396,
+        "permutation_null_sd": 0.041930523679154445,
         "bootstrap_ci95": [
-         -0.05230281030798346,
-         0.1256418690049016
+         -0.05305531538405871,
+         0.12763469663993307
         ],
         "n_bootstrap_used": 2000
        },
@@ -17668,11 +20232,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.5415,
-        "permutation_null_sd": 0.04200866163138652,
+        "permutation_p": 0.5365,
+        "permutation_null_sd": 0.04132922744512109,
         "bootstrap_ci95": [
-         -0.056356586198806444,
-         0.11092242185892416
+         -0.0602351032289046,
+         0.11051503471701082
         ],
         "n_bootstrap_used": 2000
        },
@@ -17690,11 +20254,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.0075,
-        "permutation_null_sd": 0.04157847167399492,
+        "permutation_p": 0.007,
+        "permutation_null_sd": 0.041764800614322764,
         "bootstrap_ci95": [
-         0.027645918173974746,
-         0.1918485572554734
+         0.024680065194500347,
+         0.19122036501054598
         ],
         "n_bootstrap_used": 2000
        },
@@ -17712,11 +20276,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.436,
-        "permutation_null_sd": 0.04136063029088963,
+        "permutation_p": 0.441,
+        "permutation_null_sd": 0.041840231435411886,
         "bootstrap_ci95": [
-         -0.05365821177688056,
-         0.11696308381794987
+         -0.048162679322563615,
+         0.11452082441063755
         ],
         "n_bootstrap_used": 2000
        },
@@ -17734,11 +20298,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.074,
-        "permutation_null_sd": 0.0426265967292206,
+        "permutation_p": 0.0645,
+        "permutation_null_sd": 0.04320661734867426,
         "bootstrap_ci95": [
-         -0.1612266891847156,
-         0.013140942989898414
+         -0.16115218341486132,
+         0.011663134524589914
         ],
         "n_bootstrap_used": 2000
        },
@@ -17756,11 +20320,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.7165,
-        "permutation_null_sd": 0.04134582709415088,
+        "permutation_p": 0.722,
+        "permutation_null_sd": 0.04164754090433037,
         "bootstrap_ci95": [
-         -0.10486924710796211,
-         0.07913638441844459
+         -0.09907403170656341,
+         0.0710700411801334
         ],
         "n_bootstrap_used": 2000
        },
@@ -17778,11 +20342,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.3045,
-        "permutation_null_sd": 0.04259899592891178,
+        "permutation_p": 0.299,
+        "permutation_null_sd": 0.0420061727802021,
         "bootstrap_ci95": [
-         -0.12416690097894811,
-         0.03981119686686801
+         -0.1297097898414424,
+         0.03812018511089108
         ],
         "n_bootstrap_used": 2000
        },
@@ -17800,11 +20364,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.026,
-        "permutation_null_sd": 0.04212863584272037,
+        "permutation_p": 0.024,
+        "permutation_null_sd": 0.04189644051644201,
         "bootstrap_ci95": [
-         -0.18002190280759683,
-         -0.009964016050378735
+         -0.17719547692732804,
+         -0.008047939491034677
         ],
         "n_bootstrap_used": 2000
        },
@@ -17822,11 +20386,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.4515,
-        "permutation_null_sd": 0.04153990018086296,
+        "permutation_p": 0.444,
+        "permutation_null_sd": 0.04164193447692969,
         "bootstrap_ci95": [
-         -0.11518694299520857,
-         0.05259372632053498
+         -0.11149318009597428,
+         0.05123346259510255
         ],
         "n_bootstrap_used": 2000
        },
@@ -17844,11 +20408,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.589,
-        "permutation_null_sd": 0.041467457883469616,
+        "permutation_p": 0.591,
+        "permutation_null_sd": 0.04257447189863847,
         "bootstrap_ci95": [
-         -0.06124672655338639,
-         0.10735860791384529
+         -0.0646331731713749,
+         0.10747314562708674
         ],
         "n_bootstrap_used": 2000
        },
@@ -17866,11 +20430,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.4125,
-        "permutation_null_sd": 0.043353587026690156,
+        "permutation_p": 0.397,
+        "permutation_null_sd": 0.042127487883592545,
         "bootstrap_ci95": [
-         -0.04885991096493514,
-         0.12143577220635825
+         -0.0500776826669896,
+         0.12497404314539975
         ],
         "n_bootstrap_used": 2000
        },
@@ -17888,11 +20452,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.083,
-        "permutation_null_sd": 0.04207627693270499,
+        "permutation_p": 0.0795,
+        "permutation_null_sd": 0.041258826425905566,
         "bootstrap_ci95": [
-         -0.014480479728927307,
-         0.1574490645356585
+         -0.01011507762004674,
+         0.16653570028153683
         ],
         "n_bootstrap_used": 2000
        },
@@ -17910,11 +20474,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.5825,
-        "permutation_null_sd": 0.04247193588695543,
+        "permutation_p": 0.556,
+        "permutation_null_sd": 0.04232634756494818,
         "bootstrap_ci95": [
-         -0.11068877747920093,
-         0.06536216234528311
+         -0.11066016910078641,
+         0.0626712348336834
         ],
         "n_bootstrap_used": 2000
        },
@@ -17932,11 +20496,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.2355,
-        "permutation_null_sd": 0.04033001108434953,
+        "permutation_p": 0.2565,
+        "permutation_null_sd": 0.0423306077419801,
         "bootstrap_ci95": [
-         -0.03831786992539531,
-         0.12890325247917034
+         -0.03661182522671506,
+         0.13092072331804727
         ],
         "n_bootstrap_used": 2000
        },
@@ -17954,11 +20518,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.363,
-        "permutation_null_sd": 0.04133137113728832,
+        "permutation_p": 0.3825,
+        "permutation_null_sd": 0.042273813598445426,
         "bootstrap_ci95": [
-         -0.047217030083395735,
-         0.12530681766284102
+         -0.0492768209305387,
+         0.12022633312134225
         ],
         "n_bootstrap_used": 2000
        },
@@ -17976,11 +20540,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.508,
-        "permutation_null_sd": 0.04181221490909082,
+        "permutation_p": 0.4805,
+        "permutation_null_sd": 0.04037951136978994,
         "bootstrap_ci95": [
-         -0.1196765559130624,
-         0.06071338760818161
+         -0.11131031156649676,
+         0.061678810618816096
         ],
         "n_bootstrap_used": 2000
        }
@@ -18376,11 +20940,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.611,
-        "permutation_null_sd": 0.04175049313557883,
+        "permutation_p": 0.6095,
+        "permutation_null_sd": 0.04177863020793862,
         "bootstrap_ci95": [
-         -0.06407344277638363,
-         0.10607830039172277
+         -0.06232270253285119,
+         0.10498456641335839
         ],
         "n_bootstrap_used": 2000
        },
@@ -18398,11 +20962,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.212,
-        "permutation_null_sd": 0.0426730196271753,
+        "permutation_p": 0.2125,
+        "permutation_null_sd": 0.04222595376240488,
         "bootstrap_ci95": [
-         -0.13292964724273432,
-         0.030276438447618636
+         -0.13836559299032783,
+         0.03198030811659384
         ],
         "n_bootstrap_used": 2000
        },
@@ -18420,11 +20984,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.1385,
-        "permutation_null_sd": 0.042313563680669165,
+        "permutation_p": 0.1395,
+        "permutation_null_sd": 0.042021271003377866,
         "bootstrap_ci95": [
-         -0.028688096570807023,
-         0.14692389927573066
+         -0.019640741205341983,
+         0.14667300730472038
         ],
         "n_bootstrap_used": 2000
        },
@@ -18442,11 +21006,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.189,
-        "permutation_null_sd": 0.041652387589928286,
+        "permutation_p": 0.1905,
+        "permutation_null_sd": 0.042582043800746455,
         "bootstrap_ci95": [
-         -0.1417237885422958,
-         0.034155353210186985
+         -0.14147110954014921,
+         0.032885597614536945
         ],
         "n_bootstrap_used": 2000
        },
@@ -18464,11 +21028,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.573,
-        "permutation_null_sd": 0.04149545745228243,
+        "permutation_p": 0.592,
+        "permutation_null_sd": 0.04210027782378189,
         "bootstrap_ci95": [
-         -0.1080546276534219,
-         0.06117639107901971
+         -0.1065836986895408,
+         0.06454857579976939
         ],
         "n_bootstrap_used": 2000
        },
@@ -18486,11 +21050,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.177,
-        "permutation_null_sd": 0.041586989425664814,
+        "permutation_p": 0.17,
+        "permutation_null_sd": 0.04132293461790499,
         "bootstrap_ci95": [
-         -0.02808179725341656,
-         0.14334388107041757
+         -0.02746285955398076,
+         0.14189789647771778
         ],
         "n_bootstrap_used": 2000
        },
@@ -18508,11 +21072,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.7605,
-        "permutation_null_sd": 0.04308644178797477,
+        "permutation_p": 0.7415,
+        "permutation_null_sd": 0.042097942108449006,
         "bootstrap_ci95": [
-         -0.0677498435742066,
-         0.09649191115964327
+         -0.06602852591874707,
+         0.09489558548332204
         ],
         "n_bootstrap_used": 2000
        },
@@ -18530,11 +21094,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.7215,
-        "permutation_null_sd": 0.04174408360528197,
+        "permutation_p": 0.707,
+        "permutation_null_sd": 0.04295149480551268,
         "bootstrap_ci95": [
-         -0.10765130950627878,
-         0.07039396918831435
+         -0.10460854765227943,
+         0.06836993226679634
         ],
         "n_bootstrap_used": 2000
        },
@@ -18552,11 +21116,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.3285,
-        "permutation_null_sd": 0.04204879050445783,
+        "permutation_p": 0.312,
+        "permutation_null_sd": 0.041092359279771,
         "bootstrap_ci95": [
-         -0.04134762873229117,
-         0.12515675298218623
+         -0.045726033417411355,
+         0.12879411556781403
         ],
         "n_bootstrap_used": 2000
        },
@@ -18574,11 +21138,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.674,
-        "permutation_null_sd": 0.04224233298165966,
+        "permutation_p": 0.6625,
+        "permutation_null_sd": 0.0414744128493825,
         "bootstrap_ci95": [
-         -0.10072907298220483,
-         0.06288355492497205
+         -0.10134559430744089,
+         0.06019590099457373
         ],
         "n_bootstrap_used": 2000
        },
@@ -18596,11 +21160,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.944,
-        "permutation_null_sd": 0.04252541999461919,
+        "permutation_p": 0.9435,
+        "permutation_null_sd": 0.041469249553120265,
         "bootstrap_ci95": [
-         -0.07663251534663966,
-         0.08726565747986709
+         -0.08257364684585977,
+         0.08771641396417527
         ],
         "n_bootstrap_used": 2000
        },
@@ -18618,11 +21182,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.37,
-        "permutation_null_sd": 0.04211280322382582,
+        "permutation_p": 0.3685,
+        "permutation_null_sd": 0.041695582408683485,
         "bootstrap_ci95": [
-         -0.04098889565503535,
-         0.1183698011427522
+         -0.04373508247725912,
+         0.11906806215084058
         ],
         "n_bootstrap_used": 2000
        },
@@ -18640,11 +21204,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.1755,
-        "permutation_null_sd": 0.04131509283416483,
+        "permutation_p": 0.179,
+        "permutation_null_sd": 0.042026219055509025,
         "bootstrap_ci95": [
-         -0.026316443531449147,
-         0.1409452336043407
+         -0.028343016596299665,
+         0.1383976930860664
         ],
         "n_bootstrap_used": 2000
        },
@@ -18662,11 +21226,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.6955,
-        "permutation_null_sd": 0.04344818355417743,
+        "permutation_p": 0.713,
+        "permutation_null_sd": 0.04151641289245496,
         "bootstrap_ci95": [
-         -0.06590176099375224,
-         0.10593421822534178
+         -0.07607569631464649,
+         0.10283999053990862
         ],
         "n_bootstrap_used": 2000
        },
@@ -18684,11 +21248,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.596,
-        "permutation_null_sd": 0.042790419900212644,
+        "permutation_p": 0.5895,
+        "permutation_null_sd": 0.04266997861781172,
         "bootstrap_ci95": [
-         -0.06886133770974383,
-         0.11381379001234597
+         -0.07098601208089746,
+         0.11015899460264605
         ],
         "n_bootstrap_used": 2000
        },
@@ -18706,11 +21270,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.383,
-        "permutation_null_sd": 0.04100648072455292,
+        "permutation_p": 0.385,
+        "permutation_null_sd": 0.0412456147196784,
         "bootstrap_ci95": [
-         -0.12319357303026165,
-         0.05084732635725522
+         -0.12194416457045162,
+         0.05357557023970508
         ],
         "n_bootstrap_used": 2000
        },
@@ -18728,11 +21292,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.015,
-        "permutation_null_sd": 0.04275850267663747,
+        "permutation_p": 0.0095,
+        "permutation_null_sd": 0.041229141462764664,
         "bootstrap_ci95": [
-         0.019633627972254677,
-         0.19071272255568938
+         0.01983086020074855,
+         0.18616157184396528
         ],
         "n_bootstrap_used": 2000
        },
@@ -18750,11 +21314,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.0665,
-        "permutation_null_sd": 0.042602540722132765,
+        "permutation_p": 0.0615,
+        "permutation_null_sd": 0.041840898590241635,
         "bootstrap_ci95": [
-         -0.005367996352878453,
-         0.15885874879970033
+         -0.004135824687686517,
+         0.16254656044872065
         ],
         "n_bootstrap_used": 2000
        },
@@ -18772,11 +21336,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.574,
-        "permutation_null_sd": 0.0429444011456982,
+        "permutation_p": 0.591,
+        "permutation_null_sd": 0.04235663804011898,
         "bootstrap_ci95": [
-         -0.06559754250649803,
-         0.11069643382004957
+         -0.07075656652091168,
+         0.10930504694851978
         ],
         "n_bootstrap_used": 2000
        }
@@ -19356,11 +21920,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.068,
-        "permutation_null_sd": 0.041421705521226426,
+        "permutation_p": 0.0735,
+        "permutation_null_sd": 0.04131583325421785,
         "bootstrap_ci95": [
-         -0.008682018159365291,
-         0.1546450227587442
+         -0.008219000939785165,
+         0.15805507606316574
         ],
         "n_bootstrap_used": 2000
        },
@@ -19378,11 +21942,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.272,
-        "permutation_null_sd": 0.04285590906061183,
+        "permutation_p": 0.256,
+        "permutation_null_sd": 0.041231125567352846,
         "bootstrap_ci95": [
-         -0.035543748133007036,
-         0.1276292373175431
+         -0.03872851897455693,
+         0.1283264927133816
         ],
         "n_bootstrap_used": 2000
        },
@@ -19400,11 +21964,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.6545,
-        "permutation_null_sd": 0.041253536066354436,
+        "permutation_p": 0.6605,
+        "permutation_null_sd": 0.04163419750087834,
         "bootstrap_ci95": [
-         -0.07159997682639109,
-         0.10260904633117746
+         -0.06932010951078882,
+         0.10659806653902794
         ],
         "n_bootstrap_used": 2000
        },
@@ -19422,11 +21986,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.0785,
-        "permutation_null_sd": 0.041836082732326925,
+        "permutation_p": 0.0825,
+        "permutation_null_sd": 0.04233459913409173,
         "bootstrap_ci95": [
-         -0.018432732349345952,
-         0.1556791403620224
+         -0.018900645479315,
+         0.15971813957815661
         ],
         "n_bootstrap_used": 2000
        },
@@ -19444,11 +22008,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.679,
-        "permutation_null_sd": 0.04206434187279512,
+        "permutation_p": 0.667,
+        "permutation_null_sd": 0.04276741791264656,
         "bootstrap_ci95": [
-         -0.06364215758771283,
-         0.09902785594261138
+         -0.07310340848096934,
+         0.10011432726959735
         ],
         "n_bootstrap_used": 2000
        },
@@ -19466,11 +22030,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.872,
-        "permutation_null_sd": 0.042804838536225125,
+        "permutation_p": 0.848,
+        "permutation_null_sd": 0.04145677781023413,
         "bootstrap_ci95": [
-         -0.08318480878293613,
-         0.09528869972646968
+         -0.07729927827900622,
+         0.09062394152784939
         ],
         "n_bootstrap_used": 2000
        },
@@ -19488,11 +22052,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.387,
-        "permutation_null_sd": 0.0424511853541753,
+        "permutation_p": 0.388,
+        "permutation_null_sd": 0.04235980623541252,
         "bootstrap_ci95": [
-         -0.04813526333657238,
-         0.12082138466635958
+         -0.04996605074127253,
+         0.12141236767162893
         ],
         "n_bootstrap_used": 2000
        },
@@ -19510,11 +22074,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.6595,
-        "permutation_null_sd": 0.04271729415365106,
+        "permutation_p": 0.66,
+        "permutation_null_sd": 0.041244659220930895,
         "bootstrap_ci95": [
-         -0.10897154540308705,
-         0.06767868606653386
+         -0.10322595568758755,
+         0.07148567733644672
         ],
         "n_bootstrap_used": 2000
        },
@@ -19532,11 +22096,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.9365,
-        "permutation_null_sd": 0.04288899902747144,
+        "permutation_p": 0.931,
+        "permutation_null_sd": 0.041602006081468884,
         "bootstrap_ci95": [
-         -0.09152553036917142,
-         0.0822928152536461
+         -0.0894570575552225,
+         0.08280023664266958
         ],
         "n_bootstrap_used": 2000
        },
@@ -19554,11 +22118,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.406,
-        "permutation_null_sd": 0.04214842118381201,
+        "permutation_p": 0.4045,
+        "permutation_null_sd": 0.04225367258001276,
         "bootstrap_ci95": [
-         -0.1116802874294629,
-         0.048272319623069965
+         -0.11454435746627714,
+         0.04678078283523587
         ],
         "n_bootstrap_used": 2000
        },
@@ -19576,11 +22140,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.0305,
-        "permutation_null_sd": 0.04187387134479781,
+        "permutation_p": 0.0285,
+        "permutation_null_sd": 0.04193903394032726,
         "bootstrap_ci95": [
-         -0.17494371675954445,
-         -0.011601482944429023
+         -0.172726062454955,
+         -0.012125397243041685
         ],
         "n_bootstrap_used": 2000
        },
@@ -19598,11 +22162,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.347,
-        "permutation_null_sd": 0.04213583166211682,
+        "permutation_p": 0.3475,
+        "permutation_null_sd": 0.04201950097674237,
         "bootstrap_ci95": [
-         -0.12268601650706464,
-         0.03557840843352293
+         -0.12284220669632724,
+         0.04136502604677205
         ],
         "n_bootstrap_used": 2000
        },
@@ -19620,11 +22184,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.442,
-        "permutation_null_sd": 0.04162289134771245,
+        "permutation_p": 0.4035,
+        "permutation_null_sd": 0.04090786537198603,
         "bootstrap_ci95": [
-         -0.050430243612855676,
-         0.11645141648380956
+         -0.052158971510100904,
+         0.12345864892844774
         ],
         "n_bootstrap_used": 2000
        },
@@ -19642,11 +22206,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.992,
-        "permutation_null_sd": 0.04270579613710251,
+        "permutation_p": 0.9845,
+        "permutation_null_sd": 0.041938763921749764,
         "bootstrap_ci95": [
-         -0.08469167307848825,
-         0.09034019982899351
+         -0.08364486530608672,
+         0.08754943541928942
         ],
         "n_bootstrap_used": 2000
        },
@@ -19664,11 +22228,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.8145,
-        "permutation_null_sd": 0.04041833346033652,
+        "permutation_p": 0.8195,
+        "permutation_null_sd": 0.042084883698118684,
         "bootstrap_ci95": [
-         -0.07688403523286497,
-         0.09933470516327737
+         -0.0778655416660128,
+         0.09664439633930715
         ],
         "n_bootstrap_used": 2000
        },
@@ -19686,11 +22250,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.657,
-        "permutation_null_sd": 0.04184462237264944,
+        "permutation_p": 0.6655,
+        "permutation_null_sd": 0.04245538993315152,
         "bootstrap_ci95": [
-         -0.10910271523216801,
-         0.07155524726329866
+         -0.10672343796784428,
+         0.06564141242863815
         ],
         "n_bootstrap_used": 2000
        },
@@ -19708,11 +22272,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.282,
-        "permutation_null_sd": 0.042311440417249144,
+        "permutation_p": 0.256,
+        "permutation_null_sd": 0.041550288025175144,
         "bootstrap_ci95": [
-         -0.037268506756967225,
-         0.12985887006788643
+         -0.03655866934197239,
+         0.1281052774866193
         ],
         "n_bootstrap_used": 2000
        },
@@ -19730,11 +22294,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.76,
-        "permutation_null_sd": 0.04280322223377193,
+        "permutation_p": 0.738,
+        "permutation_null_sd": 0.04160713346301217,
         "bootstrap_ci95": [
-         -0.07482408429742203,
-         0.0953815636719223
+         -0.07222289718352809,
+         0.09892871761351076
         ],
         "n_bootstrap_used": 2000
        },
@@ -19752,11 +22316,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.973,
-        "permutation_null_sd": 0.04263488653657524,
+        "permutation_p": 0.9765,
+        "permutation_null_sd": 0.04241958662758159,
         "bootstrap_ci95": [
-         -0.0902595495021445,
-         0.08697330539131079
+         -0.08888690602484921,
+         0.08756409266598553
         ],
         "n_bootstrap_used": 2000
        }
@@ -20146,11 +22710,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.59,
-        "permutation_null_sd": 0.04139041669198835,
+        "permutation_p": 0.6065,
+        "permutation_null_sd": 0.04193174277657891,
         "bootstrap_ci95": [
-         -0.05845094931720614,
-         0.10759219488733514
+         -0.06535829445486732,
+         0.10410665166710413
         ],
         "n_bootstrap_used": 2000
        },
@@ -20168,11 +22732,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.873,
-        "permutation_null_sd": 0.042338214044761645,
+        "permutation_p": 0.86,
+        "permutation_null_sd": 0.04193900765952141,
         "bootstrap_ci95": [
-         -0.0870323258166744,
-         0.07794850147781734
+         -0.09063968030209386,
+         0.07754861317222464
         ],
         "n_bootstrap_used": 2000
        },
@@ -20190,11 +22754,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.2545,
-        "permutation_null_sd": 0.043080796001650594,
+        "permutation_p": 0.236,
+        "permutation_null_sd": 0.04234770622522088,
         "bootstrap_ci95": [
-         -0.03682782345432763,
-         0.13269552773315763
+         -0.03620549982861503,
+         0.13304251180121995
         ],
         "n_bootstrap_used": 2000
        },
@@ -20212,11 +22776,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.8405,
-        "permutation_null_sd": 0.041565215095654647,
+        "permutation_p": 0.8505,
+        "permutation_null_sd": 0.04255040681707773,
         "bootstrap_ci95": [
-         -0.09379365904409816,
-         0.0759511794043004
+         -0.1017873641709667,
+         0.07906531099979446
         ],
         "n_bootstrap_used": 2000
        },
@@ -20234,11 +22798,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.935,
-        "permutation_null_sd": 0.041554918995548897,
+        "permutation_p": 0.936,
+        "permutation_null_sd": 0.04291271673068866,
         "bootstrap_ci95": [
-         -0.08476905272456815,
-         0.08543482261449292
+         -0.08373819105855614,
+         0.09063146505513049
         ],
         "n_bootstrap_used": 2000
        },
@@ -20256,11 +22820,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.01,
-        "permutation_null_sd": 0.04174521294834579,
+        "permutation_p": 0.0115,
+        "permutation_null_sd": 0.0430154611917302,
         "bootstrap_ci95": [
-         0.019639717886114124,
-         0.1889806946810144
+         0.021294264548785,
+         0.18169266758671007
         ],
         "n_bootstrap_used": 2000
        },
@@ -20278,11 +22842,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.9465,
-        "permutation_null_sd": 0.04224593919426685,
+        "permutation_p": 0.941,
+        "permutation_null_sd": 0.04238629664120433,
         "bootstrap_ci95": [
-         -0.08134758153772653,
-         0.0866545714885785
+         -0.08103584584841195,
+         0.08621332117867604
         ],
         "n_bootstrap_used": 2000
        },
@@ -20300,11 +22864,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.008,
-        "permutation_null_sd": 0.043504903758958366,
+        "permutation_p": 0.0025,
+        "permutation_null_sd": 0.042331381491860255,
         "bootstrap_ci95": [
-         -0.2032973453426719,
-         -0.03562735772339238
+         -0.20543689575618365,
+         -0.03203809758496527
         ],
         "n_bootstrap_used": 2000
        },
@@ -20322,11 +22886,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.9655,
-        "permutation_null_sd": 0.041681043469354195,
+        "permutation_p": 0.959,
+        "permutation_null_sd": 0.04244513576180242,
         "bootstrap_ci95": [
-         -0.0830908569761399,
-         0.0918562388723127
+         -0.08799817204159986,
+         0.09259105029022285
         ],
         "n_bootstrap_used": 2000
        },
@@ -20344,11 +22908,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.2845,
-        "permutation_null_sd": 0.04200660143150347,
+        "permutation_p": 0.297,
+        "permutation_null_sd": 0.04202248970360843,
         "bootstrap_ci95": [
-         -0.13003204670870686,
-         0.036984763030678346
+         -0.1257184561274565,
+         0.03408745953862521
         ],
         "n_bootstrap_used": 2000
        },
@@ -20367,10 +22931,10 @@
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
         "permutation_p": 0.0195,
-        "permutation_null_sd": 0.04182909976714989,
+        "permutation_null_sd": 0.042209783606371766,
         "bootstrap_ci95": [
-         -0.1800479740432201,
-         -0.015716050236202428
+         -0.17987141160076736,
+         -0.012503751925644471
         ],
         "n_bootstrap_used": 2000
        },
@@ -20388,11 +22952,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.3725,
-        "permutation_null_sd": 0.041683593465184965,
+        "permutation_p": 0.3875,
+        "permutation_null_sd": 0.0423249094585131,
         "bootstrap_ci95": [
-         -0.11701918912594561,
-         0.04367547546405646
+         -0.1179019233495368,
+         0.04328653255346509
         ],
         "n_bootstrap_used": 2000
        },
@@ -20410,11 +22974,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.613,
-        "permutation_null_sd": 0.0424732271288041,
+        "permutation_p": 0.6305,
+        "permutation_null_sd": 0.04366215570049068,
         "bootstrap_ci95": [
-         -0.06486711113355044,
-         0.11050138019778563
+         -0.05998068647851588,
+         0.10790584359101565
         ],
         "n_bootstrap_used": 2000
        },
@@ -20432,11 +22996,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.4395,
-        "permutation_null_sd": 0.04210391980542183,
+        "permutation_p": 0.4505,
+        "permutation_null_sd": 0.041934892074554725,
         "bootstrap_ci95": [
-         -0.0526496096957865,
-         0.12081152336007832
+         -0.05703457969303165,
+         0.11857899599910351
         ],
         "n_bootstrap_used": 2000
        },
@@ -20454,11 +23018,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.0815,
-        "permutation_null_sd": 0.041298155333826574,
+        "permutation_p": 0.0965,
+        "permutation_null_sd": 0.04336505418463914,
         "bootstrap_ci95": [
-         -0.010455545112818019,
-         0.1656837245145093
+         -0.01713359260815998,
+         0.15902092210880614
         ],
         "n_bootstrap_used": 2000
        },
@@ -20476,11 +23040,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.5685,
-        "permutation_null_sd": 0.04253838776808328,
+        "permutation_p": 0.534,
+        "permutation_null_sd": 0.04144091766236254,
         "bootstrap_ci95": [
-         -0.11578726818255944,
-         0.057260169820118174
+         -0.11025557390347544,
+         0.059490663604811964
         ],
         "n_bootstrap_used": 2000
        },
@@ -20498,11 +23062,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.383,
-        "permutation_null_sd": 0.04205050338558403,
+        "permutation_p": 0.3565,
+        "permutation_null_sd": 0.04135270802399387,
         "bootstrap_ci95": [
-         -0.04322595170105693,
-         0.12123676945735873
+         -0.05059459169915325,
+         0.11925629280478674
         ],
         "n_bootstrap_used": 2000
        },
@@ -20520,11 +23084,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.5445,
-        "permutation_null_sd": 0.04222723384369008,
+        "permutation_p": 0.5215,
+        "permutation_null_sd": 0.04174063565280697,
         "bootstrap_ci95": [
-         -0.05669595897680912,
-         0.10718034050810903
+         -0.06693020786350908,
+         0.11112858196726033
         ],
         "n_bootstrap_used": 2000
        },
@@ -20542,11 +23106,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.721,
-        "permutation_null_sd": 0.040396430706287484,
+        "permutation_p": 0.7525,
+        "permutation_null_sd": 0.04248404513612399,
         "bootstrap_ci95": [
-         -0.09899164411345047,
-         0.07285539627194577
+         -0.10551374908011052,
+         0.07548963186854346
         ],
         "n_bootstrap_used": 2000
        }
@@ -20938,11 +23502,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.0005,
-        "permutation_null_sd": 0.04270446279168648,
+        "permutation_p": 0.0,
+        "permutation_null_sd": 0.041809102559681,
         "bootstrap_ci95": [
-         0.06497514110103429,
-         0.2344148539301476
+         0.06435019481167382,
+         0.22733962328385857
         ],
         "n_bootstrap_used": 2000
        },
@@ -20960,11 +23524,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.8575,
-        "permutation_null_sd": 0.04270653909788007,
+        "permutation_p": 0.8615,
+        "permutation_null_sd": 0.04163308724749753,
         "bootstrap_ci95": [
-         -0.0939624783790738,
-         0.07538511671118107
+         -0.08794554045541743,
+         0.0770097490676888
         ],
         "n_bootstrap_used": 2000
        },
@@ -20982,11 +23546,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.534,
-        "permutation_null_sd": 0.04167621991617074,
+        "permutation_p": 0.546,
+        "permutation_null_sd": 0.04274124080079487,
         "bootstrap_ci95": [
-         -0.06245080015439416,
-         0.11220000191479883
+         -0.05705770887647467,
+         0.1075038577873017
         ],
         "n_bootstrap_used": 2000
        },
@@ -21004,11 +23568,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.778,
-        "permutation_null_sd": 0.04187974367364236,
+        "permutation_p": 0.7715,
+        "permutation_null_sd": 0.04189070725664259,
         "bootstrap_ci95": [
-         -0.07006723194575563,
-         0.09268826046044114
+         -0.07293897237980311,
+         0.08815449820816736
         ],
         "n_bootstrap_used": 2000
        },
@@ -21026,11 +23590,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.675,
-        "permutation_null_sd": 0.040938562544766285,
+        "permutation_p": 0.6795,
+        "permutation_null_sd": 0.04243793664778149,
         "bootstrap_ci95": [
-         -0.1017602062077392,
-         0.06525938161055389
+         -0.10092801633183951,
+         0.06627199323852805
         ],
         "n_bootstrap_used": 2000
        },
@@ -21048,11 +23612,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.522,
-        "permutation_null_sd": 0.04207854772196907,
+        "permutation_p": 0.5025,
+        "permutation_null_sd": 0.04158119836111467,
         "bootstrap_ci95": [
-         -0.05154989643403005,
-         0.10776750691891869
+         -0.05697103705171064,
+         0.10924308779095784
         ],
         "n_bootstrap_used": 2000
        },
@@ -21070,11 +23634,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.1225,
-        "permutation_null_sd": 0.043813355799836744,
+        "permutation_p": 0.1115,
+        "permutation_null_sd": 0.04240639921579141,
         "bootstrap_ci95": [
-         -0.01947921047225911,
-         0.14939820381850855
+         -0.020033519687053365,
+         0.15513471870841372
         ],
         "n_bootstrap_used": 2000
        },
@@ -21092,11 +23656,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.0815,
-        "permutation_null_sd": 0.042368893147271394,
+        "permutation_p": 0.077,
+        "permutation_null_sd": 0.04143076740958233,
         "bootstrap_ci95": [
-         -0.1522497740109367,
-         0.00973988832777547
+         -0.1552213263851793,
+         0.005362925905938111
         ],
         "n_bootstrap_used": 2000
        },
@@ -21114,11 +23678,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.712,
-        "permutation_null_sd": 0.042716024394900874,
+        "permutation_p": 0.665,
+        "permutation_null_sd": 0.04181875246752724,
         "bootstrap_ci95": [
-         -0.1000029587712131,
-         0.06510716292336546
+         -0.09772722615151803,
+         0.0626138176726111
         ],
         "n_bootstrap_used": 2000
        },
@@ -21136,11 +23700,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.0465,
-        "permutation_null_sd": 0.04213475128089463,
+        "permutation_p": 0.039,
+        "permutation_null_sd": 0.042058076904141685,
         "bootstrap_ci95": [
-         -0.0010607298640666432,
-         0.16419826720825936
+         0.0008256189298871344,
+         0.1635356977206222
         ],
         "n_bootstrap_used": 2000
        },
@@ -21158,11 +23722,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.056,
-        "permutation_null_sd": 0.04263861554027145,
+        "permutation_p": 0.0485,
+        "permutation_null_sd": 0.04096517886626662,
         "bootstrap_ci95": [
-         -0.0018426988742501408,
-         0.1606017011997943
+         0.0009129567489745723,
+         0.16427987619219117
         ],
         "n_bootstrap_used": 2000
        },
@@ -21180,11 +23744,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.244,
-        "permutation_null_sd": 0.042937287418119884,
+        "permutation_p": 0.2495,
+        "permutation_null_sd": 0.04253563431564911,
         "bootstrap_ci95": [
-         -0.032186456984515444,
-         0.13123345470740727
+         -0.034370444246209234,
+         0.13299790526024474
         ],
         "n_bootstrap_used": 2000
        },
@@ -21202,11 +23766,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.2745,
-        "permutation_null_sd": 0.04172645551677123,
+        "permutation_p": 0.272,
+        "permutation_null_sd": 0.04181876774985099,
         "bootstrap_ci95": [
-         -0.040648707964365566,
-         0.12597200265134315
+         -0.040190177612572216,
+         0.1275943254297111
         ],
         "n_bootstrap_used": 2000
        },
@@ -21224,11 +23788,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.32,
-        "permutation_null_sd": 0.042470478704314744,
+        "permutation_p": 0.3305,
+        "permutation_null_sd": 0.042795846140102574,
         "bootstrap_ci95": [
-         -0.04242660414092727,
-         0.1235333659123151
+         -0.04452038257107104,
+         0.13050589835467136
         ],
         "n_bootstrap_used": 2000
        },
@@ -21246,11 +23810,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.3815,
-        "permutation_null_sd": 0.04303463154518288,
+        "permutation_p": 0.3665,
+        "permutation_null_sd": 0.04191524116387027,
         "bootstrap_ci95": [
-         -0.045876746856381975,
-         0.11691109127830514
+         -0.045473270516930474,
+         0.12101831708963771
         ],
         "n_bootstrap_used": 2000
        },
@@ -21268,11 +23832,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.0685,
-        "permutation_null_sd": 0.04326175456066054,
+        "permutation_p": 0.0535,
+        "permutation_null_sd": 0.04121940830921334,
         "bootstrap_ci95": [
-         -0.00978247226374484,
-         0.16266811310618123
+         -0.006226695083392508,
+         0.16264934070428655
         ],
         "n_bootstrap_used": 2000
        },
@@ -21290,11 +23854,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.9325,
-        "permutation_null_sd": 0.041875432839259694,
+        "permutation_p": 0.934,
+        "permutation_null_sd": 0.041699676060435835,
         "bootstrap_ci95": [
-         -0.08218112433670687,
-         0.08579550390592637
+         -0.07106612680880825,
+         0.08434072958470318
         ],
         "n_bootstrap_used": 2000
        },
@@ -21312,11 +23876,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.3315,
-        "permutation_null_sd": 0.04201372335438389,
+        "permutation_p": 0.3225,
+        "permutation_null_sd": 0.04137570228820414,
         "bootstrap_ci95": [
-         -0.039374646374526444,
-         0.1207620568262323
+         -0.04000894329971435,
+         0.12358473206198568
         ],
         "n_bootstrap_used": 2000
        },
@@ -21334,11 +23898,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.461,
-        "permutation_null_sd": 0.0423392546621602,
+        "permutation_p": 0.454,
+        "permutation_null_sd": 0.04225972208622084,
         "bootstrap_ci95": [
-         -0.053704980061148926,
-         0.1140625574907386
+         -0.056542823230449756,
+         0.11515342720767499
         ],
         "n_bootstrap_used": 2000
        }
@@ -21918,11 +24482,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.3735,
-        "permutation_null_sd": 0.04145968503379978,
+        "permutation_p": 0.376,
+        "permutation_null_sd": 0.04194756497457018,
         "bootstrap_ci95": [
-         -0.12036082587985791,
-         0.04606796645688093
+         -0.12152640814336926,
+         0.04833902817727763
         ],
         "n_bootstrap_used": 2000
        },
@@ -21940,11 +24504,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.1415,
-        "permutation_null_sd": 0.04056183436582868,
+        "permutation_p": 0.173,
+        "permutation_null_sd": 0.04283680598492013,
         "bootstrap_ci95": [
-         -0.0189644318579298,
-         0.14525686337306581
+         -0.02446330912582917,
+         0.1486496898287167
         ],
         "n_bootstrap_used": 2000
        },
@@ -21962,11 +24526,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.363,
-        "permutation_null_sd": 0.043938297653236785,
+        "permutation_p": 0.349,
+        "permutation_null_sd": 0.041674181082162226,
         "bootstrap_ci95": [
-         -0.049745051377609324,
-         0.12087413752697622
+         -0.03933595035031743,
+         0.124375373277978
         ],
         "n_bootstrap_used": 2000
        },
@@ -21984,11 +24548,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.8115,
-        "permutation_null_sd": 0.04169157281653279,
+        "permutation_p": 0.822,
+        "permutation_null_sd": 0.04228450706935441,
         "bootstrap_ci95": [
-         -0.07549363503199863,
-         0.09872997525370716
+         -0.07811228354941688,
+         0.0948320292589779
         ],
         "n_bootstrap_used": 2000
        },
@@ -22006,11 +24570,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.1345,
-        "permutation_null_sd": 0.042648586295097254,
+        "permutation_p": 0.129,
+        "permutation_null_sd": 0.04270508567532273,
         "bootstrap_ci95": [
-         -0.020522537271165476,
-         0.1470376070479987
+         -0.02285499330528611,
+         0.14819304188697685
         ],
         "n_bootstrap_used": 2000
        },
@@ -22028,11 +24592,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.6775,
-        "permutation_null_sd": 0.04247783930053374,
+        "permutation_p": 0.6665,
+        "permutation_null_sd": 0.04182195102086781,
         "bootstrap_ci95": [
-         -0.06629343878366883,
-         0.1040582494423118
+         -0.06500756339953696,
+         0.09925679982957349
         ],
         "n_bootstrap_used": 2000
        },
@@ -22050,11 +24614,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.125,
-        "permutation_null_sd": 0.041609641518215966,
+        "permutation_p": 0.146,
+        "permutation_null_sd": 0.04303476821700213,
         "bootstrap_ci95": [
-         -0.015547170030622698,
-         0.14295510111673052
+         -0.015039108953878182,
+         0.14392132215461906
         ],
         "n_bootstrap_used": 2000
        },
@@ -22072,11 +24636,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.4475,
-        "permutation_null_sd": 0.04158505829389249,
+        "permutation_p": 0.4465,
+        "permutation_null_sd": 0.042016922360161295,
         "bootstrap_ci95": [
-         -0.11089214248996639,
-         0.05422536877253381
+         -0.1159847801772475,
+         0.049902036375726086
         ],
         "n_bootstrap_used": 2000
        },
@@ -22094,11 +24658,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.215,
-        "permutation_null_sd": 0.04125178450135691,
+        "permutation_p": 0.2175,
+        "permutation_null_sd": 0.04113235946832156,
         "bootstrap_ci95": [
-         -0.13190853408898356,
-         0.030801844285299196
+         -0.13087655832855102,
+         0.03153918002713759
         ],
         "n_bootstrap_used": 2000
        },
@@ -22116,11 +24680,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.3435,
-        "permutation_null_sd": 0.041661013292886795,
+        "permutation_p": 0.3605,
+        "permutation_null_sd": 0.04246884118136102,
         "bootstrap_ci95": [
-         -0.11803228430421688,
-         0.04701088782283176
+         -0.12058501640389449,
+         0.050149806887584074
         ],
         "n_bootstrap_used": 2000
        },
@@ -22138,11 +24702,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.324,
-        "permutation_null_sd": 0.04216213794100239,
+        "permutation_p": 0.3505,
+        "permutation_null_sd": 0.04210234850161544,
         "bootstrap_ci95": [
-         -0.04017438627999092,
-         0.12676335421345625
+         -0.03907380677612594,
+         0.12323824630684335
         ],
         "n_bootstrap_used": 2000
        },
@@ -22160,11 +24724,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.73,
-        "permutation_null_sd": 0.04259053753376935,
+        "permutation_p": 0.733,
+        "permutation_null_sd": 0.042695644680096914,
         "bootstrap_ci95": [
-         -0.06815247705411066,
-         0.09907313336818559
+         -0.06840633462679697,
+         0.09917419942571523
         ],
         "n_bootstrap_used": 2000
        },
@@ -22182,11 +24746,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.271,
-        "permutation_null_sd": 0.04249878867475003,
+        "permutation_p": 0.259,
+        "permutation_null_sd": 0.041763869570124165,
         "bootstrap_ci95": [
-         -0.03354967375589517,
-         0.12766640904252305
+         -0.03234206472626766,
+         0.12312766757967573
         ],
         "n_bootstrap_used": 2000
        },
@@ -22204,11 +24768,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.618,
-        "permutation_null_sd": 0.04246800668305567,
+        "permutation_p": 0.6205,
+        "permutation_null_sd": 0.042360285053928345,
         "bootstrap_ci95": [
-         -0.06431720128093181,
-         0.10440240797822885
+         -0.059630358488260066,
+         0.10462807447135593
         ],
         "n_bootstrap_used": 2000
        },
@@ -22226,11 +24790,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.0155,
-        "permutation_null_sd": 0.042833401275690235,
+        "permutation_p": 0.011,
+        "permutation_null_sd": 0.040425818543226966,
         "bootstrap_ci95": [
-         0.02282374678358826,
-         0.19309485019614178
+         0.02159961850507642,
+         0.18893569771433968
         ],
         "n_bootstrap_used": 2000
        },
@@ -22248,11 +24812,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.2735,
-        "permutation_null_sd": 0.04139503881796926,
+        "permutation_p": 0.288,
+        "permutation_null_sd": 0.04175381196322663,
         "bootstrap_ci95": [
-         -0.041283697849149426,
-         0.1312167822308126
+         -0.03833213893533272,
+         0.1268308024118269
         ],
         "n_bootstrap_used": 2000
        },
@@ -22270,11 +24834,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.3545,
-        "permutation_null_sd": 0.04180401164455566,
+        "permutation_p": 0.3815,
+        "permutation_null_sd": 0.042911703168609344,
         "bootstrap_ci95": [
-         -0.044315762324762836,
-         0.1187866758937311
+         -0.049523896966897185,
+         0.12097221757892804
         ],
         "n_bootstrap_used": 2000
        },
@@ -22292,11 +24856,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.0185,
-        "permutation_null_sd": 0.041135316215329724,
+        "permutation_p": 0.017,
+        "permutation_null_sd": 0.04117372640477502,
         "bootstrap_ci95": [
-         0.010077127372082939,
-         0.18089794639829979
+         0.017902736881041086,
+         0.1802672932273433
         ],
         "n_bootstrap_used": 2000
        },
@@ -22314,11 +24878,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.6195,
-        "permutation_null_sd": 0.041942369730335174,
+        "permutation_p": 0.6235,
+        "permutation_null_sd": 0.042619092450707184,
         "bootstrap_ci95": [
-         -0.10563692466261626,
-         0.062223364109132796
+         -0.10634564102340627,
+         0.06007344744765313
         ],
         "n_bootstrap_used": 2000
        }
@@ -22708,11 +25272,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.0065,
-        "permutation_null_sd": 0.04153979934908074,
+        "permutation_p": 0.004,
+        "permutation_null_sd": 0.04172305941716335,
         "bootstrap_ci95": [
-         0.03159771403306301,
-         0.19976078509022746
+         0.033902390872189415,
+         0.1971973030945916
         ],
         "n_bootstrap_used": 2000
        },
@@ -22730,11 +25294,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.7875,
-        "permutation_null_sd": 0.04271555584266606,
+        "permutation_p": 0.769,
+        "permutation_null_sd": 0.04196703049956531,
         "bootstrap_ci95": [
-         -0.09406459925901844,
-         0.07283400607926892
+         -0.09406931882115964,
+         0.07363189957708348
         ],
         "n_bootstrap_used": 2000
        },
@@ -22752,11 +25316,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.478,
-        "permutation_null_sd": 0.04277957043978416,
+        "permutation_p": 0.485,
+        "permutation_null_sd": 0.042632867579886144,
         "bootstrap_ci95": [
-         -0.11108103960454795,
-         0.05328144465980342
+         -0.10727990748033345,
+         0.05333758045636609
         ],
         "n_bootstrap_used": 2000
        },
@@ -22774,11 +25338,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.056,
-        "permutation_null_sd": 0.04153188885370998,
+        "permutation_p": 0.062,
+        "permutation_null_sd": 0.04199791404925182,
         "bootstrap_ci95": [
-         -0.004193790660082818,
-         0.1639981454466704
+         -0.009363132517209608,
+         0.16170453408925306
         ],
         "n_bootstrap_used": 2000
        },
@@ -22796,11 +25360,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.112,
-        "permutation_null_sd": 0.04219430863204656,
+        "permutation_p": 0.106,
+        "permutation_null_sd": 0.041704832510827836,
         "bootstrap_ci95": [
-         -0.015456334200918609,
-         0.15317927460758368
+         -0.012592561203856757,
+         0.14844258035176341
         ],
         "n_bootstrap_used": 2000
        },
@@ -22818,11 +25382,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.1545,
-        "permutation_null_sd": 0.04232479630098878,
+        "permutation_p": 0.15,
+        "permutation_null_sd": 0.04172033577508899,
         "bootstrap_ci95": [
-         -0.021402177728059312,
-         0.14045104550887
+         -0.019391917203995763,
+         0.1382687015330606
         ],
         "n_bootstrap_used": 2000
        },
@@ -22840,11 +25404,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.3075,
-        "permutation_null_sd": 0.041073037001610795,
+        "permutation_p": 0.324,
+        "permutation_null_sd": 0.04231730153820769,
         "bootstrap_ci95": [
-         -0.036671265516287584,
-         0.12368824330765263
+         -0.042357504376150844,
+         0.12243683879844344
         ],
         "n_bootstrap_used": 2000
        },
@@ -22863,10 +25427,10 @@
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
         "permutation_p": 0.505,
-        "permutation_null_sd": 0.04254815639000694,
+        "permutation_null_sd": 0.04292514052138329,
         "bootstrap_ci95": [
-         -0.052423229683664606,
-         0.10699536375576395
+         -0.05193280662830091,
+         0.10812336125058368
         ],
         "n_bootstrap_used": 2000
        },
@@ -22884,11 +25448,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.747,
-        "permutation_null_sd": 0.04212880607955276,
+        "permutation_p": 0.7365,
+        "permutation_null_sd": 0.04178177126803369,
         "bootstrap_ci95": [
-         -0.06987214814722056,
-         0.09706406616937238
+         -0.07101552750858578,
+         0.09939677382767353
         ],
         "n_bootstrap_used": 2000
        },
@@ -22906,11 +25470,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.01,
-        "permutation_null_sd": 0.04203644492444164,
+        "permutation_p": 0.011,
+        "permutation_null_sd": 0.042441220057914134,
         "bootstrap_ci95": [
-         0.025184333106084547,
-         0.18768192196877181
+         0.02302568484633336,
+         0.18176407290708943
         ],
         "n_bootstrap_used": 2000
        },
@@ -22928,11 +25492,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.7145,
-        "permutation_null_sd": 0.04341091820569729,
+        "permutation_p": 0.716,
+        "permutation_null_sd": 0.04208004144505111,
         "bootstrap_ci95": [
-         -0.09665048779976258,
-         0.06637010878051663
+         -0.09855843475605126,
+         0.06743492847629005
         ],
         "n_bootstrap_used": 2000
        },
@@ -22950,11 +25514,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.3905,
-        "permutation_null_sd": 0.042529529116131365,
+        "permutation_p": 0.38,
+        "permutation_null_sd": 0.04170232817080007,
         "bootstrap_ci95": [
-         -0.04425503593267523,
-         0.11809018147116375
+         -0.0466665161255507,
+         0.1254395757030418
         ],
         "n_bootstrap_used": 2000
        },
@@ -22972,11 +25536,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.182,
-        "permutation_null_sd": 0.041185427699319425,
+        "permutation_p": 0.205,
+        "permutation_null_sd": 0.04201013292494198,
         "bootstrap_ci95": [
-         -0.026329556599254306,
-         0.1404176307610997
+         -0.02780468353076974,
+         0.14042741564172742
         ],
         "n_bootstrap_used": 2000
        },
@@ -22994,11 +25558,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.045,
-        "permutation_null_sd": 0.04213891486920062,
+        "permutation_p": 0.0415,
+        "permutation_null_sd": 0.04061915703111379,
         "bootstrap_ci95": [
-         -0.0005299675413348909,
-         0.1632356260285406
+         0.005279572429288259,
+         0.16646115501249667
         ],
         "n_bootstrap_used": 2000
        },
@@ -23016,11 +25580,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.0075,
-        "permutation_null_sd": 0.04354259974111551,
+        "permutation_p": 0.002,
+        "permutation_null_sd": 0.04161745865140012,
         "bootstrap_ci95": [
-         0.04001665866982193,
-         0.20809363636947545
+         0.03368802882383954,
+         0.20639637894760993
         ],
         "n_bootstrap_used": 2000
        },
@@ -23038,11 +25602,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.084,
-        "permutation_null_sd": 0.04199750775179474,
+        "permutation_p": 0.0845,
+        "permutation_null_sd": 0.042735641208835703,
         "bootstrap_ci95": [
-         -0.01465142958425136,
-         0.15553361975351115
+         -0.011333194272855548,
+         0.15707027269301807
         ],
         "n_bootstrap_used": 2000
        },
@@ -23060,11 +25624,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.27,
-        "permutation_null_sd": 0.0418368834195989,
+        "permutation_p": 0.273,
+        "permutation_null_sd": 0.04167315056174274,
         "bootstrap_ci95": [
-         -0.035877573290200214,
-         0.12648581478472815
+         -0.035352293595775415,
+         0.12620412150360732
         ],
         "n_bootstrap_used": 2000
        },
@@ -23082,11 +25646,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.019,
-        "permutation_null_sd": 0.04280465436545798,
+        "permutation_p": 0.0185,
+        "permutation_null_sd": 0.04241871783436066,
         "bootstrap_ci95": [
-         0.023183155384119174,
-         0.17927929406571969
+         0.01951647998556125,
+         0.1798491364058441
         ],
         "n_bootstrap_used": 2000
        },
@@ -23104,11 +25668,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.6045,
-        "permutation_null_sd": 0.04215875539105634,
+        "permutation_p": 0.6065,
+        "permutation_null_sd": 0.042504671512289566,
         "bootstrap_ci95": [
-         -0.05938532889760761,
-         0.10926784109574987
+         -0.06051786499068221,
+         0.10684000365163551
         ],
         "n_bootstrap_used": 2000
        }
@@ -23505,10 +26069,10 @@
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
         "permutation_p": 0.0,
-        "permutation_null_sd": 0.04124017690999271,
+        "permutation_null_sd": 0.04205909497778721,
         "bootstrap_ci95": [
-         0.06431672597062615,
-         0.23712835015659753
+         0.07132721500470723,
+         0.23942964150497334
         ],
         "n_bootstrap_used": 2000
        },
@@ -23526,11 +26090,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.393,
-        "permutation_null_sd": 0.043089112608429854,
+        "permutation_p": 0.3915,
+        "permutation_null_sd": 0.042823415505031694,
         "bootstrap_ci95": [
-         -0.043810819757858374,
-         0.12160931235143116
+         -0.039651662539670805,
+         0.12312451308743261
         ],
         "n_bootstrap_used": 2000
        },
@@ -23548,11 +26112,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.662,
-        "permutation_null_sd": 0.042884691119410796,
+        "permutation_p": 0.6485,
+        "permutation_null_sd": 0.04166602247609466,
         "bootstrap_ci95": [
-         -0.06290318075454922,
-         0.0999128069204633
+         -0.06300660779434837,
+         0.09780790124086167
         ],
         "n_bootstrap_used": 2000
        },
@@ -23570,11 +26134,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.158,
-        "permutation_null_sd": 0.04185350186866156,
+        "permutation_p": 0.1825,
+        "permutation_null_sd": 0.042757851611822655,
         "bootstrap_ci95": [
-         -0.027436510786628426,
-         0.13794574114381772
+         -0.02462897933851562,
+         0.14264054764342757
         ],
         "n_bootstrap_used": 2000
        },
@@ -23592,11 +26156,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.96,
-        "permutation_null_sd": 0.04305827017415341,
+        "permutation_p": 0.9605,
+        "permutation_null_sd": 0.042090607844613645,
         "bootstrap_ci95": [
-         -0.08341710406263146,
-         0.08370618879989987
+         -0.08876936022364698,
+         0.07560555710734919
         ],
         "n_bootstrap_used": 2000
        },
@@ -23614,11 +26178,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.244,
-        "permutation_null_sd": 0.041839234654066915,
+        "permutation_p": 0.245,
+        "permutation_null_sd": 0.041232904123896304,
         "bootstrap_ci95": [
-         -0.03634341220053486,
-         0.13133397504546018
+         -0.03761358882814584,
+         0.1306727843610518
         ],
         "n_bootstrap_used": 2000
        },
@@ -23636,11 +26200,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.3195,
-        "permutation_null_sd": 0.043388544473487015,
+        "permutation_p": 0.3175,
+        "permutation_null_sd": 0.042136740056508915,
         "bootstrap_ci95": [
-         -0.0402931510052629,
-         0.1295065717647333
+         -0.044619581280378844,
+         0.12844991840586875
         ],
         "n_bootstrap_used": 2000
        },
@@ -23658,11 +26222,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.435,
-        "permutation_null_sd": 0.04135643369614382,
+        "permutation_p": 0.425,
+        "permutation_null_sd": 0.04226659035677745,
         "bootstrap_ci95": [
-         -0.11086423570260746,
-         0.044748975326428866
+         -0.11675700411602366,
+         0.04540292624792986
         ],
         "n_bootstrap_used": 2000
        },
@@ -23680,11 +26244,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.0795,
-        "permutation_null_sd": 0.0421250250193558,
+        "permutation_p": 0.077,
+        "permutation_null_sd": 0.04201749330969701,
         "bootstrap_ci95": [
-         -0.15467787298239657,
-         0.005487937866894233
+         -0.1551896215485194,
+         0.005683158709991084
         ],
         "n_bootstrap_used": 2000
        },
@@ -23702,11 +26266,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.885,
-        "permutation_null_sd": 0.041150346482375866,
+        "permutation_p": 0.868,
+        "permutation_null_sd": 0.04119019389982385,
         "bootstrap_ci95": [
-         -0.07722245773984132,
-         0.09025636200862547
+         -0.07683503548914625,
+         0.09373813349749521
         ],
         "n_bootstrap_used": 2000
        },
@@ -23724,11 +26288,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.553,
-        "permutation_null_sd": 0.041743253361393534,
+        "permutation_p": 0.558,
+        "permutation_null_sd": 0.04203885767518379,
         "bootstrap_ci95": [
-         -0.05883567118771403,
-         0.1082531009139047
+         -0.06322014700107682,
+         0.10649581191312607
         ],
         "n_bootstrap_used": 2000
        },
@@ -23746,11 +26310,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.8005,
-        "permutation_null_sd": 0.04218104260096998,
+        "permutation_p": 0.8015,
+        "permutation_null_sd": 0.04301426400372191,
         "bootstrap_ci95": [
-         -0.07240657285923734,
-         0.09288479601518622
+         -0.07330781059314338,
+         0.09863371337344883
         ],
         "n_bootstrap_used": 2000
        },
@@ -23768,11 +26332,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.761,
-        "permutation_null_sd": 0.041958835867777905,
+        "permutation_p": 0.7615,
+        "permutation_null_sd": 0.0415158240181368,
         "bootstrap_ci95": [
-         -0.09503771068087145,
-         0.07144266095218965
+         -0.09474511987060355,
+         0.07428927352069646
         ],
         "n_bootstrap_used": 2000
        },
@@ -23790,11 +26354,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.0505,
-        "permutation_null_sd": 0.04265601585801969,
+        "permutation_p": 0.044,
+        "permutation_null_sd": 0.04175178386541659,
         "bootstrap_ci95": [
-         0.001111093762539137,
-         0.17124219073228225
+         -0.007490397614348296,
+         0.16850303772182867
         ],
         "n_bootstrap_used": 2000
        },
@@ -23812,11 +26376,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.1895,
-        "permutation_null_sd": 0.04247289862178895,
+        "permutation_p": 0.1745,
+        "permutation_null_sd": 0.04200313644358599,
         "bootstrap_ci95": [
-         -0.03251988454202798,
-         0.146974169204337
+         -0.027503463675385875,
+         0.1422177172110517
         ],
         "n_bootstrap_used": 2000
        },
@@ -23834,11 +26398,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.08,
-        "permutation_null_sd": 0.04153148558896655,
+        "permutation_p": 0.086,
+        "permutation_null_sd": 0.04218338414848579,
         "bootstrap_ci95": [
-         -0.01119769938937503,
-         0.1594163876783839
+         -0.01294211208126986,
+         0.15760156360141847
         ],
         "n_bootstrap_used": 2000
        },
@@ -23856,11 +26420,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.064,
-        "permutation_null_sd": 0.04159570010019027,
+        "permutation_p": 0.068,
+        "permutation_null_sd": 0.04215504930843677,
         "bootstrap_ci95": [
-         -0.15878289124323947,
-         0.0037586594914857706
+         -0.16475635328856628,
+         0.006168461847838945
         ],
         "n_bootstrap_used": 2000
        },
@@ -23878,11 +26442,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.0075,
-        "permutation_null_sd": 0.041464458093844574,
+        "permutation_p": 0.015,
+        "permutation_null_sd": 0.04278698228538512,
         "bootstrap_ci95": [
-         0.024887983628797464,
-         0.1895178844330934
+         0.021387583400281105,
+         0.18435103210909506
         ],
         "n_bootstrap_used": 2000
        },
@@ -23900,11 +26464,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.025,
-        "permutation_null_sd": 0.04258337773521519,
+        "permutation_p": 0.0215,
+        "permutation_null_sd": 0.04229058067468674,
         "bootstrap_ci95": [
-         0.007751913415432337,
-         0.17631804821136654
+         0.010988018525853684,
+         0.17593689906231882
         ],
         "n_bootstrap_used": 2000
        }
@@ -24484,11 +27048,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.0855,
-        "permutation_null_sd": 0.0426168012620506,
+        "permutation_p": 0.093,
+        "permutation_null_sd": 0.0428012071935469,
         "bootstrap_ci95": [
-         -0.007491307329970164,
-         0.15657994181275905
+         -0.012313649747708913,
+         0.15677077669908662
         ],
         "n_bootstrap_used": 2000
        },
@@ -24506,11 +27070,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.0325,
-        "permutation_null_sd": 0.04173761664980336,
+        "permutation_p": 0.0335,
+        "permutation_null_sd": 0.04267503659392873,
         "bootstrap_ci95": [
-         0.007727613918473767,
-         0.17726068997476122
+         0.0018406890586735458,
+         0.17493565543043413
         ],
         "n_bootstrap_used": 2000
        },
@@ -24528,11 +27092,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.015,
-        "permutation_null_sd": 0.04193098216211284,
+        "permutation_p": 0.013,
+        "permutation_null_sd": 0.04145517700365878,
         "bootstrap_ci95": [
-         0.01840882245009187,
-         0.18428655902647065
+         0.02598396261587827,
+         0.18338859434582278
         ],
         "n_bootstrap_used": 2000
        },
@@ -24550,11 +27114,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.043,
-        "permutation_null_sd": 0.04196385035194947,
+        "permutation_p": 0.042,
+        "permutation_null_sd": 0.042297271340819245,
         "bootstrap_ci95": [
-         -0.00506046473111385,
-         0.1720955693051266
+         -0.005074463130796997,
+         0.17181089594330176
         ],
         "n_bootstrap_used": 2000
        },
@@ -24572,11 +27136,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.6475,
-        "permutation_null_sd": 0.04304780514414686,
+        "permutation_p": 0.651,
+        "permutation_null_sd": 0.04177608965542847,
         "bootstrap_ci95": [
-         -0.10393625158603166,
-         0.06284495102190683
+         -0.10154379445942883,
+         0.06835683698645907
         ],
         "n_bootstrap_used": 2000
        },
@@ -24594,11 +27158,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.0335,
-        "permutation_null_sd": 0.04177594411824718,
+        "permutation_p": 0.039,
+        "permutation_null_sd": 0.042698775067567946,
         "bootstrap_ci95": [
-         0.001950744202271453,
-         0.17319454503208556
+         0.005616436228145651,
+         0.16732163960018148
         ],
         "n_bootstrap_used": 2000
        },
@@ -24616,11 +27180,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.9945,
-        "permutation_null_sd": 0.04182646334608266,
+        "permutation_p": 0.9975,
+        "permutation_null_sd": 0.042000491002710395,
         "bootstrap_ci95": [
-         -0.08277435175667264,
-         0.08088481710899324
+         -0.08513171344287558,
+         0.08399628838673724
         ],
         "n_bootstrap_used": 2000
        },
@@ -24638,11 +27202,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.762,
-        "permutation_null_sd": 0.042381029092389666,
+        "permutation_p": 0.7725,
+        "permutation_null_sd": 0.04249169054412574,
         "bootstrap_ci95": [
-         -0.09366053950149943,
-         0.0688498260944676
+         -0.09399145076052778,
+         0.06879177993773584
         ],
         "n_bootstrap_used": 2000
        },
@@ -24660,11 +27224,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.885,
-        "permutation_null_sd": 0.042690527775604024,
+        "permutation_p": 0.8855,
+        "permutation_null_sd": 0.04228964598241448,
         "bootstrap_ci95": [
-         -0.08781257946244925,
-         0.07564242410802098
+         -0.08976702859373506,
+         0.07592037110605587
         ],
         "n_bootstrap_used": 2000
        },
@@ -24682,11 +27246,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.6795,
-        "permutation_null_sd": 0.04251249261920527,
+        "permutation_p": 0.659,
+        "permutation_null_sd": 0.04069961780327628,
         "bootstrap_ci95": [
-         -0.06568721417058014,
-         0.09861724614886008
+         -0.06384660673890195,
+         0.1007581789151035
         ],
         "n_bootstrap_used": 2000
        },
@@ -24704,11 +27268,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.7475,
-        "permutation_null_sd": 0.04254365644589044,
+        "permutation_p": 0.732,
+        "permutation_null_sd": 0.04161176978643785,
         "bootstrap_ci95": [
-         -0.09657957026114845,
-         0.07082344321187142
+         -0.09452828438280891,
+         0.0706977367244861
         ],
         "n_bootstrap_used": 2000
        },
@@ -24726,11 +27290,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.077,
-        "permutation_null_sd": 0.04228448220727766,
+        "permutation_p": 0.085,
+        "permutation_null_sd": 0.04281340182249632,
         "bootstrap_ci95": [
-         -0.010084702121571282,
-         0.15585517527829937
+         -0.009084296836566898,
+         0.15713092196825634
         ],
         "n_bootstrap_used": 2000
        },
@@ -24748,11 +27312,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.4425,
-        "permutation_null_sd": 0.04233087785498985,
+        "permutation_p": 0.4495,
+        "permutation_null_sd": 0.04217737142354154,
         "bootstrap_ci95": [
-         -0.05012686488043698,
-         0.11465949526245425
+         -0.04744513664589661,
+         0.11626726416663513
         ],
         "n_bootstrap_used": 2000
        },
@@ -24770,11 +27334,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.047,
-        "permutation_null_sd": 0.042640739615875035,
+        "permutation_p": 0.0365,
+        "permutation_null_sd": 0.04106126700038559,
         "bootstrap_ci95": [
-         0.0021863735914627895,
-         0.17162066544935828
+         0.004794623914250763,
+         0.16783926107247046
         ],
         "n_bootstrap_used": 2000
        },
@@ -24792,11 +27356,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.448,
-        "permutation_null_sd": 0.042237319077203225,
+        "permutation_p": 0.4535,
+        "permutation_null_sd": 0.043045531680194676,
         "bootstrap_ci95": [
-         -0.04920126853501635,
-         0.11616187360312599
+         -0.050687408448402645,
+         0.1159515380108761
         ],
         "n_bootstrap_used": 2000
        },
@@ -24814,11 +27378,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.2425,
-        "permutation_null_sd": 0.04198564262276819,
+        "permutation_p": 0.259,
+        "permutation_null_sd": 0.04248541238842966,
         "bootstrap_ci95": [
-         -0.03712415129409689,
-         0.12933414797982856
+         -0.039251389296150414,
+         0.13646000450496243
         ],
         "n_bootstrap_used": 2000
        },
@@ -24836,11 +27400,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.0865,
-        "permutation_null_sd": 0.04261845508953741,
+        "permutation_p": 0.076,
+        "permutation_null_sd": 0.04241946381565294,
         "bootstrap_ci95": [
-         -0.009902852032716932,
-         0.16100176464499874
+         -0.006301361669814021,
+         0.15463343874177993
         ],
         "n_bootstrap_used": 2000
        },
@@ -24858,11 +27422,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.001,
-        "permutation_null_sd": 0.04116329089940073,
+        "permutation_p": 0.0,
+        "permutation_null_sd": 0.04233664519867161,
         "bootstrap_ci95": [
-         0.07206940113735502,
-         0.23873971003577146
+         0.0734921069128908,
+         0.2403881537947468
         ],
         "n_bootstrap_used": 2000
        },
@@ -24880,11 +27444,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.273,
-        "permutation_null_sd": 0.04143846236700704,
+        "permutation_p": 0.2735,
+        "permutation_null_sd": 0.04179585484419136,
         "bootstrap_ci95": [
-         -0.03824997317592268,
-         0.13098312753810828
+         -0.03651616881773619,
+         0.12715720885893694
         ],
         "n_bootstrap_used": 2000
        }
@@ -25274,11 +27838,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.008,
-        "permutation_null_sd": 0.04238818860460066,
+        "permutation_p": 0.0115,
+        "permutation_null_sd": 0.04255015471069737,
         "bootstrap_ci95": [
-         0.027401215405962052,
-         0.18844619232217324
+         0.029898794895447754,
+         0.18870281297759947
         ],
         "n_bootstrap_used": 2000
        },
@@ -25296,11 +27860,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.315,
-        "permutation_null_sd": 0.04225923621019364,
+        "permutation_p": 0.328,
+        "permutation_null_sd": 0.041622725258974515,
         "bootstrap_ci95": [
-         -0.12313124710753698,
-         0.041303348340173886
+         -0.12293442484137553,
+         0.043140266392535404
         ],
         "n_bootstrap_used": 2000
        },
@@ -25318,11 +27882,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.6985,
-        "permutation_null_sd": 0.04268527748954181,
+        "permutation_p": 0.698,
+        "permutation_null_sd": 0.041984000986561326,
         "bootstrap_ci95": [
-         -0.0984711133695083,
-         0.06279501721878304
+         -0.10083653858110696,
+         0.06729334947935146
         ],
         "n_bootstrap_used": 2000
        },
@@ -25340,11 +27904,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.0105,
-        "permutation_null_sd": 0.041232780103013324,
+        "permutation_p": 0.0155,
+        "permutation_null_sd": 0.04264064197988345,
         "bootstrap_ci95": [
-         0.0269154041686787,
-         0.1922374811989333
+         0.020771111508560296,
+         0.19071462783611037
         ],
         "n_bootstrap_used": 2000
        },
@@ -25362,11 +27926,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.2455,
-        "permutation_null_sd": 0.041511595032499495,
+        "permutation_p": 0.264,
+        "permutation_null_sd": 0.04310468456610552,
         "bootstrap_ci95": [
-         -0.035194084067938045,
-         0.12868266421587315
+         -0.03455192864195757,
+         0.12781717923778002
         ],
         "n_bootstrap_used": 2000
        },
@@ -25384,11 +27948,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.0345,
-        "permutation_null_sd": 0.04205738821008824,
+        "permutation_p": 0.0335,
+        "permutation_null_sd": 0.04225638530706052,
         "bootstrap_ci95": [
-         0.0058182457611898105,
-         0.17522231981732772
+         0.00689236012223542,
+         0.17017596757440182
         ],
         "n_bootstrap_used": 2000
        },
@@ -25406,11 +27970,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.1185,
-        "permutation_null_sd": 0.04261710170804576,
+        "permutation_p": 0.1205,
+        "permutation_null_sd": 0.04236582979862924,
         "bootstrap_ci95": [
-         -0.021179332644425713,
-         0.14987836898782286
+         -0.01582437468960519,
+         0.14915629747699205
         ],
         "n_bootstrap_used": 2000
        },
@@ -25428,11 +27992,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.3405,
-        "permutation_null_sd": 0.04197371258934896,
+        "permutation_p": 0.327,
+        "permutation_null_sd": 0.04165362798351262,
         "bootstrap_ci95": [
-         -0.042638233823372604,
-         0.11768634858626734
+         -0.04251193093062311,
+         0.11879146347034374
         ],
         "n_bootstrap_used": 2000
        },
@@ -25450,11 +28014,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.6485,
-        "permutation_null_sd": 0.042320979048609625,
+        "permutation_p": 0.657,
+        "permutation_null_sd": 0.042202637126239,
         "bootstrap_ci95": [
-         -0.05945059915857985,
-         0.10356251430973751
+         -0.06777402913324472,
+         0.10119214008164358
         ],
         "n_bootstrap_used": 2000
        },
@@ -25472,11 +28036,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.097,
-        "permutation_null_sd": 0.042208987182369276,
+        "permutation_p": 0.0835,
+        "permutation_null_sd": 0.04175259908340319,
         "bootstrap_ci95": [
-         -0.01019425954182617,
-         0.15241382240222223
+         -0.008456603498005961,
+         0.15099148239086393
         ],
         "n_bootstrap_used": 2000
        },
@@ -25494,11 +28058,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.452,
-        "permutation_null_sd": 0.04152847039633477,
+        "permutation_p": 0.4355,
+        "permutation_null_sd": 0.042232959142733346,
         "bootstrap_ci95": [
-         -0.11026638210904946,
-         0.04749620007619445
+         -0.11135981330986033,
+         0.0439174254511081
         ],
         "n_bootstrap_used": 2000
        },
@@ -25516,11 +28080,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.767,
-        "permutation_null_sd": 0.04286934447243887,
+        "permutation_p": 0.774,
+        "permutation_null_sd": 0.042220124425687296,
         "bootstrap_ci95": [
-         -0.06783757581040899,
-         0.0959155459830865
+         -0.07389012973053408,
+         0.09637276737841276
         ],
         "n_bootstrap_used": 2000
        },
@@ -25538,11 +28102,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.0495,
-        "permutation_null_sd": 0.04178289422058126,
+        "permutation_p": 0.056,
+        "permutation_null_sd": 0.04243284147443009,
         "bootstrap_ci95": [
-         -0.00185688937392094,
-         0.1662228781121484
+         -0.004788160811441356,
+         0.16561470761300523
         ],
         "n_bootstrap_used": 2000
        },
@@ -25560,11 +28124,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.017,
-        "permutation_null_sd": 0.0411973873058157,
+        "permutation_p": 0.0165,
+        "permutation_null_sd": 0.042089781291643445,
         "bootstrap_ci95": [
-         0.019567065449385714,
-         0.18400723497824975
+         0.017722092964546854,
+         0.18233896101624267
         ],
         "n_bootstrap_used": 2000
        },
@@ -25582,11 +28146,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.0325,
-        "permutation_null_sd": 0.04250158812374271,
+        "permutation_p": 0.0335,
+        "permutation_null_sd": 0.04228232307629812,
         "bootstrap_ci95": [
-         0.002545604663250769,
-         0.1724282519349147
+         0.00796222399641957,
+         0.17894047605345073
         ],
         "n_bootstrap_used": 2000
        },
@@ -25604,11 +28168,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.1055,
-        "permutation_null_sd": 0.0435284094999496,
+        "permutation_p": 0.088,
+        "permutation_null_sd": 0.042488360235430775,
         "bootstrap_ci95": [
-         -0.008534734049582854,
-         0.15219313289993666
+         -0.012197305096214915,
+         0.15353498304588895
         ],
         "n_bootstrap_used": 2000
        },
@@ -25626,11 +28190,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.0015,
-        "permutation_null_sd": 0.04219626194877193,
+        "permutation_p": 0.001,
+        "permutation_null_sd": 0.042461333148552674,
         "bootstrap_ci95": [
-         0.061096380000969744,
-         0.22308937812568566
+         0.06257110835682635,
+         0.22005511736172345
         ],
         "n_bootstrap_used": 2000
        },
@@ -25648,11 +28212,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.0005,
-        "permutation_null_sd": 0.04297904632254053,
+        "permutation_p": 0.0,
+        "permutation_null_sd": 0.04280718470180304,
         "bootstrap_ci95": [
-         0.08094089257444717,
-         0.24463075882391278
+         0.08313391432381748,
+         0.24596367758074986
         ],
         "n_bootstrap_used": 2000
        },
@@ -25670,11 +28234,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.5135,
-        "permutation_null_sd": 0.042693992361120904,
+        "permutation_p": 0.5185,
+        "permutation_null_sd": 0.04297808614069483,
         "bootstrap_ci95": [
-         -0.10468778201552252,
-         0.05312141731427918
+         -0.11458876591920489,
+         0.051032880417310605
         ],
         "n_bootstrap_used": 2000
        }
@@ -25704,5 +28268,5 @@
    }
   }
  },
- "seconds": 1327.5551931858063
+ "seconds": 1363.6055476665497
 }

@@ -777,6 +777,29 @@ affine held to epoch 40 loses the level because the selected epoch comes first. 
 release rule on the validation curve costs nothing and keeps the gain; a fixed late
 start does not.
 
+Round 136 is read (job 2786, 3 h 40 min): the essentiality study's best single store,
+the parsimonious vector with the six rule counts (0.934 there), in the affine slot on
+the amino-acid deletion-only graph. It reads 0.033 (sd 0.009) against the affine-free
+control's 0.049 ($-0.016$ paired, sd 0.012, above on one of six) and against the plain
+store affine's 0.040 ($-0.007$, sd 0.013, two of six), ensembled over six seeds 0.037
+against 0.062 and 0.043. The seeds select late (epochs 47 to 186, five of six past
+100) on validation Pearson 0.06 to 0.09, so the arm neither collapses nor escapes
+further than the control does. The rule counts that separate essential from
+non-essential genes carry nothing for the amino-acid rank, and the store affine's small
+loss on this target (round 125) is not recovered by them.
+
+Round 137 is read (job 2787, 3 h 38 min): the cached solve head, a hidden layer of 256
+on the store vector in place of the zero-initialized affine, on the amino-acid
+deletion-only graph. It reads 0.053 (sd 0.008) against the affine-free control's 0.049
+($+0.004$ paired, sd 0.011, above on four of six) and against the store affine's 0.040
+($+0.013$, sd 0.008, six of six), ensembled over six seeds 0.063 against 0.062 and
+0.043. The seeds select at epochs 24 to 192 on validation Pearson 0.07 to 0.10 with the
+validation loss bottoming at 25 to 105. So the head recovers on every seed what the
+affine lost on this target and lands at the control, the highest single amino-acid arm
+of this study (0.033 to 0.049 for the others) and inside the 027 band (0.049 to 0.062).
+The store is not harmful on the amino acids when it is read nonlinearly; it is also not
+helpful, and the ensemble says the same.
+
 \input{tables/target_transfer}
 
 \subsection{Physically constrained stores on the targets, the store read without the backbone, and the second amino-acid screen\secstatus{todo}}

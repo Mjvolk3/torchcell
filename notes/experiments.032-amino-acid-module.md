@@ -81,3 +81,19 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | A6 | 129 | w146 | deletion-only, 300 epochs | 0.049 (sd 0.009); ens 0.060 |
+
+## 2026.09.24 - Round A7 read (job 2786, 3 h 40 min)
+
+- A7 (w150, the parsimonious vector with the six rule counts, the essentiality best single store, in the affine slot): 0.033 (sd 0.009) vs the deletion-only control 0.049 (-0.016, sd 0.012, 1/6) and vs the plain store affine 0.040 (-0.007, sd 0.013, 2/6); six-seed ensemble 0.037 vs 0.062 and 0.043. Seeds select at epochs 47 to 186 on validation Pearson 0.06 to 0.09. The rule counts carry nothing for the amino-acid rank. Written into `sec:target-transfer` as round 136.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A7 | 136 | w150 | del + vector with rule counts | 0.033 (sd 0.009); ens 0.037 |
+
+## 2026.09.24 - Round A8 read (job 2787, 3 h 38 min)
+
+- A8 (w151, the cached solve head, hidden 256, on the store vector instead of the affine): 0.053 (sd 0.008) vs the deletion-only control 0.049 (+0.004, sd 0.011, 4/6) and vs the store affine 0.040 (+0.013, sd 0.008, 6/6); six-seed ensemble 0.063 vs 0.062 and 0.043. Seeds select at epochs 24 to 192. The head recovers on every seed what the affine lost and lands at the control: the highest single 032 arm, inside the 027 band (0.049 to 0.062). Written into `sec:target-transfer` as round 137.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A8 | 137 | w151 | del + solve head 256 | 0.053 (sd 0.008); ens 0.063 |

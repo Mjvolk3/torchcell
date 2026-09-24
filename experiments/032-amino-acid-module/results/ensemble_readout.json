@@ -561,6 +561,166 @@
       "n_seeds": 6
     },
     {
+      "stem": "w150_aadelgpr_h12l1p1_e200",
+      "head": "mulleder19",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 639,
+          "spearman": 0.0443757888872133,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.02299808232632213,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.029467692878881326,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.030453458535784673,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.028270669074356925,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.04512086184994366,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_single_spearman": 0.03344775892541701,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 639,
+          "spearman": 0.032659919887528324,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.04050711148202635,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_triple_spearman": 0.036583515684777336,
+      "first_six": {
+        "n": 639,
+        "spearman": 0.036452972188168016,
+        "top50_enrichment": null,
+        "top50_hits": null
+      },
+      "all_seeds": {
+        "n": 639,
+        "spearman": 0.036452972188168016,
+        "top50_enrichment": null,
+        "top50_hits": null
+      },
+      "n_seeds": 6
+    },
+    {
+      "stem": "w151_aadelhead256_h12l1p1_e200",
+      "head": "mulleder19",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 639,
+          "spearman": 0.04627559528178764,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.05423886547456912,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.05717215478707415,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.06419144256174458,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.0566991160137599,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.041754651607043704,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_single_spearman": 0.05338863762099652,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 639,
+          "spearman": 0.05947092677402595,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.06123642983521735,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_triple_spearman": 0.06035367830462165,
+      "first_six": {
+        "n": 639,
+        "spearman": 0.06284643360275616,
+        "top50_enrichment": null,
+        "top50_hits": null
+      },
+      "all_seeds": {
+        "n": 639,
+        "spearman": 0.06284643360275616,
+        "top50_enrichment": null,
+        "top50_hits": null
+      },
+      "n_seeds": 6
+    },
+    {
       "stem": "w146_aadel_h12l1p1_e300",
       "head": "mulleder19",
       "seeds": [

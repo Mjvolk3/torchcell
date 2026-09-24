@@ -490,6 +490,18 @@ PAIRS = [
         "w158_aadelmdf_h12l1p1_e200",
     ),
     (
+        "amino acids: GO multi-hot in the affine slot on deletion-only graphs against deletion-only graphs",
+        "mulleder19",
+        "w170_aadelgo_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
+        "amino acids: GO multi-hot in the affine slot on deletion-only graphs against the parsimonious store there",
+        "mulleder19",
+        "w170_aadelgo_h12l1p1_e200",
+        "w143_aadelstore_h12l1p1_e200",
+    ),
+    (
         "amino acids: deletion-only graphs for 300 epochs against 200",
         "mulleder19",
         "w146_aadel_h12l1p1_e300",

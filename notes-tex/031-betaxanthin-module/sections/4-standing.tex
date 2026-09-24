@@ -2,15 +2,24 @@
 \section{Where the module stands on this target\secstatus{todo}}
 \label{sec:standing}
 
-Four things are measured. The whole-vector store affine lifts the width-12 backbone's
+Six things are measured. The whole-vector store affine lifts the width-12 backbone's
 rank to where the width-90 backbone sits and, on the strain as built, lifts its call
-too; the two do not add. The gain lives in the production half of the vector and in a
-free affine that trains at full rate; it does not come from the first epochs, and a
-release rule on the validation curve keeps it where a fixed late start loses it. The
-clean parsimonious vector read by nearest neighbors, with no backbone, carries more rank
-than any single transformer arm, and the metabolite side, the driving-force
-concentrations, carries rank linearly. Every arm overfits by epoch 60 and averaging
-seeds is worth more than any representation on the call. Open, with cells queued: the
-physically constrained stores in the transformer (rounds 135, 139, 140, 142), the size
-question (rounds 144 and 145), and a probabilistic concentration representation, the
-polytope sampled rather than its max-min point, which is not built.
+too; the two do not add, at either width. The gain lives in the production half of the
+vector and in a free affine that trains at full rate; it does not come from the first
+epochs, and a release rule on the validation curve keeps it where a fixed late start
+loses it, while a nonlinear head over the store loses it and brings the plateau back.
+The physically stated stores read in the transformer sit at the parsimonious store's
+level: the adjustment store within the seed spread with half its spread and the best
+single-seed call, the clean parsimonious vector a little above it on five seeds of six
+with the best width-12 ensemble, and the driving-force concentrations at the same rank
+with twice the spread; the second law adds a second representation at the flux store's
+level, not a higher one. Without any backbone the clean vector read by nearest
+neighbors carries more rank than any single transformer arm, and the sampled
+driving-force polytope is the one flux-side representation every model reads above
+0.12. The annotation-only family sets the level: a perceptron over the propagated GO
+multi-hot reads 0.200 in three seconds a seed, above every transformer arm, whose
+backbone reads the pathway multi-hot and ProtT5 and never saw GO. Every arm overfits by
+epoch 60 and averaging seeds is worth more than any representation on the call. Cells
+queued: the sampled cone and the polytope mean in the transformer (rounds 142, 147),
+the size question (144, 145), the release rule on the adjustment and HiGHS stores (149,
+152), and GO in the affine slot alone and beside the HiGHS store (150, 151).

@@ -20,6 +20,9 @@ Maps to `MetabolitePhenotype` (WS4): `metabolite_level = {"betaxanthin": score}`
 `measurement_type = "cri_spa_corrected_fluorescence_intensity_24h"`. Gene names in the
 source are COMMON names, so a genome is required to resolve them to systematic ORF ids
 (same pattern as Sameith); unresolved names + control/NaN rows are excluded and logged.
+The varying deletion stores the genome's own standard name as `perturbed_gene_name`
+(`canonical_common_names`, shared with the Smith/Mormino/Lian loaders), so one gene keeps
+one spelling across datasets; an ORF with no round-tripping standard name stores the id.
 """
 
 import hashlib
@@ -53,6 +56,7 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.scerevisiae.smith2006 import canonical_common_names
 from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
@@ -228,6 +232,7 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
         df = pd.read_csv(osp.join(self.raw_dir, DATA_FILENAME))
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
+        canonical = canonical_common_names(self.genome)
         n_control_or_nan = 0
         unresolved: set[str] = set()
         seen: set[str] = set()
@@ -255,8 +260,22 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
                 if pd.notna(std) and count > 1
                 else float("nan")
             )
+            # `common` is the genome's own standard name for the resolved ORF, so
+            # `perturbed_gene_name` carries the same spelling this gene gets in every
+            # other loader (the L1 `canonical_gene_names` rule), with the systematic id
+            # kept for the 789 ORFs that have no round-tripping standard name. Taking it
+            # from the genome rather than from the source column is what normalizes the
+            # 408 rows whose 2023-era spelling has since been superseded (ACN9 -> SDH7,
+            # AIM1 -> BOL3). Storing `systematic` twice, as this loader did before issue
+            # #195, threw a name the source supplied for 3,930 of 4,719 records.
             rows.append(
-                {"orf": systematic, "level": float(level), "se": se, "n": max(count, 1)}
+                {
+                    "orf": systematic,
+                    "common": canonical.get(systematic, systematic),
+                    "level": float(level),
+                    "se": se,
+                    "n": max(count, 1),
+                }
             )
         # Unresolved names are dropped by design (never guessed into an ORF): 'WT' is a
         # control and 'YLR287-A' is a malformed id. Names that resolve to a valid non-"gene"
@@ -312,7 +331,7 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
         genotype = Genotype(
             perturbations=[
                 KanMxDeletionPerturbation(
-                    systematic_gene_name=row["orf"], perturbed_gene_name=row["orf"]
+                    systematic_gene_name=row["orf"], perturbed_gene_name=row["common"]
                 ),
                 *_betaxanthin_cassette(),
             ]

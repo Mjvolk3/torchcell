@@ -430,6 +430,18 @@ PAIRS = [
         "w167_bxdelgo_h12l1p1_e200",
     ),
     (
+        "betaxanthin: HiGHS store with the affine released on escape against the HiGHS store",
+        "betaxanthin",
+        "w169_bxdelpfbarel_h12l1p1_e200",
+        "w156_bxdelpfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: HiGHS store with the affine released on escape against the GLPK store under the rule",
+        "betaxanthin",
+        "w169_bxdelpfbarel_h12l1p1_e200",
+        "w148_bxdelstorer15_h12l1p1_e200",
+    ),
+    (
         "betaxanthin: MOMA store with the affine released on escape against the MOMA store",
         "betaxanthin",
         "w166_bxdelmomarel_h12l1p1_e200",

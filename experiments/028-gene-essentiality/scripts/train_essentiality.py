@@ -1219,6 +1219,14 @@ class BxCell(BaseModel):
             "affine lets the backbone escape first."
         ),
     )
+    dropout: float = Field(
+        default=0.1,
+        description=(
+            "Round 144: dropout inside the transformer (attention and feed-forward). The "
+            "026 incumbent hardcoded 0.1; the size question (every arm overfits by epoch "
+            "60, width 90 no better than 12) is read at 0.3 against width 6."
+        ),
+    )
     ess_affine_start_val_pearson: float = Field(
         default=0.0,
         description=(
@@ -2362,6 +2370,7 @@ def build_cell(
     ess_affine_lr_mult: float = 1.0,
     ess_affine_start_epoch: int = 0,
     ess_affine_start_val_pearson: float = 0.0,
+    dropout: float = 0.1,
     deletion_only_graph: bool = False,
     perturb_cls: bool = False,
     flux_capacity_scale: float = 1.0,
@@ -2476,6 +2485,7 @@ def build_cell(
         ess_affine_lr_mult=ess_affine_lr_mult,
         ess_affine_start_epoch=ess_affine_start_epoch,
         ess_affine_start_val_pearson=ess_affine_start_val_pearson,
+        dropout=dropout,
         deletion_only_graph=deletion_only_graph,
         perturb_cls=perturb_cls,
         flux_capacity_scale=flux_capacity_scale,
@@ -5214,7 +5224,7 @@ def build_model_for_cell(
         hidden_channels=cell.hidden,
         num_transformer_layers=cell.layers,
         num_attention_heads=cell.attention_heads,
-        dropout=0.1,
+        dropout=cell.dropout,
         heads_config=heads_config,
         # OFF. With it on, the model learns a free per-gene vector and stops needing the
         # protein embedding, which 020 measured at 0.279 (off) against 0.151 (on) and
@@ -7132,6 +7142,12 @@ def main() -> None:
         help="Freeze the store affine (exactly 0 when zero-initialized) before this epoch.",
     )
     parser.add_argument(
+        "--dropout",
+        type=float,
+        default=0.1,
+        help="Dropout inside the transformer; the 026 incumbent is 0.1 (round 144).",
+    )
+    parser.add_argument(
         "--ess-affine-start-val-pearson",
         type=float,
         default=0.0,
@@ -7680,6 +7696,7 @@ def main() -> None:
         ess_affine_weight_decay=args.ess_affine_weight_decay,
         ess_affine_lr_mult=args.ess_affine_lr_mult,
         ess_affine_start_epoch=args.ess_affine_start_epoch,
+        dropout=args.dropout,
         ess_affine_start_val_pearson=args.ess_affine_start_val_pearson,
         deletion_only_graph=args.deletion_only_graph,
         ess_solve_zero_init=args.ess_solve_zero_init,

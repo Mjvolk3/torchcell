@@ -388,6 +388,24 @@ PAIRS = [
         "w140_bxdelstore_h12l1p1_e200",
     ),
     (
+        "betaxanthin: deletion-only store at width 6 against width 12",
+        "betaxanthin",
+        "w161_bxdelstoreh6_h6l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: deletion-only store at dropout 0.3 against 0.1",
+        "betaxanthin",
+        "w162_bxdelstoredrop_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
+        "amino acids: deletion-only store at width 6 against width 12",
+        "mulleder19",
+        "w163_aadelstoreh6_h6l1p1_e200",
+        "w143_aadelstore_h12l1p1_e200",
+    ),
+    (
         "amino acids: deletion-only graphs for 300 epochs against 200",
         "mulleder19",
         "w146_aadel_h12l1p1_e300",

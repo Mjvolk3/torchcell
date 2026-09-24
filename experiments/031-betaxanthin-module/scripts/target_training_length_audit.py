@@ -100,6 +100,9 @@ ARMS = [
     ("w155_aadelmoma_h12l1p1_e200", "mulleder19", "del + MOMA store"),
     ("w158_aadelmdf_h12l1p1_e200", "mulleder19", "del + driving-force store"),
     ("w160_aadelsampled_h12l1p1_e200", "mulleder19", "del + sampled-cone store"),
+    ("w161_bxdelstoreh6_h6l1p1_e200", "betaxanthin", "del + store, width 6"),
+    ("w162_bxdelstoredrop_h12l1p1_e200", "betaxanthin", "del + store, dropout 0.3"),
+    ("w163_aadelstoreh6_h6l1p1_e200", "mulleder19", "del + store, width 6"),
 ]
 LOG_LINE = re.compile(
     r"\] ep\s+(\d+) loss ([\d.]+) .*?val_loss ([\d.]+) val_r ([-+\d.]+)"

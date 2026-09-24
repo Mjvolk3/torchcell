@@ -35,7 +35,49 @@ from verify_doc_numbers import (  # noqa: E402
     transfer_comparator,
 )
 
+RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "032-amino-acid-module", "results")
+
+
+def polytope(*keys: str):
+    """A value of the concentration-polytope store's summary, by key path."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "target_concentration_polytope_store_amino_acids_mdfcap100poly.json")))
+        for k in keys:
+            d = d[k]
+        return float(d)
+
+    return run
+
+
 CHECKS: list[Check] = [
+    # sec:physics -- the driving-force polytope sampled on the prototroph.
+    Check(claim="physics: polytope wild-type constrained reactions", stated=249,
+          recompute=polytope("wild_type", "n_active"), tolerance=0.5),
+    Check(claim="physics: polytope wild-type binding reactions", stated=59,
+          recompute=polytope("wild_type", "n_binding"), tolerance=0.5),
+    Check(claim="physics: polytope wild-type constrained metabolites", stated=319,
+          recompute=polytope("wild_type", "n_constrained_metabolites"), tolerance=0.5),
+    Check(claim="physics: polytope wild-type spread over constrained", stated=2.08,
+          recompute=polytope("wild_type", "median_sd_ln_c_constrained"), tolerance=0.006),
+    Check(claim="physics: polytope wild-type spread over free", stated=2.62,
+          recompute=polytope("wild_type", "median_sd_ln_c_free"), tolerance=0.006),
+    Check(claim="physics: polytope rows differing from wild type", stated=405,
+          recompute=polytope("n_mean_differs_from_wild_type"), tolerance=0.5),
+    Check(claim="store-baselines: aa polytope mean ridge", stated=0.016,
+          recompute=store_baseline("amino_acids", "mdfcap100_poly_mean", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: aa polytope mean kNN", stated=0.011,
+          recompute=store_baseline("amino_acids", "mdfcap100_poly_mean", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: aa polytope mean forest", stated=0.008,
+          recompute=store_baseline("amino_acids", "mdfcap100_poly_mean", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: aa polytope spread ridge", stated=0.018,
+          recompute=store_baseline("amino_acids", "mdfcap100_poly_spread", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: aa polytope spread kNN", stated=0.009,
+          recompute=store_baseline("amino_acids", "mdfcap100_poly_spread", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: aa polytope spread forest", stated=0.001,
+          recompute=store_baseline("amino_acids", "mdfcap100_poly_spread", "forest", "mean_spearman"), tolerance=0.0006),
     # sec:target-transfer -- rounds 117 and 118.
     Check(
         claim="target-transfer: amino-acid store arm mean",
@@ -441,8 +483,6 @@ CHECKS: list[Check] = [
           recompute=store_baseline("amino_acids", "prot_T5_all", "forest", "mean_spearman"), tolerance=0.0006),
     Check(claim="store-baselines: aa HiGHS store with ProtT5 forest", stated=0.058,
           recompute=store_baseline("amino_acids", "pfba_highs+prot_T5_all", "forest", "mean_spearman"), tolerance=0.0006),
-    Check(claim="store-baselines: aa lowest cell (HiGHS store ridge)", stated=0.006,
-          recompute=store_baseline("amino_acids", "pfba_highs", "ridge", "mean_spearman"), tolerance=0.0006),
     # sec:target-physics -- Mulleder 2016 against Cooper 2010.
     Check(claim="concordance: shared strains", stated=4051,
           recompute=concordance_summary("n_shared_strains"), tolerance=0.5),

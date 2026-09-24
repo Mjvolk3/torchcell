@@ -52,7 +52,52 @@ def driving_force(variant: str, *keys: str):
     return run
 
 
+def polytope(*keys: str):
+    """A value of the concentration-polytope store's summary, by key path."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "target_concentration_polytope_store_betaxanthin_mdfcap100poly.json")))
+        for k in keys:
+            d = d[k]
+        return float(d)
+
+    return run
+
+
 CHECKS: list[Check] = [
+    # sec:physics -- the driving-force polytope sampled.
+    Check(claim="physics: polytope wild-type constrained metabolites", stated=234,
+          recompute=polytope("wild_type", "n_constrained_metabolites"), tolerance=0.5),
+    Check(claim="physics: polytope wild-type spread over constrained", stated=2.18,
+          recompute=polytope("wild_type", "median_sd_ln_c_constrained"), tolerance=0.006),
+    Check(claim="physics: polytope wild-type spread over free", stated=2.63,
+          recompute=polytope("wild_type", "median_sd_ln_c_free"), tolerance=0.006),
+    Check(claim="physics: polytope rows differing from wild type", stated=455,
+          recompute=polytope("n_mean_differs_from_wild_type"), tolerance=0.5),
+    Check(claim="physics: polytope viable rows solved", stated=1062,
+          recompute=polytope("n_solved"), tolerance=0.5),
+    Check(claim="physics: polytope mean distance to point", stated=0.12,
+          recompute=polytope("median_rel_distance_mean_to_point_viable"), tolerance=0.006),
+    Check(claim="store-baselines: polytope mean ridge", stated=0.136,
+          recompute=store_baseline("betaxanthin", "mdfcap100_poly_mean", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: polytope mean kNN", stated=0.127,
+          recompute=store_baseline("betaxanthin", "mdfcap100_poly_mean", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: polytope mean forest", stated=0.126,
+          recompute=store_baseline("betaxanthin", "mdfcap100_poly_mean", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: polytope spread ridge", stated=0.096,
+          recompute=store_baseline("betaxanthin", "mdfcap100_poly_spread", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: polytope spread kNN", stated=0.138,
+          recompute=store_baseline("betaxanthin", "mdfcap100_poly_spread", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: polytope spread forest", stated=0.128,
+          recompute=store_baseline("betaxanthin", "mdfcap100_poly_spread", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: capped concentrations kNN", stated=0.072,
+          recompute=store_baseline("betaxanthin", "mdfcap100_conc", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: capped concentrations forest", stated=0.098,
+          recompute=store_baseline("betaxanthin", "mdfcap100_conc", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="store-baselines: HiGHS store forest", stated=0.117,
+          recompute=store_baseline("betaxanthin", "pfba_highs", "forest", "mean_spearman"), tolerance=0.0006),
     # sec:physics -- the max-min driving-force store.
     Check(claim="physics: driving-force wild-type optimum", stated=-1.16,
           recompute=driving_force("mdfcap100", "wild_type", "mdf_kj_per_mol"), tolerance=0.006),

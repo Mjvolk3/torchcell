@@ -84,6 +84,33 @@ point representation. Rank and call separate as they did in every transformer ro
 ProtT5 gives the best top-50 (4.59 alone, 4.99 with the GLPK store under a forest), the
 clean flux store the best rank.
 
+The region, not its point. The max-min program returns one concentration vector, but
+the second law does not single it out: every log-concentration vector within the bounds
+whose carried priced reactions all run downhill by at least the optimum is as
+consistent, and that set is a polytope in $\ln c$.
+\texttt{target\_concentration\_polytope\_store.py} samples it per deletion, the region
+slackened by 1 kJ/mol below $B^*$ so it has volume where several reactions bind, by
+coordinate hit-and-run from the point program's solution (a random direction stalls when
+the start sits on the box, as the wild type's does; one metabolite per step does not),
+20,000 burn-in steps, six draws 2,000 steps apart, the metabolites in no constrained
+reaction uniform in the bounds. The chain is seeded from a hash of the polytope rather
+than the row, so two deletions with the same region read the same row; seeded by row,
+every one of the 1,062 viable rows differed from the wild type's, a sampling-noise
+degeneracy of the GLPK kind, and under the polytope hash 455 do, beside the point
+store's 451. The wild type's region constrains 234 of the 2,803 variable metabolites,
+and over those the median spread of $\ln c$ across draws is 2.18 against 2.63 for a
+metabolite the constraints never touch (uniform over four decades), so at this cap the
+second law narrows a typical constrained metabolite by little and the information sits
+in the few it pins; the mean over draws sits a median 0.12 from the point in relative
+distance. Two stores, the mean concentration over draws with the point store's
+statistics and the count of constrained metabolites, and that mean with the per-metabolite
+spread of $\ln c$ appended. On the ladder the polytope mean reads 0.136 by ridge, 0.127
+by kNN and 0.126 by forest, the one flux-side representation that every model reads above
+0.12 (the point gives ridge 0.152 but kNN 0.072 and forest 0.098; the HiGHS flux vector
+gives kNN 0.195 but forest 0.117), and the spread store 0.096, 0.138 and 0.128, so the
+width of the region carries rank the mean does not under nearest neighbors. Round 147
+(w164) is the transformer read of the polytope mean, paired against the point.
+
 \input{tables/store_degeneracy}
 
 \input{tables/store_baselines}

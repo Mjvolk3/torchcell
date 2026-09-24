@@ -48,9 +48,18 @@ predictions within $10^{-9}$ count as one rank, and the validation criterion is 
 to $10^{-6}$, so two runs agree to every digit). The screen is genome-wide and the
 stores cover the GEM genes, so most training genotypes read the wild-type row and a
 gene's row is one vector with no graph, no sequence and no pathway. On the amino acids
-every representation under every model sits between 0.006 and 0.058 (the HiGHS store
+every representation under every model sits between 0.001 and 0.058 (the HiGHS store
 0.022 by kNN, ProtT5 0.052 by forest, the two concatenated 0.058), where the 027
-bilinear ridge read 0.045 and the transformer arms 0.049 to 0.062.
+bilinear ridge read 0.045 and the transformer arms 0.049 to 0.062. The driving-force
+polytope sampled per deletion (\texttt{target\_concentration\_polytope\_store.py}, the
+method in the sibling document: the region below the max-min optimum by 1 kJ/mol,
+coordinate hit-and-run, six draws, the chain seeded from a hash of the polytope) has on
+the prototroph a wild-type region of 249 constrained reactions with 59 binding over 319
+of the 2,778 variable metabolites, a median spread of $\ln c$ across draws of 2.08 over
+them against 2.62 for an unconstrained one, and 405 viable rows whose mean differs from
+the wild type's; its mean and spread stores read 0.016, 0.011 and 0.008 and 0.018,
+0.009 and 0.001 by ridge, kNN and forest, the floor of the ladder. Round 148 (w165) is
+the transformer read of the polytope mean.
 
 \input{tables/store_degeneracy}
 

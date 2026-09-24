@@ -108,8 +108,20 @@ def _init(args: argparse.Namespace) -> None:
     # OptGPSampler copies the model, and optlang re-optimizes the copy from a cold
     # standard basis; on the prototroph three of 1,161 deletions cycled in glp_simplex
     # there for two hours with no return (2026-09-23, py-spy). Presolve is cloned into
-    # every copy's configuration and avoids the cycling; a bad status then raises.
+    # every copy's configuration and avoids the cycling; a bad status then raises. It
+    # is switched off again on the copy before the flux-variability warm-up, whose
+    # thousands of LPs per deletion need warm starts (under presolve each is a cold
+    # solve and one deletion took over an hour, 2026-09-24).
     _MODEL.solver.configuration.presolve = True
+    from cobra.sampling.hr_sampler import HRSampler
+
+    original_warmup = HRSampler.generate_fva_warmup
+
+    def warm_started_warmup(self: Any) -> None:
+        self.model.solver.configuration.presolve = False
+        original_warmup(self)
+
+    HRSampler.generate_fva_warmup = warm_started_warmup  # type: ignore[method-assign]
 
 
 def sample_model(model: Any, args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray, float, int]:
@@ -156,6 +168,9 @@ def main() -> None:
     parser.add_argument("--processes", type=int, default=16)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--limit-genes", type=int, default=0, help="Smoke test.")
+    parser.add_argument(
+        "--genes", default="", help="Comma-separated subset, in store order; a test."
+    )
     parser.add_argument("--out-dir", default=TABLE_DIR)
     parser.add_argument("--results-dir", default="")
     args = parser.parse_args()
@@ -171,6 +186,10 @@ def main() -> None:
     genes = [str(g) for g in source["genes"]]
     if args.limit_genes:
         genes = genes[: args.limit_genes]
+    if args.genes:
+        wanted = set(args.genes.split(","))
+        genes = [g for g in genes if g in wanted]
+        assert len(genes) == len(wanted), sorted(wanted - set(genes))
 
     model, media = build_target_model(args.target)
     rxn_ids = [r.id for r in model.reactions]

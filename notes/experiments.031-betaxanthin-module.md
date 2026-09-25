@@ -329,3 +329,11 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B28 | 156 | w174 | del + polytope mean with the spread | 0.116 (sd 0.041); ens 0.155 / 4.59 |
 | B32 | -- | w180 | del + HiGHS store with GO and the polytope mean | job 2821, pending |
 | B33 | -- | w181 | w168 seeds 2706 to 2711 | job 2822, pending |
+
+## 2026.09.25 - B29 read: the GO affine under the release rule
+
+- B29 (w175, GO affine released on escape, job 2813, 3 h 40 min): 0.199 (sd 0.007) vs the GO affine from epoch 0 (B23) 0.202 (-0.003, sd 0.007, 4/6) and vs the GLPK store under the rule 0.110 (+0.089, 6/6); top-50 4.89 vs 5.03 and 4.66; ensemble 0.206 / 5.19 vs 0.202 / 4.99 and 0.120 / 6.19. Release at 5, 5, 20, 42, 8, 27; every seed selects 6 to 11 epochs after its release on val 0.24 to 0.28; the two released last read lowest (0.191, 0.189). The backbone escaping first adds nothing to the annotation's single read; the rule buys seed diversity (sd 0.007 vs 0.001), worth 0.003 on the ensemble. Written as round 158; 031 published v16 (468 checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B29 | 158 | w175 | del + GO affine, released on escape | 0.199 (sd 0.007); ens 0.206 / 5.19 |

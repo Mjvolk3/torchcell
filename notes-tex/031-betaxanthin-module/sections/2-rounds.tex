@@ -485,4 +485,22 @@ seeds disagree more than the mean's did; averaged, that disagreement is what the
 ensemble gains from, and the region's width joins the region's mean as a representation
 whose value is in the ensemble rather than in any one read.
 
+Round 158 is read (job 2813, 3 h 40 min): the GO affine under round 131's release
+rule, frozen until epoch 5 and until the trailing validation Pearson reaches 0.15, on
+the deletion-only graph; round 150 read the affine memorizing the annotation in ten
+epochs before the backbone moved, and the release asks whether a backbone that escapes
+first adds anything to that read. It reads 0.199 (sd 0.007) against the GO affine from
+epoch 0 at 0.202 ($-0.003$ paired, sd 0.007, above on four of six) and against the
+GLPK store under the same rule at 0.110 ($+0.089$, sd 0.047, six of six), top-50 4.89
+against 5.03 and 4.66, and ensembled over six seeds 0.206 with a top-50 of 5.19 against
+0.202 and 4.99 and 0.120 and 6.19. The release came at epochs 5, 5, 20, 42, 8 and 27,
+and every seed selects 6 to 11 epochs after it, at 14 to 48, on validation Pearson 0.24
+to 0.28: the affine learns the annotation in the same ten epochs whether the backbone
+has escaped or not, the two seeds released last read lowest (0.191 and 0.189), and the
+seeds now differ where round 150's did not (sd 0.007 against 0.001), so the ensemble
+gains 0.003 over the identical-seed ensemble and its call rises to 5.19. So the
+backbone escaping first adds nothing to the annotation's single read and takes a little
+from it when the escape is late; what the rule buys is seed diversity, worth 0.003 on
+the ensemble, on an arm whose value was never in the backbone.
+
 \input{tables/target_transfer}

@@ -104,6 +104,43 @@ def cross_target(key: str):
     return run
 
 
+def seed_level(stem: str, which: str):
+    """The single-seed level of an arm over a seed subset of the ensemble readout:
+    ``first6``, ``last6`` or ``all12`` mean, ``sd``/``sem`` over all seeds."""
+
+    def run() -> float:
+        import json
+
+        import numpy as np
+
+        d = json.load(open(osp.join(os.environ["EXPERIMENT_ROOT"], "031-betaxanthin-module", "results", "ensemble_readout.json")))
+        a = next(q for q in d["arms"] if q["stem"] == stem)
+        v = np.array([x["spearman"] for x in a["single"]], dtype=float)
+        seeds = a["seeds"]
+        assert seeds == sorted(seeds), stem
+        if which == "first6":
+            return float(v[:6].mean())
+        if which == "last6":
+            return float(v[6:].mean())
+        if which == "last6_sd":
+            return float(v[6:].std(ddof=1))
+        if which == "all12":
+            return float(v.mean())
+        if which == "sd":
+            return float(v.std(ddof=1))
+        if which == "sem":
+            return float(v.std(ddof=1) / np.sqrt(v.size))
+        if which == "min":
+            return float(v.min())
+        if which == "max":
+            return float(v.max())
+        if which == "mean_top50":
+            return float(np.mean([x["top50_enrichment"] for x in a["single"]]))
+        raise KeyError(which)
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:standing -- the comparators on the same split and the cross-target read.
     Check(claim="ladder: GO ridge", stated=0.076,
@@ -792,6 +829,37 @@ CHECKS: list[Check] = [
           recompute=ensemble("w164_bxdelmdfpoly_h12l1p1_e200", "spearman"), tolerance=0.0006),
     Check(claim="target-transfer: polytope six-seed ensemble top-50 (round 163 pair)", stated=5.59,
           recompute=ensemble("w164_bxdelmdfpoly_h12l1p1_e200", "top50_enrichment"), tolerance=0.006),
+    # sec:rounds -- round 164, twelve seeds of the best arm.
+    Check(claim="round 164: second six level", stated=0.218,
+          recompute=seed_level("w168_bxdelgopfba_h12l1p1_e200", "last6"), tolerance=0.0006),
+    Check(claim="round 164: second six sd", stated=0.009,
+          recompute=seed_level("w168_bxdelgopfba_h12l1p1_e200", "last6_sd"), tolerance=0.0006),
+    Check(claim="round 164: first six level", stated=0.211,
+          recompute=seed_level("w168_bxdelgopfba_h12l1p1_e200", "first6"), tolerance=0.0006),
+    Check(claim="round 164: twelve-seed level", stated=0.214,
+          recompute=seed_level("w168_bxdelgopfba_h12l1p1_e200", "all12"), tolerance=0.0006),
+    Check(claim="round 164: twelve-seed sd", stated=0.008,
+          recompute=seed_level("w168_bxdelgopfba_h12l1p1_e200", "sd"), tolerance=0.0006),
+    Check(claim="round 164: twelve-seed standard error", stated=0.002,
+          recompute=seed_level("w168_bxdelgopfba_h12l1p1_e200", "sem"), tolerance=0.0006),
+    Check(claim="round 164: lowest seed", stated=0.202,
+          recompute=seed_level("w168_bxdelgopfba_h12l1p1_e200", "min"), tolerance=0.0006),
+    Check(claim="round 164: highest seed", stated=0.232,
+          recompute=seed_level("w168_bxdelgopfba_h12l1p1_e200", "max"), tolerance=0.0006),
+    Check(claim="round 164: twelve-seed ensemble", stated=0.216,
+          recompute=ensemble("w168_bxdelgopfba_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
+    Check(claim="round 164: twelve-seed ensemble top-50", stated=4.99,
+          recompute=ensemble("w168_bxdelgopfba_h12l1p1_e200", "top50_enrichment", "all_seeds"), tolerance=0.006),
+    Check(claim="round 164: six-seed ensemble", stated=0.212,
+          recompute=ensemble("w168_bxdelgopfba_h12l1p1_e200", "spearman"), tolerance=0.0006),
+    Check(claim="round 164: twelve single seeds' mean call", stated=4.98,
+          recompute=seed_level("w168_bxdelgopfba_h12l1p1_e200", "mean_top50"), tolerance=0.006),
+    Check(claim="round 164: level above the forest", stated=0.011,
+          recompute=lambda: seed_level("w168_bxdelgopfba_h12l1p1_e200", "all12")() - store_baseline("betaxanthin", "gopfba", "forest", "mean_spearman")(), tolerance=0.0006),
+    Check(claim="round 164: level above the HiGHS kNN", stated=0.019,
+          recompute=lambda: seed_level("w168_bxdelgopfba_h12l1p1_e200", "all12")() - store_baseline("betaxanthin", "pfba_highs", "knn", "mean_spearman")(), tolerance=0.0006),
+    Check(claim="round 164: ensemble gain from the second six", stated=0.004,
+          recompute=lambda: ensemble("w168_bxdelgopfba_h12l1p1_e200", "spearman", "all_seeds")() - ensemble("w168_bxdelgopfba_h12l1p1_e200", "spearman")(), tolerance=0.0006),
     # sec:physics -- the driving-force polytope sampled.
     Check(claim="physics: polytope wild-type constrained metabolites", stated=234,
           recompute=polytope("wild_type", "n_constrained_metabolites"), tolerance=0.5),

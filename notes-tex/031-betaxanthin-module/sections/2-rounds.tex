@@ -549,4 +549,16 @@ Hypothesis (untested): the affine's linear read over 3,494 training genotypes, m
 them the wild-type row on every physics column, is diluted rather than informed by a
 third block whose rows the flux block already distinguishes.
 
+Round 164 is read (job 2822, 3 h 36 min): six more seeds, 2706 to 2711, of round
+151's cell, the HiGHS vector with GO appended in the affine, so the study's best arm
+has a twelve-seed level and ensemble. The second six read 0.218 (sd 0.009) against the
+first six's 0.211 (sd 0.007); over twelve the level is 0.214 (sd 0.008, standard error
+0.002), the seeds select at epochs 6 to 13 and read 0.202 to 0.232, and the twelve-seed
+ensemble reads 0.216 with a top-50 of 4.99 against 0.212 and 4.99 for six, the single
+seeds' mean call 4.98. So the best arm's level holds on twelve seeds, at 0.214 with a
+standard error of 0.002, which puts it 0.011 above the random forest over the same
+columns (0.204, Section~\ref{sec:physics}) and 0.019 above the nearest-neighbor read
+of the HiGHS store (0.195), the two closest backbone-free reads on this split; the
+ensemble gains 0.004 from the second six and the call does not move.
+
 \input{tables/target_transfer}

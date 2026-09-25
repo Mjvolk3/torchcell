@@ -364,3 +364,11 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B32 | 163 | w180 | del + HiGHS store with GO and the polytope mean | 0.198 (sd 0.011); ens 0.201 / 4.59 |
+
+## 2026.09.25 - B33 read: twelve seeds of the best arm
+
+- B33 (w181 = w168 seeds 2706 to 2711, job 2822, 3 h 36 min): the second six read 0.218 (sd 0.009) against the first six's 0.211 (sd 0.007); over twelve 0.214 (sd 0.008, sem 0.002), seeds read 0.202 to 0.232, select at epochs 6 to 13; twelve-seed ensemble 0.216 / 4.99 (six: 0.212 / 4.99); single-seed mean call 4.98. The best arm's level holds: 0.011 above the forest over its own columns (0.204) and 0.019 above the HiGHS-store kNN (0.195). Written as round 164; 031 published v20 (536 checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B33 | 164 | w181 | w168 seeds 2706 to 2711 | twelve seeds 0.214 (sem 0.002); ens 0.216 / 4.99 |

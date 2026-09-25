@@ -55,6 +55,8 @@ transformer around it has moved it; the same holds for the flux-and-annotation a
 which dropout 0.3 leaves at 0.212 with the flux gain beside GO reproduced at 0.010
 (161). The polytope's mean appended to that affine takes 0.013 from it on five seeds
 of six and the stack reads under GO alone (163): the metabolite side does not add to
-the annotation the way the flux vector does. Cells queued: six more seeds of round
-151's cell (164), and the flux-and-annotation affine with the polytope's spread and
-with the adjustment store in place of the parsimonious one (166, 167).
+the annotation the way the flux vector does. On twelve seeds the best arm holds at
+0.214 with a standard error of 0.002, 0.011 above the forest over its own columns and
+0.019 above the nearest-neighbor read of the HiGHS store, with a twelve-seed ensemble
+of 0.216 (round 164). Cells queued: the flux-and-annotation affine with the polytope's
+spread and with the adjustment store in place of the parsimonious one (166, 167).

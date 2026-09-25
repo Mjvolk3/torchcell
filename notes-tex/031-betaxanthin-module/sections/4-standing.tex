@@ -44,6 +44,9 @@ the HiGHS store under the rule with dropout 0.3, read 0.125, under the GLPK stor
 dropout 0.3 alone (round 154): the release is the lever that costs on the clean store.
 The dropout curve turns between 0.3 and 0.5: at 0.5 three seeds of six never leave
 the plateau and the arm falls back to the incumbent's level, 0.125 against 0.121
-(round 155), so 0.3 is a maximum, not a direction. Cells queued: the polytope's spread beside its mean (156),
-the GO affine under the release rule and at dropout 0.3 (158, 159), and GO with the
-HiGHS vector at dropout 0.3 (161).
+(round 155), so 0.3 is a maximum, not a direction. The polytope's spread beside its
+mean adds nothing on single seeds and gives the highest six-seed rank of any flux-side
+width-12 arm, 0.155 (round 156): the region's value is in the ensemble. Cells queued:
+the GO affine under the release rule and at dropout 0.3 (158, 159), GO with the HiGHS
+vector at dropout 0.3 (161), GO, the HiGHS vector and the polytope mean in one affine
+(163), and six more seeds of round 151's cell (164).

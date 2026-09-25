@@ -318,3 +318,14 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B27 | 155 | w172 | del + store, dropout 0.5 | 0.125 (sd 0.017); ens 0.127 / 5.59 |
+
+## 2026.09.25 - B28 read: the polytope's spread beside its mean; packs B32, B33
+
+- B28 (w174, polytope mean + spread of ln c, 5,666 columns, job 2812, 3 h 41 min): 0.116 (sd 0.041) vs the mean alone (B20) 0.125 (-0.010, sd 0.062, 3/6) and vs the GLPK store 0.121 (-0.005, sd 0.048, 4/6); top-50 3.73 vs 3.69 and 4.93; ensemble 0.155 / 4.59 vs 0.151 / 5.59 and 0.131 / 5.59, the highest six-seed rank of any flux-side width-12 arm. Two seeds escape only partly (val 0.09 to 0.10, read 0.061 and 0.089); the rest read 0.097 to 0.164. The region's value is in the ensemble. Written as round 156; 031 published v15 (447 checks).
+- Submitted B32 = w180 (GO + HiGHS vector + polytope mean in one affine; store `ess_solve_encodings_YPD_bx_gopfbapoly.npz` from the new `target_store_concat.py`, 9,374 columns; job 2821; vs w168 and w164) and B33 = w181 (seeds 2706 to 2711 of w168, job 2822, for a twelve-seed ensemble of the best arm).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B28 | 156 | w174 | del + polytope mean with the spread | 0.116 (sd 0.041); ens 0.155 / 4.59 |
+| B32 | -- | w180 | del + HiGHS store with GO and the polytope mean | job 2821, pending |
+| B33 | -- | w181 | w168 seeds 2706 to 2711 | job 2822, pending |

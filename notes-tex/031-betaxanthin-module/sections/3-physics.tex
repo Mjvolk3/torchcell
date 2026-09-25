@@ -143,7 +143,14 @@ published network places an unseen gene through its random initial columns; that
 read is not exactly zero is consistent with the trained subsystems responding to how
 many terms the gene lights rather than to which (a hypothesis, untested). The shared
 input is what lets the hierarchy read a gene it has not seen, and with it the hierarchy
-still reads a quarter of the flat perceptron.
+still reads a quarter of the flat perceptron. Width 20, the other point of the
+essentiality study's tune grid, lifts the shared hierarchy to 0.069 (sd 0.036) with a
+top-50 of 3.33 (0.066 and 3.79 ensembled), at 13 to 24 minutes a seed against 7 to 8
+at width 8, and leaves the published input at 0.041 (sd 0.046), three of its six seeds
+never reaching a validation peak in 200 epochs; both stay at a third of the perceptron
+or under. DCell's published sizing, max(20, 0.3 times the genes under the term), is out
+of reach for this implementation, which pads every term to the widest: the root's
+1,650 units would put the edge tensor past 30 GB.
 Two things bound the reading. GO annotation is curated in part from deletion
 phenotypes, respiratory function among them, and the screen's top hits are respiratory
 (the 027 read), so an annotation input can carry the target through the literature the

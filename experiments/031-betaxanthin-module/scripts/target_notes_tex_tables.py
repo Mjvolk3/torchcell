@@ -446,7 +446,14 @@ def go_models(target: str) -> str | None:
     with open(src) as fh:
         d = json.load(fh)
     rows = []
-    for a in d["arms"]:
+    # The hierarchy arms at width 20 (2026-09-25) live in their own result file, since
+    # the script merges arms only at one width; their rows are marked.
+    src20 = results(target, f"go_models_{target}_w20.json")
+    arms = [(a, "") for a in d["arms"]]
+    if osp.isfile(src20):
+        with open(src20) as fh:
+            arms += [(a, " (width 20)") for a in json.load(fh)["arms"]]
+    for a, mark in arms:
         single = f"{a['single_mean_spearman']:+.3f} ({a['single_sd_spearman']:.3f})"
         ens = f"{a['ensemble_spearman']:+.3f}"
         if a.get("single_mean_top50") is not None:
@@ -454,7 +461,7 @@ def go_models(target: str) -> str | None:
             ens += f" / {a['ensemble_top50']:.2f}"
         epochs = ", ".join(str(r["select_epoch"]) for r in a["seeds"])
         rows.append(
-            f"    {GO_LABELS.get(a['arm'], a['arm'])} & {a['seeds'][0]['n_parameters']:,} & "
+            f"    {GO_LABELS.get(a['arm'], a['arm'])}{mark} & {a['seeds'][0]['n_parameters']:,} & "
             f"{single} & {ens} & {epochs} \\\\"
         )
     label = STUDY[target]["label"]
@@ -474,10 +481,11 @@ def go_models(target: str) -> str | None:
         f"columns with training support), full batch, Adam at $10^{{-3}}$, {d['epochs']} "
         "epochs, the epoch selected by a five-epoch moving average of the validation "
         f"per-feature Pearson. Columns: parameters, the single-seed read ({cell}), the "
-        "six-seed ensemble scored the same way, and the selected epochs. Written by "
+        "six-seed ensemble scored the same way, and the selected epochs. Hierarchy rows "
+        "are at subsystem width 8 unless marked width 20. Written by "
         "\\texttt{target\\_notes\\_tex\\_tables.py} from "
-        f"\\texttt{{results/go\\_models\\_{target.replace('_', '\\_')}.json}} "
-        "(\\texttt{target\\_go\\_models.py}).}\n"
+        f"\\texttt{{results/go\\_models\\_{target.replace('_', '\\_')}.json}} and its "
+        "\\texttt{\\_w20} companion (\\texttt{target\\_go\\_models.py}).}\n"
         "  \\label{tab:go-models}\n"
         "  \\begin{tabular}{@{}p{58mm}rrrp{34mm}@{}}\n    \\hline\n"
         "    model & parameters & single seed (sd) & ensemble & selected epochs \\\\\n    \\hline\n"

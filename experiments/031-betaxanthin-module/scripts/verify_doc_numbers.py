@@ -84,6 +84,25 @@ def go_model(arm: str, key: str):
     return run
 
 
+def go_model_w20(arm: str, key: str):
+    """A value of one arm of the width-20 GO-models read (results/go_models_betaxanthin_w20.json)."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "go_models_betaxanthin_w20.json")))
+        a = next(x for x in d["arms"] if x["arm"] == arm)
+        if key == "n_select_at_200":
+            return float(sum(1 for s in a["seeds"] if s["select_epoch"] == 200))
+        if key == "seconds_min":
+            return float(min(s["seconds"] for s in a["seeds"]) / 60)
+        if key == "seconds_max":
+            return float(max(s["seconds"] for s in a["seeds"]) / 60)
+        return float(a[key])
+
+    return run
+
+
 def cross_target(key: str):
     """A value of the betaxanthin-against-amino-acid read, from the 032 results tree."""
 
@@ -232,6 +251,31 @@ CHECKS: list[Check] = [
           recompute=go_model("dcell_published_input", "ensemble_spearman"), tolerance=0.0006),
     Check(claim="go-models: DCell published input ensemble top-50", stated=1.40,
           recompute=go_model("dcell_published_input", "ensemble_top50"), tolerance=0.006),
+    # sec:physics -- both hierarchy arms at width 20 (2026-09-25).
+    Check(claim="go-models w20: shared hierarchy", stated=0.069,
+          recompute=go_model_w20("dcell_style_shared", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models w20: shared hierarchy sd", stated=0.036,
+          recompute=go_model_w20("dcell_style_shared", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="go-models w20: shared hierarchy top-50", stated=3.33,
+          recompute=go_model_w20("dcell_style_shared", "single_mean_top50"), tolerance=0.006),
+    Check(claim="go-models w20: shared hierarchy ensemble", stated=0.066,
+          recompute=go_model_w20("dcell_style_shared", "ensemble_spearman"), tolerance=0.0006),
+    Check(claim="go-models w20: shared hierarchy ensemble top-50", stated=3.79,
+          recompute=go_model_w20("dcell_style_shared", "ensemble_top50"), tolerance=0.006),
+    Check(claim="go-models w20: shared hierarchy minutes a seed, min", stated=13,
+          recompute=go_model_w20("dcell_style_shared", "seconds_min"), tolerance=0.5),
+    Check(claim="go-models w20: shared hierarchy minutes a seed, max", stated=24,
+          recompute=go_model_w20("dcell_style_shared", "seconds_max"), tolerance=0.5),
+    Check(claim="go-models w8: shared hierarchy minutes a seed, min", stated=7,
+          recompute=lambda: min(s["seconds"] for s in next(a for a in json.load(open(osp.join(RESULTS, "go_models_betaxanthin.json")))["arms"] if a["arm"] == "dcell_style_shared")["seeds"]) / 60, tolerance=0.5),
+    Check(claim="go-models w8: shared hierarchy minutes a seed, max", stated=8,
+          recompute=lambda: max(s["seconds"] for s in next(a for a in json.load(open(osp.join(RESULTS, "go_models_betaxanthin.json")))["arms"] if a["arm"] == "dcell_style_shared")["seeds"]) / 60, tolerance=0.5),
+    Check(claim="go-models w20: published input", stated=0.041,
+          recompute=go_model_w20("dcell_published_input", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="go-models w20: published input sd", stated=0.046,
+          recompute=go_model_w20("dcell_published_input", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="go-models w20: published input seeds selecting at epoch 200", stated=3,
+          recompute=go_model_w20("dcell_published_input", "n_select_at_200"), tolerance=0.5),
     Check(claim="go-models: DCell earliest selected epoch", stated=8,
           recompute=go_model("dcell_style_shared", "select_epoch_min"), tolerance=0.5),
     Check(claim="go-models: DCell latest selected epoch", stated=13,

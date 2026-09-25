@@ -5,9 +5,9 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{2.5pt}
-  \caption[The annotation-only family on betaxanthin]{DCell's ontology hierarchy (the essentiality study's shared-input form, a linear head on the root's state, auxiliary regressions at alpha 0.3) and a perceptron over the propagated GO multi-hot, on the ladder's split (2,341 GO columns with training support), full batch, Adam at $10^{-3}$, 200 epochs, the epoch selected by a five-epoch moving average of the validation per-feature Pearson. Columns: parameters, the single-seed read (the pinned-test Spearman with the standard deviation over seeds and, after the slash, the top-50 enrichment), the six-seed ensemble scored the same way, and the selected epochs. Written by \texttt{target\_notes\_tex\_tables.py} from \texttt{results/go\_models\_betaxanthin.json} (\texttt{target\_go\_models.py}).}
+  \caption[The annotation-only family on betaxanthin]{DCell's ontology hierarchy (the essentiality study's shared-input form, a linear head on the root's state, auxiliary regressions at alpha 0.3) and a perceptron over the propagated GO multi-hot, on the ladder's split (2,341 GO columns with training support), full batch, Adam at $10^{-3}$, 200 epochs, the epoch selected by a five-epoch moving average of the validation per-feature Pearson. Columns: parameters, the single-seed read (the pinned-test Spearman with the standard deviation over seeds and, after the slash, the top-50 enrichment), the six-seed ensemble scored the same way, and the selected epochs. Hierarchy rows are at subsystem width 8 unless marked width 20. Written by \texttt{target\_notes\_tex\_tables.py} from \texttt{results/go\_models\_betaxanthin.json} and its \texttt{\_w20} companion (\texttt{target\_go\_models.py}).}
   \label{tab:go-models}
-  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{84.5mm}rrr>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{28.0mm}@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{95.6mm}rrr>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{17.0mm}@{}}
     \hline
     model & parameters & single seed (sd) & ensemble & selected epochs \\
     \hline
@@ -19,6 +19,8 @@
     perceptron over GO with the store row & 1,675,521 & +0.198 (0.041) / 4.86 & +0.189 / 4.99 & 26, 29, 22, 28, 28, 23 \\
     perceptron over GO with ProtT5 & 868,353 & +0.173 (0.011) / 4.99 & +0.177 / 5.39 & 4, 8, 4, 8, 13, 13 \\
     perceptron over GO, ProtT5 and the store row & 1,937,665 & +0.175 (0.015) / 5.03 & +0.184 / 5.19 & 11, 11, 11, 10, 11, 19 \\
+    DCell-style hierarchy, shared gene input, root head (width 20) & 1,848,987 & +0.069 (0.036) / 3.33 & +0.066 / 3.79 & 4, 2, 3, 14, 6, 5 \\
+    DCell hierarchy, published input (a weight per gene and term), root head (width 20) & 5,892,827 & +0.041 (0.046) / 1.70 & +0.099 / 2.40 & 74, 15, 200, 200, 0, 200 \\
     \hline
   \end{tabular}
 \end{table}

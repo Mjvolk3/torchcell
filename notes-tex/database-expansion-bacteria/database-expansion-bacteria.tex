@@ -1,0 +1,54 @@
+%% notes-tex/database-expansion-bacteria/database-expansion-bacteria.tex
+%% [[experiments.database.expansion-bacteria]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-bacteria/database-expansion-bacteria.tex
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+
+\usepackage{pdflscape}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{\vspace{-1.5em}Fifty Bacterial Datasets for \emph{E. coli} and \emph{P. putida},
+Ranked by Scale and Density}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\noindent
+The database holds 51 schematized and L0--L4-verified \org{Saccharomyces cerevisiae}
+datasets and no bacterial dataset at all. Table~\ref{tab:bfinal} is a fifty-row candidate
+list for the two bacterial hosts, \org{Escherichia coli} and \org{Pseudomonas putida},
+ranked by measurements, meaning instances times phenotype dimensionality
+(Sec.~\ref{sec:rule}). The build is staged in two tranches, twenty rows then thirty, and
+the first twenty carry ten rows per host so neither waits behind the other's larger
+screens (Sec.~\ref{sec:stage}).
+
+Two changes to the schema gate every row, and both were established by running the
+validators rather than by reading them (Sec.~\ref{sec:schema}): the gene-identifier
+namespace rejects every bacterial gene name, and the genomes tier has no bacterial
+assembly set. A third thing expected to block turns out not to, since the reference genome
+record already accepts either host unchanged.
+
+Table~\ref{tab:banalogs} is the column that answers whether these rows fit the record
+types already in use: for each one, the built yeast dataset it mirrors and what the
+loader would still need. Table~\ref{tab:bsources} gives each row's citation, link and
+data location; Table~\ref{tab:bexcluded} records what was considered and dropped;
+Sec.~\ref{sec:summary} closes with the summary statistics and the confidence split.
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/rule}
+\input{sections/schema}
+\input{sections/list}
+\input{sections/analogs}
+\input{sections/caveats}
+\input{sections/summary}
+
+\end{document}

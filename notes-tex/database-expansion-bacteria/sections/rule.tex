@@ -1,0 +1,113 @@
+%% notes-tex/database-expansion-bacteria/sections/rule.tex
+%% [[experiments.database.expansion-bacteria]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-bacteria/sections/rule.tex
+%% SOURCE: hand-authored prose; every number quoted here comes from
+%% experiments/database/scripts/build_bacteria_candidate_datasets_table.py
+
+\section{The selection rule\secstatus{todo}}\label{sec:rule}
+
+\subsection{Rows are ordered by measurements, which is scale times density\secstatus{todo}}
+
+The order is one quantity, applied to every row alike: \term{measurements}, meaning
+instances times phenotype dimensionality, descending. \term{Instances} is the number of
+genotype $\times$ environment $\times$ replicate records a row can actually yield, and
+\term{dimensionality} is how many values each of those records carries. A scalar fitness
+screen of $n$ strains contributes $n$ numbers; a proteome panel of $n$ samples at a
+depth of 2,000 proteins contributes $2\times10^{3}n$.
+
+Ranking on instances alone gets the order visibly wrong, and it is worth naming the
+failure rather than asserting the rule. A quantitative proteome across a couple of dozen
+growth conditions holds fewer instances than a small deletion screen, which would rank it
+below one, and yet each of its instances is a complete proteome. The product is what
+places it correctly, and it is the same normalization the supported-datasets table
+already applies through its compressed-signal column and the same one the yeast candidate
+list ranks inside its bands with.
+
+Two tie-breaks make the rule total. Instances break a measurement tie, so between two
+rows holding the same number of values the one spanning more distinct strain and
+condition combinations wins; a wide, shallow row is worth more to a
+genotype-to-phenotype model than a narrow, deep one of equal volume. Tier breaks that.
+
+This differs from the yeast list on purpose. There, rows are banded first by what they
+supply to a planned single-cell campaign, and scale orders only inside a band. Here scale
+and density are the requested rule directly, so no band is applied and no row is promoted
+for what it pairs with. What a row combines with is still recorded, in
+Table~\ref{tab:banalogs} and in the join column, but it does not move the row.
+
+\subsection{Sequence reconstruction is the gate, not a preference\secstatus{todo}}
+
+A phenotype is only trainable against a genotype that can be written down, so every row
+names a \term{sequence basis}: the route by which the total genomic content of one strain
+would be reconstructed. The bases are named per host, because the reference differs and
+because a b-number and a PP\_ locus tag are different namespaces that must not be
+silently merged (Sec.~\ref{sec:schema}).
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \term{MG1655-KO} and \term{KT2440-KO} -- the reference genome minus one
+    cataloged gene. The cheapest basis, and the one most of the built yeast set sits on
+    in its own reference.
+  \item \term{MG1655-KO x KO} -- a constructed double mutant, both loci cataloged, which
+    is the basis a genetic-interaction row needs.
+  \item \term{MG1655+transposon} and \term{KT2440+transposon} -- a mapped insertion site
+    carrying a barcode. The insertion position is sequenced, so the genotype is realized
+    rather than designed, which is what separates a barcoded transposon library from a
+    guide library.
+  \item \term{MG1655+guide}, \term{KT2440+guide} -- the genome is unedited and the
+    perturbation is a designed cassette plus a guide target. Regulatory, not
+    sequence-level, and it reaches the essential genes a deletion collection cannot hold.
+  \item \term{KT2440+promoter} and \term{engineered-chassis+promoter} or
+    \term{+RBS} -- a designed regulatory part over a native or heterologous gene.
+    Designed rather than verified per strain.
+  \item \term{engineered-chassis} -- a named production strain plus heterologous
+    cassettes, which is what a titer is measured on.
+  \item \term{evolved-WGS} -- a resequenced evolved clone.
+  \item \term{reference-only} -- wild type, where the environment carries the
+    perturbation.
+\end{itemize}
+
+What fails the gate is a strain whose genome is unknown even in principle. An evolved
+population that was never resequenced lands there, and so does a strain described only by
+a phenotype in a review table. Those are dropped in Table~\ref{tab:bexcluded} rather than
+ranked low, because no amount of phenotypic value substitutes for a missing genotype.
+
+\subsection{Tier, and what it is for here\secstatus{todo}}
+
+Tier no longer orders the list, so it does one job: it records how much of a dataset a
+loader would actually get, which is what makes a high measurement count trustworthy or
+not.
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{Tier 1} clears all three of $\geq$$10^3$ genotypes, $\geq$$10^4$
+    instances, and a clean sequence basis.
+  \item \textbf{Tier 2} clears two of the three, or is the only dataset covering a
+    phenotype the substrate needs for these hosts.
+  \item \textbf{Tier 3} is a modality or reference backbone the substrate needs without
+    itself carrying a large genotype axis, such as a library definition or a per-gene
+    coefficient that applies to every strain alike.
+  \item \textbf{Tier 4} is real but small, coarsely labeled, or expensive to extract.
+\end{itemize}
+
+The bars apply to what a row contains rather than to its reputation. A curated corpus
+with thousands of literature records fails tier 1 whatever its size, because its records
+re-serve primary papers and the net-new fraction is unknown until it is split by source.
+
+\subsection{Staging, and why the first tranche carries a quota\secstatus{todo}}\label{sec:stage}
+
+The fifty are built in two tranches, twenty then thirty. The second tranche is the next
+thirty by the ordering rule and needs no further explanation. The first twenty carry one
+correction to the rule, and it is applied after ranking and reported rather than folded
+into a score.
+
+Measurements alone would let one host fill the first tranche, because the two literatures
+are not the same size and the largest screens are not evenly split between them. Starting
+both hosts together is worth more than starting the twenty largest rows: the two schema
+changes in Sec.~\ref{sec:schema} are per host, the provisioning of a reference release is
+per host, and neither cost is paid until a row for that host is actually built. So the
+first tranche holds ten rows per host, taken in rank order within each, and every row the
+quota promoted is named with its unaided rank in Table~\ref{tab:bfinal} and in the
+generating script's output.
+
+The consequence is visible and intended. A row promoted by the quota sits above rows with
+more measurements than it has, and the displaced rows are the weakest of the
+over-represented host rather than the weakest overall, so a promotion never costs a row
+the quota is protecting.

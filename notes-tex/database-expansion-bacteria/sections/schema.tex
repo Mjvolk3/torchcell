@@ -1,0 +1,66 @@
+%% notes-tex/database-expansion-bacteria/sections/schema.tex
+%% [[experiments.database.expansion-bacteria]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-bacteria/sections/schema.tex
+%% SOURCE: schema table from
+%% experiments/database/scripts/build_bacteria_candidate_datasets_table.py; the
+%% validator results quoted in the prose were produced by running the validators,
+%% recorded in notes/experiments.database.expansion-bacteria.md
+
+\section{What the schema needs first\secstatus{todo}}\label{sec:schema}
+
+Two changes gate every row in Table~\ref{tab:bfinal}, and a third thing that was
+expected to gate them does not. All three were established by running the validators
+rather than by reading them, because the question is what the code accepts, not what it
+appears to accept.
+
+\input{tables/schema}
+
+\notesec{The reference side already admits both hosts} \texttt{ReferenceGenome} carries
+\texttt{species} and \texttt{strain} as free strings, so
+\texttt{ReferenceGenome(species="Escherichia coli", strain="MG1655")} and the
+\org{Pseudomonas putida} KT2440 equivalent both validate with no change at all. The
+organism was never hard-coded at the reference; it was hard-coded one level down.
+
+\notesec{The genotype side rejects every bacterial gene name} \texttt{GenePerturbation}
+validates \texttt{systematic\_gene\_name} against three patterns, and all three are
+\org{S. cerevisiae}: the nuclear open reading frames, the mitochondrial genes, and the
+noncoding genes. Constructing a deletion with the \gene{thrA} b-number, a \org{P.
+putida} locus tag, an EcoCyc identifier or a bare gene symbol raises \emph{Invalid
+systematic gene name format} in each case, while a yeast name is accepted. This is not a
+naming inconvenience. \texttt{Genotype} derives its content identity from the sorted
+systematic names of its perturbations, so the identifier namespace is load-bearing for
+node identity in the graph, and a b-number and a PP\_ locus tag must stay distinguishable
+namespaces rather than being merged into one string field.
+
+The fix is additive in the sense the admission gate uses: a bacterial namespace accepted
+alongside the yeast patterns adds a validated form and changes no record any served
+dataset already holds, so no served closure moves. That is the same shape as the
+segregant genotype added for the sixteen-cross yeast panel, where a genotype that carried
+no gene edit at all needed a sibling class rather than a widened one.
+
+\notesec{The genomes tier has no bacterial assembly set} The tier that dereferences a
+strain to sequence defines two assembly sets, both yeast, and the genome package holds
+one organism subpackage. A host needs its reference release pinned there by sha256 before
+any row's sequence basis resolves to bytes, so this is ordinary provisioning work rather
+than a design question, and it is on the critical path for the same reason the identifier
+namespace is.
+
+\subsection{What this buys, and what it does not\secstatus{todo}}\label{sec:schema-scope}
+
+The two changes above are enough to write a deletion, a transposon insertion, a guide
+knockdown and a production titer for either host. They are not enough for three things
+this table contains, and each carries its own cost in Table~\ref{tab:banalogs}.
+
+A designed combinatorial construct, meaning a ribosome binding site or promoter library
+over a heterologous pathway, states what each member was built to be rather than what it
+turned out to be. Ingesting one commits to storing the design and a verification status,
+which is the same weaker claim the yeast list records for its designed-edit rows.
+
+A resequenced evolved clone is a genotype only where the resequencing exists. An evolved
+population that was never sequenced differs from its parent at unmapped positions, so it
+fails the sequence-reconstruction gate and is dropped in Table~\ref{tab:bexcluded} rather
+than ranked low.
+
+A curated literature corpus is not one dataset. Its records re-serve primary papers, so
+the count is not net new until the corpus is split by source identifier, and rows in that
+state are marked in Table~\ref{tab:bfinal} rather than counted as reachable.

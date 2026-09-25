@@ -1,0 +1,39 @@
+%% notes-tex/database-expansion-bacteria/sections/caveats.tex
+%% [[experiments.database.expansion-bacteria]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-bacteria/sections/caveats.tex
+%% SOURCE: excluded table from
+%% experiments/database/scripts/build_bacteria_candidate_datasets_table.py; prose
+%% hand-authored
+
+\section{Before a loader is written\secstatus{todo}}\label{sec:caveats}
+
+Every figure in Table~\ref{tab:bfinal} is an axis count rather than a verified record
+count, and the qualifications below decide which rows can be trusted at their stated size.
+
+\notesec{Instance counts marked $\dagger$ are products, not counts} A screen reported as
+$n$ strains against $k$ conditions enters as $nk$ instances. Real screens drop strains per
+condition, so each such figure is an upper bound. The ones marked $\ddagger$ are weaker
+still, being order-of-magnitude estimates for libraries whose exact size was not confirmed.
+Neither should be quoted as a dataset size without opening the source.
+
+\notesec{Dimensionality is the other half of every rank, so an estimated depth moves the
+order} Because rows are ranked on instances times dimensionality, a wrong panel depth moves
+a row directly rather than at the margin. The generated table records whether each depth was
+read from a source or estimated, and the summary counts the split. A row whose position
+looks surprising should have its depth checked before its instance count.
+
+\notesec{A corpus is not a dataset} Rows marked \textbf{A} are curated literature
+collections. Their record counts are counts of reported observations extracted from other
+papers, so they are not net new until the corpus is resolved to primary sources, and
+several of those sources are already elsewhere in this table. They are ranked because
+their aggregate size is real and useful for discovery, and they are flagged because
+counting them as independent datasets would double-count.
+
+\notesec{Rows marked \textbf{B} have no released per-record values} A screen whose released
+form is a figure or a table of selected hits is not ingestible as a genotype-to-phenotype
+dataset, whatever its reputation. These stay in the table with the flag rather than being
+dropped, because an author request or a supplementary re-check can change the state.
+
+\section{What was dropped\secstatus{todo}}\label{sec:excluded}
+
+\input{tables/excluded}

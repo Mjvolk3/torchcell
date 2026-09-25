@@ -15,6 +15,10 @@ the CPU ladder's split, so the reads sit in the same column as ``target_store_ba
   for the amino acids), every term's scalar head an auxiliary regression of the
   standardized target (its mean over observed columns for the amino acids) at
   alpha 0.3, batch normalization over the training rows in every pass;
+* ``dcell_published_input``: the same hierarchy with DCell's own gene input, a weight
+  vector per (gene, term) annotation pair; under the split by gene a held-out gene's
+  columns are never trained, so this arm is the published network's read of an unseen
+  gene and the control for what the shared input buys;
 * ``go_mlp``: the gene's propagated GO multi-hot through one hidden layer of 256 and a
   linear head, the perceptron the GO graph convolution reduces to on one deletion per
   instance; and the same perceptron over the HiGHS parsimonious store row
@@ -86,7 +90,14 @@ from torchcell.datamodules import CellDataModule  # noqa: E402
 from torchcell.graph import SCerevisiaeGraph  # noqa: E402
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 
-ARMS = ("dcell_style_shared", "go_mlp", "store_mlp", "prot_mlp", "go_store_mlp", "go_prot_mlp", "go_prot_store_mlp")
+ARMS = ("dcell_style_shared", "dcell_published_input", "go_mlp", "store_mlp", "prot_mlp", "go_store_mlp", "go_prot_mlp", "go_prot_store_mlp")
+#: The two hierarchy arms: the shared per-term gene input, and DCell's published input,
+#: one weight vector per (gene, term) annotation pair. Under a split by gene the
+#: published input's columns for a held-out gene receive no gradient, so that arm reads
+#: an unseen gene through its random initial columns; it is the control that says what
+#: the shared input buys (2026-09-25, the user's request for DCell proper sized as the
+#: essentiality study sized it, width 8 and 20).
+DCELL_ARMS = ("dcell_style_shared", "dcell_published_input")
 #: The perceptron arms' input blocks: the GO multi-hot (binary), the HiGHS parsimonious
 #: store row (log(1+|v|), standardized on the training genes; a gene the store does not
 #: cover reads the wild-type row) and ProtT5 (standardized), concatenated.
@@ -149,8 +160,8 @@ class TargetDCell(DCellStyle):
     """The essentiality hierarchy with an ``n_out`` head on the root's state."""
 
     def __init__(self, hierarchy: Hierarchy, membership: torch.Tensor, widths: np.ndarray,
-                 order: str, n_out: int) -> None:
-        super().__init__(hierarchy, membership, widths, order, shared=True)
+                 order: str, n_out: int, shared: bool = True) -> None:
+        super().__init__(hierarchy, membership, widths, order, shared=shared)
         self.out_head = nn.Linear(self.width, n_out)
 
     def forward_target(self, stat_rows: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -207,9 +218,10 @@ def run_task(task: Task) -> SeedRead:
     mu = torch.nanmean(y_train, dim=0)
     sd = torch.tensor([float(torch.std(y_train[torch.isfinite(y_train[:, j]), j])) for j in range(n_out)])
     y_std = (y - mu) / sd
-    if task.arm == "dcell_style_shared":
+    if task.arm in DCELL_ARMS:
         assert _HIER is not None
-        net: nn.Module = TargetDCell(_HIER, x, _HIER.widths(Config(width=task.width)), "tanh_bn", n_out)
+        net: nn.Module = TargetDCell(_HIER, x, _HIER.widths(Config(width=task.width)), "tanh_bn", n_out,
+                                     shared=task.arm == "dcell_style_shared")
     else:
         assert _BLOCKS is not None
         x = torch.from_numpy(np.concatenate([_BLOCKS[b] for b in ARM_INPUTS[task.arm]], axis=1))
@@ -221,7 +233,7 @@ def run_task(task: Task) -> SeedRead:
     test_preds: list[np.ndarray] = []
     aux_target = torch.nanmean(y_std, dim=1)  # the per-instance mean over observed columns
     for epoch in range(task.epochs + 1):
-        if task.arm == "dcell_style_shared":
+        if task.arm in DCELL_ARMS:
             aux, out = cast(TargetDCell, net).forward_target(rows["train"])
         else:
             aux, out = None, net(x)

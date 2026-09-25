@@ -678,6 +678,24 @@ PAIRS = [
         tuple(range(2700, 2712)),
     ),
     (
+        "betaxanthin: measured amino-acid pool with GO against GO alone",
+        "betaxanthin",
+        "w194_bxdelgoaapool_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: measured amino-acid pool with GO and the HiGHS vector against GO with the HiGHS vector",
+        "betaxanthin",
+        "w195_bxdelgopfbaaapool_h12l1p1_e200",
+        "w168_bxdelgopfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: measured amino-acid pool with GO and the HiGHS vector against the pool with GO",
+        "betaxanthin",
+        "w195_bxdelgopfbaaapool_h12l1p1_e200",
+        "w194_bxdelgoaapool_h12l1p1_e200",
+    ),
+    (
         "amino acids: GO multi-hot in the affine slot against the control, twelve seeds",
         "mulleder19",
         "w170_aadelgo_h12l1p1_e200",

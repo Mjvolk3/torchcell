@@ -419,3 +419,15 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B38 | 171 | w190 | del + HiGHS and MOMA stores with GO | 0.216 (sd 0.007); ens 0.217 / 4.59 |
+
+## 2026.09.25 - The measured amino-acid pool as an input; DCell's published input; packs B41, B42
+
+- User direction: the cross-endpoint read (pool ridge 0.226, GO + pool 0.237 on its own folds) should be demonstrated as "adding the data helps", in the ladder and in the transformer. New `target_pool_store.py`: the strain's own Mulleder pool (19 mM columns as released, 4,678 strains, 0 missing cells; wild-type row = the loader's reference, the population robust mean) as affine store `YPD_bx_aapool`; `target_store_concat.py` appends it to GO (`YPD_bx_goaapool`, 2,381 columns) and to GO with the HiGHS vector (`YPD_bx_gopfbaaapool`, 6,558). Phenotype to phenotype: the row is the strain's measurement in a different screen, not its sequence, so a gain shows that the data carries signal beyond the gene's identity, not that the module generalizes from genotype.
+- Ladder: `target_store_baselines.py` gains `aa_pool`, `go_aapool`, `gopfba_aapool` for betaxanthin (rerun in progress, `slurm/output/store_baselines_betaxanthin_aapool.log`) and a `cooper` target (the 17 Cooper 2010 peaks read from the loader's table by the record's deleted gene on the same pinned split; no reference arm, so the identity check is skipped; `032/slurm/output/store_baselines_cooper.log`).
+- Submitted B41 = w194 (GO + pool in the affine, job 2836; vs w167) and B42 = w195 (GO + HiGHS + pool, job 2837; vs w168 and w194).
+- DCell: `target_go_models.py` gains `dcell_published_input` (DCell's own per-(gene, term) input; under the split by gene a held-out gene's columns are never trained, so it is the published network's read of an unseen gene and the control for what the shared input buys). Running on CPU: the published input at width 8 (`slurm/output/go_models_betaxanthin_published_w8.log`, merged into `results/go_models_betaxanthin.json`) and both hierarchy arms at width 20 (`go_models_betaxanthin_w20.log`, `results/go_models_betaxanthin_w20.json`), the two widths the essentiality tune grid used. DCell's published sizing, max(20, 0.3 x genes under the term), is not runnable in this implementation: every term is padded to the widest, and the root's 1,650 units would put the edge tensor past 30 GB.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B41 | -- | w194 | del + GO with the measured amino-acid pool | job 2836, pending |
+| B42 | -- | w195 | del + HiGHS store with GO and the pool | job 2837, pending |

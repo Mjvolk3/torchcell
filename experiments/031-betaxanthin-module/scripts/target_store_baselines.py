@@ -74,7 +74,36 @@ from torchcell.datamodules import CellDataModule  # noqa: E402
 from torchcell.graph import SCerevisiaeGraph  # noqa: E402
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 
-STUDY = {"betaxanthin": "031-betaxanthin-module", "amino_acids": "032-amino-acid-module"}
+STUDY = {
+    "betaxanthin": "031-betaxanthin-module",
+    "amino_acids": "032-amino-acid-module",
+    "cooper": "032-amino-acid-module",
+}
+#: Cooper 2010's 17 CE-LIF peaks (a linear ratio to the plate mean, the auxotroph on
+#: synthetic complete medium), the second deletion-collection amino-acid screen, as a
+#: ladder target (2026-09-25, the user's request for the linear and kNN baselines over
+#: BOTH amino-acid datasets). It is not in the trainer's dataset build, so it is read
+#: from the loader's preprocess table by the record's deleted gene, on the SAME pinned
+#: split as every other target; a genotype with no Cooper row or more than one deleted
+#: gene carries NaN. There is no reference arm in the trainer for it, so the identity
+#: check has nothing to compare against. The stores it is read over are the SM ones
+#: (the prototroph's medium), which is not Cooper's medium; the annotation and
+#: sequence representations do not depend on the medium.
+COOPER_KEYS = [
+    "lysine_related_peak1", "arginine", "gshbiotin", "n_acetylornithine",
+    "leucine+isoleucine+citrulline", "glutamine+valine", "methionine+proline",
+    "threonine", "alanine", "serine", "asparagine+tyrosine", "glycine", "lysine_a",
+    "ornithine", "lysine_b", "glutamate", "aspartate",
+]
+CSV_TARGETS: dict[str, dict[str, Any]] = {
+    "cooper": {
+        **TARGETS["amino_acids"],
+        "columns": COOPER_KEYS,
+        "dump_head": None,
+        "csv": osp.join(DATA_ROOT, "data/torchcell/amino_acid_cooper2010/preprocess/data.csv"),
+        "gene_column": "perturbed_gene_name",
+    },
+}
 #: (store file stem, column slice or None, flux-encoded or not) per representation.
 REPRESENTATIONS: dict[str, dict[str, Any]] = {
     "betaxanthin": {
@@ -99,6 +128,12 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         # over every annotated gene, alone and appended to the HiGHS parsimonious vector.
         "go": {"store": "YPD_bx_go", "block": "v_deletion", "flux": False},
         "gopfba": {"store": "YPD_bx_gopfba", "block": "v_deletion", "flux": True},
+        # The measured side (target_pool_store.py): the strain's own Mulleder amino-acid
+        # pool in mM (log(1 + v), phenotype to phenotype), alone and appended to GO and
+        # to GO with the HiGHS vector (target_store_concat.py).
+        "aa_pool": {"store": "YPD_bx_aapool", "block": "v_deletion", "flux": True},
+        "go_aapool": {"store": "YPD_bx_goaapool", "block": "v_deletion", "flux": True},
+        "gopfba_aapool": {"store": "YPD_bx_gopfbaaapool", "block": "v_deletion", "flux": True},
     },
     "amino_acids": {
         "pfba_highs": {"store": "SM_gem", "block": "v_deletion", "flux": True},
@@ -114,7 +149,8 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         "gopfba": {"store": "SM_gem_gopfba", "block": "v_deletion", "flux": True},
     },
 }
-PRIMARY_STORE = {"betaxanthin": "pfba_glpk_full", "amino_acids": "pfba_highs"}
+REPRESENTATIONS["cooper"] = REPRESENTATIONS["amino_acids"]
+PRIMARY_STORE = {"betaxanthin": "pfba_glpk_full", "amino_acids": "pfba_highs", "cooper": "pfba_highs"}
 FOREST_LEAF_GRID = [1, 5, 20]
 FOREST_TREES = 300
 TOP_K = 50
@@ -192,9 +228,18 @@ def main() -> None:
     from sklearn.ensemble import RandomForestRegressor
 
     started = time.time()
-    spec = TARGETS[args.target]
+    spec = CSV_TARGETS.get(args.target) or TARGETS[args.target]
     columns = spec["columns"]
     rng = np.random.default_rng(args.seed)
+    csv_rows: dict[str, np.ndarray] = {}
+    if "csv" in spec:
+        import pandas as pd
+
+        frame = pd.read_csv(spec["csv"])
+        assert not frame[spec["gene_column"]].duplicated().any(), spec["csv"]
+        frame = frame.set_index(spec["gene_column"])
+        csv_rows = {str(g): frame.loc[g, columns].to_numpy(np.float64) for g in frame.index}
+        print(f"  csv target: {len(csv_rows)} genes with a row in {spec['csv']}", flush=True)
 
     cfg = train_bx.load_config()
     genome = SCerevisiaeGenome(
@@ -236,8 +281,15 @@ def main() -> None:
     perts: dict[str, list[list[str]]] = {}
     keep_pinned: dict[str, np.ndarray] = {}
     for name, indices in splits.items():
-        values = read_targets(base, indices, spec["label"], columns)
         genes = [idx_to_genes.get(i, []) for i in indices]
+        if csv_rows:
+            # The csv value of the record's one deleted gene; NaN otherwise.
+            values = np.full((len(indices), len(columns)), np.nan)
+            for i, gs in enumerate(genes):
+                if len(gs) == 1 and gs[0] in csv_rows:
+                    values[i] = csv_rows[gs[0]]
+        else:
+            values = read_targets(base, indices, spec["label"], columns)
         has = np.isfinite(values).any(axis=1) & np.array([len(g) > 0 for g in genes])
         y[name] = values[has]
         perts[name] = [g for g, k in zip(genes, has, strict=True) if k]
@@ -254,14 +306,20 @@ def main() -> None:
     # dump is resolved through the result file, as the readouts resolve it. (The 027
     # wave-7 directory now also holds dumps with log-scaled targets, which the ladder's
     # name-order pick lands on for the amino acids.)
-    theirs = arm_targets(args.target)
+    if spec.get("dump_head") is None:
+        # A csv target has no reference arm in the trainer, so there is no dump to
+        # match; its values were read from one table with a duplicate check above.
+        theirs: dict[str, Any] = {}
+        print("  identity check: no reference arm for this target; skipped", flush=True)
+    else:
+        theirs = arm_targets(args.target)
     mine = {
         perts["test"][i][0]: y["test"][i]
         for i in range(len(perts["test"]))
         if keep_pinned["test"][i] and len(perts["test"][i]) == 1
     }
     shared = sorted(set(mine) & set(theirs))
-    assert len(shared) >= 500, f"only {len(shared)} pinned genes match the dump"
+    assert not theirs or len(shared) >= 500, f"only {len(shared)} pinned genes match the dump"
     for gene in shared:
         theirs_vec = np.array(
             [np.nan if v is None else float(v) for v in np.atleast_1d(theirs[gene])]

@@ -302,3 +302,11 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 |---|---|---|---|---|
 | B25 | 152 | w169 | del + HiGHS store, affine released on escape | 0.108 (sd 0.021); ens 0.139 / 4.99 |
 | B31 | -- | w178 | del + HiGHS store with GO, dropout 0.3 | job 2816, pending |
+
+## 2026.09.24 - B26 read: the three levers on one cell
+
+- B26 (w171, HiGHS store + release rule + dropout 0.3, job 2809, 3 h 40 min): 0.125 (sd 0.036) vs the same without dropout (B25) 0.108 (+0.017, sd 0.018, 5/6) and vs the GLPK store at dropout 0.3 (round 145) 0.145 (-0.020, sd 0.052, 3/6); top-50 4.36 vs 3.99 and 5.03; ensemble 0.148 / 4.39 vs 0.139 / 4.99 and 0.149 / 5.79. Dropout delays the escape (release at 17, 5, 24, 44, 18, 5 vs 5, 5, 22, 30, 9, 5); seeds read 0.060 to 0.155. Dropout gives back about half of what the release took from the HiGHS store (0.130 free, 0.108 under the rule, 0.125 with dropout); the release is the lever that costs on the clean store. Written as round 154; 031 published v13 (409 checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B26 | 154 | w171 | del + HiGHS store, release rule, dropout 0.3 | 0.125 (sd 0.036); ens 0.148 / 4.39 |

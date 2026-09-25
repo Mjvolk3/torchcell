@@ -435,4 +435,21 @@ round 149 closes the question the rule opened in round 131. The gain was the ver
 noise's, held off until the backbone had something to say; a store without that noise
 is read best from the first epoch.
 
+Round 154 is read (job 2809, 3 h 40 min): the three best levers on one cell, the HiGHS
+parsimonious store (round 139), the affine released on escape (round 131) and
+transformer dropout 0.3 (round 145), on the deletion-only graph. It reads 0.125 (sd
+0.036) against the same cell without the dropout (round 152) at 0.108 ($+0.017$ paired,
+sd 0.018, above on five of six) and against the GLPK store at dropout 0.3 (round 145)
+at 0.145 ($-0.020$, sd 0.052, three of six), top-50 4.36 against 3.99 and 5.03, and
+ensembled over six seeds 0.148 with a top-50 of 4.39 against 0.139 and 4.99 and 0.149
+and 5.79. Dropout delays the escape the rule waits for: the release came at epochs 17,
+5, 24, 44, 18 and 5 against 5, 5, 22, 30, 9 and 5 without it, every seed selects after
+its release, at 54 to 136 on validation Pearson 0.21 to 0.25, and the seeds read 0.060
+to 0.155, the lowest the one released last. So dropout gives back about half of what the
+release rule took from the HiGHS store (0.130 free from epoch 0, 0.108 under the rule,
+0.125 under the rule with dropout), and the three levers together sit under the two
+that do not fight: the GLPK store at dropout 0.3 keeps the higher rank and the higher
+call, on single seeds and on the ensemble. The lever that costs on the clean store is
+the release, and dropout does not repair it.
+
 \input{tables/target_transfer}

@@ -210,6 +210,7 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 ![](./assets/images/032-amino-acid-module/betaxanthin_amino_acid_correlation_2026-09-24-21-02-01.svg)
 
 - Submitted A17 = w179 (GO + HiGHS affine at dropout 0.3 on the prototroph, job 2817; paired vs w177 and w173).
+- CPU ladder rerun with GO added (29 min; every earlier cell reproduced): GO 0.044 ridge / 0.025 kNN / 0.063 forest; GO with the HiGHS vector 0.046 / 0.029 / 0.062. The annotation lifts the ladder's ceiling from 0.058 to 0.063, beside the GO perceptron 0.054 and the GO affine 0.058: the same band as every other input on this target. 032 published v11 (238 checks).
 
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|

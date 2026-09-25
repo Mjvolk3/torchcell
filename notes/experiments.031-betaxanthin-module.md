@@ -356,3 +356,11 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B31 | 161 | w178 | del + HiGHS store with GO, dropout 0.3 | 0.212 (sd 0.007); ens 0.213 / 4.99 |
 | B34 | -- | w183 | del + HiGHS store with GO and the polytope mean and spread | job 2824, pending |
 | B35 | -- | w184 | del + MOMA store with GO | job 2825, pending |
+
+## 2026.09.25 - B32 read: GO, the HiGHS vector and the polytope mean in one affine
+
+- B32 (w180, gopfbapoly store, 9,374 columns, job 2821, 3 h 39 min): 0.198 (sd 0.011) vs GO + HiGHS (B24) 0.211 (-0.013, sd 0.009, 1/6) and vs the polytope mean alone (B20) 0.125 (+0.073, 6/6); top-50 4.46 vs 4.83 and 3.69; ensemble 0.201 / 4.59 vs 0.212 / 4.99. Seeds select at 4 to 15, read 0.180 to 0.213. The 2,835 concentration columns take 0.013 from the flux-and-annotation affine and the stack reads under GO alone (0.202): the metabolite side does not add to the annotation the way the flux vector does. Hypothesis (untested): dilution of the linear read by a third block the flux block already distinguishes. Written as round 163; 031 published v19 (521 checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B32 | 163 | w180 | del + HiGHS store with GO and the polytope mean | 0.198 (sd 0.011); ens 0.201 / 4.59 |

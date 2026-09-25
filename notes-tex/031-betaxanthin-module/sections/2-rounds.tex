@@ -530,4 +530,23 @@ beside GO reproduces at dropout 0.3 (0.010 on five seeds of six, against 0.009 a
 0.1). The best cell of the study is the affine over the two blocks, at either dropout,
 and what the transformer is set to around it does not enter the read.
 
+Round 163 is read (job 2821, 3 h 39 min): the physics stack on the annotation, the
+HiGHS vector, GO and the driving-force polytope's mean concentration (round 147) in
+one affine over every annotated gene, 9,374 columns joined by
+\texttt{target\_store\_concat.py} with the polytope's wild-type row for a gene outside
+the GEM, on the deletion-only graph. It reads 0.198 (sd 0.011) against the same affine
+without the polytope (round 151) at 0.211 ($-0.013$ paired, sd 0.009, above on one of
+six) and against the polytope mean alone at 0.125 ($+0.073$, sd 0.045, six of six),
+top-50 4.46 against 4.83 and 3.69, and ensembled over six seeds 0.201 with a top-50 of
+4.59 against 0.212 and 4.99 and 0.151 and 5.59. Every seed selects at epochs 4 to 15
+on validation Pearson 0.25 to 0.27 and reads 0.180 to 0.213, a band five times wider
+than round 151's. So the 2,835 concentration columns take 0.013 from the affine that
+carried GO and the flux vector, on five seeds of six, and take its call with it, where
+the flux vector's 4,177 columns had added 0.009 beside GO: the metabolite side, which
+matched the flux vector in the affine on its own (round 147), does not add to the
+annotation the way the flux vector does, and the stack reads under GO alone (0.202).
+Hypothesis (untested): the affine's linear read over 3,494 training genotypes, most of
+them the wild-type row on every physics column, is diluted rather than informed by a
+third block whose rows the flux block already distinguishes.
+
 \input{tables/target_transfer}

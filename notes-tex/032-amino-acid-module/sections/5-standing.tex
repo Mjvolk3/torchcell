@@ -18,6 +18,7 @@ row lowers every read it joins. The sampled cone (round 143, 0.019) and the poly
 mean (148, 0.032) read under every other store; width 6 (146, 0.025) brings the
 collapse back; dropout 0.3 on the store arm (157, 0.045) returns half of what the store
 costs and stays under the control. GO in the affine slot (153, 0.058) is the one
-transformer arm above its control on five seeds of six, at the GO perceptron's level.
-Cells queued: GO with the HiGHS vector in the affine, at dropout 0.1 and 0.3 (rounds
-160, 162), and the GO affine at dropout 0.3 (165).
+transformer arm above its control on five seeds of six, at the GO perceptron's level;
+the HiGHS vector appended to it in the same affine takes 0.003 from it on every seed
+(160), where on betaxanthin it added 0.009. Cells queued: GO with the HiGHS vector at
+dropout 0.3 (round 162) and the GO affine at dropout 0.3 (165).

@@ -225,3 +225,11 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 |---|---|---|---|---|
 | A15 | 157 | w173 | del + store, dropout 0.3 | 0.045 (sd 0.005); ens 0.049 |
 | A18 | -- | w182 | del + GO affine, dropout 0.3 | job 2823, pending |
+
+## 2026.09.25 - A16 read: the HiGHS vector with GO appended on the prototroph
+
+- A16 (w177, HiGHS deletion vector + GO multi-hot in one affine, job 2815, 3 h 37 min): 0.055 (sd 0.002) vs GO alone (A14) 0.058 (-0.003, sd 0.002, 0/6) and vs the store alone (A4) 0.040 (+0.015, sd 0.004, 6/6); ensembles 0.057 vs 0.059 and 0.043. Every seed selects at epoch 2 on val 0.11 to 0.12. Where the flux vector added 0.009 to GO on betaxanthin, here it takes 0.003 from it on every seed, as every read the flux row has joined on this target. Written as round 160; 032 published v13 (266 checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A16 | 160 | w177 | del + HiGHS store with GO | 0.055 (sd 0.002); ens 0.057 |

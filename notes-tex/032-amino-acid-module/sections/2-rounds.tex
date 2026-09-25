@@ -220,4 +220,18 @@ and leaves it under the control: the lever moves this target in the same directi
 betaxanthin at a fifth of the size, inside the spread, on a target whose whole
 transformer band spans 0.04 to 0.06.
 
+Round 160 is read (job 2815, 3 h 37 min): the HiGHS parsimonious deletion vector with
+the GO multi-hot appended, 4,131 flux columns (the wild-type row for a gene outside the
+GEM) and 2,362 annotation columns in one affine over every annotated gene, into the
+19-output head on the deletion-only graph, the one-model form that read 0.211 on
+betaxanthin (the sibling document, round 151). It reads 0.055 (sd 0.002) against GO
+alone at 0.058 ($-0.003$ paired, sd 0.002, above on no seed) and against the
+parsimonious store alone at 0.040 ($+0.015$, sd 0.004, six of six), ensembled over six
+seeds 0.057 against 0.059 and 0.043. Every seed selects at epoch 2 on validation
+Pearson 0.11 to 0.12, round 153's pattern, and reads 0.051 to 0.059. So where the flux
+vector added 0.009 to the annotation on betaxanthin, on the amino acids it takes 0.003
+from it, on every seed, the same direction as every read the flux row has joined on
+this target: the annotation's small gain over the control stands, and the metabolic
+vector still has nothing to add to it here.
+
 \input{tables/target_transfer}

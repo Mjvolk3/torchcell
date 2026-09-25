@@ -598,6 +598,30 @@ PAIRS = [
         "w173_aadelstoredrop_h12l1p1_e200",
     ),
     (
+        "betaxanthin: HiGHS store with GO and the polytope mean against HiGHS store with GO",
+        "betaxanthin",
+        "w180_bxdelgopfbapoly_h12l1p1_e200",
+        "w168_bxdelgopfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: HiGHS store with GO and the polytope mean against the polytope mean alone",
+        "betaxanthin",
+        "w180_bxdelgopfbapoly_h12l1p1_e200",
+        "w164_bxdelmdfpoly_h12l1p1_e200",
+    ),
+    (
+        "amino acids: GO affine at dropout 0.3 against 0.1",
+        "mulleder19",
+        "w182_aadelgodrop_h12l1p1_e200",
+        "w170_aadelgo_h12l1p1_e200",
+    ),
+    (
+        "amino acids: GO affine at dropout 0.3 against the store at 0.3",
+        "mulleder19",
+        "w182_aadelgodrop_h12l1p1_e200",
+        "w173_aadelstoredrop_h12l1p1_e200",
+    ),
+    (
         "amino acids: deletion-only store at dropout 0.3 against 0.1",
         "mulleder19",
         "w173_aadelstoredrop_h12l1p1_e200",

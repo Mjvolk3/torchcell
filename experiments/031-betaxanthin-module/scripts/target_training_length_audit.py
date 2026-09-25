@@ -119,6 +119,8 @@ ARMS = [
     ("w177_aadelgopfba_h12l1p1_e200", "mulleder19", "del + HiGHS store with GO"),
     ("w178_bxdelgopfbadrop_h12l1p1_e200", "betaxanthin", "del + HiGHS store with GO, dropout 0.3"),
     ("w179_aadelgopfbadrop_h12l1p1_e200", "mulleder19", "del + HiGHS store with GO, dropout 0.3"),
+    ("w180_bxdelgopfbapoly_h12l1p1_e200", "betaxanthin", "del + HiGHS store with GO and the polytope mean"),
+    ("w182_aadelgodrop_h12l1p1_e200", "mulleder19", "del + GO affine, dropout 0.3"),
 ]
 LOG_LINE = re.compile(
     r"\] ep\s+(\d+) loss ([\d.]+) .*?val_loss ([\d.]+) val_r ([-+\d.]+)"

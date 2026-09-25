@@ -258,4 +258,20 @@ annotation affine, alone or with the flux vector, reads the same number at eithe
 dropout, and the target's best transformer arm is a linear read of the annotation
 that the backbone does not enter.
 
+Round 168 is read (jobs 2826 and 2827, 3 h 37 min and 3 h 39 min): six more seeds,
+2706 to 2711, of the GO affine and of its affine-free control, so this target's one
+paired gain is read on twelve. The arm reads 0.057 (sd 0.002) against the control's
+0.048 (sd 0.010), $+0.009$ paired (sd 0.010), above on ten of twelve, where the first
+six gave $+0.009$ above on five of six: the gain holds at the same size on twice the
+seeds and its sign is now established on ten of twelve. The two arms differ in
+character more than in level. The annotation arm reads 0.053 to 0.059 over twelve
+seeds, a range of 0.007; the control reads 0.023 to 0.059, a range of 0.036, five
+times as wide, because its score depends on whether its seed leaves the plateau. That
+is what the ensembles show: averaging the twelve control seeds reads 0.067, above the
+twelve-seed annotation ensemble's 0.058 and above every single cell of either arm,
+while averaging the annotation's seeds gains nothing over one of them. So on this
+target the annotation lifts a single seed and seed-averaging lifts the control past
+it: the one paired gain the study has is real at 0.009, and it is smaller than what
+the control's own seed noise is worth when averaged away.
+
 \input{tables/target_transfer}

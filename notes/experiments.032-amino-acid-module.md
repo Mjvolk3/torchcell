@@ -253,3 +253,14 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | A18 | 165 | w182 | del + GO affine, dropout 0.3 | 0.058 (sd 0.001); ens 0.059 |
+
+## 2026.09.25 - A19 and A20 read: the GO gain on twelve seeds
+
+- A19 and A20 (w186, w187 = seeds 2706 to 2711 of w170 and w141, jobs 2826 and 2827, 3 h 37 min and 3 h 39 min): the arm reads 0.057 (sd 0.002) against the control's 0.048 (sd 0.010), +0.009 paired (sd 0.010), above on 10/12, where the first six gave +0.009 on 5/6. The gain holds at the same size on twice the seeds.
+- The arms differ in character: the annotation arm spans 0.053 to 0.059 (range 0.007), the control 0.023 to 0.059 (range 0.036), because the control's score depends on whether its seed escapes the plateau. Consequence: the twelve-seed control ensemble reads 0.067, above the annotation's twelve-seed ensemble 0.058 and above every single cell of either arm. The one paired gain is real at 0.009 and smaller than what the control's seed noise is worth when averaged away.
+- `target_transfer_readout.py` now accepts a per-pair seed set as an optional fifth element of a PAIRS entry (the extension rounds 127, 164, 168, 172 read twelve).
+- Written as round 168; 032 published v16 (311 checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A19 + A20 | 168 | w186, w187 | GO affine and control, seeds 2706 to 2711 | twelve seeds +0.009 (10/12); ensembles 0.058 vs 0.067 |

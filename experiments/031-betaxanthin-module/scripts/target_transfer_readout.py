@@ -664,6 +664,13 @@ PAIRS = [
         "w184_bxdelgomoma_h12l1p1_e200",
     ),
     (
+        "amino acids: GO multi-hot in the affine slot against the control, twelve seeds",
+        "mulleder19",
+        "w170_aadelgo_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+        tuple(range(2700, 2712)),
+    ),
+    (
         "amino acids: GO affine at dropout 0.3 against 0.1",
         "mulleder19",
         "w182_aadelgodrop_h12l1p1_e200",
@@ -793,9 +800,13 @@ def read_arm(stem: str, head: str, seeds: tuple[int, ...]) -> Arm:
 
 def main() -> None:
     pairs: list[Pair] = []
-    for name, head, arm_stem, ctrl_stem in PAIRS:
-        arm = read_arm(arm_stem, head, SEEDS)
-        ctrl = read_arm(ctrl_stem, head, SEEDS)
+    for entry in PAIRS:
+        name, head, arm_stem, ctrl_stem = entry[:4]
+        # A pair may carry its own seed set as a fifth element; the extension rounds
+        # (127, 164, 168, 172) read an arm and its control over twelve seeds.
+        seeds = entry[4] if len(entry) > 4 else SEEDS
+        arm = read_arm(arm_stem, head, seeds)
+        ctrl = read_arm(ctrl_stem, head, seeds)
         by_seed = {c.seed: c for c in ctrl.cells}
         diffs = [
             c.spearman - by_seed[c.seed].spearman

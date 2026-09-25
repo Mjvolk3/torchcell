@@ -118,6 +118,35 @@ def cross_summary(key: str):
     return run
 
 
+def aa_seed_level(stem: str, which: str):
+    """A single-seed statistic of one amino-acid arm over its seeds, from the ensemble
+    readout: mean over all seeds, its sd, the lowest and highest seed."""
+
+    def run() -> float:
+        import json
+
+        import numpy as np
+
+        d = json.load(open(osp.join(RESULTS, "ensemble_readout.json")))
+        a = next(q for q in d["arms"] if q["stem"] == stem)
+        v = np.array([x["spearman"] for x in a["single"]], dtype=float)
+        if which == "mean":
+            return float(v.mean())
+        if which == "sd":
+            return float(v.std(ddof=1))
+        if which == "min":
+            return float(v.min())
+        if which == "max":
+            return float(v.max())
+        if which == "range":
+            return float(v.max() - v.min())
+        if which == "n":
+            return float(v.size)
+        raise KeyError(which)
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:cross-target -- the betaxanthin score against the amino-acid pool.
     Check(claim="cross-target: strains shared with Mulleder", stated=4477,
@@ -467,6 +496,43 @@ CHECKS: list[Check] = [
           recompute=ensemble("w170_aadelgo_h12l1p1_e200", "spearman"), tolerance=0.0006),
     Check(claim="target-transfer: aa store dropout six-seed ensemble (round 165 pair)", stated=0.049,
           recompute=ensemble("w173_aadelstoredrop_h12l1p1_e200", "spearman"), tolerance=0.0006),
+    # sec:rounds -- round 168, twelve seeds of the GO affine and its control.
+    Check(claim="round 168: arm level on twelve", stated=0.057,
+          recompute=transfer("amino acids: GO multi-hot in the affine slot against the control, twelve seeds", "mean_spearman", "arm"), tolerance=0.0006),
+    Check(claim="round 168: arm sd on twelve", stated=0.002,
+          recompute=transfer("amino acids: GO multi-hot in the affine slot against the control, twelve seeds", "sd_spearman", "arm"), tolerance=0.0006),
+    Check(claim="round 168: control level on twelve", stated=0.048,
+          recompute=transfer("amino acids: GO multi-hot in the affine slot against the control, twelve seeds", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="round 168: control sd on twelve", stated=0.010,
+          recompute=transfer("amino acids: GO multi-hot in the affine slot against the control, twelve seeds", "sd_spearman", "control"), tolerance=0.0006),
+    Check(claim="round 168: paired difference on twelve", stated=0.009,
+          recompute=transfer("amino acids: GO multi-hot in the affine slot against the control, twelve seeds", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 168: paired difference sd on twelve", stated=0.010,
+          recompute=transfer("amino acids: GO multi-hot in the affine slot against the control, twelve seeds", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 168: seeds above on twelve", stated=10,
+          recompute=transfer("amino acids: GO multi-hot in the affine slot against the control, twelve seeds", "n_positive"), tolerance=0.5),
+    Check(claim="round 168: seeds paired", stated=12,
+          recompute=transfer("amino acids: GO multi-hot in the affine slot against the control, twelve seeds", "n"), tolerance=0.5),
+    Check(claim="round 168: first-six paired difference", stated=0.009,
+          recompute=transfer("amino acids: GO multi-hot in the affine slot on deletion-only graphs against deletion-only graphs", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 168: first-six seeds above", stated=5,
+          recompute=transfer("amino acids: GO multi-hot in the affine slot on deletion-only graphs against deletion-only graphs", "n_positive"), tolerance=0.5),
+    Check(claim="round 168: arm lowest seed", stated=0.053,
+          recompute=aa_seed_level("w170_aadelgo_h12l1p1_e200", "min"), tolerance=0.0006),
+    Check(claim="round 168: arm highest seed", stated=0.059,
+          recompute=aa_seed_level("w170_aadelgo_h12l1p1_e200", "max"), tolerance=0.0006),
+    Check(claim="round 168: arm seed range", stated=0.007,
+          recompute=aa_seed_level("w170_aadelgo_h12l1p1_e200", "range"), tolerance=0.0006),
+    Check(claim="round 168: control lowest seed", stated=0.023,
+          recompute=aa_seed_level("w141_aadel_h12l1p1_e200", "min"), tolerance=0.0006),
+    Check(claim="round 168: control highest seed", stated=0.059,
+          recompute=aa_seed_level("w141_aadel_h12l1p1_e200", "max"), tolerance=0.0006),
+    Check(claim="round 168: control seed range", stated=0.036,
+          recompute=aa_seed_level("w141_aadel_h12l1p1_e200", "range"), tolerance=0.0006),
+    Check(claim="round 168: control twelve-seed ensemble", stated=0.067,
+          recompute=ensemble("w141_aadel_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
+    Check(claim="round 168: arm twelve-seed ensemble", stated=0.058,
+          recompute=ensemble("w170_aadelgo_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
     # sec:physics -- the sampled cone on the prototroph.
     Check(claim="store-baselines: aa sampled cone ridge", stated=-0.004,
           recompute=store_baseline("amino_acids", "sampled_mean", "ridge", "mean_spearman"), tolerance=0.0006),

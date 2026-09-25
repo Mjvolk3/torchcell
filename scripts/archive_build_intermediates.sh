@@ -42,11 +42,14 @@ for stage in "$@"; do
   src_bytes=$(du -sb "$BUILD_ROOT/$stage" | cut -f1)
   t0=$(date +%s)
   tar -C "$BUILD_ROOT" -cf - "$stage" | zstd -T"$THREADS" -q -f -o "$archive"
-  # zstd -t exits nonzero on any corrupt frame; set -e turns that into an abort.
-  # It prints "<file>: N bytes" to stderr, the decompressed size of the tar stream.
-  tested=$(zstd -t "$archive" 2>&1)
-  dec_bytes=$(echo "$tested" | sed -n 's/.*: *\([0-9][0-9]*\) bytes.*/\1/p' | tail -1)
-  [ -n "$dec_bytes" ] || { echo "ABORT: could not read the decompressed size from: $tested" >&2; exit 1; }
+  # The test decompresses the whole stream and counts its bytes: zstd exits nonzero
+  # on any corrupt frame, and the count is exact. `zstd -t` was used before and its
+  # report parsed for "N bytes", but on a 1 TB stream zstd 1.5.5 prints the size only
+  # in GiB (build 2791, 2026-09-24), so the parse aborted the archive after the test
+  # had passed. Counting the bytes ourselves does not depend on the display format.
+  dec_bytes=$(zstd -dc -q "$archive" | wc -c; exit "${PIPESTATUS[0]}") \
+    || { echo "ABORT: zstd reported a corrupt frame in $archive" >&2; exit 1; }
+  [ -n "$dec_bytes" ] || { echo "ABORT: no byte count from the test of $archive" >&2; exit 1; }
   sha=$(sha256sum "$archive" | cut -d' ' -f1)
   echo "$sha  $stage.tar.zst" > "$DEST/$stage.tar.zst.sha256"
   echo "$stage done $(( $(date +%s) - t0 )) s source_bytes=$src_bytes decompressed_bytes=$dec_bytes archive=$(du -h "$archive" | cut -f1) sha256=$sha" | tee -a "$LOG"

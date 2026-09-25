@@ -158,6 +158,8 @@ STORE_LABELS = {
     "sampled_mean": "sampled cone, mean over draws",
     "mdfcap100_poly_mean": "driving-force polytope, mean concentration over draws",
     "mdfcap100_poly_spread": "driving-force polytope, mean with the spread of ln c",
+    "go": "GO multi-hot (2,362 propagated terms)",
+    "gopfba": "HiGHS parsimonious store with GO appended",
 }
 
 
@@ -304,14 +306,15 @@ def betaxanthin_amino_acid_correlation() -> str | None:
                 f"$[{s['ci_low']:+.3f}, {s['ci_high']:+.3f}]$ & "
                 f"{s['top5_overlap']} / {s['top5_expected']:.1f} & {ceiling} \\\\"
             )
-        p = next(x for x in d["pool"] if x["screen"] == screen)
-        perm = p["permuted_spearman_oof"]
-        rows.append(
-            f"    pool ridge, {p['n_features']} columns, out of fold & {p['n']:,} & "
-            f"${p['spearman_oof']:+.3f}$ & folds ${min(p['spearman_by_fold']):+.3f}$ to "
-            f"${max(p['spearman_by_fold']):+.3f}$ & permuted ${np.mean(perm):+.3f}$ "
-            f"(sd {np.std(perm):.3f}) & \\\\"
-        )
+        inputs_label = {"pool": "ridge, pool", "go": "ridge, GO", "go+pool": "ridge, GO with pool"}
+        for p in (x for x in d["pool"] if x["screen"] == screen):
+            perm = p["permuted_spearman_oof"]
+            rows.append(
+                f"    {inputs_label[p['inputs']]} ({p['n_features']:,}) & "
+                f"{p['n']:,} & ${p['spearman_oof']:+.3f}$ & "
+                f"$[{min(p['spearman_by_fold']):+.3f}, {max(p['spearman_by_fold']):+.3f}]$ & "
+                f"${np.mean(perm):+.3f}$ ({np.std(perm):.3f}) & \\\\"
+            )
         if screen == "mulleder2016":
             caption = (
                 "  \\caption[Betaxanthin against the amino-acid pool]{Cachera 2023's "
@@ -323,10 +326,15 @@ def betaxanthin_amino_acid_correlation() -> str | None:
                 "and the ceiling a correlation could reach through both endpoints' noise, the "
                 "geometric mean of the betaxanthin reliability "
                 f"({d['betaxanthin_reliability']:.2f}, the 027 variance-components read) and "
-                "the amino acid's log10 retest Spearman over 194 strains. The pool row is a "
-                "ridge from the standardized log profile to the betaxanthin score over five "
-                "strain folds, the alpha chosen on an inner split, scored out of fold, with "
-                "the same fit against a shuffled target. Written by "
+                "the amino acid's log10 retest Spearman over 194 strains. The ridge rows "
+                "predict the betaxanthin score over five strain folds, the alpha chosen on an "
+                "inner split, scored out of fold, with the same fit against a shuffled target: "
+                "from the standardized log profile (the pool), from the deleted gene's "
+                "propagated GO multi-hot (a zero row outside the store), and from both, the "
+                "GO block scaled to the pool block's total variance; for these rows the "
+                "interval column holds the lowest and highest fold and the top-5 column the "
+                "shuffled-target fit's mean (sd), with the column count in parentheses. "
+                "Written by "
                 "\\texttt{target\\_notes\\_tex\\_tables.py} from "
                 "\\texttt{results/betaxanthin\\_amino\\_acid\\_correlation.json} "
                 "(\\texttt{betaxanthin\\_amino\\_acid\\_correlation.py}).}\n"

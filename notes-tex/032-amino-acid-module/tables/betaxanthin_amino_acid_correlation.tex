@@ -4,7 +4,7 @@
 \begin{table}[H]
   \centering
   \footnotesize
-  \caption[Betaxanthin against the amino-acid pool]{Cachera 2023's betaxanthin score (corrected 24 h colony fluorescence, population-centered) against each of M\"ulleder 2016's amino-acid concentrations, over the strains both screens hold, matched on the systematic ORF: the Spearman with a strain-bootstrap 95 percent interval (1,000 draws), the overlap of the top 5 percent of strains on the two axes against the count expected by chance, and the ceiling a correlation could reach through both endpoints' noise, the geometric mean of the betaxanthin reliability (0.84, the 027 variance-components read) and the amino acid's log10 retest Spearman over 194 strains. The pool row is a ridge from the standardized log profile to the betaxanthin score over five strain folds, the alpha chosen on an inner split, scored out of fold, with the same fit against a shuffled target. Written by \texttt{target\_notes\_tex\_tables.py} from \texttt{results/betaxanthin\_amino\_acid\_correlation.json} (\texttt{betaxanthin\_amino\_acid\_correlation.py}).}
+  \caption[Betaxanthin against the amino-acid pool]{Cachera 2023's betaxanthin score (corrected 24 h colony fluorescence, population-centered) against each of M\"ulleder 2016's amino-acid concentrations, over the strains both screens hold, matched on the systematic ORF: the Spearman with a strain-bootstrap 95 percent interval (1,000 draws), the overlap of the top 5 percent of strains on the two axes against the count expected by chance, and the ceiling a correlation could reach through both endpoints' noise, the geometric mean of the betaxanthin reliability (0.84, the 027 variance-components read) and the amino acid's log10 retest Spearman over 194 strains. The ridge rows predict the betaxanthin score over five strain folds, the alpha chosen on an inner split, scored out of fold, with the same fit against a shuffled target: from the standardized log profile (the pool), from the deleted gene's propagated GO multi-hot (a zero row outside the store), and from both, the GO block scaled to the pool block's total variance; for these rows the interval column holds the lowest and highest fold and the top-5 column the shuffled-target fit's mean (sd), with the column count in parentheses. Written by \texttt{target\_notes\_tex\_tables.py} from \texttt{results/betaxanthin\_amino\_acid\_correlation.json} (\texttt{betaxanthin\_amino\_acid\_correlation.py}).}
   \label{tab:betaxanthin-amino-acid-correlation}
   \begin{tabular}{@{}lrrlrr@{}}
     \hline
@@ -29,7 +29,9 @@
     tryptophan & 4,477 & $+0.001$ & $[-0.027, +0.032]$ & 13 / 11.2 & 0.34 \\
     tyrosine & 4,477 & $-0.083$ & $[-0.112, -0.054]$ & 23 / 11.2 & 0.23 \\
     valine & 4,477 & $-0.024$ & $[-0.054, +0.009]$ & 17 / 11.2 & 0.42 \\
-    pool ridge, 19 columns, out of fold & 4,477 & $+0.226$ & folds $+0.182$ to $+0.272$ & permuted $-0.002$ (sd 0.016) & \\
+    ridge, pool (19) & 4,477 & $+0.226$ & $[+0.182, +0.272]$ & $-0.002$ (0.016) & \\
+    ridge, GO (2,362) & 4,477 & $+0.165$ & $[+0.136, +0.212]$ & $+0.002$ (0.012) & \\
+    ridge, GO with pool (2,381) & 4,477 & $+0.237$ & $[+0.207, +0.311]$ & $+0.001$ (0.014) & \\
     \hline
   \end{tabular}
 \end{table}
@@ -60,7 +62,9 @@
     lysine b & 4,207 & $-0.063$ & $[-0.096, -0.031]$ & 14 / 10.5 & 0.13 \\
     glutamate & 4,189 & $-0.043$ & $[-0.074, -0.012]$ & 14 / 10.4 & 0.10 \\
     aspartate & 3,880 & $-0.042$ & $[-0.075, -0.009]$ & 9 / 9.7 & 0.18 \\
-    pool ridge, 17 columns, out of fold & 4,225 & $+0.092$ & folds $+0.066$ to $+0.121$ & permuted $-0.006$ (sd 0.014) & \\
+    ridge, pool (17) & 4,225 & $+0.083$ & $[+0.054, +0.137]$ & $-0.003$ (0.010) & \\
+    ridge, GO (2,362) & 4,225 & $+0.193$ & $[+0.140, +0.260]$ & $-0.003$ (0.014) & \\
+    ridge, GO with pool (2,379) & 4,225 & $+0.196$ & $[+0.158, +0.253]$ & $-0.006$ (0.014) & \\
     \hline
   \end{tabular}
 \end{table}

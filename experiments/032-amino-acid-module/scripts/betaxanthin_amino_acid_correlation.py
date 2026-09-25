@@ -17,7 +17,10 @@ would learn from. Three reads, each on the strains both screens measured:
 * the pool as a whole: ridge regression from the standardized log amino-acid profile to
   the betaxanthin score, out of fold over five strain folds, scored by the out-of-fold
   Spearman (the alpha chosen on the training folds by an inner split), so a signal that
-  is spread thinly over the pool is not missed by the one-at-a-time read; and
+  is spread thinly over the pool is not missed by the one-at-a-time read, beside the
+  same ridge from the deleted gene's propagated GO multi-hot (the betaxanthin study's
+  best genotype-side input) and from GO with the pool appended, on the same strains and
+  folds, so the pool's contribution beyond the gene's identity is read directly; and
 * the ceiling every read is bounded by: the geometric mean of the two endpoints'
   reliabilities (betaxanthin's stored value from the 027 variance-components read,
   Mulleder's per-amino-acid retest, Cooper's duplicate-strain agreement), which is the
@@ -77,6 +80,10 @@ MULLEDER_RETEST = osp.join(
     "027-betaxanthin-metabolic/results/mulleder_retest_reliability.json",
 )
 CONCORDANCE = osp.join(RESULTS, "amino_acid_dataset_concordance.json")
+#: The propagated GO multi-hot over every annotated gene (target_go_affine_store.py).
+GO_STORE = osp.join(
+    DATA_ROOT, "data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_go.npz"
+)
 MULLEDER_KEYS = [
     "alanine",
     "arginine",
@@ -120,7 +127,7 @@ COOPER_KEYS = [
 TOP_FRAC = 0.05
 N_BOOT = 1000
 N_FOLDS = 5
-ALPHAS = [0.1, 1.0, 10.0, 100.0, 1000.0]
+ALPHAS = [0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0]
 
 
 AA3 = {
@@ -179,10 +186,16 @@ class FeatureStat(BaseModel):
 
 
 class PoolFit(BaseModel):
-    """Ridge from the whole amino-acid profile to the betaxanthin score, out of fold."""
+    """Ridge to the betaxanthin score, out of fold, from the amino-acid profile
+    (``pool``), from the deleted gene's GO multi-hot (``go``), or from both
+    (``go+pool``), on the same strains and the same folds.
+    """
 
     screen: str
+    inputs: str
     n: int
+    #: Strains with a GO row in the store (the rest read an all-zero row).
+    n_with_go: int
     n_features: int
     filled_fraction: float
     alpha_by_fold: list[float]
@@ -264,32 +277,50 @@ def ridge_fit(x: np.ndarray, y: np.ndarray, alpha: float) -> tuple[np.ndarray, f
 
 
 def pool_fit(
-    screen: str, bx: np.ndarray, profile: np.ndarray, rng: np.random.Generator
+    screen: str,
+    inputs: str,
+    bx: np.ndarray,
+    profile: np.ndarray | None,
+    go: np.ndarray | None,
+    folds: list[np.ndarray],
+    rng: np.random.Generator,
 ) -> PoolFit:
-    """Five strain folds; the alpha of each fold chosen on an inner split of its
-    training strains; the profile log-scaled, median-filled and standardized on the
-    training fold only.
+    """Five strain folds (shared by every fit on one screen); the alpha of each fold
+    chosen on an inner split of its training strains; the profile log-scaled,
+    median-filled and standardized on the training fold only; the GO multi-hot
+    standardized on the training fold only; the two concatenated when both are given,
+    the GO block scaled to the pool block's total variance so one penalty serves both.
     """
-    keep = np.isfinite(bx)
-    bx, profile = bx[keep], profile[keep]
     n = bx.size
-    order = rng.permutation(n)
-    folds = np.array_split(order, N_FOLDS)
+    assert np.isfinite(bx).all()
+    n_features = (0 if profile is None else profile.shape[1]) + (
+        0 if go is None else go.shape[1]
+    )
     pred = np.full(n, np.nan)
     alphas, by_fold = [], []
     filled = 0
     for f in range(N_FOLDS):
         test = folds[f]
         train = np.concatenate([folds[g] for g in range(N_FOLDS) if g != f])
-        lp = np.where(
-            profile > 0, np.log10(np.where(profile > 0, profile, 1.0)), np.nan
-        )
-        med = np.nanmedian(lp[train], axis=0)
-        filled += int(np.isnan(lp[test]).sum())
-        lp = np.where(np.isnan(lp), med, lp)
-        mu, sd = lp[train].mean(axis=0), lp[train].std(axis=0)
+        blocks = []
+        if profile is not None:
+            lp = np.where(
+                profile > 0, np.log10(np.where(profile > 0, profile, 1.0)), np.nan
+            )
+            med = np.nanmedian(lp[train], axis=0)
+            filled += int(np.isnan(lp[test]).sum())
+            blocks.append(np.where(np.isnan(lp), med, lp))
+        if go is not None:
+            blocks.append(go.astype(float))
+        raw = np.concatenate(blocks, axis=1)
+        mu, sd = raw[train].mean(axis=0), raw[train].std(axis=0)
         sd[sd == 0] = 1.0
-        z = (lp - mu) / sd
+        z = (raw - mu) / sd
+        if profile is not None and go is not None:
+            # One penalty over two blocks of very different width would let the 2,362
+            # GO columns swamp the 19 pool columns, so the GO block is scaled to carry
+            # the same total variance as the pool block.
+            z[:, profile.shape[1] :] *= np.sqrt(profile.shape[1] / go.shape[1])
         # The inner split: the last fifth of the training strains selects alpha.
         cut = int(0.8 * train.size)
         inner_tr, inner_va = train[:cut], train[cut:]
@@ -312,9 +343,11 @@ def pool_fit(
         permuted.append(float(spearmanr(pred, bx[perm]).correlation))
     return PoolFit(
         screen=screen,
+        inputs=inputs,
         n=int(n),
-        n_features=int(profile.shape[1]),
-        filled_fraction=float(filled / (n * profile.shape[1])),
+        n_with_go=0 if go is None else int((go.sum(axis=1) > 0).sum()),
+        n_features=int(n_features),
+        filled_fraction=float(filled / (n * n_features)),
         alpha_by_fold=alphas,
         spearman_oof=float(spearmanr(pred, bx).correlation),
         pearson_oof=float(np.corrcoef(pred, bx)[0, 1]),
@@ -375,10 +408,37 @@ def main() -> None:
             f"[{s.ci_low:+.3f}, {s.ci_high:+.3f}] p {s.spearman_p:.1e} top5 "
             f"{s.top5_overlap}/{s.top5_expected:.1f} (x{s.top5_enrichment:.1f}){ceiling}"
         )
-    pool = [pool_fit("mulleder2016", y_m, m, rng), pool_fit("cooper2010", y_c, c, rng)]
+    # The deleted gene's GO multi-hot, the betaxanthin study's best genotype-side input
+    # (the affine store of round 150); a strain outside the store reads an all-zero row.
+    go_store = np.load(GO_STORE)
+    go_rows = {str(g): i for i, g in enumerate(go_store["genes"])}
+    go_all = np.asarray(go_store["v_deletion"], dtype=np.float32)
+
+    def go_matrix(strains: list[str]) -> np.ndarray:
+        out = np.zeros((len(strains), go_all.shape[1]), dtype=np.float32)
+        for i, s in enumerate(strains):
+            if s in go_rows:
+                out[i] = go_all[go_rows[s]]
+        return out
+
+    pool = []
+    for screen, y, prof, strains in (
+        ("mulleder2016", y_m, m, shared_m),
+        ("cooper2010", y_c, c, shared_c),
+    ):
+        assert np.isfinite(y).all()
+        folds = np.array_split(rng.permutation(y.size), N_FOLDS)
+        g = go_matrix(strains)
+        print(
+            f"  {screen}: {int((g.sum(axis=1) > 0).sum())} of {len(strains)} strains "
+            "carry a GO row"
+        )
+        pool.append(pool_fit(screen, "pool", y, prof, None, folds, rng))
+        pool.append(pool_fit(screen, "go", y, None, g, folds, rng))
+        pool.append(pool_fit(screen, "go+pool", y, prof, g, folds, rng))
     for p in pool:
         print(
-            f"  pool {p.screen:<12s} n {p.n} out-of-fold Spearman {p.spearman_oof:+.3f} "
+            f"  {p.inputs:<8s} {p.screen:<12s} n {p.n} out-of-fold Spearman {p.spearman_oof:+.3f} "
             f"(folds {[round(v, 3) for v in p.spearman_by_fold]}; permuted "
             f"{np.mean(p.permuted_spearman_oof):+.3f} sd {np.std(p.permuted_spearman_oof):.3f}; "
             f"filled {p.filled_fraction:.3f})"
@@ -500,7 +560,10 @@ def main() -> None:
             "the log10 retest Spearman over 194 strains, Cooper's the duplicate-strain "
             "Spearman. The pool fit is ridge over the log10 profile, standardized and "
             "median-filled on the training fold, five strain folds, alpha chosen on an "
-            "inner split, scored out of fold; the permuted reference shuffles the target."
+            "inner split, scored out of fold; the permuted reference shuffles the target. "
+            "The go and go+pool fits use the same folds with the deleted gene's propagated "
+            "GO multi-hot (ess_solve_encodings_YPD_bx_go.npz), standardized on the training "
+            "fold, alone and beside the pool."
         ),
     )
     os.makedirs(RESULTS, exist_ok=True)

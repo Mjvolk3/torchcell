@@ -95,7 +95,11 @@ def cross_target(key: str):
         )))
         if key == "n_shared_mulleder":
             return float(d["n_shared_mulleder"])
-        return float(next(p for p in d["pool"] if p["screen"] == "mulleder2016")[key])
+        inputs, _, field = key.rpartition(":")
+        return float(next(
+            p for p in d["pool"]
+            if p["screen"] == "mulleder2016" and p["inputs"] == (inputs or "pool")
+        )[field])
 
     return run
 
@@ -114,6 +118,12 @@ CHECKS: list[Check] = [
           recompute=cross_target("spearman_oof"), tolerance=0.0006),
     Check(claim="standing: strains shared with Mulleder", stated=4477,
           recompute=cross_target("n_shared_mulleder"), tolerance=0.5),
+    Check(claim="standing: GO ridge on the Mulleder strains", stated=0.165,
+          recompute=cross_target("go:spearman_oof"), tolerance=0.0006),
+    Check(claim="standing: GO with the pool on the Mulleder strains", stated=0.237,
+          recompute=cross_target("go+pool:spearman_oof"), tolerance=0.0006),
+    Check(claim="standing: the pool's addition beyond GO", stated=0.072,
+          recompute=lambda: cross_target("go+pool:spearman_oof")() - cross_target("go:spearman_oof")(), tolerance=0.0006),
     # sec:physics -- the annotation-only family.
     Check(claim="go-models: GO columns with train support", stated=2341,
           recompute=go_model("go_mlp", "n_columns_with_train_support"), tolerance=0.5),

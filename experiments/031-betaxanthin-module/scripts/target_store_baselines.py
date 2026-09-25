@@ -95,6 +95,10 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         "sampled_mean": {"store": "YPD_bx_sampledmean", "block": "v_deletion", "flux": True},
         "mdfcap100_poly_mean": {"store": "YPD_bx_mdfcap100polymean", "block": "v_deletion", "flux": True},
         "mdfcap100_poly_spread": {"store": "YPD_bx_mdfcap100polyspread", "block": "v_deletion", "flux": True},
+        # The annotation side (target_go_affine_store.py): the propagated GO multi-hot
+        # over every annotated gene, alone and appended to the HiGHS parsimonious vector.
+        "go": {"store": "YPD_bx_go", "block": "v_deletion", "flux": False},
+        "gopfba": {"store": "YPD_bx_gopfba", "block": "v_deletion", "flux": True},
     },
     "amino_acids": {
         "pfba_highs": {"store": "SM_gem", "block": "v_deletion", "flux": True},
@@ -106,6 +110,8 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         "sampled_mean": {"store": "SM_gem_sampledmean", "block": "v_deletion", "flux": True},
         "mdfcap100_poly_mean": {"store": "SM_gem_mdfcap100polymean", "block": "v_deletion", "flux": True},
         "mdfcap100_poly_spread": {"store": "SM_gem_mdfcap100polyspread", "block": "v_deletion", "flux": True},
+        "go": {"store": "SM_gem_go", "block": "v_deletion", "flux": False},
+        "gopfba": {"store": "SM_gem_gopfba", "block": "v_deletion", "flux": True},
     },
 }
 PRIMARY_STORE = {"betaxanthin": "pfba_glpk_full", "amino_acids": "pfba_highs"}

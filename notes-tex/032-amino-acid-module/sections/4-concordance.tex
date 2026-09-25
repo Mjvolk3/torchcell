@@ -62,16 +62,23 @@ amino-acid pool carries about as much rank on its betaxanthin level as the best
 genotype-side model in the betaxanthin study reads from the deleted gene (0.211,
 \texttt{notes-tex/031-betaxanthin-module}, round 151), on a different set of strains and
 from a different kind of input, so the two endpoints share strain-level signal well
-above the noise. The Cooper screen gives the same picture faintly: no single peak beyond
-$\pm 0.063$ over the 4,225 shared strains, a pool ridge at $+0.092$ against a shuffled
-$-0.006$, with the peaks' own duplicate agreement bounding the ceilings at 0.00 to
-0.49. Hypothesis (untested): part of the shared signal is a growth or respiratory
-covariate common to both screens, since the betaxanthin screen's top hits are
-mitochondrial and the pool responds to respiratory deficiency; whether the pool adds to
-the deleted gene, rather than restating it, is the joint-training question and is not
-answered by this read.
+above the noise. Whether the pool adds to the deleted gene or restates it is read on the
+same strains and folds: the same ridge from the gene's propagated GO multi-hot (the
+betaxanthin study's best genotype-side input, 2,362 columns, an all-zero row for the
+557 strains outside the store) reads 0.165, and from GO with the pool appended, the GO
+block scaled to the pool block's variance so one penalty serves both, 0.237 (folds 0.207
+to 0.311), above the pool alone on four folds of five and above GO alone on every fold.
+The pool adds 0.072 beyond the gene's identity, so the amino-acid signal a joint model
+would learn from is not the one the annotation already carries. The Cooper screen gives
+the same picture faintly: no single peak beyond $\pm 0.063$ over the 4,225 shared
+strains, a pool ridge at $+0.083$ against a shuffled $-0.003$, with the peaks' own
+duplicate agreement bounding the ceilings at 0.00 to 0.49; on these strains GO alone
+reads 0.193 and GO with the Cooper pool 0.196, an addition of 0.003. Hypothesis
+(untested): part of the shared signal is a growth or respiratory covariate common to
+both screens, since the betaxanthin screen's top hits are mitochondrial and the pool
+responds to respiratory deficiency.
 
-\tcfigfit[1.0]{figures/betaxanthin_amino_acid_correlation_2026-09-24-20-46-33.pdf}{\textbf{The
+\tcfigfit[1.0]{figures/betaxanthin_amino_acid_correlation_2026-09-24-21-02-01.pdf}{\textbf{The
 betaxanthin score against each amino-acid quantity, strain by strain.}
 \textbf{a}, Cachera 2023's betaxanthin score against each of M\"ulleder 2016's nineteen
 concentrations over the 4,477 strains both screens hold: the Spearman (bars) with a

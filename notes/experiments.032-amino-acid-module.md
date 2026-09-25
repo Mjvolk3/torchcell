@@ -203,10 +203,11 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 - Strains matched on the systematic ORF: Cachera shares 4,477 with Mulleder and 4,225 with Cooper.
 - Single amino acids (Mulleder, Spearman with a strain bootstrap): methionine +0.130 [0.100, 0.157], threonine +0.093, aspartate +0.091, tyrosine -0.083, arginine -0.077, glutamate -0.065; top-5% overlap 3.3x chance for aspartate, 3.0x for threonine. Ceilings (sqrt of the two reliabilities, betaxanthin 0.84) 0.20 to 0.54, so the singles sit well under them.
 - The pool: ridge from the 19 standardized log concentrations to the betaxanthin score, five strain folds, out of fold, reads Spearman +0.226 (folds 0.182 to 0.272) against -0.002 (sd 0.016) with the target shuffled. That is at the level of the best genotype-side betaxanthin model (0.211, round 151), from a different input on a different strain set: the two endpoints share strain-level signal.
-- Cooper: no single peak beyond |0.063|; pool ridge +0.092 (shuffled -0.006); ceilings 0.00 to 0.49.
-- Hypothesis (untested): part of the shared signal is a growth or respiratory covariate common to both screens. Whether the pool adds to the deleted gene, rather than restating it, is the joint-training question this read does not answer.
+- Does the pool add to the gene's identity? Same strains and folds: ridge from the gene's GO multi-hot (2,362 columns; 557 strains outside the store read zeros) 0.165; GO with the pool appended (GO block scaled to the pool block's variance) 0.237, above the pool alone on 4/5 folds and above GO on 5/5. The pool adds 0.072 beyond GO: the amino-acid signal is not the one the annotation already carries.
+- Cooper: no single peak beyond |0.063|; pool ridge +0.083 (shuffled -0.003); ceilings 0.00 to 0.49; GO 0.193, GO + Cooper pool 0.196 (+0.003).
+- Hypothesis (untested): part of the shared signal is a growth or respiratory covariate common to both screens.
 
-![](./assets/images/032-amino-acid-module/betaxanthin_amino_acid_correlation_2026-09-24-20-46-33.svg)
+![](./assets/images/032-amino-acid-module/betaxanthin_amino_acid_correlation_2026-09-24-21-02-01.svg)
 
 - Submitted A17 = w179 (GO + HiGHS affine at dropout 0.3 on the prototroph, job 2817; paired vs w177 and w173).
 

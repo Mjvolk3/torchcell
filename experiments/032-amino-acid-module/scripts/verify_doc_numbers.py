@@ -96,7 +96,8 @@ def cross_summary(key: str):
                 return float(max(abs(x["spearman"]) for x in rows))
             vals = [x["ceiling"] for x in rows if x["ceiling"] is not None]
             return float(min(vals) if field == "ceiling_min" else max(vals))
-        p = next(x for x in d["pool"] if x["screen"] == screen)
+        screen, _, inputs = screen.partition("/")
+        p = next(x for x in d["pool"] if x["screen"] == screen and x["inputs"] == (inputs or "pool"))
         if field == "spearman_oof":
             return float(p["spearman_oof"])
         if field == "fold_min":
@@ -107,6 +108,11 @@ def cross_summary(key: str):
             return float(np.mean(p["permuted_spearman_oof"]))
         if field == "permuted_sd":
             return float(np.std(p["permuted_spearman_oof"]))
+        if field == "n_with_go":
+            return float(p["n_with_go"])
+        if field in ("folds_above_pool", "folds_above_go"):
+            other = next(x for x in d["pool"] if x["screen"] == screen and x["inputs"] == field.split("_")[-1])
+            return float(sum(a > b for a, b in zip(p["spearman_by_fold"], other["spearman_by_fold"])))
         raise KeyError(key)
 
     return run
@@ -160,10 +166,32 @@ CHECKS: list[Check] = [
           recompute=cross_summary("mulleder2016:permuted_sd"), tolerance=0.0006),
     Check(claim="cross-target: Cooper largest single peak", stated=0.063,
           recompute=cross_summary("cooper2010:abs_spearman_max"), tolerance=0.0006),
-    Check(claim="cross-target: Cooper pool ridge out of fold", stated=0.092,
+    Check(claim="cross-target: Cooper pool ridge out of fold", stated=0.083,
           recompute=cross_summary("cooper2010:spearman_oof"), tolerance=0.0006),
-    Check(claim="cross-target: Cooper pool permuted mean", stated=-0.006,
+    Check(claim="cross-target: Cooper pool permuted mean", stated=-0.003,
           recompute=cross_summary("cooper2010:permuted_mean"), tolerance=0.0006),
+    Check(claim="cross-target: Mulleder strains outside the GO store", stated=557,
+          recompute=lambda: 4477 - cross_summary("mulleder2016/go:n_with_go")(), tolerance=0.5),
+    Check(claim="cross-target: GO ridge on the Mulleder strains", stated=0.165,
+          recompute=cross_summary("mulleder2016/go:spearman_oof"), tolerance=0.0006),
+    Check(claim="cross-target: GO with the pool on the Mulleder strains", stated=0.237,
+          recompute=cross_summary("mulleder2016/go+pool:spearman_oof"), tolerance=0.0006),
+    Check(claim="cross-target: GO with the pool fold min", stated=0.207,
+          recompute=cross_summary("mulleder2016/go+pool:fold_min"), tolerance=0.0006),
+    Check(claim="cross-target: GO with the pool fold max", stated=0.311,
+          recompute=cross_summary("mulleder2016/go+pool:fold_max"), tolerance=0.0006),
+    Check(claim="cross-target: GO with the pool above the pool, folds", stated=4,
+          recompute=cross_summary("mulleder2016/go+pool:folds_above_pool"), tolerance=0.5),
+    Check(claim="cross-target: GO with the pool above GO, folds", stated=5,
+          recompute=cross_summary("mulleder2016/go+pool:folds_above_go"), tolerance=0.5),
+    Check(claim="cross-target: the pool's addition beyond GO (Mulleder)", stated=0.072,
+          recompute=lambda: cross_summary("mulleder2016/go+pool:spearman_oof")() - cross_summary("mulleder2016/go:spearman_oof")(), tolerance=0.0006),
+    Check(claim="cross-target: GO ridge on the Cooper strains", stated=0.193,
+          recompute=cross_summary("cooper2010/go:spearman_oof"), tolerance=0.0006),
+    Check(claim="cross-target: GO with the Cooper pool", stated=0.196,
+          recompute=cross_summary("cooper2010/go+pool:spearman_oof"), tolerance=0.0006),
+    Check(claim="cross-target: the pool's addition beyond GO (Cooper)", stated=0.003,
+          recompute=lambda: cross_summary("cooper2010/go+pool:spearman_oof")() - cross_summary("cooper2010/go:spearman_oof")(), tolerance=0.0006),
     Check(claim="cross-target: Cooper ceiling min", stated=0.00,
           recompute=cross_summary("cooper2010:ceiling_min"), tolerance=0.006),
     Check(claim="cross-target: Cooper ceiling max", stated=0.49,

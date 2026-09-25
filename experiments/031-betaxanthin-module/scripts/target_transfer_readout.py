@@ -634,6 +634,24 @@ PAIRS = [
         "w168_bxdelgopfba_h12l1p1_e200",
     ),
     (
+        "betaxanthin: HiGHS store with GO at affine decay 0.1 against no decay",
+        "betaxanthin",
+        "w188_bxdelgopfbawd_h12l1p1_e200",
+        "w168_bxdelgopfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: HiGHS store with GO at affine decay 1.0 against no decay",
+        "betaxanthin",
+        "w189_bxdelgopfbawd1_h12l1p1_e200",
+        "w168_bxdelgopfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: HiGHS store with GO at affine decay 1.0 against decay 0.1",
+        "betaxanthin",
+        "w189_bxdelgopfbawd1_h12l1p1_e200",
+        "w188_bxdelgopfbawd_h12l1p1_e200",
+    ),
+    (
         "amino acids: GO affine at dropout 0.3 against 0.1",
         "mulleder19",
         "w182_aadelgodrop_h12l1p1_e200",

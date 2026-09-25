@@ -420,6 +420,14 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 |---|---|---|---|---|
 | B38 | 171 | w190 | del + HiGHS and MOMA stores with GO | 0.216 (sd 0.007); ens 0.217 / 4.59 |
 
+## 2026.09.25 - B40 read: the control on twelve seeds
+
+- B40 (w192 = w137 seeds 2706 to 2711, job 2832, 3 h 41 min): the control's second six read 0.094 (sd 0.017) vs the first six's 0.058 (sd 0.075); over twelve 0.076 (sd 0.055), seeds -0.089 to 0.126, select at epochs 3 to 69. GO affine vs control paired over twelve: +0.127 (sd 0.054), 12/12, 0.203 vs 0.076; top-50 4.99 vs 4.06. Control ensembles: six 0.082 / 4.79, twelve 0.102 / 5.59; the annotation's twelve-seed ensemble 0.203 stays double. The amino-acid round-168 finding (control ensemble passes the annotation) does not repeat here: the gain is five times what the averaging recovers. Written as round 173; 031 published v30.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B40 | 173 | w192 | w137 seeds 2706 to 2711 | control twelve seeds 0.076 (sd 0.055); GO affine +0.127 (12/12); control ens 0.102 / 5.59 |
+
 ## 2026.09.25 - The measured amino-acid pool as an input; DCell's published input; packs B41, B42
 
 - User direction: the cross-endpoint read (pool ridge 0.226, GO + pool 0.237 on its own folds) should be demonstrated as "adding the data helps", in the ladder and in the transformer. New `target_pool_store.py`: the strain's own Mulleder pool (19 mM columns as released, 4,678 strains, 0 missing cells; wild-type row = the loader's reference, the population robust mean) as affine store `YPD_bx_aapool`; `target_store_concat.py` appends it to GO (`YPD_bx_goaapool`, 2,381 columns) and to GO with the HiGHS vector (`YPD_bx_gopfbaaapool`, 6,558). Phenotype to phenotype: the row is the strain's measurement in a different screen, not its sequence, so a gain shows that the data carries signal beyond the gene's identity, not that the module generalizes from genotype.

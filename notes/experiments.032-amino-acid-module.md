@@ -237,3 +237,11 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 | A20 | -- | w187 | w141 seeds 2706 to 2711 (the control) | job 2827, pending |
 
 - A19 and A20 (jobs 2826, 2827): six more seeds of the GO affine and of its control, so the one paired gain on this target (+0.009 on 5/6) is read on twelve seeds.
+
+## 2026.09.25 - A17 read: GO with the HiGHS vector at dropout 0.3
+
+- A17 (w179, GO + HiGHS affine at dropout 0.3, job 2817, 3 h 40 min): 0.055 (sd 0.002) vs the same at 0.1 (A16) 0.055 (+0.000, sd 0.001, 4/6) and vs the store at 0.3 (A15) 0.045 (+0.011, sd 0.007, 6/6); ensembles 0.056 vs 0.057 and 0.049. Every seed selects at epoch 2. Dropout does not enter the annotation affine's read here either; the affine over the annotation is this target's best transformer arm and the backbone is not where its level is set. Written as round 162; 032 published v14 (280 checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A17 | 162 | w179 | del + HiGHS store with GO, dropout 0.3 | 0.055 (sd 0.002); ens 0.056 |

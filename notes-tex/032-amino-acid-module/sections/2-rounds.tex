@@ -234,4 +234,17 @@ from it, on every seed, the same direction as every read the flux row has joined
 this target: the annotation's small gain over the control stands, and the metabolic
 vector still has nothing to add to it here.
 
+Round 162 is read (job 2817, 3 h 40 min): the same affine, the HiGHS vector with GO
+appended, with transformer dropout 0.3, on the deletion-only graph. It reads 0.055 (sd
+0.002) against the same affine at dropout 0.1 at 0.055 ($+0.000$ paired, sd 0.001,
+above on four of six) and against the store alone at dropout 0.3 at 0.045 ($+0.011$,
+sd 0.007, six of six), ensembled over six seeds 0.056 against 0.057 and 0.049. Every
+seed selects at epoch 2 on validation Pearson 0.11 to 0.12 and reads 0.051 to 0.059, the
+seeds of round 160 to the third decimal. So the transformer's dropout does not enter the
+annotation affine's read on this target either (the sibling document, rounds 159 and
+161), and the affine's margin over the store narrows from 0.015 at dropout 0.1 (round
+160) to 0.011 at 0.3 only because the store arm moved (round 157): the affine over the
+annotation is what this target's best transformer arm is, and the backbone around it
+is not where its level is set.
+
 \input{tables/target_transfer}

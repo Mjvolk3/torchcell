@@ -71,7 +71,7 @@ Two consecutive runs then agree to every printed digit. On betaxanthin the GLPK 
 block carries nothing (ridge $-0.006$, kNN $-0.004$, forest $+0.009$); the whole GLPK
 vector, the one round 117 read, carries 0.097 by kNN; the HiGHS rebuild of the growth
 program carries 0.195 by kNN with a top-50 enrichment of 3.39, the highest rank of any
-single read on this split (the best single transformer arm is 0.121, the best six-seed
+flux-side read on this split (the best single transformer arm is 0.121, the best six-seed
 ensemble 0.153, the cosine kNN over ProtT5 0.145, reproduced here at 0.144); the MOMA
 store 0.135 by ridge; the six flux statistics of the parsimonious build 0.145 by kNN;
 the capped driving-force concentrations 0.152 by
@@ -142,7 +142,15 @@ target itself produced; the split holds out genes, not annotations. And the tran
 arms were never given this input: the annotation the backbone reads is the pathway
 multi-hot, and rounds 150 and 151 (w167, w168) put the GO multi-hot in the affine
 slot, alone and appended to the HiGHS store, over every annotated gene, the interface
-every other input has entered through.
+every other input has entered through. The same two inputs read by the ladder's three
+models (Table~\ref{tab:store-baselines}) fix what the transformer adds to them: the GO
+multi-hot reads 0.076 by ridge, 0.179 by nearest neighbors and 0.187 by forest with a
+top-50 enrichment of 5.39, the highest call of any read on this split; GO with the
+HiGHS vector appended reads 0.123, 0.198 and 0.204 with a top-50 of 4.79. The forest
+over the 6,539 columns round 151's affine reads sits 0.008 under that round's 0.211,
+the size of the round's own seed spread, with the higher call, so on this input the
+transformer's rank is what a backbone-free model of the same columns reaches, and
+averaging its six seeds adds 0.001.
 
 \input{tables/go_models}
 

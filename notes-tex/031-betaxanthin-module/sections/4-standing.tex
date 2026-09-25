@@ -29,9 +29,12 @@ five seeds of six, the highest rank of the study (round 151). Dropout 0.3 on the
 arm reads 0.145, the best single-seed rank and call of any store arm, where width 6 to
 90 left the level flat (144, 145). Every arm overfits by epoch 60 and averaging seeds
 is worth more than any representation on the call. On the same split the comparators
-sit below the best arm: cosine nearest neighbors over the HiGHS store 0.195, the ridge
-0.152, nearest neighbors over ProtT5 0.145, the Flux Cone Learning random forest 0.039
-(Tables~\ref{tab:store-baselines} and \ref{tab:target-transfer-comparators}). The
+sit below the best arm, the closest by 0.008: a random forest over GO with the HiGHS
+vector, the best arm's own input, 0.204 with a top-50 of 4.79, cosine nearest neighbors
+over the HiGHS store 0.195, the ridge 0.152, nearest neighbors over ProtT5 0.145, the
+Flux Cone Learning random forest 0.039 (Tables~\ref{tab:store-baselines} and
+\ref{tab:target-transfer-comparators}); the best call of any read is the forest over GO
+alone, 5.39. The
 amino-acid endpoint shares strain-level signal with this one: a deletion's measured
 amino-acid pool, M\"ulleder's nineteen concentrations through a ridge, reads its
 betaxanthin level out of fold at 0.226 over 4,477 strains, and appended to the gene's

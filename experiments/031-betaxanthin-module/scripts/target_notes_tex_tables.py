@@ -31,6 +31,9 @@ NOTES_TEX = osp.join(osp.dirname(EXPERIMENT_ROOT), "notes-tex")
 STUDY = {
     "betaxanthin": {"dir": "031-betaxanthin-module", "label": "betaxanthin"},
     "amino_acids": {"dir": "032-amino-acid-module", "label": "amino acids"},
+    # Cooper 2010's 17 peaks as a ladder target (2026-09-25), written into the 032
+    # document beside the Mulleder ladder under its own table name.
+    "cooper": {"dir": "032-amino-acid-module", "label": "Cooper 2010 peaks"},
 }
 SCRIPT = "experiments/031-betaxanthin-module/scripts/target_notes_tex_tables.py"
 PAIRS_PER_TABLE = 18
@@ -183,11 +186,19 @@ def store_baselines(target: str) -> str | None:
                 cell += f" / {tp['top50_enrichment']:.2f}"
             cells.append(cell)
         rows.append(f"    {STORE_LABELS.get(rep, rep)} & {o['dim']} & " + " & ".join(cells) + " \\\\")
-    cell_note = (
-        "the cell is the pinned-test Spearman and, after the slash, the top-50 enrichment"
-        if target == "betaxanthin"
-        else "the cell is the mean pinned-test Spearman over the 19 amino acids"
-    )
+    cell_note = {
+        "betaxanthin": "the cell is the pinned-test Spearman and, after the slash, the top-50 enrichment",
+        "amino_acids": "the cell is the mean pinned-test Spearman over the 19 amino acids",
+        "cooper": (
+            "the target is Cooper 2010's 17 CE-LIF peaks (a linear ratio to the plate mean, "
+            "the auxotroph on synthetic complete medium), read from the loader's table by the "
+            f"record's deleted gene on the same pinned split ({d['n_pinned']['test']} pinned "
+            "test genotypes carry a Cooper row), over the SM stores of the prototroph; the "
+            "cell is the mean pinned-test Spearman over the 17 peaks"
+        ),
+    }[target]
+    name = "store_baselines" if target != "cooper" else "store_baselines_cooper"
+    label = "tab:store-baselines" if target != "cooper" else "tab:store-baselines-cooper"
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
         "  \\caption[CPU baselines over the store representations]{Each deleted gene "
@@ -201,13 +212,13 @@ def store_baselines(target: str) -> str | None:
         "\\texttt{target\\_notes\\_tex\\_tables.py} from "
         f"\\texttt{{results/store\\_baselines\\_{target.replace('_', '\\_')}.json}} "
         "(\\texttt{target\\_store\\_baselines.py}).}\n"
-        "  \\label{tab:store-baselines}\n"
+        f"  \\label{{{label}}}\n"
         "  \\begin{tabular}{@{}p{62mm}rrrr@{}}\n    \\hline\n"
         "    representation & columns & ridge & kNN & forest \\\\\n    \\hline\n"
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
-    return write(target, "store_baselines", body, f"results/store_baselines_{target}.json")
+    return write(target, name, body, f"results/store_baselines_{target}.json")
 
 
 def store_degeneracy(target: str) -> str | None:
@@ -481,6 +492,7 @@ def main() -> None:
         target_transfer("amino_acids"),
         store_baselines("betaxanthin"),
         store_baselines("amino_acids"),
+        store_baselines("cooper"),
         store_degeneracy("betaxanthin"),
         store_degeneracy("amino_acids"),
         amino_acid_concordance(),

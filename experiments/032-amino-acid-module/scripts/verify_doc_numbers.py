@@ -78,6 +78,35 @@ def cross_feature(screen: str, key: str, field: str):
     return run
 
 
+def cooper_ladder(key: str):
+    """A value of the Cooper-target ladder (``results/store_baselines_cooper.json``):
+    ``<rep>:<model>`` for a selected cell's mean Spearman, ``min`` or ``max`` over every
+    cell, ``n_test`` or ``n_pinned_test``."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "store_baselines_cooper.json")))
+        reps = d["representations"]
+        if key == "n_test":
+            return float(d["n"]["test"])
+        if key == "n_pinned_test":
+            return float(d["n_pinned"]["test"])
+        cells = [
+            reps[r][m]["selected_on_val"]["test_pinned"]["mean_spearman"]
+            for r in reps
+            for m in ("ridge", "knn", "forest")
+        ]
+        if key == "min":
+            return float(min(cells))
+        if key == "max":
+            return float(max(cells))
+        rep, _, model = key.partition(":")
+        return float(reps[rep][model]["selected_on_val"]["test_pinned"]["mean_spearman"])
+
+    return run
+
+
 def mulleder_retest(key: str):
     """A value of the 027 retest read: a top-level mean, ``<amino acid>:<field>``,
     ``min:<field>`` or ``max:<field>`` over the nineteen, or ``spearman_ceiling``, the
@@ -235,6 +264,23 @@ CHECKS: list[Check] = [
           recompute=mulleder_retest("min:sd_single_measurement_log10"), tolerance=0.006),
     Check(claim="retest: single-measurement sd max", stated=0.27,
           recompute=mulleder_retest("max:sd_single_measurement_log10"), tolerance=0.006),
+    # sec:concordance -- Cooper's peaks as a ladder target (2026-09-25).
+    Check(claim="cooper ladder: test genotypes with a row", stated=816,
+          recompute=cooper_ladder("n_test"), tolerance=0.5),
+    Check(claim="cooper ladder: pinned test genotypes", stated=561,
+          recompute=cooper_ladder("n_pinned_test"), tolerance=0.5),
+    Check(claim="cooper ladder: lowest cell", stated=-0.025,
+          recompute=cooper_ladder("min"), tolerance=0.0006),
+    Check(claim="cooper ladder: highest cell", stated=0.041,
+          recompute=cooper_ladder("max"), tolerance=0.0006),
+    Check(claim="cooper ladder: HiGHS store with ProtT5 forest", stated=0.041,
+          recompute=cooper_ladder("pfba_highs+prot_T5_all:forest"), tolerance=0.0006),
+    Check(claim="cooper ladder: MOMA ridge", stated=0.039,
+          recompute=cooper_ladder("moma:ridge"), tolerance=0.0006),
+    Check(claim="cooper ladder: GO forest", stated=0.019,
+          recompute=cooper_ladder("go:forest"), tolerance=0.0006),
+    Check(claim="cooper ladder: ProtT5 ridge", stated=0.028,
+          recompute=cooper_ladder("prot_T5_all:ridge"), tolerance=0.0006),
     Check(claim="cross-target: Mulleder pool ridge out of fold", stated=0.226,
           recompute=cross_summary("mulleder2016:spearman_oof"), tolerance=0.0006),
     Check(claim="cross-target: Mulleder pool fold min", stated=0.182,

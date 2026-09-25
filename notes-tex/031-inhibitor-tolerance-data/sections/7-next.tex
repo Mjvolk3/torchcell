@@ -1,0 +1,41 @@
+%% notes-tex/031-inhibitor-tolerance-data/sections/7-next.tex
+
+\section{What follows\secstatus{todo}}
+\label{sec:next}
+
+\notesec{Baselines before models}
+The ceilings of Section~\ref{sec:noise} become scores through the same ladder the
+trigenic work used: a per-gene additive ridge and a nearest-neighbor model over genes,
+fit on Vanacloig alone and then on Vanacloig with HOM, under a split that holds out
+whole compounds. A held-out compound is the case a strain-design model faces, a stress
+it has never seen, and it is the split that isolates the model from the dataset
+offsets of Section~\ref{sec:axes}. Every per-compound score is reported beside that
+compound's ceiling, because a score of 0.3 on a compound with a ceiling of 0.9 and a
+score of 0.3 on one with a ceiling of 0.35 are different results.
+
+\notesec{Two transfer tests}
+Section~\ref{sec:structure} found one exact match that transfers. The model question
+is whether a partner dataset helps on held-out inhibitors through exact matches only,
+or through chemical similarity as well. Both are testable on the same split: add HOM
+restricted to the exact-match compounds, then add all of HOM with compounds encoded by
+one of the encoders of Section~\ref{sec:encoders}, and compare the held-out Vanacloig
+score against Vanacloig alone. Section~\ref{sec:chemistry} gives the prior for the
+second arm.
+
+\notesec{The environment encoding}
+The first environment representation is the dosed compound alone, one vector per record
+from a chosen encoder. The second adds the medium: SynBase, YPD and SC dropouts enter as
+sets of compound vectors rather than as names, which is the representation the
+metabolism arm will share. Whether adding the metabolic model degrades the held-out
+compound score is the ablation that decides whether the integrated representation
+costs anything.
+
+\notesec{Lian 2019 as the external furfural check}
+Lian et al.\ 2019 (\texttt{10.1038/s41467-019-13621-4}) selected a genome-wide
+CRISPRa, CRISPRi and CRISPRd library on furfural. Round 1 of the CRISPRd arm, about
+21{,}000 guides over about 5{,}200 genes in the unmodified host, is the nearest thing
+to a deletion screen; the activation and interference arms have no deletion analog
+and rounds 2 and 3 carry integrated backgrounds. Furfural's ceiling in Vanacloig is
+0.88, so there is signal to transfer, and the environments differ (aerobic SED-URA
+with G418 at 5\,mM against anaerobic SynBase at IC30), so a weak score would not
+separate the model from the modality.

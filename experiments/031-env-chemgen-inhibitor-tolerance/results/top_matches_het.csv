@@ -20,11 +20,11 @@ vanillic acid,chlorambucil,0.088730810789822,basifungin,0.08400536538571178
 "2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",thimerosal,0.08423555098046873,1-methyl-4-phenylpyridinium,0.08296046865399653
 nonylacridine orange,flucytosine|ketoconazole,0.08389509330060664,npc216413,0.08250631433412685
 levulinic acid,basifungin,0.08379737161554926,fenpropimorph,0.05283122476360605
-4-hydroxybenzaldehyde,juglone,0.08369307995087936,T=23.0,0.07322102171678165
+4-hydroxybenzaldehyde,juglone,0.08369307995087936,T=23,0.07322102171678165
 methyl methanesulfonate,dyclonine,0.07994474411977287,5-chloro-8-hydroxyquinoline,0.06941173197642533
 azelaic acid,coralyne,0.07944632512214755,lithium chloride,0.07095369883588104
-ferulamide,tunicamycin,0.07887658361746037,T=37.0,0.0780002942575833
-"2,4-dimethylimidazole",T=20.0,0.07554602655769223,amitriptyline hydrochloride,0.07095612290140417
+ferulamide,tunicamycin,0.07887658361746037,T=37,0.0780002942575833
+"2,4-dimethylimidazole",T=20,0.07554602655769223,amitriptyline hydrochloride,0.07095612290140417
 methylglyoxal,nocodazole,0.07418894929849215,"phosphine sulfide, tris(4-methylphenyl)-",0.0585151665532466
 crystal violet,itraconazole,0.07285829305847133,solasodine,0.07256893245749944
 gamma-valerolactone,basifungin,0.07015497776012672,"phosphine sulfide, tris(4-methylphenyl)-",0.068165925304891

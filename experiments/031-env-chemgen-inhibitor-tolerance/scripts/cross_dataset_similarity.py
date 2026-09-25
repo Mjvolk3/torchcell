@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import os
 import os.path as osp
+import sys
 
 import matplotlib
 
@@ -61,6 +62,9 @@ RESULTS_DIR = osp.join(
     EXPERIMENT_ROOT, "031-env-chemgen-inhibitor-tolerance", "results"
 )
 IMAGES_DIR = osp.join(ASSET_IMAGES_DIR, "031-env-chemgen-inhibitor-tolerance")
+#: ``--stable`` writes un-timestamped file names (the reviewed figures the note and the
+#: notes-tex document reference); the default keeps the timestamp for iteration.
+STABLE_NAMES = "--stable" in sys.argv
 INK = "#000000"
 ORANGE, RED, PURPLE, YELLOW, BLUE, GRAY = PLOT_PALETTE[:6]
 HIT_QUANTILE = 0.05
@@ -109,7 +113,7 @@ def _box(ax: Axes) -> None:
 def _save(fig: plt.Figure, name: str) -> str:
     """Save PNG + true-size SVG with a timestamp; return the SVG path."""
     os.makedirs(IMAGES_DIR, exist_ok=True)
-    stem = osp.join(IMAGES_DIR, f"{name}_{timestamp()}")
+    stem = osp.join(IMAGES_DIR, name if STABLE_NAMES else f"{name}_{timestamp()}")
     fig.savefig(stem + ".png", dpi=300)
     savefig_true_size_svg(fig, stem + ".svg")
     return stem + ".svg"
@@ -121,6 +125,18 @@ def _background(df: pd.DataFrame) -> set[str]:
     return set.intersection(*sets) if len(sets) > 1 else set()
 
 
+def condition_label(df: pd.DataFrame) -> pd.Series:
+    """Coarse condition: the dosed compound, else the physical factor, else the raised or
+    lowered temperature, else the swapped medium (Hillenmeyer's SD, SC-dropout and YP
+    glycerol arms carry no compound, no physical factor and an unstated temperature).
+    """
+    cond = df["compound"].where(df["compound"] != "", df["physical"])
+    temp = df["temperature_c"].map(lambda t: "" if pd.isna(t) else f"T={t:g}")
+    cond = cond.where(cond != "", temp)
+    medium = df["media_name"].str.split(" (", regex=False).str[0].str.strip()
+    return cond.where(cond != "", "medium=" + medium)
+
+
 def load_matrix(name: str, sign: float) -> tuple[pd.DataFrame, pd.DataFrame]:
     """(gene x condition response matrix, gene x condition SE matrix), growth-oriented."""
     df = pd.read_parquet(osp.join(RESULTS_DIR, f"records_{name}.parquet"))
@@ -129,9 +145,7 @@ def load_matrix(name: str, sign: float) -> tuple[pd.DataFrame, pd.DataFrame]:
         lambda g: "|".join(x for x in g.split("|") if x not in bg)
     )
     df = df[df["query_gene"].str.count(r"\|") == 0]  # single queried gene only
-    cond = df["compound"].where(df["compound"] != "", df["physical"])
-    cond = cond.where(cond != "", "T=" + df["temperature_c"].astype(str))
-    df = df.assign(condition=cond, r=sign * df["response"])
+    df = df.assign(condition=condition_label(df), r=sign * df["response"])
     g = df.groupby(["query_gene", "condition"])
     M = g["r"].mean().unstack()
     n = g["r"].size().unstack()
@@ -310,7 +324,7 @@ def fig_reliability(
     ax.bar(
         x,
         r.loc[order, "reliability"].clip(lower=0),
-        color=ORANGE,
+        color=PURPLE,
         edgecolor=INK,
         linewidth=0.4,
         label="reliability index (served SE)",
@@ -319,7 +333,7 @@ def fig_reliability(
         x,
         best.loc[order],
         "o",
-        color=PURPLE,
+        color=RED,
         markersize=2.5,
         markeredgecolor=INK,
         markeredgewidth=0.3,
@@ -328,13 +342,15 @@ def fig_reliability(
     med = np.nanmedian(rel_h["reliability"])
     ax.axhline(
         med,
-        color=RED,
+        color=BLUE,
         linewidth=0.6,
         linestyle="--",
         label=f"{partner.upper()} median reliability",
     )
     ax.set_xticks(x)
-    ax.set_xticklabels(order, rotation=90)
+    ax.set_xticklabels(
+        [c if len(c) <= 26 else c[:24] + ".." for c in order], rotation=90
+    )
     ax.set_ylim(0, 1)
     ax.yaxis.set_major_locator(MultipleLocator(0.2))
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
@@ -396,6 +412,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--partners", nargs="+", default=list(PARTNERS), choices=list(PARTNERS)
+    )
+    ap.add_argument(
+        "--stable", action="store_true", help="write un-timestamped figure names"
     )
     args = ap.parse_args()
     _apply_rc()

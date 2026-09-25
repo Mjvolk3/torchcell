@@ -120,8 +120,8 @@ and the ceiling for any correlation with another dataset.
 | dataset | conditions with a served SE | median | 25th pct | conditions below 0.1 |
 |---|---|---|---|---|
 | Vanacloig 2022 | 41 | 0.703 | 0.370 | sodium glyoxylate, sodium butyrate, 5-HMF, 4-methylimidazole, 2-methylimidazole, p-coumaric acid |
-| Hillenmeyer HOM | 45 | 0.917 | 0.774 | levodopa |
-| Hillenmeyer HET | 61 | 0.844 | 0.659 | 3,5-dinitrobenzamide, rotenone, hexestrol |
+| Hillenmeyer HOM | 52 | 0.919 | 0.804 | levodopa |
+| Hillenmeyer HET | 62 | 0.845 | 0.668 | 3,5-dinitrobenzamide, rotenone, hexestrol |
 
 Six Vanacloig compounds carry no measurable across-gene signal at this dose, and 5-HMF
 is one of them (index -0.054, so the replicate noise exceeds the spread between genes).
@@ -129,7 +129,7 @@ The compounds that matter for the isobutanol work are well measured: isobutanol 
 ethanol 0.828, furfural 0.771, ferulic acid 0.850, methyl methanesulfonate 0.879.
 Vanillin is 0.656 and sodium acetate 0.370.
 
-![](./assets/images/031-env-chemgen-inhibitor-tolerance/reliability_vs_cross_hom_2026-09-25-17-46-08.svg)
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/reliability_vs_cross_hom.svg)
 
 Panel b. Reliability index per Vanacloig condition (bars) against the best Spearman that
 condition reaches with any HOM condition (markers) and the HOM median (dashed).
@@ -141,20 +141,20 @@ Both matrices are oriented so that negative is a defect, Hillenmeyer's doses and
 generation counts are averaged within a compound, and every Vanacloig condition is
 correlated with every partner condition over the shared genes.
 
-| statistic | HOM (123 conditions) | HET (307 conditions) |
+| statistic | HOM (140 conditions) | HET (308 conditions) |
 |---|---|---|
-| cross Spearman, median | 0.011 | 0.003 |
+| cross Spearman, median | 0.010 | 0.003 |
 | cross Spearman, 95th percentile | 0.076 | 0.052 |
 | cross Spearman, maximum | 0.222 (myclobutanil vs basifungin) | 0.183 (myclobutanil vs tris(4-methylphenyl)phosphine sulfide) |
-| per-gene mean response across conditions, Spearman | 0.138 (n = 3,550) | 0.036 (n = 3,577) |
-| gene-gene similarity agreement (Mantel Spearman) | 0.056, null -0.001 +/- 0.008 (1,351 genes) | 0.024, null -0.001 +/- 0.007 (1,422 genes) |
+| per-gene mean response across conditions, Spearman | 0.118 (n = 3,550) | 0.036 (n = 3,577) |
+| gene-gene similarity agreement (Mantel Spearman) | 0.068, null -0.003 +/- 0.006 (1,350 genes) | 0.024, null -0.001 +/- 0.007 (1,422 genes) |
 
-The shared structure is real (the Mantel statistic is seven null standard deviations
-out for HOM) and small. HOM carries about four times the shared structure that HET
+The shared structure is real (the Mantel statistic is eleven null standard deviations
+out for HOM) and small. HOM carries about three times the shared structure that HET
 does on every statistic, which is the expected direction: HOM is the same perturbation
 class as Vanacloig, HET is a dosage halving that includes essential genes.
 
-![](./assets/images/031-env-chemgen-inhibitor-tolerance/cross_similarity_heatmap_hom_2026-09-25-17-46-08.svg)
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/cross_similarity_heatmap_hom.svg)
 
 Panel a. Spearman between each Vanacloig condition (rows) and the 40 HOM conditions with
 the largest absolute correlation to any row (columns), over the 3,550 shared genes.
@@ -165,20 +165,20 @@ genes in a condition (172 genes); 8.6 are expected to overlap by chance.
 
 | Vanacloig vs partner | rho | rank of the true match | hit overlap | Fisher p |
 |---|---|---|---|---|
-| MMS vs MMS (HOM) | 0.132 | 3 of 123 | 39 | 8.8e-17 |
-| benomyl vs benomyl (HOM) | -0.007 | 75 of 123 | 16 | 0.011 |
-| sodium acetate vs acetic acid (HOM) | -0.027 | 106 of 123 | 4 | 0.97 |
-| benomyl vs benomyl (HET) | 0.024 | 30 of 307 | 5 | 0.94 |
-| ferulic acid vs ferulic acid (HET) | 0.005 | 109 of 307 | 8 | 0.63 |
+| MMS vs MMS (HOM) | 0.132 | 3 of 140 | 39 | 8.8e-17 |
+| benomyl vs benomyl (HOM) | -0.007 | 88 of 140 | 16 | 0.011 |
+| sodium acetate vs acetic acid (HOM) | -0.027 | 121 of 140 | 4 | 0.97 |
+| benomyl vs benomyl (HET) | 0.024 | 30 of 308 | 5 | 0.94 |
+| ferulic acid vs ferulic acid (HET) | 0.005 | 110 of 308 | 8 | 0.63 |
 
-MMS transfers: its HOM match ranks third of 123, and its best match, 4-nitroquinoline
+MMS transfers: its HOM match ranks third of 140, and its best match, 4-nitroquinoline
 1-oxide, is another DNA-damaging agent. Benomyl transfers at the hit level only, and not
 at all into HET. The acetate salt against the free acid does not transfer, and neither
 does ferulic acid at 3.95 uM against ferulic acid at IC30. Hypothesis (untested): the
 acetate result is the dose form, a salt at pH 5 in SynBase against the free acid in YPD,
 and the ferulic acid result is the dose, 3.95 uM being far below an IC30.
 
-![](./assets/images/031-env-chemgen-inhibitor-tolerance/shared_compound_scatter_hom_2026-09-25-17-46-08.svg)
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/shared_compound_scatter_hom.svg)
 
 Panels c to e. Shared-gene responses for the three HOM pairs, bottom-5% hits in both
 datasets in red. Generated by
@@ -195,10 +195,10 @@ and the aldehyde and ketone phenolics share a DNA-damage profile. The full ranki
 ### What this means for the model
 
 - **HOM is the partner, not HET.** It is the same perturbation class, it shares 3,550 of
-  Vanacloig's 3,598 genes, and it carries four times HET's shared structure. HET adds
+  Vanacloig's 3,598 genes, and it carries three times HET's shared structure. HET adds
   essential genes Vanacloig cannot query, which is a different use.
 - **What HOM can contribute is a gene-level prior.** The per-gene mean response
-  correlates at 0.138 and the gene-gene co-response structure agrees above the null, so
+  correlates at 0.118 and the gene-gene co-response structure agrees above the null, so
   which genes are generally sensitive and which genes move together is partly shared.
   Compound-matched transfer is available for exactly one compound, MMS.
 - **The two datasets are separated by constant axes** (oxygen, base medium, pH, ploidy,
@@ -226,3 +226,56 @@ and the aldehyde and ketone phenolics share a DNA-damage profile. The full ranki
    YPD enter as sets of molecules rather than as names.
 3. The metabolism arm is a later ablation on the same split: add it and check that the
    held-out compound score does not fall.
+
+## 2026.09.25 - Replication, error, ceilings, and the typeset document
+
+**Correction to the numbers above.** The first run labeled every Hillenmeyer record with
+no compound, no physical factor and an unstated temperature as one condition (the SD,
+SC-dropout and YP glycerol media swaps collapsed into a single bucket). The scripts now
+label those conditions by their medium, which takes HOM from 123 to 140 conditions and
+HET from 307 to 308, and the numbers above were corrected in place: the per-gene
+mean-response correlation with HOM is 0.118 (was 0.138), the Mantel statistic 0.068
+against a null SD of 0.006 (was 0.056), and the ranks of the shared compounds are out
+of 140 and 308. Everything else moved by less than a rounding step.
+
+The reliability index is a served-SE quantity, so it was checked against the raw
+replicates the loaders consumed
+([[experiments.031-env-chemgen-inhibitor-tolerance.scripts.replicate_noise_and_ceilings]]).
+
+| dataset | records with one replicate | served SE on | index median | ceiling on r median | raw replicate Spearman median | hit Jaccard median | index vs raw (rank) |
+|---|---|---|---|---|---|---|---|
+| Vanacloig 2022 | 0% | 100% | 0.703 | 0.838 | 0.333 (41 conditions) | 0.237 | 0.87 |
+| Hillenmeyer HOM | 65% | 35% | 0.919 | 0.959 | 0.386 (78 labels) | 0.203 | 0.40 |
+| Hillenmeyer HET | 76% | 24% | 0.845 | 0.919 | 0.255 (108 labels) | 0.146 | 0.43 |
+
+Vanacloig's served SE is an honest per-compound noise estimate: the index tracks the
+raw three-batch agreement at rank 0.87. Hillenmeyer's served SE overstates reliability:
+the index says 0.92 where the replicate arrays agree at 0.39, so for Hillenmeyer the raw
+replicate agreement is the ceiling to quote. Plausible reason, unverified: the served SD
+exists only for the third of records with more than one array and describes scatter
+within one control set, while replicates of a label span control sets and scanners.
+
+Per Vanacloig compound the ceiling on the correlation with the noise-free response is
+`sqrt(rel)`: isobutanol 0.89, ethanol 0.91, furfural 0.88, methyl methanesulfonate 0.94,
+ferulic acid 0.92; sodium glyoxylate, sodium butyrate and 5-HMF have no ceiling at all
+(index at or below zero), and 4-methylimidazole, 2-methylimidazole and p-coumaric acid sit
+below 0.1. Full table in `results/condition_noise_vanacloig2022.csv`.
+
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/noise_distributions.svg)
+
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/reliability_index_vs_replicates.svg)
+
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/vanacloig_ceilings.svg)
+
+Panels a to f generated by
+`experiments/031-env-chemgen-inhibitor-tolerance/scripts/replicate_noise_and_ceilings.py`.
+
+**The typeset document** is `notes-tex/031-inhibitor-tolerance-data/` (build with `make`,
+gate with `make check`, tables from `make tables`, panels from `make plots`). It carries
+the axes, overlap, noise and shared-structure sections, and two sections that wait on the
+molecular-encoder embeddings: encoder coverage
+([[experiments.031-env-chemgen-inhibitor-tolerance.scripts.embed_compounds]]) and whether
+chemical similarity predicts response similarity across the datasets
+([[experiments.031-env-chemgen-inhibitor-tolerance.scripts.chemical_similarity]]).
+The figures now carry stable names (the `--stable` flag of the plotting scripts), which
+is what the document's `make plots` reads.

@@ -135,6 +135,15 @@ weaker annotation than propagated GO. Concatenation adds no rank: GO with the st
 ensembled), all three 0.175 and 5.03. DCell's hierarchy over the same columns reads
 0.049 (sd 0.043), selected at epochs 8 to 13, under the perceptron on every seed: the
 one-subsystem-per-term wiring costs three quarters of what the flat annotation carries.
+DCell's own input, a weight vector per (gene, term) annotation pair in place of the
+shared one, reads 0.028 (sd 0.058) with a top-50 of 1.26, and 0.073 with 1.40 when the
+six seeds are averaged; the seeds select anywhere from epoch 0 to 93 and read $-0.057$
+to 0.115. Under a split by gene a held-out gene's columns receive no gradient, so the
+published network places an unseen gene through its random initial columns; that the
+read is not exactly zero is consistent with the trained subsystems responding to how
+many terms the gene lights rather than to which (a hypothesis, untested). The shared
+input is what lets the hierarchy read a gene it has not seen, and with it the hierarchy
+still reads a quarter of the flat perceptron.
 Two things bound the reading. GO annotation is curated in part from deletion
 phenotypes, respiratory function among them, and the screen's top hits are respiratory
 (the 027 read), so an annotation input can carry the target through the literature the

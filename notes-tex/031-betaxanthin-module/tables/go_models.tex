@@ -4,13 +4,15 @@
 \begin{table}[H]
   \centering
   \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[The annotation-only family on betaxanthin]{DCell's ontology hierarchy (the essentiality study's shared-input form, a linear head on the root's state, auxiliary regressions at alpha 0.3) and a perceptron over the propagated GO multi-hot, on the ladder's split (2,341 GO columns with training support), full batch, Adam at $10^{-3}$, 200 epochs, the epoch selected by a five-epoch moving average of the validation per-feature Pearson. Columns: parameters, the single-seed read (the pinned-test Spearman with the standard deviation over seeds and, after the slash, the top-50 enrichment), the six-seed ensemble scored the same way, and the selected epochs. Written by \texttt{target\_notes\_tex\_tables.py} from \texttt{results/go\_models\_betaxanthin.json} (\texttt{target\_go\_models.py}).}
   \label{tab:go-models}
-  \begin{tabular}{@{}lrrrl@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{84.5mm}rrr>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{28.0mm}@{}}
     \hline
     model & parameters & single seed (sd) & ensemble & selected epochs \\
     \hline
     DCell-style hierarchy, shared gene input, root head & 354,615 & +0.049 (0.043) / 3.10 & +0.046 / 3.00 & 13, 8, 11, 9, 9, 8 \\
+    DCell hierarchy, published input (a weight per gene and term), root head & 1,972,151 & +0.028 (0.058) / 1.26 & +0.073 / 1.40 & 0, 81, 91, 93, 2, 26 \\
     perceptron over the GO multi-hot & 606,209 & +0.200 (0.002) / 4.79 & +0.200 / 4.79 & 21, 21, 21, 22, 21, 21 \\
     perceptron over the HiGHS parsimonious store row & 1,069,825 & +0.119 (0.013) / 2.00 & +0.121 / 2.00 & 16, 13, 9, 13, 31, 20 \\
     perceptron over ProtT5 & 262,657 & +0.103 (0.023) / 4.13 & +0.107 / 4.79 & 7, 6, 10, 9, 7, 8 \\

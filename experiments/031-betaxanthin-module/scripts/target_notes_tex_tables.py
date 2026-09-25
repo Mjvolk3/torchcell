@@ -428,6 +428,7 @@ def betaxanthin_amino_acid_correlation() -> str | None:
 
 GO_LABELS = {
     "dcell_style_shared": "DCell-style hierarchy, shared gene input, root head",
+    "dcell_published_input": "DCell hierarchy, published input (a weight per gene and term), root head",
     "go_mlp": "perceptron over the GO multi-hot",
     "store_mlp": "perceptron over the HiGHS parsimonious store row",
     "prot_mlp": "perceptron over ProtT5",

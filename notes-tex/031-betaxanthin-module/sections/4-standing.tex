@@ -58,5 +58,10 @@ of six and the stack reads under GO alone (163): the metabolite side does not ad
 the annotation the way the flux vector does. On twelve seeds the best arm holds at
 0.214 with a standard error of 0.002, 0.011 above the forest over its own columns and
 0.019 above the nearest-neighbor read of the HiGHS store, with a twelve-seed ensemble
-of 0.216 (round 164). Cells queued: the flux-and-annotation affine with the polytope's
-spread and with the adjustment store in place of the parsimonious one (166, 167).
+of 0.216 (round 164). Adding the region's width to that stack costs again, and the
+cost grows with the columns added (0.193, round 166): the metabolite side does not
+enter this affine's read at any width. The adjustment store in place of the
+parsimonious one adds 0.006 to the annotation on every seed against the parsimonious
+vector's 0.009 (round 167): both flux programs enter the annotation's read where the
+metabolite programs do not. Cells queued: the affine's own weight decay at 0.1 and 1.0
+(169, 170).

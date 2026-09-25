@@ -125,6 +125,7 @@ ARMS = [
     ("w184_bxdelgomoma_h12l1p1_e200", "betaxanthin", "del + MOMA store with GO"),
     ("w188_bxdelgopfbawd_h12l1p1_e200", "betaxanthin", "del + HiGHS store with GO, affine decay 0.1"),
     ("w189_bxdelgopfbawd1_h12l1p1_e200", "betaxanthin", "del + HiGHS store with GO, affine decay 1.0"),
+    ("w190_bxdelgopfbamoma_h12l1p1_e200", "betaxanthin", "del + HiGHS and MOMA stores with GO"),
 ]
 LOG_LINE = re.compile(
     r"\] ep\s+(\d+) loss ([\d.]+) .*?val_loss ([\d.]+) val_r ([-+\d.]+)"

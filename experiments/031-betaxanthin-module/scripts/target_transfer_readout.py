@@ -652,6 +652,18 @@ PAIRS = [
         "w188_bxdelgopfbawd_h12l1p1_e200",
     ),
     (
+        "betaxanthin: HiGHS and MOMA stores with GO against HiGHS store with GO",
+        "betaxanthin",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+        "w168_bxdelgopfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: HiGHS and MOMA stores with GO against MOMA store with GO",
+        "betaxanthin",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+        "w184_bxdelgomoma_h12l1p1_e200",
+    ),
+    (
         "amino acids: GO affine at dropout 0.3 against 0.1",
         "mulleder19",
         "w182_aadelgodrop_h12l1p1_e200",

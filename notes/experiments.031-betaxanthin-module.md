@@ -372,6 +372,25 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B33 | 164 | w181 | w168 seeds 2706 to 2711 | twelve seeds 0.214 (sem 0.002); ens 0.216 / 4.99 |
+
+## 2026.09.25 - B34 read: the stack with the region's width
+
+- B34 (w183, gopfbapolyspread store, 12,205 columns, job 2824, 3 h 39 min): 0.193 (sd 0.015) vs GO + HiGHS (B24) 0.211 (-0.018, sd 0.016, 2/6) and vs the same stack with the mean alone (B32) 0.198 (-0.005, sd 0.018, 2/6); top-50 4.23 vs 4.83 and 4.46; ensemble 0.201 / 4.59, the same as the mean alone. Seeds select at 9 to 27, read 0.175 to 0.213. The cost grows with the columns: 2,835 concentration columns took 0.013, another 2,831 spread columns take 0.005 more, and the seed spread doubles at each step. The metabolite side does not enter this affine at any width. Written as round 166; 031 published v21 (553 checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B34 | 166 | w183 | del + HiGHS store with GO and the polytope mean and spread | 0.193 (sd 0.015); ens 0.201 / 4.59 |
+
+## 2026.09.25 - B35 read: the adjustment store beside the annotation; packs B38, B39
+
+- B35 (w184, GO + MOMA store, 6,539 columns, job 2825, 3 h 39 min): 0.208 (sd 0.003) vs GO alone (B23) 0.202 (+0.006, sd 0.003, 6/6) and vs GO + HiGHS (B24) 0.211 (-0.004, sd 0.006, 2/6); top-50 4.46 vs 5.03 and 4.83; ensemble 0.209 / 4.39. Seeds select at 8 to 16, read 0.205 to 0.212. Both flux programs enter the annotation's read (MOMA +0.006, parsimonious +0.009, difference inside the paired spread) where the metabolite programs do not. Written as round 167; 031 published v22 (569 checks).
+- Submitted B38 = w190 (GO + HiGHS + MOMA in one affine, store `YPD_bx_gopfbamoma`, 10,716 columns, job 2830; vs w168 and w184) and B39 = w191 (w167 seeds 2706 to 2711, job 2831, for the twelve-seed annotation-only level).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B35 | 167 | w184 | del + MOMA store with GO | 0.208 (sd 0.003); ens 0.209 / 4.39 |
+| B38 | -- | w190 | del + HiGHS and MOMA stores with GO | job 2830, pending |
+| B39 | -- | w191 | w167 seeds 2706 to 2711 | job 2831, pending |
 | B36 | -- | w188 | del + HiGHS store with GO, affine weight decay 0.1 | job 2828, pending |
 | B37 | -- | w189 | del + HiGHS store with GO, affine weight decay 1.0 | job 2829, pending |
 

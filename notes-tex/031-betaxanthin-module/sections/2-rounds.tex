@@ -561,4 +561,33 @@ columns (0.204, Section~\ref{sec:physics}) and 0.019 above the nearest-neighbor 
 of the HiGHS store (0.195), the two closest backbone-free reads on this split; the
 ensemble gains 0.004 from the second six and the call does not move.
 
+Round 166 is read (job 2824, 3 h 39 min): the same stack with the region's width, the
+HiGHS vector, GO and the polytope's mean with the per-metabolite spread of $\ln c$,
+12,205 columns in one affine on the deletion-only graph. It reads 0.193 (sd 0.015)
+against the flux-and-annotation affine (round 151) at 0.211 ($-0.018$ paired, sd 0.016,
+above on two of six) and against the same stack with the mean alone (round 163) at
+0.198 ($-0.005$, sd 0.018, two of six), top-50 4.23 against 4.83 and 4.46, and
+ensembled over six seeds 0.201 with a top-50 of 4.59, the same ensemble as the mean
+alone. The seeds select at epochs 9 to 27 on validation Pearson 0.22 to 0.28 and read
+0.175 to 0.213, twice round 163's band and three times round 151's. So the second
+physics block costs what the first cost again, and the cost grows with the columns
+added: 2,835 concentration columns took 0.013, another 2,831 spread columns take 0.005
+more, while the seed spread doubles at each step. The metabolite side does not enter
+this affine's read at any width, and the study's best cell remains the flux vector with
+the annotation and nothing else.
+
+Round 167 is read (job 2825, 3 h 39 min): which flux program adds most beside the
+annotation, the linear adjustment store (round 135) in place of the parsimonious vector
+in the flux-and-annotation affine, 6,539 columns on the deletion-only graph. It reads
+0.208 (sd 0.003) against GO alone at 0.202 ($+0.006$ paired, sd 0.003, above on six of
+six) and against the parsimonious vector with GO at 0.211 ($-0.004$, sd 0.006, two of
+six), top-50 4.46 against 5.03 and 4.83, and ensembled over six seeds 0.209 with a
+top-50 of 4.39 against 0.202 and 0.212. The seeds select at epochs 8 to 16 on validation
+Pearson 0.24 to 0.27 and read 0.205 to 0.212. So the adjustment store adds to the
+annotation as the parsimonious vector does, on every seed, and adds a little less: what
+the flux side contributes beside GO is 0.006 from the store anchored to one wild-type
+vector against 0.009 from the parsimonious rebuild, a difference inside the paired
+spread. Both physically stated flux programs enter the annotation's read where the
+metabolite programs do not, and the parsimonious vector stays the best of them.
+
 \input{tables/target_transfer}

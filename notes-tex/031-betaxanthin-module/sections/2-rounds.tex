@@ -452,4 +452,20 @@ that do not fight: the GLPK store at dropout 0.3 keeps the higher rank and the h
 call, on single seeds and on the ensemble. The lever that costs on the clean store is
 the release, and dropout does not repair it.
 
+Round 155 is read (job 2810, 3 h 38 min): the dropout curve's third point, the store
+arm on the deletion-only graph at transformer dropout 0.5, paired against 0.3 (round
+145) and 0.1 (the incumbent). It reads 0.125 (sd 0.017) against 0.145 at 0.3 ($-0.019$
+paired, sd 0.019, above on two of six) and against 0.121 at 0.1 ($+0.005$, sd 0.039,
+three of six), top-50 4.16 against 5.03 and 4.93, and ensembled over six seeds 0.127
+with a top-50 of 5.59 against 0.149 and 5.79 and 0.131 and 5.59. Three seeds never
+leave the plateau: their validation Pearson sits at $-0.03$ to $-0.02$ through epoch
+199, they select at 149 to 181 and read 0.124 to 0.133, the affine alone; the three
+that escape select at epochs 68 to 156 on validation Pearson 0.16 to 0.24 and read
+0.094 to 0.140, no higher. So the curve turns between 0.3 and 0.5: at 0.5 the
+regularization that lifted the backbone at 0.3 keeps half the seeds from escaping at
+all, and the seeds that do escape read at the affine's level, so the arm sits at the
+incumbent's level with the incumbent's spread and a weaker call. Dropout 0.3 stands as
+the setting, and its gain in round 145 reads as a maximum of the curve, not a monotone
+trend to push further.
+
 \input{tables/target_transfer}

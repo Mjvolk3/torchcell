@@ -310,3 +310,11 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B26 | 154 | w171 | del + HiGHS store, release rule, dropout 0.3 | 0.125 (sd 0.036); ens 0.148 / 4.39 |
+
+## 2026.09.24 - B27 read: dropout 0.5, the curve turns
+
+- B27 (w172, store arm at dropout 0.5, job 2810, 3 h 38 min): 0.125 (sd 0.017) vs 0.3 at 0.145 (-0.019, sd 0.019, 2/6) and vs 0.1 at 0.121 (+0.005, sd 0.039, 3/6); top-50 4.16 vs 5.03 and 4.93; ensemble 0.127 / 5.59 vs 0.149 / 5.79 and 0.131 / 5.59. Three seeds never escape the plateau (val Pearson -0.03 to -0.02 through epoch 199; select at 149 to 181; read 0.124 to 0.133 = the affine alone); the three that escape read 0.094 to 0.140. The dropout curve 0.1 -> 0.121, 0.3 -> 0.145, 0.5 -> 0.125: 0.3 is a maximum. Written as round 155; 031 published v14 (426 checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B27 | 155 | w172 | del + store, dropout 0.5 | 0.125 (sd 0.017); ens 0.127 / 5.59 |

@@ -42,6 +42,8 @@ GO multi-hot in the same ridge adds 0.072 to what the annotation reads alone (0.
 0.237), the sibling document's Section~4 (\texttt{notes-tex/032-amino-acid-module}). The three levers on one cell,
 the HiGHS store under the rule with dropout 0.3, read 0.125, under the GLPK store at
 dropout 0.3 alone (round 154): the release is the lever that costs on the clean store.
-Cells queued: dropout 0.5 (155), the polytope's spread beside its mean (156), the GO
-affine under the release rule and at dropout 0.3 (158, 159), and GO with the HiGHS
-vector at dropout 0.3 (161).
+The dropout curve turns between 0.3 and 0.5: at 0.5 three seeds of six never leave
+the plateau and the arm falls back to the incumbent's level, 0.125 against 0.121
+(round 155), so 0.3 is a maximum, not a direction. Cells queued: the polytope's spread beside its mean (156),
+the GO affine under the release rule and at dropout 0.3 (158, 159), and GO with the
+HiGHS vector at dropout 0.3 (161).

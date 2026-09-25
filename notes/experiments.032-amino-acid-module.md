@@ -163,3 +163,27 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | A13 | 148 | w165 | del + driving-force polytope mean | 0.032 (sd 0.008); ens 0.035 |
+
+## 2026.09.24 - Round A10 read (job 2803, 3 h 40 min)
+
+- A10 (w160, the sampled-cone mean in the affine slot): 0.019 (sd 0.007) vs the deletion-only control 0.049 (-0.030, sd 0.007, 0/6) and vs the parsimonious store 0.040 (-0.021, sd 0.010, 0/6); ensemble 0.023, the lowest arm of the study. Seeds select at epochs 104 to 196; the validation loss bottoms at 3 to 21. The cone mean is the weakest flux representation on both targets. Written into the 032 document as round 143 (version 7).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A10 | 143 | w160 | del + sampled-cone mean store | 0.019 (sd 0.007); ens 0.023 |
+
+## 2026.09.24 - Round A15 queued: dropout 0.3
+
+- A15 (w173, job 2811): the store arm on the deletion-only graph at transformer dropout 0.3 (betaxanthin's round 145 read +0.024); paired against A6' (w143, 0.1) and A4 (w141). Round 157.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| A15 | 157 | w173 | del + store, dropout 0.3 | pending (2811) |
+
+## 2026.09.24 - Round A16 queued: GO appended to the HiGHS store
+
+- A16 (w177, job 2815): the HiGHS deletion vector with GO appended on the prototroph (`SM_gem_gopfba`, 6,493 columns); paired against A14 (w170, GO alone) and A6' (w143). Round 160.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| A16 | 160 | w177 | del + HiGHS store with GO appended | pending (2815) |

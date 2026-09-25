@@ -190,4 +190,21 @@ round 142) and read at the ladder's floor here ($-0.004$ by ridge): a deletion's
 feasible region averaged over six draws is the weakest representation of the flux
 family on both targets.
 
+Round 153 is read (job 2808, 3 h 34 min): the GO multi-hot in the affine slot, 2,362
+propagated terms over every annotated gene, into the 19-output head on the
+deletion-only graph, the annotation the backbone never saw. It reads 0.058 (sd 0.001
+over seeds) against the affine-free control's 0.049 ($+0.009$ paired, sd 0.007, above
+on five of six) and against the parsimonious store's 0.040 ($+0.018$, sd 0.005, six of
+six), ensembled over six seeds 0.059 against 0.062 and 0.043: the highest single-seed
+transformer arm on this target, above the cached solve head's 0.053, with the first
+paired gain over the control that holds on five seeds of six. Every seed selects at
+epoch 2 or 3, where the validation Pearson peaks at 0.11 before the backbone has moved,
+and the validation loss bottoms at epochs 1 to 2 and rises by 0.12 to 0.13 by epoch
+199: as on betaxanthin (the sibling document, round 150), the affine's read of the
+binary columns is the whole cell and the seeds read the same number. So annotation in
+the affine slot lifts this target by a hundredth where every metabolic store sat at or
+under the control, to the level the GO perceptron read alone (0.054) and under
+annotation with sequence through a perceptron (0.065); against a strain-level retest
+of 0.20 the gain is real and small, and it is the first.
+
 \input{tables/target_transfer}

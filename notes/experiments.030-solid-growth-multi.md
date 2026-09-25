@@ -132,4 +132,4 @@ of a double and an array-strain match for the control terms.
 
 The dendron note of the script is
 [[experiments.030-solid-growth-multi.scripts.closure_recompute_030]]; the comparison table goes
-into `notes-tex/025-s3-closure` as Table 10.
+into `notes-tex/025-s3-closure` as Table 9 of Section 8 (branch `feat/025-s3-closure-030`, PR #435).

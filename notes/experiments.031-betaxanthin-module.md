@@ -372,3 +372,7 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B33 | 164 | w181 | w168 seeds 2706 to 2711 | twelve seeds 0.214 (sem 0.002); ens 0.216 / 4.99 |
+| B36 | -- | w188 | del + HiGHS store with GO, affine weight decay 0.1 | job 2828, pending |
+| B37 | -- | w189 | del + HiGHS store with GO, affine weight decay 1.0 | job 2829, pending |
+
+- B36 and B37: since rounds 158 to 164 read the annotation arms as the affine alone, the one setting left that acts on the read is the affine's own regularization: w168 with `--ess-affine-weight-decay 0.1` and `1.0` at the full rate (round 119 read decay with a tenth of the rate on the degenerate store and lost the gain, so the rate is left alone). Paired against w168 and against each other.

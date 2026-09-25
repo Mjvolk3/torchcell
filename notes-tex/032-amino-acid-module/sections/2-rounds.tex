@@ -247,4 +247,15 @@ annotation affine's read on this target either (the sibling document, rounds 159
 annotation is what this target's best transformer arm is, and the backbone around it
 is not where its level is set.
 
+Round 165 is read (job 2823, 3 h 40 min): the GO affine alone with transformer dropout
+0.3, on the deletion-only graph. It reads 0.058 (sd 0.001) against the GO affine at
+dropout 0.1 at 0.058 ($+0.000$ paired, sd 0.001, above on four of six) and against the
+store alone at dropout 0.3 at 0.045 ($+0.013$, sd 0.005, six of six), ensembled over
+six seeds 0.059 against 0.059 and 0.049. Every seed selects at epoch 2 or 3 on
+validation Pearson 0.11 and reads 0.057 to 0.059. So the third dropout read on this
+target closes the question as the betaxanthin rounds 159 and 161 closed it there: the
+annotation affine, alone or with the flux vector, reads the same number at either
+dropout, and the target's best transformer arm is a linear read of the annotation
+that the backbone does not enter.
+
 \input{tables/target_transfer}

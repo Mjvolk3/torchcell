@@ -245,3 +245,11 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | A17 | 162 | w179 | del + HiGHS store with GO, dropout 0.3 | 0.055 (sd 0.002); ens 0.056 |
+
+## 2026.09.25 - A18 read: the GO affine at dropout 0.3
+
+- A18 (w182, GO affine at dropout 0.3, job 2823, 3 h 40 min): 0.058 (sd 0.001) vs the GO affine at 0.1 (A14) 0.058 (+0.000, sd 0.001, 4/6) and vs the store at 0.3 (A15) 0.045 (+0.013, sd 0.005, 6/6); ensembles 0.059 vs 0.059 and 0.049. Selects at epoch 2 or 3. The third dropout read on this target: the annotation affine reads the same number at either dropout; the best arm is a linear read of the annotation the backbone does not enter. Written as round 165; 032 published v15 (293 checks).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A18 | 165 | w182 | del + GO affine, dropout 0.3 | 0.058 (sd 0.001); ens 0.059 |

@@ -36,6 +36,7 @@ ARGS=()
 [[ -n "${LIMIT:-}" ]] && ARGS+=(--limit-triples "$LIMIT")
 [[ -n "${REF_025:-}" ]] && ARGS+=(--reference-025 "$REF_025")
 [[ -n "${LABEL:-}" ]] && ARGS+=(--label "$LABEL")
+[[ -n "${RAW_KUZMIN:-}" ]] && ARGS+=(--raw-kuzmin "$RAW_KUZMIN")
 ARGS+=(--workers "$SLURM_CPUS_PER_TASK")
 
 SCRIPT=experiments/030-solid-growth-multi/scripts/closure_recompute_030.py

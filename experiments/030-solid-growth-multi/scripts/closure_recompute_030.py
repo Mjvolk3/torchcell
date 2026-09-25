@@ -474,7 +474,14 @@ def _reference_rows(
     return rows, provenance
 
 
-def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) -> None:
+def analyze(
+    cache: str,
+    results: str,
+    ref_025: str,
+    ref_029: str,
+    label: str,
+    raw_kuzmin: str | None,
+) -> None:
     os.makedirs(results, exist_ok=True)
     print("reading the entry cache ...", flush=True)
     entries = pd.read_parquet(osp.join(cache, "entries.parquet"))
@@ -482,6 +489,19 @@ def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) ->
         source_key(d, t) for d, t in zip(entries["dataset"], entries["temp"])
     ]
     roles = pd.read_parquet(osp.join(cache, "triple_roles.parquet"))
+
+    # DIAGNOSTIC, not a build value: the array single-mutant fitness the source wrote on
+    # the trigenic row itself, from the raw-table cache of s3_closure_recompute.py,
+    # keyed by screen, query strain token and array strain. It tests whether that one
+    # column is what the build still lacks for a screen (Kuzmin 2020 releases no array
+    # single-mutant fitness table, and its row values vary within an array strain).
+    f_a_row: pd.Series | None = None
+    if raw_kuzmin is not None:
+        raw = pd.read_parquet(raw_kuzmin)
+        raw = raw[raw["type"] == "trigenic"].copy()
+        raw["qt"] = raw["q"].map(strain_token)
+        f_a_row = raw.groupby(["source", "qt", "a"])["f_a"].median()
+        print(f"raw trigenic rows with an array SMF: {len(raw):,}", flush=True)
 
     singles = entries[entries["order"] == 1]
     doubles = entries[entries["order"] == 2]
@@ -576,6 +596,17 @@ def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) ->
             & np.isfinite(f_k_strain)
         )
 
+        f_k_raw = np.full(len(stored), np.nan)
+        if f_a_row is not None:
+            keys = pd.MultiIndex.from_arrays(
+                [
+                    [screen] * len(stored),
+                    stored["query_strain_id"].map(strain_token).tolist(),
+                    stored["array_strain_id"].tolist(),
+                ]
+            )
+            f_k_raw = f_a_row.reindex(keys).to_numpy(dtype=float)
+
         f_ijk = _arr(f_triple, stored["genes"])
         f_k = _arr(f_single, stored["array_gene"])
         eps_ik = _arr(eps_double, ik)
@@ -589,6 +620,10 @@ def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) ->
         forms = {
             "asymmetric, query-strain double, array-strain controls": f_ijk
             - f_ij_matched * f_k_strain
+            - eps_ik_strain
+            - eps_jk_strain,
+            "same, f_k from the screen's own row (raw table, diagnostic)": f_ijk
+            - f_ij_matched * f_k_raw
             - eps_ik_strain
             - eps_jk_strain,
             "asymmetric, query-strain double": f_ijk
@@ -621,6 +656,7 @@ def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) ->
             "n_controls_array_matched": int(controls_matched.sum()),
             "n_eps_ik_array_matched": int(np.isfinite(eps_ik_strain).sum()),
             "n_f_k_array_matched_by": f_k_from,
+            "n_f_k_from_raw_row": int(np.isfinite(f_k_raw).sum()),
             "n_every_term_strain_matched": int((matched & controls_matched).sum()),
             "policy_id": policy.policy_id,
         }
@@ -700,6 +736,14 @@ def main() -> None:
         "--label", default="030", help="build label of the rows this run writes"
     )
     ap.add_argument(
+        "--raw-kuzmin",
+        default=None,
+        help=(
+            "raw_kuzmin_all.parquet from s3_closure_recompute.py raw; adds the "
+            "diagnostic form whose f_k is the source's own row value"
+        ),
+    )
+    ap.add_argument(
         "--reference-025",
         default=osp.join(
             EXPERIMENT_ROOT,
@@ -718,7 +762,12 @@ def main() -> None:
         scan(args.build, args.cache, args.workers, args.limit_triples)
     else:
         analyze(
-            args.cache, args.results, args.reference_025, args.reference_029, args.label
+            args.cache,
+            args.results,
+            args.reference_025,
+            args.reference_029,
+            args.label,
+            args.raw_kuzmin,
         )
 
 

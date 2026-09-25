@@ -432,4 +432,12 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B41 | -- | w194 | del + GO with the measured amino-acid pool | job 2836, pending |
 | B42 | -- | w195 | del + HiGHS store with GO and the pool | job 2837, pending |
 
+## 2026.09.25 - B39 read: twelve seeds of the annotation-only arm
+
+- B39 (w191 = w167 seeds 2706 to 2711, job 2831, 3 h 40 min): the second six read 0.204 (sd 0.002) against the first six's 0.202 (sd 0.001); over twelve 0.203 (sd 0.002, sem 0.0005), seeds 0.200 to 0.207, select at epochs 7 to 14; twelve-seed ensemble 0.203 / 4.99. The flux vector's gain beside GO paired over the same twelve seeds (new PAIRS entry): +0.012 (sd 0.009), 11/12, 0.214 vs 0.203 (the first six gave +0.009 on 5/6). Written as round 172; 031 published v27.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B39 | 172 | w191 | w167 seeds 2706 to 2711 | twelve seeds 0.203 (sem 0.0005); flux gain beside GO +0.012 (11/12) |
+
 - MEASURED, the ladder with the pool (`results/store_baselines_betaxanthin.json`, 13.5 min; all fifteen earlier cells reproduced to the printed digit): the pool alone (19 columns) reads 0.149 by ridge, 0.285 by kNN, 0.280 by forest (top-50 3.99 / 4.19 / 4.79), above every genotype-side read and every transformer arm (0.216); GO + pool 0.102 / 0.174 / 0.264 (forest top-50 5.99); GO + HiGHS + pool 0.156 / 0.195 / 0.247 (forest top-50 6.19, the highest call of any read). Ridge and kNN fall when the 2,362 GO columns join the 19; the forest keeps 0.26 and gains the call (plausible reason, unverified: the distance models weigh every standardized column alike). Written into the 031 document (section 3 and the standing section; 031 published v26).

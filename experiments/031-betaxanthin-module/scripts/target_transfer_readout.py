@@ -678,6 +678,13 @@ PAIRS = [
         tuple(range(2700, 2712)),
     ),
     (
+        "betaxanthin: HiGHS store with GO appended against GO alone, twelve seeds",
+        "betaxanthin",
+        "w168_bxdelgopfba_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+        tuple(range(2700, 2712)),
+    ),
+    (
         "betaxanthin: measured amino-acid pool with GO against GO alone",
         "betaxanthin",
         "w194_bxdelgoaapool_h12l1p1_e200",

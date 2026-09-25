@@ -16,10 +16,18 @@ with twice the spread; the second law adds a second representation at the flux s
 level, not a higher one. Without any backbone the clean vector read by nearest
 neighbors carries more rank than any single transformer arm, and the sampled
 driving-force polytope is the one flux-side representation every model reads above
-0.12. The annotation-only family sets the level: a perceptron over the propagated GO
-multi-hot reads 0.200 in three seconds a seed, above every transformer arm, whose
-backbone reads the pathway multi-hot and ProtT5 and never saw GO. Every arm overfits by
-epoch 60 and averaging seeds is worth more than any representation on the call. Cells
-queued: the sampled cone and the polytope mean in the transformer (rounds 142, 147),
-the size question (144, 145), the release rule on the adjustment and HiGHS stores (149,
-152), and GO in the affine slot alone and beside the HiGHS store (150, 151).
+0.12; in the transformer the polytope's mean reads at the flux store's level on every
+seed above the control, with the best width-12 ensemble rank, and the sampled cone is
+the weakest flux representation. The release rule that lifted the degenerate GLPK
+store adds nothing to the adjustment store and takes from the HiGHS store (rounds 149,
+152); a store without the vertex noise is read best from the first epoch. The
+annotation family sets the level: a perceptron over the propagated GO multi-hot reads
+0.200 in three seconds a seed, above every transformer arm, and the same columns in the
+affine slot read 0.202 with the seeds identical (round 150), the backbone adding
+nothing; the HiGHS vector appended to GO in that affine reads 0.211, above GO alone on
+five seeds of six, the highest rank of the study (round 151). Dropout 0.3 on the store
+arm reads 0.145, the best single-seed rank and call of any store arm, where width 6 to
+90 left the level flat (144, 145). Every arm overfits by epoch 60 and averaging seeds
+is worth more than any representation on the call. Cells queued: the three best levers
+on one cell (round 154), dropout 0.5 (155), the polytope's spread beside its mean
+(156), and the GO affine under the release rule and at dropout 0.3 (158, 159).

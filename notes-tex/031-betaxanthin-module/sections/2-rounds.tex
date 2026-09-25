@@ -398,4 +398,41 @@ So the transformer is not what limits the annotation family on this target; the
 annotation it was given was. What remains is whether the flux vector adds to GO in the
 one model, round 151, and whether either adds to the other's call.
 
+Round 151 is read (job 2806, 3 h 38 min): the HiGHS parsimonious deletion vector with
+the GO multi-hot appended, 4,177 flux columns (the wild-type row for a gene outside the
+GEM) and 2,362 annotation columns in one affine over every annotated gene, on the
+deletion-only graph. It reads 0.211 (sd 0.007) against the HiGHS store alone at 0.130
+($+0.081$ paired, sd 0.032, above on six of six) and against GO alone at 0.202
+($+0.009$, sd 0.007, five of six), with a top-50 enrichment of 4.83 against 4.46 and
+5.03, and ensembled over six seeds 0.212 with a top-50 of 4.99 against 0.148 and 0.202,
+the highest rank of the study on single seeds and on the ensemble. Every seed selects
+at epochs 8 to 13 on validation Pearson 0.24 to 0.26 and reads 0.202 to 0.220, the
+round-150 pattern with a wider band. So the flux vector adds to the annotation in the
+one model, by 0.009 on five seeds of six against a paired spread of 0.007, where the
+perceptron on the same two blocks read no gain (0.198 against 0.200 with a spread of
+0.041): the affine on the logit is the interface on which the two families add, and
+what the flux store contributes beside GO is a tenth of what GO contributes beside the
+flux store. The call does not follow the rank: 4.83 sits under GO alone's 5.03, as the
+flux store's call sat under the control's in every round that read it beside a stronger
+input.
+
+Round 152 is read (job 2807, 3 h 40 min): round 131's release rule on the HiGHS
+parsimonious store, the affine frozen until epoch 5 and until the trailing validation
+Pearson reaches 0.15, on the deletion-only graph. It reads 0.108 (sd 0.021) against
+the HiGHS store with the affine from epoch 0 at 0.130 ($-0.022$ paired, sd 0.042, above
+on two of six) and against the GLPK store under the same rule at 0.110 ($-0.002$, sd
+0.058, two of six), top-50 3.99 against 4.46 and 4.66, and ensembled over six seeds
+0.139 with a top-50 of 4.99 against 0.148 and 5.79 and 0.120 and 6.19. The release came
+at epochs 5, 5, 22, 30, 9 and 5, the same epochs as round 149 on the same seeds, and
+the seeds select at 2, 2, 95, 121, 55 and 43, two of them before the release on early
+validation peaks of 0.26 and 0.21, reading 0.117 and 0.126. The HiGHS store's plateau
+seed, which read 0.160 from the affine alone at epoch 2 with the backbone at validation
+0.02, releases at epoch 9 under the rule, selects at 55 and reads 0.117. So the rule
+takes from the clean vector what it added to the degenerate one: the HiGHS store under
+the rule reads at the GLPK store's level under the rule, below the HiGHS store free
+from epoch 0 on four seeds of six, on the call and on the ensemble, and the pair with
+round 149 closes the question the rule opened in round 131. The gain was the vertex
+noise's, held off until the backbone had something to say; a store without that noise
+is read best from the first epoch.
+
 \input{tables/target_transfer}

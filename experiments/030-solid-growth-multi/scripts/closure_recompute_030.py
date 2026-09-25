@@ -413,7 +413,7 @@ def _reference_rows(
     return rows, provenance
 
 
-def analyze(cache: str, results: str, ref_025: str, ref_029: str) -> None:
+def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) -> None:
     os.makedirs(results, exist_ok=True)
     print("reading the entry cache ...", flush=True)
     entries = pd.read_parquet(osp.join(cache, "entries.parquet"))
@@ -521,7 +521,7 @@ def analyze(cache: str, results: str, ref_025: str, ref_029: str) -> None:
             for form, tau in forms.items():
                 rows.append(
                     {
-                        "build": "030",
+                        "build": label,
                         "screen": screen,
                         "stratum": stratum,
                         "form": form,
@@ -590,6 +590,9 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=32)
     ap.add_argument("--limit-triples", type=int, default=None)
     ap.add_argument(
+        "--label", default="030", help="build label of the rows this run writes"
+    )
+    ap.add_argument(
         "--reference-025",
         default=osp.join(
             EXPERIMENT_ROOT,
@@ -607,7 +610,9 @@ def main() -> None:
     if args.stage == "scan":
         scan(args.build, args.cache, args.workers, args.limit_triples)
     else:
-        analyze(args.cache, args.results, args.reference_025, args.reference_029)
+        analyze(
+            args.cache, args.results, args.reference_025, args.reference_029, args.label
+        )
 
 
 if __name__ == "__main__":

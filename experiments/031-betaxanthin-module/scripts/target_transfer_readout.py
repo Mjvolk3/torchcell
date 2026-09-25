@@ -538,6 +538,42 @@ PAIRS = [
         "w140_bxdelstore_h12l1p1_e200",
     ),
     (
+        "betaxanthin: GO affine released on escape against the GO affine",
+        "betaxanthin",
+        "w175_bxdelgorel_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: GO affine released on escape against the GLPK store under the rule",
+        "betaxanthin",
+        "w175_bxdelgorel_h12l1p1_e200",
+        "w148_bxdelstorer15_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: GO affine at dropout 0.3 against the GO affine",
+        "betaxanthin",
+        "w176_bxdelgodrop_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: GO affine at dropout 0.3 against the GLPK store at dropout 0.3",
+        "betaxanthin",
+        "w176_bxdelgodrop_h12l1p1_e200",
+        "w162_bxdelstoredrop_h12l1p1_e200",
+    ),
+    (
+        "amino acids: HiGHS store with GO appended against GO alone",
+        "mulleder19",
+        "w177_aadelgopfba_h12l1p1_e200",
+        "w170_aadelgo_h12l1p1_e200",
+    ),
+    (
+        "amino acids: HiGHS store with GO appended against the parsimonious store alone",
+        "mulleder19",
+        "w177_aadelgopfba_h12l1p1_e200",
+        "w143_aadelstore_h12l1p1_e200",
+    ),
+    (
         "amino acids: deletion-only store at dropout 0.3 against 0.1",
         "mulleder19",
         "w173_aadelstoredrop_h12l1p1_e200",

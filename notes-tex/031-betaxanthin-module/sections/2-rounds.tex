@@ -379,4 +379,23 @@ and on the ensemble: the adjustment store, anchored to one wild-type vector and 
 the vertex noise, did not need the backbone to escape first, and the release rule's
 gain in round 131 reads as specific to the degenerate store it was measured on.
 
+Round 150 is read (job 2805, 3 h 39 min): the GO multi-hot in the affine slot, 2,362
+propagated terms over every annotated gene (Section~\ref{sec:physics}), on the
+deletion-only graph, the interface the flux stores enter through and the annotation
+the backbone never saw. It reads 0.202 (sd 0.001 over seeds) against the affine-free
+control's 0.058 ($+0.144$ paired, sd 0.075, above on six of six) and against the GLPK
+store's 0.121 ($+0.082$, sd 0.025, six of six), with a top-50 enrichment of 5.03
+against 3.39 and 4.93, and ensembled over six seeds 0.202 with a top-50 of 4.99: the
+highest single-seed rank of any transformer arm on this target, at the level the GO
+perceptron read on its own (0.200), with the best single-seed call tied with round 145,
+and the first arm whose ensemble adds nothing, because the six seeds read the same
+number. Every seed selects at epochs 8 to 12 on validation Pearson 0.25, the validation
+loss bottoms at epochs 1 to 3 and rises by 0.13 to 0.18 by epoch 199, and the seeds
+differ in the third decimal: the affine's linear read of the binary columns is the
+whole cell, learned in ten epochs and memorized thereafter, and the backbone, which
+escapes to the same 0.25 on every seed, adds nothing the affine did not already have.
+So the transformer is not what limits the annotation family on this target; the
+annotation it was given was. What remains is whether the flux vector adds to GO in the
+one model, round 151, and whether either adds to the other's call.
+
 \input{tables/target_transfer}

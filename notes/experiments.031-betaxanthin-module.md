@@ -247,3 +247,27 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B20 | 147 | w164 | del + driving-force polytope mean | 0.125 (sd 0.041); ens 0.151 / 5.59 |
+
+## 2026.09.24 - Round B21 read (job 2804, 3 h 35 min)
+
+- B21 (w166, the MOMA store with the affine released on escape): 0.106 (sd 0.034) vs the MOMA store 0.107 (-0.001, sd 0.038, 3/6) and vs the GLPK store under the rule 0.110 (-0.004, sd 0.063, 2/6); top-50 4.53; ensemble 0.105 / 5.59. Releases at epochs 5, 5, 22, 30, 9, 5; two seeds select before the release (epochs 2 and 6). The rule adds nothing to the adjustment store and costs its call; its round-131 gain reads as specific to the degenerate store. Written into the 031 document as round 149 (version 8).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B21 | 149 | w166 | del + MOMA store, affine on escape | 0.106 (sd 0.034); ens 0.105 / 5.59 |
+
+## 2026.09.24 - Round B28 queued: the width of the region
+
+- B28 (w174, job 2812): the polytope's mean with the per-metabolite spread of ln c appended (5,666 columns; the ladder read the spread store at 0.138 by kNN); paired against B20 (w164, the mean alone) and B5 (w140). Round 156. The transfer table in the document is now paged at eighteen rows (`target_notes_tex_tables.py`, `PAIRS_PER_TABLE`), after it overran the page.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| B28 | 156 | w174 | del + polytope mean and spread | pending (2812) |
+
+## 2026.09.24 - Round B23 read (job 2805, 3 h 39 min)
+
+- B23 (w167, the GO multi-hot in the affine slot over every annotated gene): 0.202 (sd 0.001) vs the deletion-only control 0.058 (+0.144, sd 0.075, 6/6) and vs the GLPK store 0.121 (+0.082, sd 0.025, 6/6); top-50 5.03; ensemble 0.202 / 4.99 (the seeds read the same number). Every seed selects at epochs 8 to 12 on validation Pearson 0.25; validation loss bottoms at epochs 1 to 3 and rises 0.13 to 0.18. The affine's linear read of the binary columns is the whole cell, at the perceptron's 0.200; the backbone adds nothing. The transformer was limited by the annotation it was given. Written into the 031 document as round 150.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B23 | 150 | w167 | del + GO multi-hot affine | 0.202 (sd 0.001); ens 0.202 / 4.99 |

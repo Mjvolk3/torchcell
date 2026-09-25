@@ -114,6 +114,9 @@ ARMS = [
     ("w172_bxdelstoredrop5_h12l1p1_e200", "betaxanthin", "del + store, dropout 0.5"),
     ("w173_aadelstoredrop_h12l1p1_e200", "mulleder19", "del + store, dropout 0.3"),
     ("w174_bxdelmdfpolyspread_h12l1p1_e200", "betaxanthin", "del + driving-force polytope mean and spread"),
+    ("w175_bxdelgorel_h12l1p1_e200", "betaxanthin", "del + GO affine, released on escape"),
+    ("w176_bxdelgodrop_h12l1p1_e200", "betaxanthin", "del + GO affine, dropout 0.3"),
+    ("w177_aadelgopfba_h12l1p1_e200", "mulleder19", "del + HiGHS store with GO"),
 ]
 LOG_LINE = re.compile(
     r"\] ep\s+(\d+) loss ([\d.]+) .*?val_loss ([\d.]+) val_r ([-+\d.]+)"

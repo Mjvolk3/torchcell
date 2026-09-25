@@ -34,6 +34,32 @@ and density are the requested rule directly, so no band is applied and no row is
 for what it pairs with. What a row combines with is still recorded, in
 Table~\ref{tab:banalogs} and in the join column, but it does not move the row.
 
+\subsection{What this ordering costs, stated before the table\secstatus{todo}}\label{sec:cost}
+
+Ranking on measurements has one large consequence and it runs against the reason a
+bacterial host is interesting at all. The functional-genomics screens win, and the
+metabolic-engineering campaigns lose, by roughly three orders of magnitude.
+
+The twenty-four rows that connect an explicit engineering intervention to a production
+phenotype, meaning the production campaigns, the combinatorial designs and the tolerance
+series, have a median of 145 measurements and a median rank of 62. Three of them reach the
+fifty; twenty-one sit in the reserve. The sixteen transposon-fitness and chemical-genomics
+rows have a median of 282,906 measurements, a factor of about 1,944 more, and every one of
+them reaches the fifty. Twenty-one of the twenty-five reserve rows are engineering rows.
+
+Neither figure is wrong and the rule is not misapplied. A titer measured on six strains
+really is six numbers, and a barcoded library really does yield millions. What the ordering
+encodes is that a dataset's worth is its volume, and for a substrate meant to support
+inverse strain design that is a defensible default and an incomplete one: the rows that
+teach a model what an intervention does to a product are the rows this ordering ranks last.
+
+Two things follow, and only the first is done here. The ranking is reported as asked, so
+the table below is ordered by volume and density alone. And the alternative is one field
+away rather than a rewrite: the generating script already records a class per row, so a
+portfolio rule that reserves a share of the tranche for engineering breadth, the way the
+yeast list bands its rows before ranking them, would reorder the same records without
+recollecting anything.
+
 \subsection{Sequence reconstruction is the gate, not a preference\secstatus{todo}}
 
 A phenotype is only trainable against a genotype that can be written down, so every row
@@ -43,16 +69,16 @@ because a b-number and a PP\_ locus tag are different namespaces that must not b
 silently merged (Sec.~\ref{sec:schema}).
 
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
-  \item \term{MG1655-KO} and \term{KT2440-KO} -- the reference genome minus one
+  \item \term{K-12-KO} and \term{KT2440-KO} -- the reference genome minus one
     cataloged gene. The cheapest basis, and the one most of the built yeast set sits on
     in its own reference.
-  \item \term{MG1655-KO x KO} -- a constructed double mutant, both loci cataloged, which
+  \item \term{K-12-KO x KO} -- a constructed double mutant, both loci cataloged, which
     is the basis a genetic-interaction row needs.
-  \item \term{MG1655+transposon} and \term{KT2440+transposon} -- a mapped insertion site
+  \item \term{K-12+transposon} and \term{KT2440+transposon} -- a mapped insertion site
     carrying a barcode. The insertion position is sequenced, so the genotype is realized
     rather than designed, which is what separates a barcoded transposon library from a
     guide library.
-  \item \term{MG1655+guide}, \term{KT2440+guide} -- the genome is unedited and the
+  \item \term{K-12+guide}, \term{KT2440+guide} -- the genome is unedited and the
     perturbation is a designed cassette plus a guide target. Regulatory, not
     sequence-level, and it reaches the essential genes a deletion collection cannot hold.
   \item \term{KT2440+promoter} and \term{engineered-chassis+promoter} or
@@ -64,6 +90,16 @@ silently merged (Sec.~\ref{sec:schema}).
   \item \term{reference-only} -- wild type, where the environment carries the
     perturbation.
 \end{itemize}
+
+\notesec{The \org{E. coli} bases say K-12 rather than naming one strain, and that is an
+admission} The deletion collection is in BW25113 and the knockdown libraries are mostly
+MG1655. Those are different genomes: BW25113 carries defined lesions at the lactose,
+arabinose and rhamnose loci among others, so a deletion row and a knockdown row do not
+sit on the same reference even when both are called K-12. Labeling a collection row with
+the MG1655 name would be a sequence-level error in a substrate whose claim is
+sequence-level genotype fidelity, and labeling both K-12 records the lineage without
+asserting an identity that was not checked. Which background each row actually used is a
+per-row provenance item to settle when its loader is written, and it is not settled here.
 
 What fails the gate is a strain whose genome is unknown even in principle. An evolved
 population that was never resequenced lands there, and so does a strain described only by
@@ -98,16 +134,17 @@ thirty by the ordering rule and needs no further explanation. The first twenty c
 correction to the rule, and it is applied after ranking and reported rather than folded
 into a score.
 
-Measurements alone would let one host fill the first tranche, because the two literatures
-are not the same size and the largest screens are not evenly split between them. Starting
-both hosts together is worth more than starting the twenty largest rows: the two schema
-changes in Sec.~\ref{sec:schema} are per host, the provisioning of a reference release is
-per host, and neither cost is paid until a row for that host is actually built. So the
-first tranche holds ten rows per host, taken in rank order within each, and every row the
-quota promoted is named with its unaided rank in Table~\ref{tab:bfinal} and in the
-generating script's output.
+The correction is a floor of six rows per host, not an even split, and the difference
+matters. The two schema changes in Sec.~\ref{sec:schema} are per host, and so is
+provisioning a reference release, so neither cost is paid until a row for that host is
+actually built; a floor guarantees both hosts start. An even ten-and-ten split would go
+much further than that and fight the ordering rule, promoting four rows of a few hundred
+measurements over rows of a few hundred thousand.
 
-The consequence is visible and intended. A row promoted by the quota sits above rows with
-more measurements than it has, and the displaced rows are the weakest of the
-over-represented host rather than the weakest overall, so a promotion never costs a row
-the quota is protecting.
+On these rows the floor does not bind at all. Ranking by measurements alone already puts
+fourteen \org{E. coli} rows and six \org{P. putida} rows in the first tranche, which meets
+the floor without promoting anything, so the printed order is the measurement order from
+first row to last. The floor is a guard that turned out not to be needed, and the
+generating script prints any promotion it makes, so a future pass in which it does bind
+will say so rather than quietly reordering. An even ten-and-ten split would have bound
+here, which is the comparison that justifies the floor over a split.

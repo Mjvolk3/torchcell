@@ -1,0 +1,67 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_bacteria_candidate_datasets_table.py
+\begin{table}[H]\centering
+\small
+\caption[]{Summary of the fifty, split at the tranche-1 line. \emph{Tr. 1} and
+\emph{Tr. 2} count rows; \emph{Genotypes}, \emph{Instances} and \emph{Meas.} sum the row
+axes over all fifty and are lower bounds, since a row with no count contributes nothing.
+The fifty name 50 joins, 49 of them to a dataset already built.}
+\label{tab:bsummary}
+\begin{tabular}{@{}l r r r r r@{}}
+\toprule
+ & Tr. 1 & Tr. 2 & Genotypes & Instances & Meas. \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{By host}}\\
+E. coli & 14 & 25 & 2,978,256 & $3.0\times 10^{7}$ & $3.0\times 10^{8}$ \\
+P. putida & 6 & 5 & 214,643 & $2.4\times 10^{6}$ & $6.4\times 10^{6}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{By tier}}\\
+tier 1 & 12 & 5 & 2,666,704 & $3.1\times 10^{7}$ & $3.0\times 10^{8}$ \\
+tier 2 & 3 & 5 & 315,084 & $1.2\times 10^{6}$ & $1.4\times 10^{6}$ \\
+tier 3 & 3 & 10 & 210,856 & $4.8\times 10^{4}$ & $7.1\times 10^{6}$ \\
+tier 4 & 2 & 10 & 255 & $1.6\times 10^{3}$ & $3.9\times 10^{6}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{By class}}\\
+Aggregation / support & 0 & 4 & 18,222 & $1.9\times 10^{4}$ & $7.0\times 10^{4}$ \\
+CRISPR library screen & 4 & 2 & 303,848 & $1.2\times 10^{6}$ & $1.7\times 10^{6}$ \\
+Fitness / chemical genomics & 3 & 1 & 15,977 & $1.6\times 10^{6}$ & $9.8\times 10^{6}$ \\
+Genetic interaction & 0 & 3 & 918,141 & $2.9\times 10^{5}$ & $2.9\times 10^{5}$ \\
+Metabolome / flux & 1 & 2 & 3,987 & $3.5\times 10^{4}$ & $2.6\times 10^{8}$ \\
+Modality / backbone & 0 & 2 & 189,386 & $2.3\times 10^{4}$ & $2.3\times 10^{4}$ \\
+Multi-omics campaign & 1 & 5 & 1,057 & $1.5\times 10^{3}$ & $1.5\times 10^{6}$ \\
+Production campaign & 1 & 2 & 649 & $2.8\times 10^{3}$ & $2.2\times 10^{6}$ \\
+Proteome & 0 & 3 & 7 & 134 & $3.1\times 10^{5}$ \\
+Transcriptome & 2 & 0 & 93 & $1.4\times 10^{3}$ & $6.2\times 10^{6}$ \\
+Translation / turnover & 0 & 2 & 2 & 15 & $4.8\times 10^{4}$ \\
+Transposon fitness & 8 & 4 & 1,741,530 & $2.9\times 10^{7}$ & $2.9\times 10^{7}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{By sequence basis}}\\
+K-12+guide & 4 & 2 & 303,848 & $1.2\times 10^{6}$ & $1.7\times 10^{6}$ \\
+K-12+transposon & 4 & 2 & 1,712,954 & $2.7\times 10^{7}$ & $2.7\times 10^{7}$ \\
+K-12-KO & 5 & 4 & 23,961 & $1.7\times 10^{6}$ & $2.7\times 10^{8}$ \\
+K-12-KO x KO & 0 & 3 & 918,141 & $2.9\times 10^{5}$ & $2.9\times 10^{5}$ \\
+KT2440+guide & 1 & 0 & 472 & $1.4\times 10^{3}$ & $2.1\times 10^{6}$ \\
+KT2440+promoter & 0 & 1 & 12 & 36 & $7.2\times 10^{4}$ \\
+KT2440+transposon & 4 & 3 & 213,977 & $2.4\times 10^{6}$ & $2.4\times 10^{6}$ \\
+engineered-chassis & 0 & 4 & 1,281 & $2.9\times 10^{3}$ & $2.2\times 10^{5}$ \\
+reference-only & 2 & 11 & 18,253 & $1.9\times 10^{4}$ & $3.6\times 10^{6}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Other attributes}}\\
+carries a time axis & 2 & 4 & 3,984 & $1.2\times 10^{5}$ & $9.7\times 10^{6}$ \\
+mirrors a built yeast dataset & 20 & 29 & 3,192,899 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
+needs a phenotype class the substrate lacks & 0 & 1 & 0 & 297 & $2.3\times 10^{4}$ \\
+has a join to a built dataset & 20 & 29 & 3,192,899 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
+figures sourced this pass & 20 & 28 & 3,037,483 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
+figures from recall, to confirm & 0 & 2 & 155,416 & $1.6\times 10^{5}$ & $1.6\times 10^{5}$ \\
+data location confirmed live & 14 & 15 & 822,122 & $4.8\times 10^{6}$ & $2.8\times 10^{8}$ \\
+per-record values not released & 0 & 3 & 302,741 & $3.0\times 10^{5}$ & $3.0\times 10^{5}$ \\
+a corpus, not net new until split & 2 & 4 & 22,971 & $1.6\times 10^{6}$ & $3.4\times 10^{6}$ \\
+instances a reported count & 7 & 12 & 767,687 & $1.8\times 10^{6}$ & $2.7\times 10^{8}$ \\
+instances a product of the axes & 13 & 12 & 1,584,382 & $3.0\times 10^{7}$ & $3.3\times 10^{7}$ \\
+instances an estimate & 0 & 6 & 840,830 & $2.5\times 10^{5}$ & $3.7\times 10^{5}$ \\
+dimensionality reported, not estimated & 18 & 25 & 2,968,342 & $3.2\times 10^{7}$ & $3.0\times 10^{8}$ \\
+\midrule
+Total & 20 & 30 & 3,192,899 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
+\bottomrule
+\end{tabular}
+\end{table}

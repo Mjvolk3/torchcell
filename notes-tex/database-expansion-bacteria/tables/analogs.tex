@@ -1,0 +1,128 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_bacteria_candidate_datasets_table.py
+\begin{landscape}
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}r@{\hspace{4pt}} L{40mm} L{40mm} L{74mm} L{74mm}@{}}
+\caption[]{What each bacterial row maps onto in the supported set. A named analog means
+the loader writes a record type the schema already holds, against a different reference
+genome, so the work is the retrieval and the provenance rather than a new phenotype
+class. \emph{What the schema still needs} is per-row and excludes the two blockers every
+row shares (Table~\ref{tab:bschema}); a dash means those two are the whole cost.}
+\label{tab:banalogs}\\
+\toprule
+\textbf{\#} & \textbf{Bacterial row} & \textbf{Built yeast analog} & \textbf{Why it is the analog} & \textbf{What the schema still needs} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{@{}l}{\footnotesize\emph{Table~\ref{tab:banalogs}, continued}}\\
+\toprule
+\textbf{\#} & \textbf{Bacterial row} & \textbf{Built yeast analog} & \textbf{Why it is the analog} & \textbf{What the schema still needs} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1 & Fuhrer 2017 \org{E. coli} & \textbf{Mulleder 2016 amino-acid metabolome} & whole deletion collection metabolite profiling & -- \\
+\addlinespace[5pt]
+2 & Wetmore 2015 \org{E. coli} & \textbf{Hillenmeyer 2008 HIP/HOP} & pooled barcoded competitive fitness assay & -- \\
+\addlinespace[5pt]
+3 & Mutalik 2020 \org{E. coli} & \textbf{Hillenmeyer 2008 HIP/HOP} & pooled barcoded mutants across selective conditions & -- \\
+\addlinespace[5pt]
+4 & Tong 2020 \org{E. coli} & \textbf{Smith 2006 chemogenomic} & colony growth per deletion per condition & -- \\
+\addlinespace[5pt]
+5 & PRECISE-1K \org{E. coli} & \textbf{Kemmeren 2014 deletion transcriptome} & deletion-and-condition expression compendium & -- \\
+\addlinespace[5pt]
+6 & Carruthers 2025 \org{P. putida} & \textbf{Lian 2019 CRISPR-AID} & multiplexed guide combinations scored by product & -- \\
+\addlinespace[5pt]
+7 & Lim 2022 putidaPRECISE321 \org{P. putida} & \textbf{Caudal 2024 pan-transcriptome} & aggregated RNA-seq compendium across many backgrounds & -- \\
+\addlinespace[5pt]
+8 & Borchert 2024 fModules \org{P. putida} & \textbf{Hillenmeyer 2008 HIP/HOP} & pooled mutant fitness across hundreds of conditions & -- \\
+\addlinespace[5pt]
+9 & Caglar 2017 \org{E. coli} & \textbf{Zelezniak 2018 proteome and metabolome} & two layers on identical samples & -- \\
+\addlinespace[5pt]
+10 & Nichols 2011 \org{E. coli} & \textbf{Hillenmeyer 2008 HIP/HOP} & deletion collection across many chemicals & -- \\
+\addlinespace[5pt]
+11 & Goodall 2018 \org{E. coli} & \textbf{SGD essentiality} & genome-wide essential gene call set & -- \\
+\addlinespace[5pt]
+12 & Price 2018 \org{E. coli} & \textbf{Hillenmeyer 2008 HIP/HOP} & pooled barcoded fitness across many conditions & -- \\
+\addlinespace[5pt]
+13 & Choe 2025 \org{E. coli} & \textbf{Smith 2016 CRISPRi} & pooled CRISPRi knockdown across drugs & -- \\
+\addlinespace[5pt]
+14 & Rapp 2026 CRISPRi metabolome \org{E. coli} & \textbf{Zelezniak 2018 metabolome} & both put metabolite concentrations and a second molecular layer on one strain axis & -- \\
+\addlinespace[5pt]
+15 & Schmidt 2022 nitrogen \org{P. putida} & \textbf{Hillenmeyer 2008 HIP/HOP} & pooled mutant fitness across nitrogen sources & -- \\
+\addlinespace[5pt]
+16 & Wang 2018 \org{E. coli} & \textbf{Smith 2016 CRISPRi} & pooled CRISPRi guide fitness screen & -- \\
+\addlinespace[5pt]
+17 & Rousset 2018 \org{E. coli} & \textbf{Smith 2016 CRISPRi} & pooled CRISPRi guide fitness screen & -- \\
+\addlinespace[5pt]
+18 & Shiver 2016 \org{E. coli} & \textbf{Wildenhain 2015 drug tolerance} & neglected-compound panel against deletion collection & -- \\
+\addlinespace[5pt]
+19 & Thompson 2020 fatty acid and alcohol \org{P. putida} & \textbf{Hillenmeyer 2008 HIP/HOP} & pooled mutant fitness across a carbon-source panel & -- \\
+\addlinespace[5pt]
+20 & Borchert 2023 lignin tolerance \org{P. putida} & \textbf{Hillenmeyer 2008 HIP/HOP} & pooled mutant fitness across chemical stresses & -- \\
+\addlinespace[5pt]
+21 & Schastnaya 2021 \org{E. coli} & \textbf{Mulleder 2016 amino-acid metabolome} & point-mutant panel, metabolite readout & -- \\
+\addlinespace[5pt]
+22 & Cui 2018 \org{E. coli} & \textbf{Smith 2016 CRISPRi} & pooled CRISPRi guide fitness screen & -- \\
+\addlinespace[5pt]
+23 & Schmidt 2016 \org{E. coli} & \textbf{Messner 2023 proteome} & both give panel-wide absolute proteome depth & -- \\
+\addlinespace[5pt]
+24 & Butland 2008 \org{E. coli} & \textbf{Costanzo 2016 SGA} & conjugation analog of yeast SGA & -- \\
+\addlinespace[5pt]
+25 & Mori 2021 \org{E. coli} & \textbf{Messner 2023 proteome} & absolute proteome across a large condition panel & -- \\
+\addlinespace[5pt]
+26 & Ishii 2007 \org{E. coli} & \textbf{Zelezniak 2018 proteome and metabolome} & several layers, one strain panel & -- \\
+\addlinespace[5pt]
+27 & Campos 2018 \org{E. coli} & \textbf{Kemmeren 2014 deletion transcriptome} & high-dimensional profile per deletion strain & -- \\
+\addlinespace[5pt]
+28 & Typas 2008 \org{E. coli} & \textbf{Costanzo 2016 SGA} & conjugation analog of yeast SGA & -- \\
+\addlinespace[5pt]
+29 & Girgis 2009 \org{E. coli} & \textbf{Hillenmeyer 2008 HIP/HOP} & pooled mutant library across drug panel & -- \\
+\addlinespace[5pt]
+30 & Banerjee 2025 \org{P. putida} & \textbf{Zelezniak 2018 proteome} & engineered panel paired with quantitative proteomes & -- \\
+\addlinespace[5pt]
+31 & Fang 2025 FFA CRISPRi-FACS \org{E. coli} & \textbf{Xue 2025 free fatty acids} & both read free fatty acid output as the label on a perturbed strain & -- \\
+\addlinespace[5pt]
+32 & Babu 2014 \org{E. coli} & \textbf{Costanzo 2016 SGA} & conjugation digenic epistasis colony scores & -- \\
+\addlinespace[5pt]
+33 & Gupta 2024 turnover \org{E. coli} & \textbf{Messner 2023 proteome} & proteome-wide per-protein quantitative depth & -- \\
+\addlinespace[5pt]
+34 & MCF2Chem 2023 \org{E. coli} & \textbf{Ozaydin 2013 beta-carotene screen} & both score a small-molecule product per engineered strain over a genome-scale perturbation panel & -- \\
+\addlinespace[5pt]
+35 & CeCaFDB flux compendium \org{E. coli} & -- & No built row measures this. & -- \\
+\addlinespace[5pt]
+36 & Thompson 2019 lysine \org{P. putida} & \textbf{Hillenmeyer 2008 HIP/HOP} & pooled deletion fitness across nutrient conditions & -- \\
+\addlinespace[5pt]
+37 & Rand 2017 Putida\_ML5 library \org{P. putida} & \textbf{Hillenmeyer 2008 HIP/HOP} & the pooled barcoded mutant collection itself & -- \\
+\addlinespace[5pt]
+38 & Balakrishnan 2022 \org{E. coli} & \textbf{Zelezniak 2018 proteome and metabolome} & two layers, same samples, joinable & -- \\
+\addlinespace[5pt]
+39 & Brunk 2016 \org{E. coli} & \textbf{Zelezniak 2018 metabolome} & both put metabolite concentrations and a second molecular layer on one strain axis & -- \\
+\addlinespace[5pt]
+40 & Thompson 2019 valerolactam \org{P. putida} & \textbf{Hillenmeyer 2008 HIP/HOP} & pooled mutant fitness on defined carbon sources & -- \\
+\addlinespace[5pt]
+41 & D2Cell 2026 \org{E. coli} & \textbf{Ozaydin 2013 beta-carotene screen} & both score a small-molecule product per engineered strain over a genome-scale perturbation panel & -- \\
+\addlinespace[5pt]
+42 & Li 2014 \org{E. coli} & \textbf{Messner 2023 proteome} & genome-wide absolute protein-level quantification & -- \\
+\addlinespace[5pt]
+43 & Potel 2018 phosphoproteome \org{E. coli} & \textbf{Messner 2023 proteome} & deep single-organism protein-level mass spectrometry & -- \\
+\addlinespace[5pt]
+44 & Baba 2006 \org{E. coli} & \textbf{SGD essentiality} & reference deletion set defines essentiality & -- \\
+\addlinespace[5pt]
+45 & Gerdes 2003 \org{E. coli} & \textbf{SGD essentiality} & genome-wide essential gene call set & -- \\
+\addlinespace[5pt]
+46 & Kochanowski 2017 \org{E. coli} & \textbf{Zelezniak 2018 proteome and metabolome} & expression plus metabolome, shared conditions & -- \\
+\addlinespace[5pt]
+47 & Oyetunde 2019 \org{E. coli} & \textbf{Ozaydin 2013 beta-carotene screen} & both score a small-molecule product per engineered strain over a genome-scale perturbation panel & -- \\
+\addlinespace[5pt]
+48 & Taniguchi 2010 \org{E. coli} & \textbf{Nadal-Ribelles 2025 Perturb-seq} & single-cell readout across strain library & -- \\
+\addlinespace[5pt]
+49 & Haverkorn van Rijsewijk 2011 \org{E. coli} & \textbf{Mulleder 2016 amino-acid metabolome} & deletion panel, central-metabolic readout & -- \\
+\addlinespace[5pt]
+50 & Menasalvas 2025 \org{P. putida} & \textbf{Lopez 2024 isobutanol} & iterative engineered panel, alcohol titer & -- \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup
+\end{landscape}

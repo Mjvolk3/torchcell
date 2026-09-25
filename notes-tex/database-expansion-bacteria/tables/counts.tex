@@ -1,0 +1,35 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_bacteria_candidate_datasets_table.py
+\begin{table}[H]\centering
+\small
+\caption[]{Candidates by class and by host, split at the two tranche lines.
+\emph{Genotypes}, \emph{Instances} and \emph{Meas.} sum the per-row axes over all
+tranches; a row with no count contributes nothing, so every total is a lower bound.}
+\label{tab:bcounts}
+\begin{tabular}{@{}l r r r r r r@{}}
+\toprule
+ & Tr. 1 & Tr. 2 & Reserve & Genotypes & Instances & Meas. \\
+\midrule
+Aggregation / support & 0 & 4 & 0 & 18,222 & $1.9\times 10^{4}$ & $7.0\times 10^{4}$ \\
+CRISPR library screen & 4 & 2 & 3 & 304,032 & $1.2\times 10^{6}$ & $1.7\times 10^{6}$ \\
+Combinatorial design & 0 & 0 & 5 & 653 & $1.1\times 10^{3}$ & $1.1\times 10^{3}$ \\
+Fitness / chemical genomics & 3 & 1 & 0 & 15,977 & $1.6\times 10^{6}$ & $9.8\times 10^{6}$ \\
+Genetic interaction & 0 & 3 & 0 & 918,141 & $2.9\times 10^{5}$ & $2.9\times 10^{5}$ \\
+Metabolome / flux & 1 & 2 & 0 & 3,987 & $3.5\times 10^{4}$ & $2.6\times 10^{8}$ \\
+Modality / backbone & 0 & 2 & 0 & 189,386 & $2.3\times 10^{4}$ & $2.3\times 10^{4}$ \\
+Multi-omics campaign & 1 & 5 & 1 & 1,117 & $1.7\times 10^{3}$ & $1.5\times 10^{6}$ \\
+Production campaign & 1 & 2 & 12 & 830 & $3.8\times 10^{3}$ & $2.2\times 10^{6}$ \\
+Proteome & 0 & 3 & 0 & 7 & 134 & $3.1\times 10^{5}$ \\
+Tolerance / robustness & 0 & 0 & 4 & 168 & 687 & 687 \\
+Transcriptome & 2 & 0 & 0 & 93 & $1.4\times 10^{3}$ & $6.2\times 10^{6}$ \\
+Translation / turnover & 0 & 2 & 0 & 2 & 15 & $4.8\times 10^{4}$ \\
+Transposon fitness & 8 & 4 & 0 & 1,741,530 & $2.9\times 10^{7}$ & $2.9\times 10^{7}$ \\
+\midrule
+\multicolumn{7}{@{}l}{\emph{The same rows, by host}}\\
+E. coli & 14 & 25 & 11 & 2,979,176 & $3.0\times 10^{7}$ & $3.0\times 10^{8}$ \\
+P. putida & 6 & 5 & 14 & 214,969 & $2.4\times 10^{6}$ & $6.4\times 10^{6}$ \\
+\midrule
+Total & 20 & 30 & 25 & 3,194,145 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
+\bottomrule
+\end{tabular}
+\end{table}

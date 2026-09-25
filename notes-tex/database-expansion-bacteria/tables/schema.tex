@@ -1,0 +1,29 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_bacteria_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}L{52mm} L{46mm} L{72mm}@{}}
+\caption[]{What the schema needs before any bacterial row can be written, and how each
+was established. The first two are the critical path: every row in
+Table~\ref{tab:bfinal} waits on them, and both are additive, so they add classes and
+move no served closure. \emph{Evidence} is the result of running the validator, not a
+reading of it.}
+\label{tab:bschema}\\
+\toprule
+Change & Where & Evidence \\
+\midrule
+\endfirsthead
+\toprule
+Change & Where & Evidence \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\textbf{A bacterial gene-identifier namespace on GenePerturbation, so a b-number or a PP\_ locus tag validates as a systematic gene name} & \file{torchcell/datamodels/schema.py, GenePerturbation.validate_sys_gene_name} & The validator admits only Y[A-P][LR]NNN[WC], QNNNN and YNC[A-Q]NNNN[WC]. Constructing a DeletionPerturbation with b0002, PP\_0001, ECK0002 or thrA raises 'Invalid systematic gene name format'; YAL001C is accepted. Blocks: every row in the table that perturbs a named gene. \\
+\addlinespace[5pt]
+\textbf{A genomes-tier assembly set per host, so a strain's sequence resolves the way a yeast strain's does} & \file{torchcell/sequence/genome/registry.py and torchcell/sequence/genome/} & The tier defines two assembly sets, both S. cerevisiae (sgd\_S288C\_R64-4-1\_20230830 and peter2018\_1011\_assemblies), and the genome package holds only a scerevisiae subpackage. Blocks: the sequence basis of every row, and so the sequence-reconstruction gate. \\
+\addlinespace[5pt]
+\textbf{Nothing on the reference side} & \file{torchcell/datamodels/schema.py, ReferenceGenome} & species and strain are free strings, so ReferenceGenome(species='Escherichia coli', strain='MG1655') and the KT2440 equivalent both validate unchanged. Blocks: nothing. \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup

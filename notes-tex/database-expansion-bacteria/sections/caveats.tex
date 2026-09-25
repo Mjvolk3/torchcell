@@ -34,6 +34,55 @@ form is a figure or a table of selected hits is not ingestible as a genotype-to-
 dataset, whatever its reputation. These stay in the table with the flag rather than being
 dropped, because an author request or a supplementary re-check can change the state.
 
+\subsection{The transposon rows overlap each other, and the largest is a superset\secstatus{todo}}\label{sec:overlap}
+
+Several of the highest-ranking rows draw on the same barcoded libraries, so ingesting them
+in rank order would load the same measurements more than once. This is the one place where
+the ranking and the build order should come apart.
+
+For \org{P. putida}, one released fitness matrix is dense and machine-readable at 4,732
+genes by 332 samples with no missing values, and it is a superset of the other
+transposon-fitness rows in this table. Those rows should be de-duplicated against it
+rather than ingested in parallel, which turns four loaders into one plus a provenance
+record of which source experiments the matrix covers. The library behind them is one
+library, not several: the reported insertion counts belong to a single barcoded collection
+of 185,401 insertions, 152,810 of them in genes covering 5,213 of 5,661 genes, and a
+smaller figure quoted elsewhere is fitness coverage rather than library size.
+
+For \org{E. coli}, the same relation holds between the method paper that introduced the
+barcoded library and the later compendium built on it: the compendium is a superset of that
+paper's \org{E. coli} experiments. The deletion-collection rows have the cleaner
+relationship, since they share a strain axis without sharing measurements, and that shared
+axis is what makes them joinable rather than redundant.
+
+\subsection{Access findings that change what a loader can do\secstatus{todo}}\label{sec:access}
+
+Four findings are specific enough to name, because each one changes the work rather than
+the confidence.
+
+\notesec{One \org{P. putida} campaign is deposited as seven separate proteomics
+accessions, one per design cycle} Ingesting the one accession a reader finds first would
+drop six sevenths of the proteome. The campaign is one dataset with linked assets, and its
+loader has to enumerate all seven.
+
+\notesec{No \org{P. putida} knockdown library in this table releases a guide-by-sample
+matrix} The library itself is real, roughly three guides per gene over 5,591 coding
+sequences, but the deposit holds baseline per-guide counts, a lost-guide list, per-round
+enriched hit lists and representative rather than per-replicate sequencing. A per-guide
+fitness matrix cannot be reconstructed from it, so the row enters on its per-strain
+production measurements and not as a pooled screen.
+
+\notesec{Two accessions did not resolve when checked} One resequencing project identifier
+returns nothing at the sequence archives, so the mutation calls exist only in a
+supplementary table, and one deletion-collection portal has moved host. Neither is a
+reason to drop a row, and both are a reason the provenance record has to pin the file that
+was actually read.
+
+\notesec{One fitness portal is behind a challenge that blocks scripted retrieval} Four
+rows whose only data location is that portal are therefore unconfirmed at the accession
+level, and the coverage figures circulating for it come from archived snapshots rather than
+a live read. They are recorded as unconfirmed rather than quoted as current.
+
 \section{What was dropped\secstatus{todo}}\label{sec:excluded}
 
 \input{tables/excluded}

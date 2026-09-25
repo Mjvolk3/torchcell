@@ -85,7 +85,37 @@ def go_model(arm: str, key: str):
     return run
 
 
+def cross_target(key: str):
+    """A value of the betaxanthin-against-amino-acid read, from the 032 results tree."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(
+            os.environ["EXPERIMENT_ROOT"], "032-amino-acid-module", "results",
+            "betaxanthin_amino_acid_correlation.json",
+        )))
+        if key == "n_shared_mulleder":
+            return float(d["n_shared_mulleder"])
+        return float(next(p for p in d["pool"] if p["screen"] == "mulleder2016")[key])
+
+    return run
+
+
 CHECKS: list[Check] = [
+    # sec:standing -- the comparators on the same split and the cross-target read.
+    Check(claim="standing: kNN over the HiGHS store", stated=0.195,
+          recompute=store_baseline("betaxanthin", "pfba_highs", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="standing: best ridge (driving-force cap 100)", stated=0.152,
+          recompute=store_baseline("betaxanthin", "mdfcap100_conc", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="standing: kNN over ProtT5", stated=0.145,
+          recompute=transfer_comparator("betaxanthin", "cosine kNN"), tolerance=0.0006),
+    Check(claim="standing: FCL random forest", stated=0.039,
+          recompute=transfer_comparator("betaxanthin", "FCL RandomForest"), tolerance=0.0006),
+    Check(claim="standing: amino-acid pool ridge reads betaxanthin out of fold", stated=0.226,
+          recompute=cross_target("spearman_oof"), tolerance=0.0006),
+    Check(claim="standing: strains shared with Mulleder", stated=4477,
+          recompute=cross_target("n_shared_mulleder"), tolerance=0.5),
     # sec:physics -- the annotation-only family.
     Check(claim="go-models: GO columns with train support", stated=2341,
           recompute=go_model("go_mlp", "n_columns_with_train_support"), tolerance=0.5),

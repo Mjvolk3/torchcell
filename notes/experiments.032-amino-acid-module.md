@@ -187,3 +187,29 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | round | 028 | pack | arm | status |
 |---|---|---|---|---|
 | A16 | 160 | w177 | del + HiGHS store with GO appended | pending (2815) |
+
+## 2026.09.24 - Round A14 read (job 2808, 3 h 34 min)
+
+- A14 (w170, the GO multi-hot in the affine slot): 0.058 (sd 0.001) vs the deletion-only control 0.049 (+0.009, sd 0.007, 5/6) and vs the parsimonious store 0.040 (+0.018, sd 0.005, 6/6); ensemble 0.059. Every seed selects at epoch 2 or 3 (validation Pearson 0.11 before the backbone moves); the affine's read is the whole cell. The highest single-seed transformer arm on this target and the first paired gain over the control on five seeds. Written into the 032 document as round 153 (version 8).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A14 | 153 | w170 | del + GO multi-hot affine | 0.058 (sd 0.001); ens 0.059 |
+
+## 2026.09.24 - Betaxanthin against the amino-acid pool (joint-training hope)
+
+Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correlation.py`; results `results/betaxanthin_amino_acid_correlation.json`; figure below; section 4.1 of the 032 document (published v9) with two generated tables and 28 verifier checks.
+
+- Strains matched on the systematic ORF: Cachera shares 4,477 with Mulleder and 4,225 with Cooper.
+- Single amino acids (Mulleder, Spearman with a strain bootstrap): methionine +0.130 [0.100, 0.157], threonine +0.093, aspartate +0.091, tyrosine -0.083, arginine -0.077, glutamate -0.065; top-5% overlap 3.3x chance for aspartate, 3.0x for threonine. Ceilings (sqrt of the two reliabilities, betaxanthin 0.84) 0.20 to 0.54, so the singles sit well under them.
+- The pool: ridge from the 19 standardized log concentrations to the betaxanthin score, five strain folds, out of fold, reads Spearman +0.226 (folds 0.182 to 0.272) against -0.002 (sd 0.016) with the target shuffled. That is at the level of the best genotype-side betaxanthin model (0.211, round 151), from a different input on a different strain set: the two endpoints share strain-level signal.
+- Cooper: no single peak beyond |0.063|; pool ridge +0.092 (shuffled -0.006); ceilings 0.00 to 0.49.
+- Hypothesis (untested): part of the shared signal is a growth or respiratory covariate common to both screens. Whether the pool adds to the deleted gene, rather than restating it, is the joint-training question this read does not answer.
+
+![](./assets/images/032-amino-acid-module/betaxanthin_amino_acid_correlation_2026-09-24-20-46-33.svg)
+
+- Submitted A17 = w179 (GO + HiGHS affine at dropout 0.3 on the prototroph, job 2817; paired vs w177 and w173).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A17 | -- | w179 | del + HiGHS store with GO, dropout 0.3 | job 2817, pending |

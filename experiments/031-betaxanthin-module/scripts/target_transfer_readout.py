@@ -574,6 +574,30 @@ PAIRS = [
         "w143_aadelstore_h12l1p1_e200",
     ),
     (
+        "betaxanthin: HiGHS store with GO appended at dropout 0.3 against 0.1",
+        "betaxanthin",
+        "w178_bxdelgopfbadrop_h12l1p1_e200",
+        "w168_bxdelgopfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: HiGHS store with GO appended at dropout 0.3 against GO alone at 0.3",
+        "betaxanthin",
+        "w178_bxdelgopfbadrop_h12l1p1_e200",
+        "w176_bxdelgodrop_h12l1p1_e200",
+    ),
+    (
+        "amino acids: HiGHS store with GO appended at dropout 0.3 against 0.1",
+        "mulleder19",
+        "w179_aadelgopfbadrop_h12l1p1_e200",
+        "w177_aadelgopfba_h12l1p1_e200",
+    ),
+    (
+        "amino acids: HiGHS store with GO appended at dropout 0.3 against the store at 0.3",
+        "mulleder19",
+        "w179_aadelgopfbadrop_h12l1p1_e200",
+        "w173_aadelstoredrop_h12l1p1_e200",
+    ),
+    (
         "amino acids: deletion-only store at dropout 0.3 against 0.1",
         "mulleder19",
         "w173_aadelstoredrop_h12l1p1_e200",

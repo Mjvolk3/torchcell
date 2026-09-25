@@ -18,6 +18,7 @@ import json
 import os
 import os.path as osp
 import sys
+import numpy as np
 
 from dotenv import load_dotenv
 
@@ -281,6 +282,78 @@ def amino_acid_concordance() -> str | None:
     return write("amino_acids", "amino_acid_concordance", body, "results/amino_acid_dataset_concordance.json")
 
 
+def betaxanthin_amino_acid_correlation() -> str | None:
+    """Cachera's betaxanthin score against each amino-acid quantity of the two screens,
+    and the pool ridge, from betaxanthin_amino_acid_correlation.py."""
+    src = results("amino_acids", "betaxanthin_amino_acid_correlation.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    screen_label = {"mulleder2016": "M\\\"ulleder 2016 (mM)", "cooper2010": "Cooper 2010 (ratio)"}
+    tables = []
+    for screen in ("mulleder2016", "cooper2010"):
+        rows = []
+        for s in d["features"]:
+            if s["screen"] != screen:
+                continue
+            ceiling = "" if s["ceiling"] is None else f"{s['ceiling']:.2f}"
+            rows.append(
+                f"    {s['key'].replace('_', ' ')} & {s['n']:,} & ${s['spearman']:+.3f}$ & "
+                f"$[{s['ci_low']:+.3f}, {s['ci_high']:+.3f}]$ & "
+                f"{s['top5_overlap']} / {s['top5_expected']:.1f} & {ceiling} \\\\"
+            )
+        p = next(x for x in d["pool"] if x["screen"] == screen)
+        perm = p["permuted_spearman_oof"]
+        rows.append(
+            f"    pool ridge, {p['n_features']} columns, out of fold & {p['n']:,} & "
+            f"${p['spearman_oof']:+.3f}$ & folds ${min(p['spearman_by_fold']):+.3f}$ to "
+            f"${max(p['spearman_by_fold']):+.3f}$ & permuted ${np.mean(perm):+.3f}$ "
+            f"(sd {np.std(perm):.3f}) & \\\\"
+        )
+        if screen == "mulleder2016":
+            caption = (
+                "  \\caption[Betaxanthin against the amino-acid pool]{Cachera 2023's "
+                "betaxanthin score (corrected 24 h colony fluorescence, population-centered) "
+                "against each of M\\\"ulleder 2016's amino-acid concentrations, over the "
+                "strains both screens hold, matched on the systematic ORF: the Spearman with "
+                "a strain-bootstrap 95 percent interval (1,000 draws), the overlap of the top "
+                "5 percent of strains on the two axes against the count expected by chance, "
+                "and the ceiling a correlation could reach through both endpoints' noise, the "
+                "geometric mean of the betaxanthin reliability "
+                f"({d['betaxanthin_reliability']:.2f}, the 027 variance-components read) and "
+                "the amino acid's log10 retest Spearman over 194 strains. The pool row is a "
+                "ridge from the standardized log profile to the betaxanthin score over five "
+                "strain folds, the alpha chosen on an inner split, scored out of fold, with "
+                "the same fit against a shuffled target. Written by "
+                "\\texttt{target\\_notes\\_tex\\_tables.py} from "
+                "\\texttt{results/betaxanthin\\_amino\\_acid\\_correlation.json} "
+                "(\\texttt{betaxanthin\\_amino\\_acid\\_correlation.py}).}\n"
+                "  \\label{tab:betaxanthin-amino-acid-correlation}\n"
+            )
+        else:
+            caption = (
+                "  \\caption[Betaxanthin against the Cooper peaks]{"
+                "Table~\\ref{tab:betaxanthin-amino-acid-correlation} for Cooper 2010's "
+                "peaks (a linear ratio to the plate mean), the ceiling from the peak's "
+                "duplicate-strain Spearman, blank where no duplicate pairs were measured.}\n"
+                "  \\label{tab:betaxanthin-amino-acid-correlation-cooper}\n"
+            )
+        tables.append(
+            "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n" + caption
+            + "  \\begin{tabular}{@{}lrrlrr@{}}\n    \\hline\n"
+            "    " + screen_label[screen] + " & strains & Spearman & 95\\% interval & "
+            "top 5\\% & ceiling \\\\\n    \\hline\n"
+            + "\n".join(rows)
+            + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n\n"
+        )
+    body = "".join(tables)
+    return write(
+        "amino_acids", "betaxanthin_amino_acid_correlation", body,
+        "results/betaxanthin_amino_acid_correlation.json",
+    )
+
+
 GO_LABELS = {
     "dcell_style_shared": "DCell-style hierarchy, shared gene input, root head",
     "go_mlp": "perceptron over the GO multi-hot",
@@ -350,6 +423,7 @@ def main() -> None:
         store_degeneracy("betaxanthin"),
         store_degeneracy("amino_acids"),
         amino_acid_concordance(),
+        betaxanthin_amino_acid_correlation(),
         go_models("betaxanthin"),
         go_models("amino_acids"),
     ]

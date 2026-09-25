@@ -271,3 +271,33 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B23 | 150 | w167 | del + GO multi-hot affine | 0.202 (sd 0.001); ens 0.202 / 4.99 |
+
+## 2026.09.24 - Rounds B29 and B30 queued: the GO affine released, and at dropout 0.3
+
+- B29 (w175, job 2813): the GO affine under the release rule (frozen until epoch 5 and until validation Pearson 0.15), asking whether a backbone that escapes first adds to the annotation's read; paired against B23 (w167) and B10 (w148). Round 158.
+- B30 (w176, job 2814): the GO affine at transformer dropout 0.3; paired against B23 and B19 (w162). Round 159.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| B29 | 158 | w175 | del + GO affine, released on escape | pending (2813) |
+| B30 | 159 | w176 | del + GO affine, dropout 0.3 | pending (2814) |
+
+## 2026.09.24 - Round B24 read (job 2806, 3 h 38 min)
+
+- B24 (w168, the HiGHS deletion vector with GO appended in one affine): 0.211 (sd 0.007) vs the HiGHS store alone 0.130 (+0.081, sd 0.032, 6/6) and vs GO alone 0.202 (+0.009, sd 0.007, 5/6); top-50 4.83 (under GO alone's 5.03); ensemble 0.212 / 4.99, the highest rank of the study. Every seed selects at epochs 8 to 13. The flux vector adds to the annotation on the logit where the perceptron read no gain; what flux adds beside GO is a tenth of what GO adds beside flux. Written into the 031 document as round 151.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B24 | 151 | w168 | del + HiGHS store with GO appended | 0.211 (sd 0.007); ens 0.212 / 4.99 |
+
+## 2026.09.24 - B25 read; standing against the comparators; packs B31 and A17
+
+- B25 (w169, the HiGHS store under the release rule, job 2807): 0.108 (sd 0.021) vs the HiGHS store free from epoch 0 at 0.130 (-0.022, sd 0.042, 2/6) and vs the GLPK store under the rule 0.110 (-0.002, 2/6); top-50 3.99 vs 4.46 and 4.66; ensemble 0.139 / 4.99 vs 0.148 / 5.79. Release at epochs 5, 5, 22, 30, 9, 5 (as round 149); the HiGHS plateau seed (0.160 from the affine alone) reads 0.117 under the rule. The rule's gain was the degenerate GLPK store's; a clean store is read best from epoch 0. Written as round 152; 031 published v9, then v10 with the standing section rewritten through round 153.
+- Standing against the comparators on the same split (pinned test Spearman): best arm 0.211 (GO + HiGHS affine, round 151); kNN over the HiGHS store 0.195; best ridge 0.152 (driving-force cap 100); kNN over ProtT5 0.145; FCL RandomForest 0.039. Every comparator is below the best arm; the kNN is the closest.
+- Cross-target read (`experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correlation.py`, in the 032 note): a deletion's measured Mulleder amino-acid pool reads its betaxanthin level out of fold at 0.226 (permuted 0.00) over 4,477 shared strains. The two endpoints share strain-level signal.
+- Submitted B31 = w178 (GO + HiGHS affine at dropout 0.3, job 2816; paired vs w168 and w176) and A17 = w179 (the same on the amino acids, job 2817; vs w177 and w173).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B25 | 152 | w169 | del + HiGHS store, affine released on escape | 0.108 (sd 0.021); ens 0.139 / 4.99 |
+| B31 | -- | w178 | del + HiGHS store with GO, dropout 0.3 | job 2816, pending |

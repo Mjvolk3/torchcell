@@ -65,7 +65,112 @@ def go_model(arm: str, key: str):
     return run
 
 
+def cross_feature(screen: str, key: str, field: str):
+    """One statistic of the betaxanthin-against-amino-acid read for one quantity."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "betaxanthin_amino_acid_correlation.json")))
+        s = next(x for x in d["features"] if x["screen"] == screen and x["key"] == key)
+        return float(s[field])
+
+    return run
+
+
+def cross_summary(key: str):
+    """A summary of the betaxanthin-against-amino-acid read."""
+
+    def run() -> float:
+        import json
+
+        import numpy as np
+
+        d = json.load(open(osp.join(RESULTS, "betaxanthin_amino_acid_correlation.json")))
+        screen, _, field = key.partition(":")
+        if field in ("n_shared_mulleder", "n_shared_cooper", "betaxanthin_reliability"):
+            return float(d[field])
+        if field in ("ceiling_min", "ceiling_max", "abs_spearman_max"):
+            rows = [x for x in d["features"] if x["screen"] == screen]
+            if field == "abs_spearman_max":
+                return float(max(abs(x["spearman"]) for x in rows))
+            vals = [x["ceiling"] for x in rows if x["ceiling"] is not None]
+            return float(min(vals) if field == "ceiling_min" else max(vals))
+        p = next(x for x in d["pool"] if x["screen"] == screen)
+        if field == "spearman_oof":
+            return float(p["spearman_oof"])
+        if field == "fold_min":
+            return float(min(p["spearman_by_fold"]))
+        if field == "fold_max":
+            return float(max(p["spearman_by_fold"]))
+        if field == "permuted_mean":
+            return float(np.mean(p["permuted_spearman_oof"]))
+        if field == "permuted_sd":
+            return float(np.std(p["permuted_spearman_oof"]))
+        raise KeyError(key)
+
+    return run
+
+
 CHECKS: list[Check] = [
+    # sec:cross-target -- the betaxanthin score against the amino-acid pool.
+    Check(claim="cross-target: strains shared with Mulleder", stated=4477,
+          recompute=cross_summary("mulleder2016:n_shared_mulleder"), tolerance=0.5),
+    Check(claim="cross-target: strains shared with Cooper", stated=4225,
+          recompute=cross_summary("cooper2010:n_shared_cooper"), tolerance=0.5),
+    Check(claim="cross-target: betaxanthin reliability", stated=0.84,
+          recompute=cross_summary(":betaxanthin_reliability"), tolerance=0.006),
+    Check(claim="cross-target: methionine Spearman", stated=0.130,
+          recompute=cross_feature("mulleder2016", "methionine", "spearman"), tolerance=0.0006),
+    Check(claim="cross-target: methionine interval low", stated=0.100,
+          recompute=cross_feature("mulleder2016", "methionine", "ci_low"), tolerance=0.0006),
+    Check(claim="cross-target: methionine interval high", stated=0.157,
+          recompute=cross_feature("mulleder2016", "methionine", "ci_high"), tolerance=0.0006),
+    Check(claim="cross-target: threonine Spearman", stated=0.093,
+          recompute=cross_feature("mulleder2016", "threonine", "spearman"), tolerance=0.0006),
+    Check(claim="cross-target: aspartate Spearman", stated=0.091,
+          recompute=cross_feature("mulleder2016", "aspartate", "spearman"), tolerance=0.0006),
+    Check(claim="cross-target: tyrosine Spearman", stated=-0.083,
+          recompute=cross_feature("mulleder2016", "tyrosine", "spearman"), tolerance=0.0006),
+    Check(claim="cross-target: arginine Spearman", stated=-0.077,
+          recompute=cross_feature("mulleder2016", "arginine", "spearman"), tolerance=0.0006),
+    Check(claim="cross-target: glutamate Spearman", stated=-0.065,
+          recompute=cross_feature("mulleder2016", "glutamate", "spearman"), tolerance=0.0006),
+    Check(claim="cross-target: aspartate top-5 enrichment", stated=3.3,
+          recompute=cross_feature("mulleder2016", "aspartate", "top5_enrichment"), tolerance=0.06),
+    Check(claim="cross-target: aspartate top-5 overlap", stated=37,
+          recompute=cross_feature("mulleder2016", "aspartate", "top5_overlap"), tolerance=0.5),
+    Check(claim="cross-target: aspartate top-5 expected", stated=11.2,
+          recompute=cross_feature("mulleder2016", "aspartate", "top5_expected"), tolerance=0.06),
+    Check(claim="cross-target: threonine top-5 enrichment", stated=3.0,
+          recompute=cross_feature("mulleder2016", "threonine", "top5_enrichment"), tolerance=0.06),
+    Check(claim="cross-target: Mulleder ceiling min", stated=0.20,
+          recompute=cross_summary("mulleder2016:ceiling_min"), tolerance=0.006),
+    Check(claim="cross-target: Mulleder ceiling max", stated=0.54,
+          recompute=cross_summary("mulleder2016:ceiling_max"), tolerance=0.006),
+    Check(claim="cross-target: Mulleder pool ridge out of fold", stated=0.226,
+          recompute=cross_summary("mulleder2016:spearman_oof"), tolerance=0.0006),
+    Check(claim="cross-target: Mulleder pool fold min", stated=0.182,
+          recompute=cross_summary("mulleder2016:fold_min"), tolerance=0.0006),
+    Check(claim="cross-target: Mulleder pool fold max", stated=0.272,
+          recompute=cross_summary("mulleder2016:fold_max"), tolerance=0.0006),
+    Check(claim="cross-target: Mulleder pool permuted mean", stated=-0.002,
+          recompute=cross_summary("mulleder2016:permuted_mean"), tolerance=0.0006),
+    Check(claim="cross-target: Mulleder pool permuted sd", stated=0.016,
+          recompute=cross_summary("mulleder2016:permuted_sd"), tolerance=0.0006),
+    Check(claim="cross-target: Cooper largest single peak", stated=0.063,
+          recompute=cross_summary("cooper2010:abs_spearman_max"), tolerance=0.0006),
+    Check(claim="cross-target: Cooper pool ridge out of fold", stated=0.092,
+          recompute=cross_summary("cooper2010:spearman_oof"), tolerance=0.0006),
+    Check(claim="cross-target: Cooper pool permuted mean", stated=-0.006,
+          recompute=cross_summary("cooper2010:permuted_mean"), tolerance=0.0006),
+    Check(claim="cross-target: Cooper ceiling min", stated=0.00,
+          recompute=cross_summary("cooper2010:ceiling_min"), tolerance=0.006),
+    Check(claim="cross-target: Cooper ceiling max", stated=0.49,
+          recompute=cross_summary("cooper2010:ceiling_max"), tolerance=0.006),
+    Check(claim="cross-target: the betaxanthin study's best arm (round 151)", stated=0.211,
+          recompute=transfer("betaxanthin: HiGHS store with GO appended against the HiGHS store alone", "mean_spearman", "arm"),
+          tolerance=0.0006),
     # sec:physics -- the annotation-only family on the amino acids.
     Check(claim="go-models: aa GO perceptron", stated=0.054,
           recompute=go_model("go_mlp", "single_mean_spearman"), tolerance=0.0006),

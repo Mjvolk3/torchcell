@@ -29,6 +29,7 @@ Stages (cache under $DATA_ROOT/data/torchcell/experiments/030-solid-growth-multi
 
     python .../closure_recompute_030.py scan     # build -> entries.parquet, triple_roles.parquet
     python .../closure_recompute_030.py analyze  # results, table
+    python .../closure_recompute_030.py table    # the document table from the CSV alone
 
 ``--build`` and ``--cache`` point the same two stages at another build (the 029 store is
 the smoke test: it carries no query-strain double, so the strain-matched reading must
@@ -682,14 +683,33 @@ def analyze(
     }
     with open(osp.join(results, "closure_030_summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
-    _write_table(table, osp.join(results, "t10-030-closure.tex"))
+    _write_table(table, osp.join(results, "t10-030-closure.tex"), label)
     print()
     print(table.to_string(index=False))
     print(json.dumps(coverage, indent=2))
 
 
-def _write_table(table: pd.DataFrame, path: str) -> None:
+# What the document's table shows: the reference rows of 025 and 029, and for 030 the
+# two strata that answer the question (029's universe; every term strain-matched) under
+# the four readings. The CSV keeps every stratum and form.
+DOC_STRATA = ("deletion", "every term strain-matched")
+DOC_FORMS = {
+    "asymmetric, array-screen double": "array-screen double (029 reading)",
+    "asymmetric, query-strain double": "query-strain double",
+    "asymmetric, query-strain double, array-strain controls": "+ array-strain controls",
+    "same, f_k from the screen's own row (raw table, diagnostic)": "+ $f_k$ from the source row (diagnostic)",
+}
+DOC_FORM_ORDER = {form: k for k, form in enumerate(DOC_FORMS)}
+
+
+def _write_table(table: pd.DataFrame, path: str, label: str) -> None:
     """The comparison table in the style of notes-tex/025-s3-closure/tables/t9-asymmetric.tex."""
+    keep = (table["build"] != label) | (
+        table["stratum"].isin(DOC_STRATA) & table["form"].isin(DOC_FORMS)
+    )
+    table = table[keep & table["pearson"].notna()].copy()
+    table["_order"] = table["form"].map(DOC_FORM_ORDER).fillna(-1)
+    table = table.sort_values("_order", kind="stable")
     lines = [
         "%% SOURCE: experiments/030-solid-growth-multi/scripts/closure_recompute_030.py "
         "(results/closure_030_by_screen.csv) -- GENERATED, do not edit",
@@ -712,8 +732,9 @@ def _write_table(table: pd.DataFrame, path: str) -> None:
             first = (
                 f"{build} & {label.replace('kuzmin', 'Kuzmin ')}" if k == 0 else " & "
             )
+            form = DOC_FORMS.get(r["form"], r["form"])
             lines.append(
-                f"{first} & {r['form']} & {int(r['n']):,} & {rr} & {r['slope']:.2f} & {r['rmse']:.3f} \\\\"
+                f"{first} & {form} & {int(r['n']):,} & {rr} & {r['slope']:.2f} & {r['rmse']:.3f} \\\\"
             )
         lines.append(r"\midrule")
     lines[-1] = r"\bottomrule"
@@ -726,7 +747,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    ap.add_argument("stage", choices=["scan", "analyze"])
+    ap.add_argument("stage", choices=["scan", "analyze", "table"])
     ap.add_argument("--build", default=DEFAULT_BUILD)
     ap.add_argument("--cache", default=DEFAULT_CACHE)
     ap.add_argument("--results", default=RESULTS)
@@ -760,6 +781,15 @@ def main() -> None:
     args = ap.parse_args()
     if args.stage == "scan":
         scan(args.build, args.cache, args.workers, args.limit_triples)
+    elif args.stage == "table":
+        _write_table(
+            pd.read_csv(
+                osp.join(args.results, "closure_030_by_screen.csv"),
+                dtype={"build": str},
+            ),
+            osp.join(args.results, "t10-030-closure.tex"),
+            args.label,
+        )
     else:
         analyze(
             args.cache,

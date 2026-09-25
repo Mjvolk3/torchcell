@@ -133,3 +133,34 @@ of a double and an array-strain match for the control terms.
 The dendron note of the script is
 [[experiments.030-solid-growth-multi.scripts.closure_recompute_030]]; the comparison table goes
 into `notes-tex/025-s3-closure` as Table 9 of Section 8 (branch `feat/025-s3-closure-030`, PR #435).
+
+## 2026.09.25 - The control terms matched on the array strain: 2018 closes, 2020 names its last column
+
+Tested the hypothesis above (slurm 2835 rescan keeping every strain identifier per entry and the
+triple's array strain, 2838 analysis). Matching eps_ik, eps_jk and f_k on the triple's own array
+strain, within its own screen, as the source did:
+
+| screen, every term strain-matched | n | 029 reading | query-strain double | + array-strain controls | + f_k from the raw row (diagnostic) |
+|---|---|---|---|---|---|
+| Kuzmin 2018 | 86,111 | 0.435 | 0.951 | 0.987, rmse 0.008, median residual 2.9e-5 | 0.987 (identical) |
+| Kuzmin 2020 | 254,977 | 0.338 | 0.659 | 0.660, median residual 0.031 | 0.920, rmse 0.025, median residual 2.8e-5 |
+
+Kuzmin 2018 is closed at the raw-table figure (0.985 there); the residual is the rounding of the
+published five-decimal score. Kuzmin 2020 did not move under array-strain matching although the
+control interactions matched on 300,185 of 300,187 triples, because the build holds no Kuzmin
+2020 array single-mutant fitness: all 299,862 f_k values came from Costanzo's single of the same
+strain. `SmfKuzmin2020Dataset` reads only the "Single mutant" rows of Table S5 (the query strain
+standard); the 2020 array single-mutant fitness is a column on the interaction rows of Tables S1
+and S3 that no loader emits. Substituting the trigenic row's own value from the raw-table cache of
+`s3_closure_recompute.py` (`--raw-kuzmin`, keyed by screen, query token and array strain) gives
+0.920 with the median residual at 2.8e-5, so that column is the 2020 remainder, with a tail left
+to the raw-table 0.976. The column varies within an array strain in the raw 2020 table (1,159 of
+4,553 strains; median range 0, 90th percentile 0.046, max 0.41; 11,443 of 290,355 trigenic
+(array strain, query token) groups carry more than one value), so it is a row value for a quarter
+of the strains, not a strain property.
+
+Next action, a decision: a loader emitting the Kuzmin 2020 array single-mutant fitness with its
+array strain identifier, admitted as a superset like the query doubles, with the row-level
+variation kept (one entry per interaction row's value, or per (query strain, array strain))
+rather than averaged into one number per strain. Results: `results/closure_030_by_screen.csv`
+(every stratum and form), `results/t10-030-closure.tex` (the document subset).

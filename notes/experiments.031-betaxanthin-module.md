@@ -296,6 +296,7 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 - Standing against the comparators on the same split (pinned test Spearman): best arm 0.211 (GO + HiGHS affine, round 151); kNN over the HiGHS store 0.195; best ridge 0.152 (driving-force cap 100); kNN over ProtT5 0.145; FCL RandomForest 0.039. Every comparator is below the best arm; the kNN is the closest.
 - Cross-target read (`experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correlation.py`, in the 032 note): a deletion's measured Mulleder amino-acid pool reads its betaxanthin level out of fold at 0.226 (permuted 0.00) over 4,477 shared strains. The two endpoints share strain-level signal.
 - Submitted B31 = w178 (GO + HiGHS affine at dropout 0.3, job 2816; paired vs w168 and w176) and A17 = w179 (the same on the amino acids, job 2817; vs w177 and w173).
+- CPU ladder rerun with GO added (`target_store_baselines.py`, 10 min; every earlier cell reproduced to the printed digit): GO multi-hot ridge 0.076 / kNN 0.179 / forest 0.187 (top-50 5.39, the best call of any read on this split); GO with the HiGHS vector 0.123 / 0.198 / 0.204 (4.79). The forest over the best arm's own input sits 0.008 under round 151's 0.211, the size of that round's seed spread, with a higher call: on this input the transformer's single-seed rank is what a backbone-free model reaches; averaging six seeds adds 0.001. 031 published v12 (392 checks).
 
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|

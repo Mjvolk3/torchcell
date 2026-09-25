@@ -411,3 +411,11 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B37 | 170 | w189 | del + HiGHS store with GO, affine weight decay 1.0 | 0.204 (sd 0.012); ens 0.208 / 4.99 |
+
+## 2026.09.25 - B38 read: both flux programs beside the annotation
+
+- B38 (w190, GO + HiGHS + MOMA in one affine, 10,716 columns, job 2830, 3 h 36 min): 0.216 (sd 0.007) vs GO + HiGHS (B24) 0.211 (+0.004, sd 0.003, 5/6) and vs GO + MOMA (B35) 0.208 (+0.008, sd 0.006, 5/6); top-50 4.73 vs 4.83 and 4.46; ensemble 0.217 / 4.59 vs 0.212 / 4.99 and 0.209 / 4.39. Seeds select at 9 to 14 on val Pearson 0.25 to 0.26, read 0.206 to 0.223. The two programs add: the highest single-seed rank of the study at a paired spread of 0.003 against the previous best; the call does not follow. Written as round 171; 031 published v25.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B38 | 171 | w190 | del + HiGHS and MOMA stores with GO | 0.216 (sd 0.007); ens 0.217 / 4.59 |

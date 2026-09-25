@@ -618,4 +618,19 @@ across seeds. The affine's own regularization does not lift the annotation arm a
 than the transformer's settings did, and the study's best cell stays round 151's as
 built.
 
+Round 171 is read (job 2830, 3 h 36 min): the two flux programs that each add to the
+annotation, read together. The parsimonious vector and the adjustment store both
+appended to GO in one affine, 10,716 columns on the deletion-only graph. It reads 0.216
+(sd 0.007) against the parsimonious vector with GO (round 151) at 0.211 ($+0.004$
+paired, sd 0.003, above on five of six) and against the adjustment store with GO (round
+167) at 0.208 ($+0.008$, sd 0.006, five of six), top-50 4.73 against 4.83 and 4.46, and
+ensembled over six seeds 0.217 with a top-50 of 4.59 against 0.212 and 0.209. The seeds
+select at epochs 9 to 14 on validation Pearson 0.25 to 0.26 and read 0.206 to 0.223. So
+the two programs add: what the adjustment store carries beside the annotation is not
+all inside what the parsimonious vector carries, and the two together give the highest
+single-seed rank of the study, 0.216, at a paired spread of 0.003 against the previous
+best. The call does not follow, 4.73 against 4.83 on single seeds and 4.59 against 4.99
+ensembled. The flux side enters the annotation's read a second time where the
+metabolite side (rounds 163, 166) did not enter it once.
+
 \input{tables/target_transfer}

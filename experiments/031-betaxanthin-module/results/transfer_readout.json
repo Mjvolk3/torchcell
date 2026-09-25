@@ -9389,6 +9389,286 @@
       ]
     },
     {
+      "name": "betaxanthin: HiGHS and MOMA stores with GO against HiGHS store with GO",
+      "head": "betaxanthin",
+      "arm": {
+        "stem": "w190_bxdelgopfbamoma_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 14,
+            "select_val_pearson": 0.24593205749988556,
+            "spearman": 0.2055591025674225,
+            "pearson": 0.3337804675102234,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 12,
+            "select_val_pearson": 0.246560737490654,
+            "spearman": 0.21678661480085235,
+            "pearson": 0.3422573208808899,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 9,
+            "select_val_pearson": 0.2641783058643341,
+            "spearman": 0.22043983715021556,
+            "pearson": 0.34057050943374634,
+            "top50_enrichment": 4.792380952380952,
+            "top50_hits": 24.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 11,
+            "select_val_pearson": 0.2562096416950226,
+            "spearman": 0.22248802354030983,
+            "pearson": 0.35283365845680237,
+            "top50_enrichment": 5.191746031746032,
+            "top50_hits": 26.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 11,
+            "select_val_pearson": 0.24511484801769257,
+            "spearman": 0.21995655487185192,
+            "pearson": 0.34519147872924805,
+            "top50_enrichment": 4.592698412698413,
+            "top50_hits": 23.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 11,
+            "select_val_pearson": 0.24915188550949097,
+            "spearman": 0.21005842860470061,
+            "pearson": 0.3461359143257141,
+            "top50_enrichment": 4.992063492063492,
+            "top50_hits": 25.0
+          }
+        ],
+        "mean_spearman": 0.21588142692255882,
+        "sd_spearman": 0.006667982379608154,
+        "mean_top50_enrichment": 4.725820105820106
+      },
+      "control": {
+        "stem": "w168_bxdelgopfba_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 11,
+            "select_val_pearson": 0.25917792320251465,
+            "spearman": 0.20182325896561862,
+            "pearson": 0.33863282203674316,
+            "top50_enrichment": 4.592698412698413,
+            "top50_hits": 23.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 10,
+            "select_val_pearson": 0.25378820300102234,
+            "spearman": 0.21212380286940047,
+            "pearson": 0.3411405682563782,
+            "top50_enrichment": 4.792380952380952,
+            "top50_hits": 24.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 10,
+            "select_val_pearson": 0.24513301253318787,
+            "spearman": 0.21189210406145587,
+            "pearson": 0.3459438979625702,
+            "top50_enrichment": 4.992063492063492,
+            "top50_hits": 25.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 9,
+            "select_val_pearson": 0.24493518471717834,
+            "spearman": 0.21707198286441448,
+            "pearson": 0.3471381664276123,
+            "top50_enrichment": 5.191746031746032,
+            "top50_hits": 26.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 8,
+            "select_val_pearson": 0.26450076699256897,
+            "spearman": 0.22004796458643897,
+            "pearson": 0.35224655270576477,
+            "top50_enrichment": 4.992063492063492,
+            "top50_hits": 25.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 13,
+            "select_val_pearson": 0.24925464391708374,
+            "spearman": 0.20563917768863438,
+            "pearson": 0.33429622650146484,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          }
+        ],
+        "mean_spearman": 0.2114330485059938,
+        "sd_spearman": 0.006820839060171546,
+        "mean_top50_enrichment": 4.825661375661375
+      },
+      "n": 6,
+      "mean_difference": 0.004448378416564998,
+      "sd_difference": 0.0027894548305417845,
+      "n_positive": 5,
+      "differences": [
+        0.003735843601803873,
+        0.004662811931451877,
+        0.008547733088759696,
+        0.0054160406758953505,
+        -0.00009140971458704295,
+        0.004419250916066236
+      ]
+    },
+    {
+      "name": "betaxanthin: HiGHS and MOMA stores with GO against MOMA store with GO",
+      "head": "betaxanthin",
+      "arm": {
+        "stem": "w190_bxdelgopfbamoma_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 14,
+            "select_val_pearson": 0.24593205749988556,
+            "spearman": 0.2055591025674225,
+            "pearson": 0.3337804675102234,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 12,
+            "select_val_pearson": 0.246560737490654,
+            "spearman": 0.21678661480085235,
+            "pearson": 0.3422573208808899,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 9,
+            "select_val_pearson": 0.2641783058643341,
+            "spearman": 0.22043983715021556,
+            "pearson": 0.34057050943374634,
+            "top50_enrichment": 4.792380952380952,
+            "top50_hits": 24.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 11,
+            "select_val_pearson": 0.2562096416950226,
+            "spearman": 0.22248802354030983,
+            "pearson": 0.35283365845680237,
+            "top50_enrichment": 5.191746031746032,
+            "top50_hits": 26.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 11,
+            "select_val_pearson": 0.24511484801769257,
+            "spearman": 0.21995655487185192,
+            "pearson": 0.34519147872924805,
+            "top50_enrichment": 4.592698412698413,
+            "top50_hits": 23.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 11,
+            "select_val_pearson": 0.24915188550949097,
+            "spearman": 0.21005842860470061,
+            "pearson": 0.3461359143257141,
+            "top50_enrichment": 4.992063492063492,
+            "top50_hits": 25.0
+          }
+        ],
+        "mean_spearman": 0.21588142692255882,
+        "sd_spearman": 0.006667982379608154,
+        "mean_top50_enrichment": 4.725820105820106
+      },
+      "control": {
+        "stem": "w184_bxdelgomoma_h12l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 13,
+            "select_val_pearson": 0.25656887888908386,
+            "spearman": 0.20560780764380243,
+            "pearson": 0.3291250467300415,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 10,
+            "select_val_pearson": 0.25416654348373413,
+            "spearman": 0.20859725539380838,
+            "pearson": 0.33412468433380127,
+            "top50_enrichment": 4.792380952380952,
+            "top50_hits": 24.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 11,
+            "select_val_pearson": 0.2536739408969879,
+            "spearman": 0.21050596172364622,
+            "pearson": 0.33803460001945496,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 16,
+            "select_val_pearson": 0.24434350430965424,
+            "spearman": 0.20478644892282957,
+            "pearson": 0.3275977373123169,
+            "top50_enrichment": 3.3946031746031746,
+            "top50_hits": 17.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 8,
+            "select_val_pearson": 0.26451483368873596,
+            "spearman": 0.2115689117906472,
+            "pearson": 0.3490771949291229,
+            "top50_enrichment": 5.3914285714285715,
+            "top50_hits": 27.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 15,
+            "select_val_pearson": 0.24428831040859222,
+            "spearman": 0.20658709343610054,
+            "pearson": 0.3396609425544739,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          }
+        ],
+        "mean_spearman": 0.20794224648513907,
+        "sd_spearman": 0.0027349397242829514,
+        "mean_top50_enrichment": 4.459576719576719
+      },
+      "n": 6,
+      "mean_difference": 0.007939180437419735,
+      "sd_difference": 0.006054994844159918,
+      "n_positive": 5,
+      "differences": [
+        -0.00004870507637994015,
+        0.008189359407043961,
+        0.009933875426569344,
+        0.01770157461748026,
+        0.00838764308120471,
+        0.0034713351686000704
+      ]
+    },
+    {
       "name": "betaxanthin: GO multi-hot in the affine slot against the control, twelve seeds",
       "head": "betaxanthin",
       "arm": {

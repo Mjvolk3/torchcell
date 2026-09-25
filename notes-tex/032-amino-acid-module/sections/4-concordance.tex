@@ -34,9 +34,23 @@ nor serve as a second one; and the medium and the auxotrophy differ between the 
 a biological difference that this replicate agreement cannot separate from noise. What
 the read fixes is the amino-acid endpoint's position: its own retest rank is 0.20, the
 second screen agrees with it at 0.03, and every model above, transformer or ladder,
-sits between 0.00 and 0.06.
+sits between 0.00 and 0.06. The retest is the agreement of two single-culture
+measurements of one strain, so it bounds a second screen, not a model: a model scored
+against one measurement is bounded by the square root of the reliability, the share of
+a measurement's variance that is between strains (Table~\ref{tab:mulleder-retest}). On
+the Pearson scale over $\log_{10}$ concentrations that bound averages 0.62 over the
+nineteen amino acids, from 0.00 for asparagine and 0.13 for methionine, whose retest
+spread equals their spread across strains, to 0.85 for glutamine; from the Spearman
+retest of 0.20 the same rule gives about 0.45. The 237 injections of the quality-control
+sample put the instrument's spread at 0.03 to 0.13 in $\log_{10}$ against a
+single-culture spread of 0.16 to 0.27, so the retest noise is culture to culture, not
+analytical. The models sit at a tenth of that bound, not at it: the target is hard to
+learn from single-culture labels, and no input has found more than a tenth of what the
+measurement would let a model read.
 
 \input{tables/amino_acid_concordance}
+
+\input{tables/mulleder_retest}
 
 \subsection{The betaxanthin endpoint against the amino-acid pool\secstatus{todo}}
 \label{sec:cross-target}

@@ -78,6 +78,34 @@ def cross_feature(screen: str, key: str, field: str):
     return run
 
 
+def mulleder_retest(key: str):
+    """A value of the 027 retest read: a top-level mean, ``<amino acid>:<field>``,
+    ``min:<field>`` or ``max:<field>`` over the nineteen, or ``spearman_ceiling``, the
+    square root of the mean Spearman retest."""
+
+    def run() -> float:
+        import json
+        import math
+
+        d = json.load(open(osp.join(
+            os.environ["EXPERIMENT_ROOT"], "027-betaxanthin-metabolic", "results",
+            "mulleder_retest_reliability.json",
+        )))
+        if key == "spearman_ceiling":
+            return math.sqrt(float(d["mean_spearman_retest"]))
+        if ":" in key:
+            head, _, field = key.partition(":")
+            vals = [float(r[field]) for r in d["per_amino_acid"]]
+            if head == "min":
+                return min(vals)
+            if head == "max":
+                return max(vals)
+            return float(next(r for r in d["per_amino_acid"] if r["amino_acid"] == head)[field])
+        return float(d[key])
+
+    return run
+
+
 def cross_summary(key: str):
     """A summary of the betaxanthin-against-amino-acid read."""
 
@@ -183,6 +211,30 @@ CHECKS: list[Check] = [
           recompute=cross_summary("mulleder2016:ceiling_min"), tolerance=0.006),
     Check(claim="cross-target: Mulleder ceiling max", stated=0.54,
           recompute=cross_summary("mulleder2016:ceiling_max"), tolerance=0.006),
+    # sec:endpoint, sec:concordance, sec:standing -- the retest bounds a second screen,
+    # the square root of the reliability bounds a model (corrected 2026-09-25).
+    Check(claim="retest: mean Spearman", stated=0.20,
+          recompute=mulleder_retest("mean_spearman_retest"), tolerance=0.006),
+    Check(claim="retest: mean Pearson ceiling", stated=0.62,
+          recompute=mulleder_retest("mean_pearson_ceiling"), tolerance=0.006),
+    Check(claim="retest: Spearman ceiling, sqrt of the mean retest", stated=0.45,
+          recompute=mulleder_retest("spearman_ceiling"), tolerance=0.006),
+    Check(claim="retest: asparagine ceiling", stated=0.00,
+          recompute=mulleder_retest("asparagine:pearson_ceiling"), tolerance=0.006),
+    Check(claim="retest: methionine ceiling", stated=0.13,
+          recompute=mulleder_retest("methionine:pearson_ceiling"), tolerance=0.006),
+    Check(claim="retest: glutamine ceiling", stated=0.85,
+          recompute=mulleder_retest("glutamine:pearson_ceiling"), tolerance=0.006),
+    Check(claim="retest: QC injections", stated=237,
+          recompute=mulleder_retest("n_qc_injections"), tolerance=0.5),
+    Check(claim="retest: QC sd min", stated=0.03,
+          recompute=mulleder_retest("min:qc_sd_log10"), tolerance=0.006),
+    Check(claim="retest: QC sd max", stated=0.13,
+          recompute=mulleder_retest("max:qc_sd_log10"), tolerance=0.006),
+    Check(claim="retest: single-measurement sd min", stated=0.16,
+          recompute=mulleder_retest("min:sd_single_measurement_log10"), tolerance=0.006),
+    Check(claim="retest: single-measurement sd max", stated=0.27,
+          recompute=mulleder_retest("max:sd_single_measurement_log10"), tolerance=0.006),
     Check(claim="cross-target: Mulleder pool ridge out of fold", stated=0.226,
           recompute=cross_summary("mulleder2016:spearman_oof"), tolerance=0.0006),
     Check(claim="cross-target: Mulleder pool fold min", stated=0.182,

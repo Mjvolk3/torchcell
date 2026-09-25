@@ -284,6 +284,55 @@ def amino_acid_concordance() -> str | None:
     return write("amino_acids", "amino_acid_concordance", body, "results/amino_acid_dataset_concordance.json")
 
 
+def mulleder_retest() -> str | None:
+    """Mulleder 2016's 194 strains measured twice, per amino acid, and the ceiling it sets
+    on a model: the square root of the between-strain share of a measurement's variance."""
+    src = osp.join(
+        EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "results", "mulleder_retest_reliability.json"
+    )
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    rows = []
+    for r in d["per_amino_acid"]:
+        rows.append(
+            f"    {r['amino_acid']} & {r['n_pairs']} & {r['pearson_retest_log10']:.2f} & "
+            f"{r['spearman_retest_log10']:.2f} & {r['qc_sd_log10']:.2f} & "
+            f"{r['sd_single_measurement_log10']:.2f} & {r['sd_across_strains_log10']:.2f} & "
+            f"{r['reliability_estimate']:.2f} & {r['pearson_ceiling']:.2f} \\\\"
+        )
+    rows.append("    \\hline")
+    rows.append(
+        f"    mean & & {d['mean_pearson_retest']:.2f} & {d['mean_spearman_retest']:.2f} & & & & "
+        f"{d['mean_reliability']:.2f} & {d['mean_pearson_ceiling']:.2f} \\\\"
+    )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[M\\\"ulleder 2016 retest and the model ceiling]{M\\\"ulleder 2016's "
+        f"retest, the {d['n_orfs_measured_twice']} strains measured twice, per amino acid. "
+        "Pearson and Spearman between the two $\\log_{10}$ measurements; the "
+        f"quality-control sample's sd over its {d['n_qc_injections']} injections (the "
+        "instrument); the single-measurement sd from the pairs and the sd across strains "
+        "(both $\\log_{10}$); the reliability, the between-strain share of a measurement's "
+        "variance; and its square root, the Pearson a perfect model of the true value "
+        "would reach against one measurement. The retest correlation bounds a second "
+        "screen; the square root of the reliability bounds a model. Written by "
+        "\\texttt{target\\_notes\\_tex\\_tables.py} from the 027 read "
+        "\\texttt{results/mulleder\\_retest\\_reliability.json}.}\n"
+        "  \\label{tab:mulleder-retest}\n"
+        "  \\begin{tabular}{@{}lrrrrrrrr@{}}\n    \\hline\n"
+        "    amino acid & pairs & Pearson & Spearman & QC sd & single sd & across sd & "
+        "reliability & ceiling \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "amino_acids", "mulleder_retest", body,
+        "experiments/027-betaxanthin-metabolic/results/mulleder_retest_reliability.json",
+    )
+
+
 def betaxanthin_amino_acid_correlation() -> str | None:
     """Cachera's betaxanthin score against each amino-acid quantity of the two screens,
     and the pool ridge, from betaxanthin_amino_acid_correlation.py.
@@ -432,6 +481,7 @@ def main() -> None:
         store_degeneracy("betaxanthin"),
         store_degeneracy("amino_acids"),
         amino_acid_concordance(),
+        mulleder_retest(),
         betaxanthin_amino_acid_correlation(),
         go_models("betaxanthin"),
         go_models("amino_acids"),

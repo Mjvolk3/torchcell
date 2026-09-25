@@ -345,3 +345,14 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B30 | 159 | w176 | del + GO affine, dropout 0.3 | 0.202 (sd 0.002); ens 0.202 / 4.79 |
+
+## 2026.09.25 - B31 read: GO with the HiGHS vector at dropout 0.3; packs B34, B35
+
+- B31 (w178, GO + HiGHS affine at dropout 0.3, job 2816, 3 h 40 min): 0.212 (sd 0.007) vs the same at 0.1 (B24) 0.211 (+0.000, sd 0.001, 2/6) and vs GO at 0.3 (B30) 0.202 (+0.010, sd 0.007, 5/6); top-50 4.89 vs 4.83 and 4.89; ensemble 0.213 / 4.99. The two levers do not add; the flux gain beside GO reproduces at dropout 0.3 (0.010 vs 0.009). Written as round 161; 031 published v18 (504 checks).
+- Since the annotation arms ignore every transformer setting (rounds 158, 159, 161), the next levers act on the affine's input. Two stores built with `target_store_concat.py`: `YPD_bx_gopfbapolyspread` (GO + HiGHS + polytope mean and spread, 12,205 columns) and `YPD_bx_gomoma` (GO + MOMA, 6,539). Submitted B34 = w183 (gopfbapolyspread, job 2824; vs w168 and w180) and B35 = w184 (gomoma, job 2825; vs w167 and w168).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B31 | 161 | w178 | del + HiGHS store with GO, dropout 0.3 | 0.212 (sd 0.007); ens 0.213 / 4.99 |
+| B34 | -- | w183 | del + HiGHS store with GO and the polytope mean and spread | job 2824, pending |
+| B35 | -- | w184 | del + MOMA store with GO | job 2825, pending |

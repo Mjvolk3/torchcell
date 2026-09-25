@@ -516,4 +516,18 @@ acts on the backbone, and on this arm the backbone contributes nothing for it to
 on. Taken with round 158, the annotation arm is the affine and the affine alone, and no
 setting of the transformer around it has moved it.
 
+Round 161 is read (job 2816, 3 h 40 min): the campaign's two best levers on one cell,
+the HiGHS vector with GO appended in the affine (round 151) with transformer dropout
+0.3 (round 145), on the deletion-only graph. It reads 0.212 (sd 0.007) against the
+same affine at dropout 0.1 at 0.211 ($+0.000$ paired, sd 0.001, above on two of six)
+and against GO alone at dropout 0.3 at 0.202 ($+0.010$, sd 0.007, five of six), top-50
+4.89 against 4.83 and 4.89, and ensembled over six seeds 0.213 with a top-50 of 4.99
+against 0.212 and 4.99 and 0.202 and 4.79. Every seed selects at epochs 7 to 13 on
+validation Pearson 0.24 to 0.26 and reads 0.202 to 0.220. So the two levers do not
+add: dropout leaves the flux-and-annotation affine where it was, to the fourth decimal
+on the mean, as it left the annotation affine in round 159, and the flux vector's gain
+beside GO reproduces at dropout 0.3 (0.010 on five seeds of six, against 0.009 at
+0.1). The best cell of the study is the affine over the two blocks, at either dropout,
+and what the transformer is set to around it does not enter the read.
+
 \input{tables/target_transfer}

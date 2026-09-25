@@ -233,3 +233,7 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | A16 | 160 | w177 | del + HiGHS store with GO | 0.055 (sd 0.002); ens 0.057 |
+| A19 | -- | w186 | w170 seeds 2706 to 2711 (GO affine) | job 2826, pending |
+| A20 | -- | w187 | w141 seeds 2706 to 2711 (the control) | job 2827, pending |
+
+- A19 and A20 (jobs 2826, 2827): six more seeds of the GO affine and of its control, so the one paired gain on this target (+0.009 on 5/6) is read on twelve seeds.

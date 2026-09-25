@@ -51,6 +51,8 @@ under the release rule reads 0.199, the backbone escaping first adding nothing t
 annotation's single read; the rule buys seed diversity, worth 0.003 on the ensemble
 (0.206, round 158); dropout 0.3 on the same arm moves it by less than a thousandth
 (round 159), so the annotation arm is the affine alone and no setting of the
-transformer around it has moved it. Cells queued: GO with the HiGHS vector at dropout
-0.3 (161), GO, the HiGHS vector and the polytope mean in one affine (163), and six more
-seeds of round 151's cell (164).
+transformer around it has moved it; the same holds for the flux-and-annotation affine,
+which dropout 0.3 leaves at 0.212 with the flux gain beside GO reproduced at 0.010
+(161). Cells queued: GO, the HiGHS vector and the polytope mean in one affine (163),
+six more seeds of round 151's cell (164), and the same affine with the polytope's
+spread and with the adjustment store in place of the parsimonious one (166, 167).

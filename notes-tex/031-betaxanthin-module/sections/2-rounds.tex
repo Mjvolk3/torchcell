@@ -590,4 +590,19 @@ vector against 0.009 from the parsimonious rebuild, a difference inside the pair
 spread. Both physically stated flux programs enter the annotation's read where the
 metabolite programs do not, and the parsimonious vector stays the best of them.
 
+Round 169 is read (job 2828, 3 h 40 min): the one setting left that acts on the
+affine's own read, its weight decay. Round 151's cell, the HiGHS vector with GO in the
+affine on the deletion-only graph, with the affine in its own optimizer group at weight
+decay 0.1 and the full rate (round 119 read decay and a tenth of the rate together on
+the degenerate store and lost the gain, so the rate is left alone). It reads 0.210
+(sd 0.007) against no decay at 0.211 ($-0.002$ paired, sd 0.008, above on four of six),
+top-50 4.66 against 4.83, and ensembled over six seeds 0.211 with a top-50 of 4.79
+against 0.212 and 4.99. The seeds select at epochs 8 to 16 on validation Pearson 0.24 to
+0.27 and read 0.199 to 0.221; on five seeds the arm and its control select at the same
+epoch and differ by under 0.004, and the sixth selects seven epochs later and reads
+0.018 under. So a thousandfold increase in the decay on the affine's weights leaves the
+selected epochs and the read where they were. The affine over the annotation and the
+flux vector is read within its first sixteen epochs, and regularizing it does not move
+that read either.
+
 \input{tables/target_transfer}

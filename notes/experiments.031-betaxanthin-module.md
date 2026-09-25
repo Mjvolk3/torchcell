@@ -395,3 +395,11 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B37 | -- | w189 | del + HiGHS store with GO, affine weight decay 1.0 | job 2829, pending |
 
 - B36 and B37: since rounds 158 to 164 read the annotation arms as the affine alone, the one setting left that acts on the read is the affine's own regularization: w168 with `--ess-affine-weight-decay 0.1` and `1.0` at the full rate (round 119 read decay with a tenth of the rate on the degenerate store and lost the gain, so the rate is left alone). Paired against w168 and against each other.
+
+## 2026.09.25 - B36 read: the affine's weight decay at 0.1
+
+- B36 (w188, GO + HiGHS affine with the affine's weight decay at 0.1, job 2828, 3 h 40 min): 0.210 (sd 0.007) vs no decay (B24) 0.211 (-0.002, sd 0.008, 4/6); top-50 4.66 vs 4.83; ensemble 0.211 / 4.79 vs 0.212 / 4.99. Seeds select at 8 to 16 on val Pearson 0.24 to 0.27, read 0.199 to 0.221; five seeds select at the same epoch as their control and differ by under 0.004, seed 2703 selects at 16 instead of 9 and reads 0.018 under. A thousandfold decay on the affine's weights leaves the selected epochs and the read where they were. Written as round 169; 031 published v23.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B36 | 169 | w188 | del + HiGHS store with GO, affine weight decay 0.1 | 0.210 (sd 0.007); ens 0.211 / 4.79 |

@@ -17,7 +17,13 @@ term is the whole gap (0.985 / 0.976 with the query strain's fitness, 0.538 / 0.
 without it). This script asks whether the build now closes that gap: the same identity,
 the same Kuzmin-first policy, with f_ij chosen by ``LabelPolicy.select_double``, which
 prefers the entry whose strain token equals the triple's query strain, and beside it
-the 029 reading with the query-strain entries excluded, on identical records.
+the 029 reading with the query-strain entries excluded, on identical records. A third
+form also matches the control terms on the triple's own ARRAY strain, which is what the
+source did: eps_ik and eps_jk from the single-mutant control queries' scores against
+that array strain in the triple's own screen, and f_k from that strain's own single
+(the screen's array single first, Costanzo's single of the same deletion strain
+otherwise). A record does not label the roles, but every perturbation carries its
+strain identifier, so the scan keeps all of them per entry and the analysis reads them.
 
 Stages (cache under $DATA_ROOT/data/torchcell/experiments/030-solid-growth-multi/closure/):
 
@@ -41,6 +47,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import os.path as osp
 from collections.abc import Callable
@@ -84,6 +91,7 @@ ENTRY_COLS = [
     "n_samples",
     "p",
     "strain_id",
+    "strain_ids",
 ]
 DELETION = "deletion"
 
@@ -113,7 +121,11 @@ def _entries(idx: int, raw: bytes) -> list[tuple[Any, ...]]:
             for p in perts
         )
         temp = float(e["environment"]["temperature"]["value"])
+        # strain_id: the one identifier shared by every perturbation (a query strain's
+        # double, a single); strain_ids: every identifier the entry carries, so a
+        # digenic control row keeps its array strain beside its query strain
         strain_ids = {p["strain_id"] for p in perts if p.get("strain_id")}
+        all_ids = "|".join(sorted(strain_ids))
         strain_id = strain_ids.pop() if len(strain_ids) == 1 else None
         if e["experiment_type"] == "fitness":
             rows.append(
@@ -130,6 +142,7 @@ def _entries(idx: int, raw: bytes) -> list[tuple[Any, ...]]:
                     ph.get("n_samples"),
                     None,
                     strain_id,
+                    all_ids,
                 )
             )
         elif e["experiment_type"] == "gene interaction":
@@ -147,6 +160,7 @@ def _entries(idx: int, raw: bytes) -> list[tuple[Any, ...]]:
                     None,
                     ph.get("gene_interaction_p_value"),
                     strain_id,
+                    all_ids,
                 )
             )
     return rows
@@ -182,8 +196,14 @@ def _roles_chunk(idxs: list[int]) -> list[dict[str, Any]]:
                 e = item["experiment"]
                 if e["experiment_type"] != "fitness":
                     continue
-                roles = triple_roles(e["genotype"]["perturbations"])
+                perts = e["genotype"]["perturbations"]
+                roles = triple_roles(perts)
                 if roles is not None:
+                    array_strain_id = next(
+                        p["strain_id"]
+                        for p in perts
+                        if p["systematic_gene_name"] == roles.array_gene
+                    )
                     out.append(
                         {
                             "idx": i,
@@ -191,6 +211,7 @@ def _roles_chunk(idxs: list[int]) -> list[dict[str, Any]]:
                             "qi": roles.query_genes[0],
                             "qj": roles.query_genes[1],
                             "query_strain_id": roles.query_strain_id,
+                            "array_strain_id": array_strain_id,
                         }
                     )
                 break
@@ -264,12 +285,19 @@ def scan(build: str, cache: str, workers: int, limit_triples: int | None) -> Non
 
 
 # --------------------------------------------------------------------------- analyze
-def _label_entries(frame: pd.DataFrame, label: str) -> dict[str, list[LabelEntry]]:
-    """LabelEntry objects of every gene set in ``frame``, for one label."""
+def _label_entries(
+    frame: pd.DataFrame, label: str
+) -> tuple[dict[str, list[LabelEntry]], dict[str, list[set[str]]]]:
+    """LabelEntry objects of every gene set in ``frame``, for one label.
+
+    The second map holds, aligned with the first, every strain identifier each entry
+    carries, which is what an array-strain match reads.
+    """
     want = "fitness" if label == "fitness" else "gene interaction"
     sub = frame[frame["exp_type"] == want]
     out: dict[str, list[LabelEntry]] = {}
-    for genes, src, v, sd, n, p, sid in zip(
+    ids: dict[str, list[set[str]]] = {}
+    for genes, src, v, sd, n, p, sid, sids in zip(
         sub["genes"],
         sub["source"],
         sub["value"],
@@ -277,6 +305,7 @@ def _label_entries(frame: pd.DataFrame, label: str) -> dict[str, list[LabelEntry
         sub["n_samples"],
         sub["p"],
         sub["strain_id"],
+        sub["strain_ids"],
     ):
         out.setdefault(str(genes), []).append(
             LabelEntry(
@@ -291,7 +320,39 @@ def _label_entries(frame: pd.DataFrame, label: str) -> dict[str, list[LabelEntry
                 else str(sid),
             )
         )
-    return out
+        ids.setdefault(str(genes), []).append(set(str(sids).split("|")) - {""})
+    return out, ids
+
+
+def _array_matched(
+    pools: dict[str, list[LabelEntry]],
+    ids: dict[str, list[set[str]]],
+    key: str,
+    array_strain_id: str,
+    year: str,
+    policy: LabelPolicy,
+    label: str,
+) -> tuple[float, str]:
+    """The value of ``key`` measured on the triple's own array strain.
+
+    Entries of the triple's own screen carrying that array strain come first (the
+    single-mutant control query against the same array strain, or the screen's own
+    array single); failing that, any source's entry on that strain (Costanzo's single
+    of the same deletion strain). Returns NaN and "none" when no entry carries it.
+    """
+    pool = pools.get(key)
+    if not pool:
+        return math.nan, "none"
+    on_strain = [(e, s) for e, s in zip(pool, ids[key]) if array_strain_id in s]
+    same_year = [e for e, _ in on_strain if e.source == year]
+    which = "year"
+    if not same_year:
+        same_year = [e for e, _ in on_strain]
+        which = "other"
+    if not same_year:
+        return math.nan, "none"
+    choice = policy.select(same_year, label)
+    return (math.nan, "none") if choice is None else (choice.value, which)
 
 
 def _chosen(
@@ -425,10 +486,10 @@ def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) ->
     singles = entries[entries["order"] == 1]
     doubles = entries[entries["order"] == 2]
     triples = entries[entries["order"] == 3]
-    double_fit = _label_entries(doubles, "fitness")
-    double_gi = _label_entries(doubles, "gene_interaction")
-    single_fit = _label_entries(singles, "fitness")
-    triple_fit = _label_entries(triples, "fitness")
+    double_fit, _ = _label_entries(doubles, "fitness")
+    double_gi, double_gi_ids = _label_entries(doubles, "gene_interaction")
+    single_fit, single_fit_ids = _label_entries(singles, "fitness")
+    triple_fit, _ = _label_entries(triples, "fitness")
     # the array-screen reading: the same pools without the query-strain entries (029)
     double_fit_array = {
         g: [e for e in pool if strain_token(e.strain_id) is None]
@@ -478,6 +539,43 @@ def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) ->
                 f_ij_matched[n] = choice.value
         f_ij_array = _arr(f_double_array, qpair)
 
+        # the control terms on the triple's own array strain: the two single-mutant
+        # control queries' scores against that strain and that strain's own single
+        eps_ik_strain = np.full(len(stored), np.nan)
+        eps_jk_strain = np.full(len(stored), np.nan)
+        f_k_strain = np.full(len(stored), np.nan)
+        f_k_from = {"year": 0, "other": 0, "none": 0}
+        for n, (ik_key, jk_key, k_gene, asid) in enumerate(
+            zip(ik, jk, stored["array_gene"], stored["array_strain_id"])
+        ):
+            eps_ik_strain[n], _ = _array_matched(
+                double_gi,
+                double_gi_ids,
+                ik_key,
+                asid,
+                screen,
+                policy,
+                "gene_interaction",
+            )
+            eps_jk_strain[n], _ = _array_matched(
+                double_gi,
+                double_gi_ids,
+                jk_key,
+                asid,
+                screen,
+                policy,
+                "gene_interaction",
+            )
+            f_k_strain[n], which = _array_matched(
+                single_fit, single_fit_ids, k_gene, asid, screen, policy, "fitness"
+            )
+            f_k_from[which] += 1
+        controls_matched = (
+            np.isfinite(eps_ik_strain)
+            & np.isfinite(eps_jk_strain)
+            & np.isfinite(f_k_strain)
+        )
+
         f_ijk = _arr(f_triple, stored["genes"])
         f_k = _arr(f_single, stored["array_gene"])
         eps_ik = _arr(eps_double, ik)
@@ -489,6 +587,10 @@ def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) ->
         y = stored["value"].to_numpy(dtype=float)
 
         forms = {
+            "asymmetric, query-strain double, array-strain controls": f_ijk
+            - f_ij_matched * f_k_strain
+            - eps_ik_strain
+            - eps_jk_strain,
             "asymmetric, query-strain double": f_ijk
             - f_ij_matched * f_k
             - eps_ik
@@ -508,6 +610,7 @@ def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) ->
             "all": np.ones(len(stored), dtype=bool),
             "deletion": np.array([m == "|".join([DELETION] * 3) for m in markers]),
             "query double in build": matched,
+            "every term strain-matched": matched & controls_matched,
         }
         coverage[screen] = {
             "n_stored": int(len(stored)),
@@ -515,6 +618,10 @@ def analyze(cache: str, results: str, ref_025: str, ref_029: str, label: str) ->
             "n_deletion_only": int(strata["deletion"].sum()),
             "n_query_double_in_build": int(matched.sum()),
             "n_query_double_and_deletion": int((matched & strata["deletion"]).sum()),
+            "n_controls_array_matched": int(controls_matched.sum()),
+            "n_eps_ik_array_matched": int(np.isfinite(eps_ik_strain).sum()),
+            "n_f_k_array_matched_by": f_k_from,
+            "n_every_term_strain_matched": int((matched & controls_matched).sum()),
             "policy_id": policy.policy_id,
         }
         for stratum, sel in strata.items():

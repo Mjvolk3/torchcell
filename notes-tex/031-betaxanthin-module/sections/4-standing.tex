@@ -49,6 +49,8 @@ mean adds nothing on single seeds and gives the highest six-seed rank of any flu
 width-12 arm, 0.155 (round 156): the region's value is in the ensemble. The GO affine
 under the release rule reads 0.199, the backbone escaping first adding nothing to the
 annotation's single read; the rule buys seed diversity, worth 0.003 on the ensemble
-(0.206, round 158). Cells queued: the GO affine at dropout 0.3 (159), GO with the
-HiGHS vector at dropout 0.3 (161), GO, the HiGHS vector and the polytope mean in one
-affine (163), and six more seeds of round 151's cell (164).
+(0.206, round 158); dropout 0.3 on the same arm moves it by less than a thousandth
+(round 159), so the annotation arm is the affine alone and no setting of the
+transformer around it has moved it. Cells queued: GO with the HiGHS vector at dropout
+0.3 (161), GO, the HiGHS vector and the polytope mean in one affine (163), and six more
+seeds of round 151's cell (164).

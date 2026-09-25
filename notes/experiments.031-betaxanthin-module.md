@@ -337,3 +337,11 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B29 | 158 | w175 | del + GO affine, released on escape | 0.199 (sd 0.007); ens 0.206 / 5.19 |
+
+## 2026.09.25 - B30 read: the GO affine at dropout 0.3
+
+- B30 (w176, GO affine at transformer dropout 0.3, job 2814, 3 h 40 min): 0.202 (sd 0.002) vs the GO affine at 0.1 (B23) 0.202 (-0.001, sd 0.001, 0/6) and vs the GLPK store at dropout 0.3 (round 145) 0.145 (+0.057, 6/6); top-50 4.89 vs 5.03 and 5.03; ensemble 0.202 / 4.79. Every seed selects at epochs 8 to 14, reads 0.198 to 0.203. The lever that lifted the store arm by 0.024 moves the annotation arm by less than a thousandth: the annotation arm is the affine alone; no transformer setting has moved it (with B29). Written as round 159; 031 published v17 (485 checks; the first upload attempt failed on the Zotero attachment call and the retry succeeded).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B30 | 159 | w176 | del + GO affine, dropout 0.3 | 0.202 (sd 0.002); ens 0.202 / 4.79 |

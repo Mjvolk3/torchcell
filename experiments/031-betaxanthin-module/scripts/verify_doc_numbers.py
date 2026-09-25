@@ -25,8 +25,6 @@ load_dotenv()
 sys.path.insert(0, osp.join(os.environ["EXPERIMENT_ROOT"], "028-gene-essentiality", "scripts"))
 from verify_doc_numbers import (  # noqa: E402
     Check,
-    concordance,
-    concordance_summary,
     degeneracy,
     ensemble,
     physics_store,

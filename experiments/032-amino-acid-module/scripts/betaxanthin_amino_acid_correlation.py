@@ -54,7 +54,12 @@ from pydantic import BaseModel
 from scipy.stats import hypergeom, spearmanr
 
 from torchcell.timestamp import timestamp
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
+from torchcell.utils import (
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -64,22 +69,53 @@ RESULTS = osp.join(EXPERIMENT_ROOT, "032-amino-acid-module", "results")
 CACHERA = osp.join(DATA_ROOT, "data/torchcell/betaxanthin_cachera2023")
 MULLEDER = osp.join(DATA_ROOT, "data/torchcell/amino_acid_mulleder2016")
 COOPER = osp.join(DATA_ROOT, "data/torchcell/amino_acid_cooper2010")
-RELIABILITY = osp.join(EXPERIMENT_ROOT, "027-betaxanthin-metabolic/results/target_reliability.json")
+RELIABILITY = osp.join(
+    EXPERIMENT_ROOT, "027-betaxanthin-metabolic/results/target_reliability.json"
+)
 MULLEDER_RETEST = osp.join(
-    EXPERIMENT_ROOT, "027-betaxanthin-metabolic/results/mulleder_retest_reliability.json"
+    EXPERIMENT_ROOT,
+    "027-betaxanthin-metabolic/results/mulleder_retest_reliability.json",
 )
 CONCORDANCE = osp.join(RESULTS, "amino_acid_dataset_concordance.json")
 MULLEDER_KEYS = [
-    "alanine", "arginine", "asparagine", "aspartate", "glutamate", "glutamine",
-    "glycine", "histidine", "isoleucine", "leucine", "lysine", "methionine",
-    "phenylalanine", "proline", "serine", "threonine", "tryptophan", "tyrosine",
+    "alanine",
+    "arginine",
+    "asparagine",
+    "aspartate",
+    "glutamate",
+    "glutamine",
+    "glycine",
+    "histidine",
+    "isoleucine",
+    "leucine",
+    "lysine",
+    "methionine",
+    "phenylalanine",
+    "proline",
+    "serine",
+    "threonine",
+    "tryptophan",
+    "tyrosine",
     "valine",
 ]
 COOPER_KEYS = [
-    "lysine_related_peak1", "arginine", "gshbiotin", "n_acetylornithine",
-    "leucine+isoleucine+citrulline", "glutamine+valine", "methionine+proline",
-    "threonine", "alanine", "serine", "asparagine+tyrosine", "glycine", "lysine_a",
-    "ornithine", "lysine_b", "glutamate", "aspartate",
+    "lysine_related_peak1",
+    "arginine",
+    "gshbiotin",
+    "n_acetylornithine",
+    "leucine+isoleucine+citrulline",
+    "glutamine+valine",
+    "methionine+proline",
+    "threonine",
+    "alanine",
+    "serine",
+    "asparagine+tyrosine",
+    "glycine",
+    "lysine_a",
+    "ornithine",
+    "lysine_b",
+    "glutamate",
+    "aspartate",
 ]
 TOP_FRAC = 0.05
 N_BOOT = 1000
@@ -88,13 +124,32 @@ ALPHAS = [0.1, 1.0, 10.0, 100.0, 1000.0]
 
 
 AA3 = {
-    "alanine": "Ala", "arginine": "Arg", "asparagine": "Asn", "aspartate": "Asp",
-    "glutamate": "Glu", "glutamine": "Gln", "glycine": "Gly", "histidine": "His",
-    "isoleucine": "Ile", "leucine": "Leu", "lysine": "Lys", "methionine": "Met",
-    "phenylalanine": "Phe", "proline": "Pro", "serine": "Ser", "threonine": "Thr",
-    "tryptophan": "Trp", "tyrosine": "Tyr", "valine": "Val", "citrulline": "Cit",
-    "lysine_a": "Lys a", "lysine_b": "Lys b", "lysine_related_peak1": "Lys-related",
-    "gshbiotin": "GSH-biotin", "n_acetylornithine": "N-acetyl-Orn", "ornithine": "Orn",
+    "alanine": "Ala",
+    "arginine": "Arg",
+    "asparagine": "Asn",
+    "aspartate": "Asp",
+    "glutamate": "Glu",
+    "glutamine": "Gln",
+    "glycine": "Gly",
+    "histidine": "His",
+    "isoleucine": "Ile",
+    "leucine": "Leu",
+    "lysine": "Lys",
+    "methionine": "Met",
+    "phenylalanine": "Phe",
+    "proline": "Pro",
+    "serine": "Ser",
+    "threonine": "Thr",
+    "tryptophan": "Trp",
+    "tyrosine": "Tyr",
+    "valine": "Val",
+    "citrulline": "Cit",
+    "lysine_a": "Lys a",
+    "lysine_b": "Lys b",
+    "lysine_related_peak1": "Lys-related",
+    "gshbiotin": "GSH-biotin",
+    "n_acetylornithine": "N-acetyl-Orn",
+    "ornithine": "Orn",
 }
 
 
@@ -138,6 +193,8 @@ class PoolFit(BaseModel):
 
 
 class Report(BaseModel):
+    """The whole read: manifests, shared counts, per-quantity statistics, pool fits."""
+
     cachera_manifest: dict[str, Any]
     mulleder_manifest: dict[str, Any]
     cooper_manifest: dict[str, Any]
@@ -158,8 +215,13 @@ def manifest(root: str) -> dict[str, Any]:
 
 
 def feature_stat(
-    screen: str, key: str, bx: np.ndarray, aa: np.ndarray, reliability: float | None,
-    bx_reliability: float, rng: np.random.Generator,
+    screen: str,
+    key: str,
+    bx: np.ndarray,
+    aa: np.ndarray,
+    reliability: float | None,
+    bx_reliability: float,
+    rng: np.random.Generator,
 ) -> FeatureStat:
     ok = np.isfinite(bx) & np.isfinite(aa)
     x, y = bx[ok], aa[ok]
@@ -186,7 +248,9 @@ def feature_stat(
         top5_enrichment=float(overlap / expected),
         top5_hypergeom_p=float(hypergeom.sf(overlap - 1, x.size, k, k)),
         reliability=reliability,
-        ceiling=None if reliability is None else float(np.sqrt(max(reliability, 0.0) * bx_reliability)),
+        ceiling=None
+        if reliability is None
+        else float(np.sqrt(max(reliability, 0.0) * bx_reliability)),
     )
 
 
@@ -204,7 +268,8 @@ def pool_fit(
 ) -> PoolFit:
     """Five strain folds; the alpha of each fold chosen on an inner split of its
     training strains; the profile log-scaled, median-filled and standardized on the
-    training fold only."""
+    training fold only.
+    """
     keep = np.isfinite(bx)
     bx, profile = bx[keep], profile[keep]
     n = bx.size
@@ -216,7 +281,9 @@ def pool_fit(
     for f in range(N_FOLDS):
         test = folds[f]
         train = np.concatenate([folds[g] for g in range(N_FOLDS) if g != f])
-        lp = np.where(profile > 0, np.log10(np.where(profile > 0, profile, 1.0)), np.nan)
+        lp = np.where(
+            profile > 0, np.log10(np.where(profile > 0, profile, 1.0)), np.nan
+        )
         med = np.nanmedian(lp[train], axis=0)
         filled += int(np.isnan(lp[test]).sum())
         lp = np.where(np.isnan(lp), med, lp)
@@ -228,9 +295,12 @@ def pool_fit(
         inner_tr, inner_va = train[:cut], train[cut:]
         best = max(
             ALPHAS,
-            key=lambda a: spearmanr(
-                z[inner_va] @ ridge_fit(z[inner_tr], bx[inner_tr], a)[0], bx[inner_va]
-            ).correlation,
+            key=lambda a: (
+                spearmanr(
+                    z[inner_va] @ ridge_fit(z[inner_tr], bx[inner_tr], a)[0],
+                    bx[inner_va],
+                ).correlation
+            ),
         )
         w, b0 = ridge_fit(z[train], bx[train], best)
         pred[test] = z[test] @ w + b0
@@ -264,7 +334,9 @@ def main() -> None:
     with open(RELIABILITY) as fh:
         rel = json.load(fh)
     bx_rel = float(
-        next(t for t in rel["targets"] if t["target"] == "Betaxanthin")["reliability_stored_value"]
+        next(t for t in rel["targets"] if t["target"] == "Betaxanthin")[
+            "reliability_stored_value"
+        ]
     )
     with open(MULLEDER_RETEST) as fh:
         mul_rel = {
@@ -272,7 +344,10 @@ def main() -> None:
             for row in json.load(fh)["per_amino_acid"]
         }
     with open(CONCORDANCE) as fh:
-        coo_rel = {r["key"]: float(r["spearman"]) for r in json.load(fh)["cooper_duplicate_retest"]}
+        coo_rel = {
+            r["key"]: float(r["spearman"])
+            for r in json.load(fh)["cooper_duplicate_retest"]
+        }
 
     shared_m = sorted(set(bx.index) & set(mul.index))
     shared_c = sorted(set(bx.index) & set(coo.index))
@@ -284,11 +359,15 @@ def main() -> None:
     y_m = bx.loc[shared_m, "level"].to_numpy(float)
     m = mul.loc[shared_m, MULLEDER_KEYS].to_numpy(float)
     for j, key in enumerate(MULLEDER_KEYS):
-        features.append(feature_stat("mulleder2016", key, y_m, m[:, j], mul_rel[key], bx_rel, rng))
+        features.append(
+            feature_stat("mulleder2016", key, y_m, m[:, j], mul_rel[key], bx_rel, rng)
+        )
     y_c = bx.loc[shared_c, "level"].to_numpy(float)
     c = coo.loc[shared_c, COOPER_KEYS].to_numpy(float)
     for j, key in enumerate(COOPER_KEYS):
-        features.append(feature_stat("cooper2010", key, y_c, c[:, j], coo_rel.get(key), bx_rel, rng))
+        features.append(
+            feature_stat("cooper2010", key, y_c, c[:, j], coo_rel.get(key), bx_rel, rng)
+        )
     for s in features:
         ceiling = "" if s.ceiling is None else f" ceiling {s.ceiling:.2f}"
         print(
@@ -296,10 +375,7 @@ def main() -> None:
             f"[{s.ci_low:+.3f}, {s.ci_high:+.3f}] p {s.spearman_p:.1e} top5 "
             f"{s.top5_overlap}/{s.top5_expected:.1f} (x{s.top5_enrichment:.1f}){ceiling}"
         )
-    pool = [
-        pool_fit("mulleder2016", y_m, m, rng),
-        pool_fit("cooper2010", y_c, c, rng),
-    ]
+    pool = [pool_fit("mulleder2016", y_m, m, rng), pool_fit("cooper2010", y_c, c, rng)]
     for p in pool:
         print(
             f"  pool {p.screen:<12s} n {p.n} out-of-fold Spearman {p.spearman_oof:+.3f} "
@@ -310,7 +386,12 @@ def main() -> None:
 
     # ---- figure: one panel per screen, the Spearman with its interval and ceiling ----
     plt.rcParams.update(
-        {"font.family": "Arial", "font.size": 6, "svg.fonttype": "none", "axes.linewidth": 0.5}
+        {
+            "font.family": "Arial",
+            "font.size": 6,
+            "svg.fonttype": "none",
+            "axes.linewidth": 0.5,
+        }
     )
     fig_w = PANEL_WIDTHS_MM["full"]
     fig_h = 60.0
@@ -326,14 +407,37 @@ def main() -> None:
         vals = np.array([s.spearman for s in rows])
         lo = vals - np.array([s.ci_low for s in rows])
         hi = np.array([s.ci_high for s in rows]) - vals
-        ax.bar(xs, vals, color=color, edgecolor="black", linewidth=0.5, width=0.7,
-               label="Spearman, strains both screens hold")
-        ax.errorbar(xs, vals, yerr=[lo, hi], fmt="none", ecolor="black", elinewidth=0.5,
-                    capsize=1.2, capthick=0.5)
+        ax.bar(
+            xs,
+            vals,
+            color=color,
+            edgecolor="black",
+            linewidth=0.5,
+            width=0.7,
+            label="Spearman, strains both screens hold",
+        )
+        ax.errorbar(
+            xs,
+            vals,
+            yerr=[lo, hi],
+            fmt="none",
+            ecolor="black",
+            elinewidth=0.5,
+            capsize=1.2,
+            capthick=0.5,
+        )
         ceilings = [np.nan if s.ceiling is None else s.ceiling for s in rows]
-        ax.plot(xs, ceilings, linestyle="none", marker="o", markersize=2.6,
-                markerfacecolor=PLOT_PALETTE[2], markeredgecolor="black", markeredgewidth=0.4,
-                label="ceiling from the two reliabilities")
+        ax.plot(
+            xs,
+            ceilings,
+            linestyle="none",
+            marker="o",
+            markersize=2.6,
+            markerfacecolor=PLOT_PALETTE[2],
+            markeredgecolor="black",
+            markeredgewidth=0.4,
+            label="ceiling from the two reliabilities",
+        )
         ax.axhline(0, color="black", linewidth=0.5)
         ax.set_xticks(xs)
         ax.set_xticklabels([short(k) for k in keys], rotation=90)
@@ -349,10 +453,25 @@ def main() -> None:
         ax.tick_params(length=2, width=0.5)
         ax.set_xlim(-0.7, len(rows) - 0.3)
         if letter == "a":
-            ax.legend(loc="lower left", bbox_to_anchor=(0, 1.03), ncol=2, frameon=False,
-                      fontsize=6, handlelength=1.2, columnspacing=1.0)
-        ax.text(-0.12 if letter == "a" else -0.05, 1.03, letter, transform=ax.transAxes,
-                fontsize=8, fontweight="bold", ha="right", va="bottom")
+            ax.legend(
+                loc="lower left",
+                bbox_to_anchor=(0, 1.03),
+                ncol=2,
+                frameon=False,
+                fontsize=6,
+                handlelength=1.2,
+                columnspacing=1.0,
+            )
+        ax.text(
+            -0.12 if letter == "a" else -0.05,
+            1.03,
+            letter,
+            transform=ax.transAxes,
+            fontsize=8,
+            fontweight="bold",
+            ha="right",
+            va="bottom",
+        )
     os.makedirs(IMAGES, exist_ok=True)
     stamp = timestamp()
     svg = osp.join(IMAGES, f"betaxanthin_amino_acid_correlation_{stamp}.svg")

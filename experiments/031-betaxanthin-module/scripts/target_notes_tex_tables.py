@@ -18,8 +18,8 @@ import json
 import os
 import os.path as osp
 import sys
-import numpy as np
 
+import numpy as np
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -284,7 +284,8 @@ def amino_acid_concordance() -> str | None:
 
 def betaxanthin_amino_acid_correlation() -> str | None:
     """Cachera's betaxanthin score against each amino-acid quantity of the two screens,
-    and the pool ridge, from betaxanthin_amino_acid_correlation.py."""
+    and the pool ridge, from betaxanthin_amino_acid_correlation.py.
+    """
     src = results("amino_acids", "betaxanthin_amino_acid_correlation.json")
     if not osp.isfile(src):
         return None

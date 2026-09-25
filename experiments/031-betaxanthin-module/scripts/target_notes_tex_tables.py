@@ -160,6 +160,9 @@ STORE_LABELS = {
     "mdfcap100_poly_spread": "driving-force polytope, mean with the spread of ln c",
     "go": "GO multi-hot (2,362 propagated terms)",
     "gopfba": "HiGHS parsimonious store with GO appended",
+    "aa_pool": "measured M\\\"ulleder amino-acid pool of the strain (19 mM columns)",
+    "go_aapool": "GO multi-hot with the measured pool appended",
+    "gopfba_aapool": "HiGHS parsimonious store with GO and the measured pool appended",
 }
 
 

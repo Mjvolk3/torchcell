@@ -145,12 +145,32 @@ slot, alone and appended to the HiGHS store, over every annotated gene, the inte
 every other input has entered through. The same two inputs read by the ladder's three
 models (Table~\ref{tab:store-baselines}) fix what the transformer adds to them: the GO
 multi-hot reads 0.076 by ridge, 0.179 by nearest neighbors and 0.187 by forest with a
-top-50 enrichment of 5.39, the highest call of any read on this split; GO with the
+top-50 enrichment of 5.39, the highest call of any genotype-side read on this split; GO with the
 HiGHS vector appended reads 0.123, 0.198 and 0.204 with a top-50 of 4.79. The forest
 over the 6,539 columns round 151's affine reads sits 0.008 under that round's 0.211,
 the size of the round's own seed spread, with the higher call, so on this input the
 transformer's rank is what a backbone-free model of the same columns reaches, and
 averaging its six seeds adds 0.001.
+
+The measured side enters the same ladder. The strain's own M\"ulleder amino-acid pool,
+nineteen concentrations in mM as an affine store over the 4,678 strains the screen
+measured (a strain it did not measure reads the loader's reference, the population
+robust mean per amino acid), reads 0.149 by ridge, 0.285 by nearest neighbors and 0.280
+by forest, with top-50 enrichments of 3.99, 4.19 and 4.79: nineteen columns carry more
+rank than any genotype-side representation and more than any transformer arm (0.216,
+round 171). Appended to GO the pool reads 0.102, 0.174 and 0.264 with a forest call of
+5.99; appended to GO with the HiGHS vector, 0.156, 0.195 and 0.247 with a forest call
+of 6.19, the highest call of any read on this split. The ridge and the nearest-neighbor
+reads fall when the annotation's 2,362 columns join the nineteen while the forest,
+which selects columns, keeps 0.26 and gains the call; a plausible reason, unverified,
+is that the two distance-based models weigh every standardized column alike, so the
+pool is then a hundredth of the input. This read is phenotype to phenotype: the pool is
+a measurement of the same strain in a different screen, on minimal medium, not the
+strain's sequence, and the split by gene holds because the pool row is never the
+betaxanthin target. What it fixes is that the amino-acid data carries betaxanthin
+signal beyond the gene's identity, at a rank above the sequence, the annotation and
+every flux store; the transformer's affine reading the same columns, alone with GO and
+beside the HiGHS vector, is queued (rounds 175, 176).
 
 \input{tables/go_models}
 

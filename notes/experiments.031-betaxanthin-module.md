@@ -431,3 +431,5 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 |---|---|---|---|---|
 | B41 | -- | w194 | del + GO with the measured amino-acid pool | job 2836, pending |
 | B42 | -- | w195 | del + HiGHS store with GO and the pool | job 2837, pending |
+
+- MEASURED, the ladder with the pool (`results/store_baselines_betaxanthin.json`, 13.5 min; all fifteen earlier cells reproduced to the printed digit): the pool alone (19 columns) reads 0.149 by ridge, 0.285 by kNN, 0.280 by forest (top-50 3.99 / 4.19 / 4.79), above every genotype-side read and every transformer arm (0.216); GO + pool 0.102 / 0.174 / 0.264 (forest top-50 5.99); GO + HiGHS + pool 0.156 / 0.195 / 0.247 (forest top-50 6.19, the highest call of any read). Ridge and kNN fall when the 2,362 GO columns join the 19; the forest keeps 0.26 and gains the call (plausible reason, unverified: the distance models weigh every standardized column alike). Written into the 031 document (section 3 and the standing section; 031 published v26).

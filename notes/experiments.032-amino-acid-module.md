@@ -215,3 +215,13 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | A17 | -- | w179 | del + HiGHS store with GO, dropout 0.3 | job 2817, pending |
+
+## 2026.09.25 - A15 read: dropout 0.3 on the store arm
+
+- A15 (w173, store arm at dropout 0.3, job 2811, 3 h 38 min): 0.045 (sd 0.005) vs the store at 0.1 at 0.040 (+0.005, sd 0.009, 5/6) and vs the control 0.049 (-0.005, sd 0.009, 2/6); ensembles 0.049 vs 0.043 and 0.062. Seeds select at 39 to 187 on val Pearson 0.05 to 0.08, read 0.038 to 0.051. The lever moves this target the same direction as betaxanthin at a fifth of the size, inside the spread. Written as round 157; the standing section brought up to date through round 157; 032 published v12 (252 checks).
+- Submitted A18 = w182 (GO affine at dropout 0.3, job 2823; vs w170 and w173).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A15 | 157 | w173 | del + store, dropout 0.3 | 0.045 (sd 0.005); ens 0.049 |
+| A18 | -- | w182 | del + GO affine, dropout 0.3 | job 2823, pending |

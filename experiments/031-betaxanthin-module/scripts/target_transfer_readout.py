@@ -664,6 +664,20 @@ PAIRS = [
         "w184_bxdelgomoma_h12l1p1_e200",
     ),
     (
+        "betaxanthin: GO multi-hot in the affine slot against the control, twelve seeds",
+        "betaxanthin",
+        "w167_bxdelgo_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+        tuple(range(2700, 2712)),
+    ),
+    (
+        "amino acids: HiGHS store with GO appended against GO alone, twelve seeds",
+        "mulleder19",
+        "w177_aadelgopfba_h12l1p1_e200",
+        "w170_aadelgo_h12l1p1_e200",
+        tuple(range(2700, 2712)),
+    ),
+    (
         "amino acids: GO multi-hot in the affine slot against the control, twelve seeds",
         "mulleder19",
         "w170_aadelgo_h12l1p1_e200",

@@ -605,4 +605,17 @@ selected epochs and the read where they were. The affine over the annotation and
 flux vector is read within its first sixteen epochs, and regularizing it does not move
 that read either.
 
+Round 170 is read (job 2829, 3 h 40 min): the second point of the curve, the same cell
+at affine weight decay 1.0. It reads 0.204 (sd 0.012) against no decay at 0.211
+($-0.007$ paired, sd 0.013, above on one of six) and against decay 0.1 at 0.210
+($-0.005$, sd 0.013, two of six), top-50 4.76 against 4.83 and 4.66, and ensembled over
+six seeds 0.208 with a top-50 of 4.99 against 0.212 and 0.211. The seeds select at
+epochs 34 to 114 on validation Pearson 0.25 to 0.27, against 8 to 16 for both lighter
+settings, and read 0.190 to 0.218, a spread of 0.012 against 0.007. So the decay curve
+runs 0.211, 0.210, 0.204 from none to 0.1 to 1.0: flat, then down, with the heavy
+setting slowing the affine so its read arrives fifty epochs later and spreads more
+across seeds. The affine's own regularization does not lift the annotation arm any more
+than the transformer's settings did, and the study's best cell stays round 151's as
+built.
+
 \input{tables/target_transfer}

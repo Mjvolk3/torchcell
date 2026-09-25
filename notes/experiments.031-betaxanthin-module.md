@@ -403,3 +403,11 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B36 | 169 | w188 | del + HiGHS store with GO, affine weight decay 0.1 | 0.210 (sd 0.007); ens 0.211 / 4.79 |
+
+## 2026.09.25 - B37 read: the affine's weight decay at 1.0
+
+- B37 (w189, the same cell at affine weight decay 1.0, job 2829, 3 h 40 min): 0.204 (sd 0.012) vs no decay (B24) 0.211 (-0.007, sd 0.013, 1/6) and vs decay 0.1 (B36) 0.210 (-0.005, sd 0.013, 2/6); top-50 4.76 vs 4.83 and 4.66; ensemble 0.208 / 4.99. Seeds select at 34 to 114 (vs 8 to 16 at the lighter settings) on val Pearson 0.25 to 0.27, read 0.190 to 0.218. The decay curve none / 0.1 / 1.0 reads 0.211 / 0.210 / 0.204: flat then down, the heavy setting slowing the affine by about fifty epochs and doubling the seed spread. Written as round 170; 031 published v24.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B37 | 170 | w189 | del + HiGHS store with GO, affine weight decay 1.0 | 0.204 (sd 0.012); ens 0.208 / 4.99 |

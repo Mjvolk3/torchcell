@@ -63,8 +63,9 @@ cost grows with the columns added (0.193, round 166): the metabolite side does n
 enter this affine's read at any width. The adjustment store in place of the
 parsimonious one adds 0.006 to the annotation on every seed against the parsimonious
 vector's 0.009 (round 167): both flux programs enter the annotation's read where the
-metabolite programs do not. Weight decay 0.1 on the affine's own weights leaves the best
-arm where it is, 0.210 against 0.211 with the same selected epochs (round 169): no
-setting of the transformer and no regularization of the affine has moved the annotation
-arms. Cells queued: the affine's weight decay at 1.0 (170), both flux programs beside GO
-in one affine (171), the annotation-only arm and its control on twelve seeds (172, 173).
+metabolite programs do not. Weight decay on the affine's own weights runs 0.211, 0.210,
+0.204 from none to 0.1 to 1.0 (rounds 169, 170), the heavy setting selecting fifty
+epochs later with twice the seed spread: no setting of the transformer and no
+regularization of the affine has moved the annotation arms. Cells queued: both flux
+programs beside GO in one affine (171), the annotation-only arm and its control on
+twelve seeds (172, 173).

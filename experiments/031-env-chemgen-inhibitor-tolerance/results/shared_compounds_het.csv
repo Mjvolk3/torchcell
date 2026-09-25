@@ -1,0 +1,3 @@
+vanacloig,hillenmeyer,n_genes,spearman,rank_of_true_match,n_partner_conditions,best_match,best_rho,hits_each,hit_overlap,hit_overlap_expected,odds_ratio,fisher_p
+benomyl,benomyl,3436,0.02441498744972914,30,307,nocodazole,0.10842718530295499,172,5,8.610011641443538,0.55523683172577,0.9398545607419935
+ferulic acid,ferulic acid,3416,0.0051940349535321215,109,307,atorvastatin,0.0654586877308238,171,8,8.560011709601874,0.9279987955888441,0.6323780425571448

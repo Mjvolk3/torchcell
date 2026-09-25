@@ -1,0 +1,5 @@
+what,a,b,n_a,n_b,shared,jaccard
+queried genes,Vanacloig 2022,Hillenmeyer 2008 HOM,3598,4675,3550,0.7516409062036841
+queried genes,Vanacloig 2022,Hillenmeyer 2008 HET,3598,5825,3577,0.611871365035922
+queried genes,Hillenmeyer 2008 HOM,Hillenmeyer 2008 HET,4675,5825,4648,0.7942583732057417
+queried genes,all three,,,,3533,

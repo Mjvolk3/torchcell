@@ -29,6 +29,7 @@ from torchcell.datamodels.identity import (
     media_identity,
     temperature_identity,
 )
+from torchcell.knowledge_graphs.build_telemetry import BuildPhase
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 
 logging.basicConfig(level=logging.INFO)
@@ -450,6 +451,7 @@ class CellAdapter:
             ]
             if method_name in config_method_names:
                 log.info(f"Running: {method_name}")
+                BuildPhase.set(type(self).__name__, method_name, "node")
                 if method.__name__.startswith("_get_"):
                     yield from method()
                 else:
@@ -465,6 +467,7 @@ class CellAdapter:
             ]
             if method_name in config_method_names:
                 log.info(f"Running: {method_name}")
+                BuildPhase.set(type(self).__name__, method_name, "edge")
                 if method.__name__.startswith("_get_"):
                     yield from method()
                 else:

@@ -27,6 +27,7 @@ from omegaconf import DictConfig, OmegaConf
 import torchcell
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.graph import SCerevisiaeGraph
+from torchcell.knowledge_graphs.build_telemetry import BuildPhase, ResourceSampler
 from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 from torchcell.knowledge_graphs.incremental_import import (
     INCREMENTAL_CALL_FILENAME,
@@ -104,11 +105,18 @@ def main(cfg: DictConfig) -> None:
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
+    # Tags make builds comparable across rounds: the config's own tags plus any the
+    # launcher passes in TCDB_TAGS (comma-separated: round, arm, commit). A build with
+    # no tags is the production path and stays untagged.
+    tags = [str(t) for t in wandb_cfg["wandb"].get("tags") or []]
+    tags += [t for t in os.environ.get("TCDB_TAGS", "").split(",") if t]
     wandb.init(
         mode=wandb_cfg["wandb"]["mode"],
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
+        tags=tags,
+        job_type=os.environ.get("TCDB_JOB_TYPE", "build"),
         # save_code=True,
     )
     # save_code = True only works for git repositories, so we log the kg dir.
@@ -140,6 +148,13 @@ def main(cfg: DictConfig) -> None:
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
     wandb.log({"biocypher-out": bc._output_directory.split("/")[-1]})
+    # Whole-container CPU + memory every 5 s, stamped with the adapter/method in
+    # flight; the per-phase table it yields at the end is what a build-speed round
+    # is scored on. Samples land beside the CSVs so they survive with the output.
+    sampler = ResourceSampler(Path(output_directory) / "telemetry", interval=5.0)
+    sampler.start()
+    build_t0 = time.time()
+    BuildPhase.set("", "instantiate datasets", "setup")
     # Partition workers
     io_workers = math.ceil(
         wandb.config.adapters["io_to_total_worker_ratio"] * num_workers
@@ -294,8 +309,9 @@ def main(cfg: DictConfig) -> None:
 
     total_nodes = 0
     total_edges = 0
-    for adapter in adapters:
+    for adapter_index, adapter in enumerate(adapters):
         adapter_name = type(adapter).__name__
+        wandb.log({"adapter_index": adapter_index, "current_adapter": adapter_name})
         log.info(f"Writing nodes for adapter: {adapter_name}")
         start_time = time.time()
         n_nodes = _count_while_writing(bc.write_nodes, adapter.get_nodes())
@@ -326,7 +342,25 @@ def main(cfg: DictConfig) -> None:
         total_edges,
         len(adapters),
     )
-    wandb.log({"total_nodes": total_nodes, "total_edges": total_edges})
+    generation_wall_s = time.time() - build_t0
+    BuildPhase.set("", "finish", "finish")
+    timings = sampler.stop()
+    wandb.log(
+        {
+            "total_nodes": total_nodes,
+            "total_edges": total_edges,
+            "generation_wall_s": generation_wall_s,
+            "generation_cpu_core_s": sum(t.cpu_core_seconds for t in timings),
+            "generation_mem_peak_gb": max(
+                (t.mem_peak_gb for t in timings), default=0.0
+            ),
+        }
+    )
+    log.info(
+        "Generation wall %.0f s, peak memory %.1f GiB",
+        generation_wall_s,
+        max((t.mem_peak_gb for t in timings), default=0.0),
+    )
     if import_mode == "full":
         # Write admin import statement and schema information (for biochatter)
         bc.write_import_call()

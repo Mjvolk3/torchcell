@@ -151,6 +151,11 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         "mdfcap100_poly_spread": {"store": "SM_gem_mdfcap100polyspread", "block": "v_deletion", "flux": True},
         "go": {"store": "SM_gem_go", "block": "v_deletion", "flux": False},
         "gopfba": {"store": "SM_gem_gopfba", "block": "v_deletion", "flux": True},
+        # The reverse of the betaxanthin pool read (target_pool_store.py --source
+        # cachera): the strain's own Cachera betaxanthin score, signed, so standardized
+        # and never log(1 + |v|); alone and appended to GO.
+        "bx_score": {"store": "SM_gem_bxscore", "block": "v_deletion", "flux": False},
+        "go_bxscore": {"store": "SM_gem_gobxscore", "block": "v_deletion", "flux": False},
     },
 }
 REPRESENTATIONS["cooper"] = REPRESENTATIONS["amino_acids"]

@@ -31,10 +31,21 @@ module generalizes from genotype; the split by gene still holds, since a held-ou
 pool row is that strain's own measurement in a different screen, never the betaxanthin
 target. Stores are never overwritten.
 
+The reverse direction (``--source cachera``, 2026-09-25): the strain's Cachera 2023
+betaxanthin score, the corrected 24 h colony fluorescence, population-centered so
+negative values are ordinary, as a one-column store for the amino-acid target on the
+prototroph's gene axis (``SM_gem_bxscore``). The reference row is the loader's, 0.0. The
+score is signed, so this store is read standardized (the ladder's ``flux: False``, the
+trainer's ``--ess-solve-encoding standardized``), never through ``log(1 + |v|)``, which
+would fold the sign.
+
 Run from the repo root::
 
     PYTHONHASHSEED=0 PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
         experiments/031-betaxanthin-module/scripts/target_pool_store.py --out YPD_bx_aapool
+    PYTHONHASHSEED=0 PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
+        experiments/031-betaxanthin-module/scripts/target_pool_store.py \
+        --source cachera --out SM_gem_bxscore
 """
 
 from __future__ import annotations
@@ -56,7 +67,28 @@ DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 TABLE_DIR = osp.join(DATA_ROOT, "data/torchcell/reference_flux")
 MULLEDER = osp.join(DATA_ROOT, "data/torchcell/amino_acid_mulleder2016")
-STUDY = "031-betaxanthin-module"
+CACHERA = osp.join(DATA_ROOT, "data/torchcell/betaxanthin_cachera2023")
+#: Per source: the loader's preprocess table, its gene column, the csv columns kept
+#: (csv name -> store column name), whether values must be nonnegative (mM are; the
+#: population-centered score is not), the study that owns the results file.
+SOURCES: dict[str, dict] = {
+    "mulleder": {
+        "root": MULLEDER,
+        "gene_column": "orf",
+        "columns": None,  # every column but the gene's, the 19 amino acids
+        "nonnegative": True,
+        "layout": "Mulleder 2016 intracellular amino-acid concentrations (mM, as released), 19 columns",
+        "study": "031-betaxanthin-module",
+    },
+    "cachera": {
+        "root": CACHERA,
+        "gene_column": "orf",
+        "columns": {"level": "betaxanthin_score"},
+        "nonnegative": False,
+        "layout": "Cachera 2023 betaxanthin score (corrected 24 h colony fluorescence, population-centered), 1 column",
+        "study": "032-amino-acid-module",
+    },
+}
 
 
 class PoolStoreProvenance(BaseModel):
@@ -87,42 +119,57 @@ def sha256_of(path: str) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--source", default="mulleder", choices=sorted(SOURCES))
     ap.add_argument("--out", default="YPD_bx_aapool", help="store stem, ess_solve_encodings_<out>.npz")
     ap.add_argument("--out-dir", default=TABLE_DIR)
     args = ap.parse_args()
     started = time.time()
-    csv_path = osp.join(MULLEDER, "preprocess", "data.csv")
-    table = pd.read_csv(csv_path).set_index("orf")
+    src = SOURCES[args.source]
+    root = src["root"]
+    csv_path = osp.join(root, "preprocess", "data.csv")
+    table = pd.read_csv(csv_path).set_index(src["gene_column"])
     assert not table.index.duplicated().any(), "duplicated ORF in the released table"
-    columns = [str(c) for c in table.columns]
-    assert len(columns) == 19, columns
-    with open(osp.join(MULLEDER, "preprocess", "experiment_reference_index.json")) as fh:
+    if src["columns"] is None:
+        csv_columns = [str(c) for c in table.columns]
+        columns = csv_columns
+        assert len(columns) == 19, columns
+    else:
+        csv_columns = list(src["columns"])
+        columns = [src["columns"][c] for c in csv_columns]
+    with open(osp.join(root, "preprocess", "experiment_reference_index.json")) as fh:
         refs = json.load(fh)
     assert len(refs) == 1, f"{len(refs)} reference groups; expected one"
     reference = refs[0]["reference"]["phenotype_reference"]["metabolite_level"]
-    assert set(reference) == set(columns), set(reference) ^ set(columns)
-    wild = np.array([float(reference[c]) for c in columns], np.float32)
-    values = table[columns].to_numpy(np.float64)
+    # The Mulleder reference is keyed by amino acid, the Cachera one by "betaxanthin".
+    ref_keys = list(reference)
+    assert len(ref_keys) == len(columns), (ref_keys, columns)
+    if src["columns"] is None:
+        assert set(reference) == set(columns), set(reference) ^ set(columns)
+        wild = np.array([float(reference[c]) for c in columns], np.float32)
+    else:
+        wild = np.array([float(reference[k]) for k in ref_keys], np.float32)
+    values = table[csv_columns].to_numpy(np.float64)
     missing = ~np.isfinite(values)
     n_missing = int(missing.sum())
     values = np.where(missing, wild[None, :], values).astype(np.float32)
-    assert np.isfinite(values).all() and (values >= 0).all(), "a negative concentration"
-    with open(osp.join(MULLEDER, "preprocess", "build_manifest.json")) as fh:
+    assert np.isfinite(values).all(), "a non-finite value after the fill"
+    if src["nonnegative"]:
+        assert (values >= 0).all(), "a negative concentration"
+    with open(osp.join(root, "preprocess", "build_manifest.json")) as fh:
         manifest = json.load(fh)
     provenance = PoolStoreProvenance(
         source_csv=csv_path,
         source_csv_sha256=sha256_of(csv_path),
         source_build_manifest=manifest,
-        reference_source=osp.join(MULLEDER, "preprocess", "experiment_reference_index.json"),
-        reference_levels_mM={c: float(reference[c]) for c in columns},
+        reference_source=osp.join(root, "preprocess", "experiment_reference_index.json"),
+        reference_levels_mM={c: float(w) for c, w in zip(columns, wild, strict=True)},
         n_genes=int(len(table)),
         n_columns=len(columns),
         n_missing_cells_filled_with_reference=n_missing,
-        column_layout="Mulleder 2016 intracellular amino-acid concentrations (mM, as released), 19 columns",
+        column_layout=src["layout"],
         method=(
-            "the strain's own measured amino-acid pool as affine columns; the wild-type row is "
-            "the loader's reference (population robust mean per amino acid); written by "
-            "target_pool_store.py"
+            f"the strain's own measured phenotype ({args.source}) as affine columns; the "
+            "wild-type row is the loader's reference; written by target_pool_store.py"
         ),
         flux_sha256=hashlib.sha256(values.tobytes()).hexdigest(),
     )
@@ -138,7 +185,7 @@ def main() -> None:
         provenance=np.array(provenance.model_dump_json()),
     )
     print(f"{path}: {values.shape}; {n_missing} missing cells filled with the reference", flush=True)
-    results_dir = osp.join(EXPERIMENT_ROOT, STUDY, "results")
+    results_dir = osp.join(EXPERIMENT_ROOT, src["study"], "results")
     os.makedirs(results_dir, exist_ok=True)
     summary = {
         "store": path,
@@ -147,6 +194,7 @@ def main() -> None:
         "columns": columns,
         "n_missing_cells_filled_with_reference": n_missing,
         "reference_levels_mM": provenance.reference_levels_mM,
+        "source": args.source,
         "source_csv_sha256": provenance.source_csv_sha256,
         "seconds": time.time() - started,
     }

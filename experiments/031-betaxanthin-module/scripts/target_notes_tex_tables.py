@@ -165,6 +165,8 @@ STORE_LABELS = {
     "gopfba": "HiGHS parsimonious store with GO appended",
     "pfba_l2": "minimum-norm flux at maximal growth (Clarabel QP, one solution per deletion)",
     "gol2": "GO multi-hot with the minimum-norm flux appended",
+    "bx_score": "measured Cachera betaxanthin score of the strain (1 column, standardized)",
+    "go_bxscore": "GO multi-hot with the measured betaxanthin score appended",
     "aa_pool": "measured M\\\"ulleder amino-acid pool of the strain (19 mM columns)",
     "go_aapool": "GO multi-hot with the measured pool appended",
     "gopfba_aapool": "HiGHS parsimonious store with GO and the measured pool appended",

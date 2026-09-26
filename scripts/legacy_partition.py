@@ -16,12 +16,13 @@ Edges come from three sources. Python files are parsed with ``ast`` and every
 including the implicit parent packages an import executes. A ``from pkg import Name``
 whose ``Name`` is re-exported by ``pkg/__init__.py`` also edges to the submodule that
 defines it, so a package used through its ``__init__`` keeps that submodule live.
-Root files of every kind (Python, shell, slurm, YAML, Makefile, workflows) are scanned
-for dotted ``torchcell.a.b`` and path ``torchcell/a/b.py`` references, so a hydra
-``_target_``, an ``importlib`` string, or a ``python torchcell/x.py`` launcher line
-keeps its module live. Package files are scanned only in their non-docstring string
-constants (a ``-m torchcell.x`` subprocess target, a sibling ``runner.py`` path);
-frontmatter comments and docstrings name modules without importing them.
+Non-Python root files (shell, slurm, YAML, Makefile, workflows) are scanned for dotted
+``torchcell.a.b`` and path ``torchcell/a/b.py`` references, so a hydra ``_target_`` or a
+``python torchcell/x.py`` launcher line keeps its module live. Python files, roots and
+package alike, are scanned only in their non-docstring string constants (an
+``importlib`` target, a ``-m torchcell.x`` subprocess, a sibling ``runner.py`` path);
+frontmatter comments and docstrings name modules without importing them, and the
+import-all test's broken-module lists are excluded outright (``NO_STRING_SCAN``).
 
 Categories in the report:
 
@@ -75,6 +76,9 @@ ROOT_DIRS = ("tests", "scripts", "database")
 # test-exception table name modules precisely because they are dead. Only its
 # [project.scripts] entry points and the setuptools version attr count (below).
 ROOT_FILES = ("Makefile", ".pre-commit-config.yaml")
+# Roots whose string constants name modules because they are broken or side-effecting
+# (the import-all NEVER_IMPORT / KNOWN_BROKEN lists), never because they use them.
+NO_STRING_SCAN = ("tests/torchcell/test_import_all.py",)
 ROOT_GLOBS = (".github/workflows/*.yaml", ".github/workflows/*.yml")
 FIRST_LIVE_EXPERIMENT = 16
 TEXT_SUFFIXES = {".py", ".sh", ".slurm", ".yaml", ".yml", ".toml", ".cfg", ".txt", ""}
@@ -270,14 +274,20 @@ class ImporterGraph:
             self.edges[name] = targets - {name}
         for path in root_files():
             rel = _rel(path)
-            text = path.read_text(encoding="utf-8", errors="replace")
-            targets = self._known(string_references(text))
+            targets = set()
             if path.suffix == ".py":
+                # Python roots: ast imports plus non-docstring string constants, like
+                # package files. A docstring or comment naming a module is not a use.
                 tree = _parse(path)
                 if tree is not None:
-                    targets |= self._resolve(
-                        _Imports(tree, rel[:-3].replace("/", "."), False)
-                    )
+                    file_imports = _Imports(tree, rel[:-3].replace("/", "."), False)
+                    targets = self._resolve(file_imports)
+                    if rel not in NO_STRING_SCAN:
+                        for value in file_imports.strings:
+                            targets |= self._known(string_references(value))
+            else:
+                text = path.read_text(encoding="utf-8", errors="replace")
+                targets = self._known(string_references(text))
             self.root_edges[rel] = targets
         self.root_edges["pyproject.toml#project.scripts"] = self._known(
             _entry_point_modules()

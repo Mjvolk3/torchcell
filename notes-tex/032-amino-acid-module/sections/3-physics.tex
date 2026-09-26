@@ -93,7 +93,9 @@ The strain's measured betaxanthin score through the same perceptrons, on CPU
 (Table~\ref{tab:score-mlp-sweep}; the GO-models script with the score as its store
 block, one hidden width per pass, six seeds, seconds a seed): the score alone reads
 0.050, 0.054 and 0.055 at widths 16, 256 and 1,024, the two wider settings selecting
-at epoch 198 of 200, so their peaks are not established; GO with the score reads 0.056,
+at epoch 198 of 200; a 400-epoch rerun of those two settings reads 0.055 and 0.053,
+selecting at 398 and at 321 to 384, so the longer budget finds no higher peak and
+the score-alone perceptron's level is 0.055 at any width; GO with the score reads 0.056,
 0.064 and 0.066, ensembled 0.066 at 1,024 with a band of 0.002 and selection at epochs
 10 to 11. Against the GO perceptron alone (0.054) the score adds 0.012 at the widest
 setting, the same direction as the forest's 0.015 (Section~\ref{sec:concordance}) and

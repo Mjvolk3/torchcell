@@ -68,6 +68,7 @@ EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 TABLE_DIR = osp.join(DATA_ROOT, "data/torchcell/reference_flux")
 MULLEDER = osp.join(DATA_ROOT, "data/torchcell/amino_acid_mulleder2016")
 CACHERA = osp.join(DATA_ROOT, "data/torchcell/betaxanthin_cachera2023")
+COOPER = osp.join(DATA_ROOT, "data/torchcell/amino_acid_cooper2010")
 #: Per source: the loader's preprocess table, its gene column, the csv columns kept
 #: (csv name -> store column name), whether values must be nonnegative (mM are; the
 #: population-centered score is not), the study that owns the results file.
@@ -87,6 +88,22 @@ SOURCES: dict[str, dict] = {
         "nonnegative": False,
         "layout": "Cachera 2023 betaxanthin score (corrected 24 h colony fluorescence, population-centered), 1 column",
         "study": "032-amino-acid-module",
+    },
+    "cooper": {
+        "root": COOPER,
+        "gene_column": "perturbed_gene_name",
+        "columns": None,  # every column but the gene's and the record metadata, the 17 peaks
+        "drop_columns": [
+            "systematic_gene_name",
+            "source_name",
+            "name_cell",
+            "row_index",
+        ],
+        "n_columns": 17,
+        "reference_groups": "union",
+        "nonnegative": True,
+        "layout": "Cooper 2010 relative amino-acid peak levels (17 peaks, as released; a missing peak carries the reference 1.0)",
+        "study": "031-betaxanthin-module",
     },
 }
 
@@ -120,7 +137,11 @@ def sha256_of(path: str) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--source", default="mulleder", choices=sorted(SOURCES))
-    ap.add_argument("--out", default="YPD_bx_aapool", help="store stem, ess_solve_encodings_<out>.npz")
+    ap.add_argument(
+        "--out",
+        default="YPD_bx_aapool",
+        help="store stem, ess_solve_encodings_<out>.npz",
+    )
     ap.add_argument("--out-dir", default=TABLE_DIR)
     args = ap.parse_args()
     started = time.time()
@@ -129,17 +150,33 @@ def main() -> None:
     csv_path = osp.join(root, "preprocess", "data.csv")
     table = pd.read_csv(csv_path).set_index(src["gene_column"])
     assert not table.index.duplicated().any(), "duplicated ORF in the released table"
+    table = table.drop(columns=src.get("drop_columns", []))
     if src["columns"] is None:
         csv_columns = [str(c) for c in table.columns]
         columns = csv_columns
-        assert len(columns) == 19, columns
+        assert len(columns) == src.get("n_columns", 19), columns
     else:
         csv_columns = list(src["columns"])
         columns = [src["columns"][c] for c in csv_columns]
     with open(osp.join(root, "preprocess", "experiment_reference_index.json")) as fh:
         refs = json.load(fh)
-    assert len(refs) == 1, f"{len(refs)} reference groups; expected one"
-    reference = refs[0]["reference"]["phenotype_reference"]["metabolite_level"]
+    if src.get("reference_groups") == "union":
+        # Cooper's loader keeps one reference group per batch, each naming the peaks that
+        # batch measured, every level the relative 1.0: the union of the keys is the
+        # column set and a key's level must agree wherever it appears.
+        reference: dict[str, float] = {}
+        for group in refs:
+            for k, v in group["reference"]["phenotype_reference"][
+                "metabolite_level"
+            ].items():
+                assert reference.setdefault(k, float(v)) == float(v), (
+                    k,
+                    v,
+                    reference[k],
+                )
+    else:
+        assert len(refs) == 1, f"{len(refs)} reference groups; expected one"
+        reference = refs[0]["reference"]["phenotype_reference"]["metabolite_level"]
     # The Mulleder reference is keyed by amino acid, the Cachera one by "betaxanthin".
     ref_keys = list(reference)
     assert len(ref_keys) == len(columns), (ref_keys, columns)
@@ -161,7 +198,9 @@ def main() -> None:
         source_csv=csv_path,
         source_csv_sha256=sha256_of(csv_path),
         source_build_manifest=manifest,
-        reference_source=osp.join(root, "preprocess", "experiment_reference_index.json"),
+        reference_source=osp.join(
+            root, "preprocess", "experiment_reference_index.json"
+        ),
         reference_levels_mM={c: float(w) for c, w in zip(columns, wild, strict=True)},
         n_genes=int(len(table)),
         n_columns=len(columns),
@@ -184,7 +223,10 @@ def main() -> None:
         rxn_ids=np.array(columns),
         provenance=np.array(provenance.model_dump_json()),
     )
-    print(f"{path}: {values.shape}; {n_missing} missing cells filled with the reference", flush=True)
+    print(
+        f"{path}: {values.shape}; {n_missing} missing cells filled with the reference",
+        flush=True,
+    )
     results_dir = osp.join(EXPERIMENT_ROOT, src["study"], "results")
     os.makedirs(results_dir, exist_ok=True)
     summary = {

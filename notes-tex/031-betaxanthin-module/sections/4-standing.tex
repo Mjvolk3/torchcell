@@ -92,5 +92,13 @@ annotation with the flux and measured sides reads 0.208 to 0.218: the affine's c
 on this input family. The pool alone in the affine reads 0.195 with the widest seed
 spread and the lowest call of any store arm (round 179), above the ridge on the same
 columns (0.149) and 0.09 under their nearest-neighbor read: the ceiling is the slot's.
-Cells queued: the pool through a hidden layer of 64 (180), the minimum-norm store alone
-and with GO (181, 182).
+The same columns through a hidden layer of 64 read 0.240, $+0.045$ over the linear
+slot on five of six and the highest single-seed mean of any transformer arm, with a
+six-seed ensemble of 0.292 that passes the ladder's nearest neighbors (round 180): the
+pool's nonlinear signal does reach the transformer once the slot is nonlinear, and one
+seed selects at the budget's end, so 0.240 is a lower bound. The minimum-norm flux
+store, the unique point with no vertex noise, reads under the sparse HiGHS vertex both
+alone (0.093 against 0.130, round 181) and beside GO (0.204 against 0.211 on six of six,
+round 182): the flux side's gain beside the annotation lives in the sparse solution.
+Cells queued: GO with the pool through the hidden layer (183), six more seeds of round
+180 (184), the pool through a layer of 256 (185), the three families through 64 (186).

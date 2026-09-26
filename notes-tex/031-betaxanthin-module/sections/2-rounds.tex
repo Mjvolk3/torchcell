@@ -718,4 +718,45 @@ affine's ceiling of round 178 is the slot's, not the backbone's, and the hidden 
 of 64 over the same columns (round 180) is the direct test of whether the transformer
 can read the pool nonlinearly at all.
 
+Round 180 is read (job 2842, 3 h 41 min): the pool alone through one GELU hidden layer
+of 64 in the affine slot, the same nineteen columns as round 179 read nonlinearly. It
+reads 0.240 (sd 0.048) against the linear affine's 0.195 ($+0.045$ paired, sd 0.047,
+five of six) and against the control's 0.058 ($+0.182$, sd 0.099, six of six), the
+highest single-seed mean of any transformer arm in the study, above every linear cell's
+0.208 to 0.218; top-50 4.03 against 2.53 and 3.39. The six-seed ensemble reads 0.292
+with a top-50 of 5.79, above the ladder's nearest neighbors (0.285) and forest (0.280)
+on the same columns and 0.074 above the best linear ensemble (0.218, round 178). The
+seeds read 0.159 to 0.300 on validation Pearson 0.35 to 0.38, and select at epochs 13
+to 197: one seed selects three epochs before the budget's end, so its peak is not
+established and the level of this arm is a lower bound on what a longer budget reads.
+The hidden layer does what round 134's hidden layer of 256 over the flux store did not:
+here the nonlinear head lifts the read by 0.045 where there it lost 0.02, so the pool
+carries signal that a hidden layer recovers and the flux vector does not. The
+annotation with the pool through the same hidden layer, the pool through a layer of
+256, the three families through 64 and six more seeds of this arm are queued (rounds
+183 to 186).
+
+Round 181 is read (job 2843, 3 h 40 min): the minimum-norm flux store alone in the
+affine, the $\ell_2$ point at maximal growth (Section~\ref{sec:physics}) with no vertex
+noise. It reads 0.093 (sd 0.013) against the HiGHS parsimonious store on the same seeds
+(round 139) at 0.130 ($-0.037$ paired, sd 0.043, one of six) and against the control's
+0.058 ($+0.035$, sd 0.076, four of six), top-50 4.59 against 4.46 and 3.39, ensembled
+0.094 with a top-50 of 5.19. The seeds read 0.070 to 0.107 and select at epochs 3 to
+64. On the ladder the same store reads 0.068, 0.126 and 0.133 by ridge, nearest
+neighbors and forest against the HiGHS store's 0.098, 0.195 and 0.117, so the
+transformer's affine and the distance models agree: the unique interior point carries
+less rank than the sparse vertex, and the vertex noise the release rule was built
+around is not what the affine was reading.
+
+Round 182 is read (job 2844, 3 h 40 min): the minimum-norm store appended to GO, 6,539
+columns. It reads 0.204 (sd 0.005) against the HiGHS vector with GO (round 151) at
+0.211 ($-0.007$ paired, sd 0.007, zero of six) and against GO alone at 0.202 ($+0.002$,
+sd 0.005, four of six), top-50 4.36 against 4.83 and 5.03, ensembled 0.206 with a
+top-50 of 4.39. The seeds read 0.198 to 0.212 and select at epochs 8 to 16, the
+annotation arm's band. So the flux side's gain beside the annotation, $+0.009$ on six
+seeds and $+0.012$ on twelve for the $\ell_1$ vector, is absent for the $\ell_2$ point
+on every seed: whatever the affine reads from the flux vector beside GO lives in the
+sparse solution, and the nearest-neighbor read of the same columns at 0.208, the best
+kNN of any genotype-side representation, does not reach the transformer.
+
 \input{tables/target_transfer}

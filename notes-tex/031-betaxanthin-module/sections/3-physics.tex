@@ -79,10 +79,13 @@ GO it reads 0.068, 0.208 and 0.173 against the $\ell_1$ vector's 0.123, 0.198 an
 by ridge and forest. So removing the vertex noise does not add rank on its own; a
 plausible reason, unverified, is that the $\ell_1$ point's sparsity pattern, which
 reactions carry flux at all, is what the cosine neighborhoods read, and the
-minimum-norm point spreads that pattern over twice the reactions. The store alone in
-the affine and appended to GO are queued as rounds 181 and 182, paired against the
-HiGHS store (round 139) and the HiGHS vector with GO (round 151), which read whether
-the transformer's affine prefers the unique point or the sparse one.
+minimum-norm point spreads that pattern over twice the reactions. The transformer's
+affine answers the same way (rounds 181, 182): the store alone reads 0.093 against the
+HiGHS store's 0.130 on the same seeds, under it on five of six, and appended to GO it
+reads 0.204 against the HiGHS vector's 0.211, under it on six of six and within 0.002
+of GO alone. The affine prefers the sparse point to the unique one, and the flux side's
+gain beside the annotation, $+0.012$ on twelve seeds for the $\ell_1$ vector, is not
+carried by the $\ell_2$ point at all.
 
 The store read without the backbone (Table~\ref{tab:store-baselines};
 \texttt{target\_store\_baselines.py}, the 027 ladder's split, standardization and
@@ -215,8 +218,10 @@ a measurement of the same strain in a different screen, on minimal medium, not t
 strain's sequence, and the split by gene holds because the pool row is never the
 betaxanthin target. What it fixes is that the amino-acid data carries betaxanthin
 signal beyond the gene's identity, at a rank above the sequence, the annotation and
-every flux store; the transformer's affine reading the same columns, alone with GO and
-beside the HiGHS vector, is queued (rounds 175, 176).
+every flux store. The transformer's affine reads the same columns linearly at 0.195
+alone and 0.208 beside GO (rounds 179, 175), above the ridge and under the distance
+models; through a hidden layer of 64 the pool alone reads 0.240 with a six-seed
+ensemble of 0.292, above the nearest neighbors (round 180).
 
 \input{tables/go_models}
 

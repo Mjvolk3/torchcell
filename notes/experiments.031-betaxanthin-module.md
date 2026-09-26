@@ -495,3 +495,20 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | B45 | 179 | w198 | del + the measured pool alone | 0.195 (sd 0.029); vs control +0.137 (6/6); vs GO -0.008 (4/6); ens 0.211 / 3.00 |
+
+## 2026.09.26 - B46 to B48 read: the pool through a hidden layer, the minimum-norm store
+
+- B46 (w199, the pool alone through one GELU hidden layer of 64, job 2842, 3 h 41 min): 0.240 (sd 0.048) vs the linear pool (w198) 0.195 (+0.045, sd 0.047, 5/6) and vs the control +0.182 (sd 0.099, 6/6); top-50 4.03 vs 2.53 and 3.39; six-seed ensemble 0.292 / 5.79, above the ladder's kNN (0.285) and forest (0.280) and 0.074 above the best linear ensemble (w197, 0.218). Seeds read 0.159 to 0.300 on validation Pearson 0.35 to 0.38, select at epochs 13 to 197 (seed 2704 at 197 of 200: its peak is not established, so 0.240 is a lower bound). The highest single-seed mean and ensemble of any transformer arm. Written as round 180.
+- B47 (w200, the minimum-norm l2 store alone, job 2843, 3 h 40 min): 0.093 (sd 0.013) vs the HiGHS store alone (w156, round 139) 0.130 (-0.037, sd 0.043, 1/6) and vs the control +0.035 (4/6); top-50 4.59 vs 4.46; ensemble 0.094 / 5.19; seeds 0.070 to 0.107, epochs 3 to 64. The affine agrees with the ladder (l2 0.068 / 0.126 / 0.133 vs HiGHS 0.098 / 0.195 / 0.117): the unique interior point carries less rank than the sparse vertex. Written as round 181.
+- B48 (w201, GO + l2, 6,539 columns, job 2844, 3 h 40 min): 0.204 (sd 0.005) vs GO + HiGHS (w168) 0.211 (-0.007, sd 0.007, 0/6) and vs GO alone (w167) 0.202 (+0.002, sd 0.005, 4/6); top-50 4.36 vs 4.83 and 5.03; ensemble 0.206 / 4.39; seeds 0.198 to 0.212, epochs 8 to 16. The flux side's gain beside GO (+0.012 on twelve seeds for l1) is absent for the l2 point on every seed: it lives in the sparse solution. Written as round 182.
+- Queued on the B46 result (all six seeds, hidden 64 unless stated): B49 = w204 GO + pool through 64 (job 2847; vs w199, w194, w167); B50 = w205 = w199 seeds 2706 to 2711 (job 2848; twelve-seed pairs vs w137 and w167); B51 = w206 pool through 256 (job 2849; vs w199, w198); B52 = w207 the three families through 64 (job 2850; vs w197, w204, w199). Four running (with w202, w203 on 032), two pending behind them.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B46 | 180 | w199 | del + the pool through a hidden layer of 64 | 0.240 (sd 0.048); vs linear +0.045 (5/6); ens 0.292 / 5.79 |
+| B47 | 181 | w200 | del + the minimum-norm store | 0.093 (sd 0.013); vs HiGHS store -0.037 (1/6); ens 0.094 / 5.19 |
+| B48 | 182 | w201 | del + GO with the minimum-norm store | 0.204 (sd 0.005); vs GO + HiGHS -0.007 (0/6); ens 0.206 / 4.39 |
+| B49 | 183 | w204 | del + GO with the pool through 64 | job 2847, running |
+| B50 | 184 | w205 | w199 seeds 2706 to 2711 | job 2848, running |
+| B51 | 185 | w206 | del + the pool through 256 | job 2849, pending |
+| B52 | 186 | w207 | del + the three families through 64 | job 2850, pending |

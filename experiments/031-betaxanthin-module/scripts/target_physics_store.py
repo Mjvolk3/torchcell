@@ -30,7 +30,15 @@ trainer reads through ``ESS_SOLVE_TABLE``:
   028 flux layer's table): a reaction with :math:`\Delta_r G'^\circ\le -T` loses its
   reverse part, one with :math:`\ge +T` its forward part, :math:`T` 10 or 30 kJ/mol.
   Unpriced reactions, the cassette's included, keep the GEM box. The second law enters
-  the program rather than a loss.
+  the program rather than a loss;
+* ``l2``: the minimum-norm flux at maximal growth, :math:`\min\|v\|_2^2` s.t.
+  :math:`Sv=0` on the knocked-out box with :math:`v_{biomass}` held at the growth LP's
+  optimum, one Clarabel QP per gene. The l1 parsimonious optimum has many
+  vertices and each solver lands on its own (rounds 139 and 152 measured the cost of
+  that vertex noise between GLPK and HiGHS); the squared norm is strictly convex on the
+  optimal face, so this store has ONE solution per deletion whatever the solver path
+  (2026-09-25, the solver question raised with Gurobi: uniqueness comes from the
+  program, not the solver).
 
 The source store's gene list, reaction order and wild-type vector are reused, so a store
 here differs from its source ONLY in the program; the growth-ratio CSV the trainer reads
@@ -94,7 +102,10 @@ from torchcell.metabolism.parameters import (  # noqa: E402
 from torchcell.metabolism.yeast_GEM import YeastGEM  # noqa: E402
 
 Target = Literal["betaxanthin", "amino_acids"]
-Variant = Literal["moma", "pfba", "sign10", "sign30"]
+Variant = Literal["moma", "pfba", "sign10", "sign30", "l2"]
+#: The growth floor of the l2 program is the growth LP's optimum less this relative
+#: tolerance, so the QP's feasible set is never emptied by the LP's own rounding.
+L2_GROWTH_TOLERANCE = 1e-6
 TARGETS: dict[str, dict[str, str]] = {
     "betaxanthin": {
         "source_stem": "YPD_bx",
@@ -175,6 +186,55 @@ def solve_moma(gene: str) -> tuple[str, np.ndarray, float, bool]:
     return gene, v, growth, True
 
 
+def _min_norm_at_max_growth(lb: np.ndarray, ub: np.ndarray) -> tuple[np.ndarray, float, bool]:
+    r"""The growth LP, then :math:`\min\|v\|_2^2` s.t. :math:`Sv=0`, the box, and
+    :math:`v_{biomass}\ge\mu^*(1-\epsilon)`; returns ``(v, growth, converged)``."""
+    assert _S_CSR is not None
+    m, r = _S_CSR.shape
+    c = np.zeros(r)
+    c[_BIOMASS] = -1.0
+    growth_lp = linprog(
+        c, A_eq=_S_CSR, b_eq=np.zeros(m),
+        bounds=list(zip(lb.tolist(), ub.tolist(), strict=True)), method="highs",
+    )
+    if not growth_lp.success:
+        return np.zeros(r, dtype=np.float32), 0.0, False
+    mu = float(-growth_lp.fun)
+    if mu < LETHAL_GROWTH:
+        return np.zeros(r, dtype=np.float32), mu, True
+    # Clarabel (interior point): min 1/2 v'Pv s.t. S v = 0 (zero cone), v <= ub and
+    # -v <= -lb (nonnegative cone). HiGHS's active-set QP returned "Solve error" on this
+    # 2,831 x 4,177 model with presolve on or off (measured 2026-09-25); Clarabel solves
+    # the wild type in 0.2 s, bit-identical on a repeat, |Sv| under 1e-6.
+    import clarabel
+    from scipy import sparse
+
+    qp_lb = lb.copy()
+    qp_lb[_BIOMASS] = max(qp_lb[_BIOMASS], mu * (1.0 - L2_GROWTH_TOLERANCE))
+    p_mat = sparse.identity(r, format="csc") * 2.0
+    a_mat = sparse.vstack([_S_CSR, sparse.identity(r), -sparse.identity(r)], format="csc")
+    b_vec = np.concatenate([np.zeros(m), ub, -qp_lb])
+    cones = [clarabel.ZeroConeT(m), clarabel.NonnegativeConeT(2 * r)]
+    settings = clarabel.DefaultSettings()
+    settings.verbose = False
+    solution = clarabel.DefaultSolver(p_mat, np.zeros(r), a_mat, b_vec, cones, settings).solve()
+    if str(solution.status) != "Solved":
+        return np.zeros(r, dtype=np.float32), mu, False
+    v = np.asarray(solution.x, dtype=np.float64)
+    return v.astype(np.float32), float(v[_BIOMASS]), True
+
+
+def solve_l2(gene: str) -> tuple[str, np.ndarray, float, bool]:
+    """The minimum-norm flux at the knocked-out box's maximal growth."""
+    lb, ub = _knocked_box(gene)
+    v, growth, ok = _min_norm_at_max_growth(lb, ub)
+    if not ok:
+        return gene, np.zeros(lb.size, dtype=np.float32), growth, False
+    if growth < LETHAL_GROWTH:
+        return gene, np.zeros(lb.size, dtype=np.float32), growth, True
+    return gene, v, growth, True
+
+
 def solve_pfba(gene: str) -> tuple[str, np.ndarray, float, bool]:
     """Two-stage parsimonious FBA on the (direction-fixed) knocked-out box."""
     assert _S is not None
@@ -198,7 +258,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", required=True, choices=sorted(TARGETS))
     parser.add_argument(
-        "--variant", required=True, choices=["moma", "pfba", "sign10", "sign30"]
+        "--variant", required=True, choices=["moma", "pfba", "sign10", "sign30", "l2"]
     )
     parser.add_argument("--processes", type=int, default=8)
     parser.add_argument("--limit-genes", type=int, default=0, help="Smoke test.")
@@ -304,6 +364,11 @@ def main() -> None:
         wt_v = _V_WT.copy()
         wt_growth = float(wt_v[_BIOMASS])
         solve = solve_moma
+    elif args.variant == "l2":
+        wt_v, wt_growth, ok = _min_norm_at_max_growth(lb, ub)
+        assert ok and wt_growth >= LETHAL_GROWTH, "the plain box admits growth (asserted above)"
+        assert abs(wt_growth - unconstrained) < 1e-4 * max(1.0, unconstrained), (wt_growth, unconstrained)
+        solve = solve_l2
     else:
         try:
             record = parsimonious_reference_flux(
@@ -394,6 +459,14 @@ def main() -> None:
         )
         if args.variant == "pfba"
         else (
+            "minimum-norm flux at maximal growth: the growth LP (scipy HiGHS), then "
+            "min sum_j v_j^2 s.t. S v = 0 on the knocked-out box with v_biomass held at "
+            f"the LP optimum less {L2_GROWTH_TOLERANCE:g} relative (one Clarabel "
+            "interior-point QP per gene); strictly convex, so one solution per deletion "
+            "whatever the solver path"
+        )
+        if args.variant == "l2"
+        else (
             f"pFBA (parsimonious_reference_flux, two scipy HiGHS LPs) on the box with "
             f"reaction directions fixed by the standard reaction energies at "
             f"{SIGN_THRESHOLD[args.variant]:g} kJ/mol (eQuilibrator union-external route)"
@@ -407,7 +480,11 @@ def main() -> None:
         growth_fraction=1.0,
         flux_scale=FLUX_SCALE,
         method=method,
-        solver="scipy HiGHS (linprog)" if args.variant == "moma" else "pfba",
+        solver=(
+            "scipy HiGHS (linprog)" if args.variant == "moma"
+            else "scipy HiGHS (linprog) growth LP + Clarabel QP" if args.variant == "l2"
+            else "pfba"
+        ),
         n_nonoptimal_zero_flux=int((~converged).sum()),
         medium=spec["medium"],
         media_report=MediaApplied.model_validate(media),

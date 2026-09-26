@@ -704,6 +704,30 @@ PAIRS = [
         "w195_bxdelgopfbaaapool_h12l1p1_e200",
     ),
     (
+        "betaxanthin: minimum-norm flux store against the HiGHS parsimonious store",
+        "betaxanthin",
+        "w200_bxdell2_h12l1p1_e200",
+        "w156_bxdelpfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: minimum-norm flux store against the control",
+        "betaxanthin",
+        "w200_bxdell2_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: minimum-norm flux store with GO against HiGHS store with GO",
+        "betaxanthin",
+        "w201_bxdelgol2_h12l1p1_e200",
+        "w168_bxdelgopfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: minimum-norm flux store with GO against GO alone",
+        "betaxanthin",
+        "w201_bxdelgol2_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
         "betaxanthin: measured amino-acid pool alone in the affine against the control",
         "betaxanthin",
         "w198_bxdelaapool_h12l1p1_e200",

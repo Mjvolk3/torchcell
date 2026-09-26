@@ -18,6 +18,15 @@
     "p90_rel_l2_log1p": 0.3899178137483416
   },
   {
+    "stem": "YPD_bx_l2",
+    "label": "betaxanthin, minimum-norm flux at maximal growth (Clarabel QP)",
+    "n_genes": 1155,
+    "n_no_effect": 1031,
+    "n_no_effect_vector_differs": 427,
+    "median_rel_l2_log1p": 1.3394733385309138e-08,
+    "p90_rel_l2_log1p": 3.45524251369929e-05
+  },
+  {
     "stem": "YPD_bx_moma",
     "label": "betaxanthin, linear MOMA",
     "n_genes": 1155,

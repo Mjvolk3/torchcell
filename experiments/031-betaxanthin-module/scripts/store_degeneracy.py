@@ -37,6 +37,7 @@ RESULTS = osp.join(EXPERIMENT_ROOT, "031-betaxanthin-module", "results")
 STORES = [
     ("YPD_bx", 4177, "stats", "betaxanthin, parsimonious, cobra pFBA through GLPK"),
     ("YPD_bx_pfba", None, "growth_ratio", "betaxanthin, parsimonious, HiGHS two-stage"),
+    ("YPD_bx_l2", None, "growth_ratio", "betaxanthin, minimum-norm flux at maximal growth (Clarabel QP)"),
     ("YPD_bx_moma", None, "growth_ratio", "betaxanthin, linear MOMA"),
     ("SM_gem", None, "stats", "amino acids, parsimonious, HiGHS two-stage"),
     ("SM_gem_moma", None, "growth_ratio", "amino acids, linear MOMA"),

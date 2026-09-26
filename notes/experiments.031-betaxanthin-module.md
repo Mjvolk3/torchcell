@@ -454,6 +454,19 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B45 | -- | w198 | del + the pool alone in the affine | job 2841, pending |
 | B46 | -- | w199 | del + the pool alone, hidden layer 64 | job 2842, pending |
 
+## 2026.09.25 - The minimum-norm flux store: uniqueness from the program, not the solver
+
+- The Gurobi question (user, 17:00): a faster LP solver would pick a third set of vertices of the degenerate l1 parsimonious optimum, not remove the vertex noise rounds 139 and 152 measured. The fix is a strictly convex program. `target_physics_store.py --variant l2`: the growth LP (scipy HiGHS), then min ||v||^2 s.t. Sv = 0 on the knocked-out box with v_biomass held at the LP optimum less 1e-6 relative, one Clarabel interior-point QP per gene. HiGHS's active-set QP (`highspy` 1.15.1) returned "Solve error" on the 2,831 x 4,177 strain model with presolve on or off; Clarabel 0.11.1 solves the wild type in 0.22 s, bit-identical on a repeat, |Sv| under 1e-6 (pinned in `env/requirements.txt`).
+- MEASURED (`results/target_physics_store_betaxanthin_l2.json`, 49 s on 8 processes): 1,155 genes, 93 lethal (the source's 93), 0 not converged, the same 17 growth ratios moved as the HiGHS rebuild, median relative log1p distance to the GLPK source 0.43 (the l2 point spreads flux: the wild type has 996 reactions above 1e-6 against the l1 solution's 426, l1 norm 452 against 426, l2 norm 82 against 89). Store `ess_solve_encodings_YPD_bx_l2.npz`; GO appended as `YPD_bx_gol2` (6,539 columns).
+- MEASURED, degeneracy (`store_degeneracy.py`, `results/store_degeneracy.json`): of the 1,031 no-effect deletions, 427 differ from the wild-type row by more than 1e-6 relative, but the median distance is 1.3e-8 and the ninetieth percentile 3.5e-5, against the HiGHS store's 428 with a ninetieth percentile of 0.39 and the GLPK store's 1,025 at 0.38: interior-point tolerance, not vertex choice. The store carries no vertex noise.
+- Ladder rerun with `pfba_l2` and `gol2` in progress (`slurm/output/store_baselines_betaxanthin_l2.log`). Submitted B47 = w200 (the l2 store alone in the affine, job 2843; vs w156 and w137) and B48 = w201 (GO + l2, job 2844; vs w168 and w167), queued behind w196 to w199.
+- Gurobi itself: gurobipy 13.0.3 was installed and REMOVED the same day. Its presence makes optlang pick Gurobi as cobra's default solver, and under the pip package's 2,000-variable license every GEM build in the env died with "Model too large" (`build_strain_model` included). Before reinstalling with a real license, pin `cobra.Configuration().solver = "glpk"` in the shared loader. The key: GilaHyper is a home workstation (140.177.156.150, not an academic address), so `grbgetkey` must run on Delta with `--input` of GilaHyper's `grbprobe` file (staged at `~/gurobi-tools/` on Delta; tools at `/scratch/projects/torchcell-scratch/tools/gurobi/`).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B47 | -- | w200 | del + the minimum-norm flux store | job 2843, pending |
+| B48 | -- | w201 | del + GO with the minimum-norm flux store | job 2844, pending |
+
 ## 2026.09.25 - B39 read: twelve seeds of the annotation-only arm
 
 - B39 (w191 = w167 seeds 2706 to 2711, job 2831, 3 h 40 min): the second six read 0.204 (sd 0.002) against the first six's 0.202 (sd 0.001); over twelve 0.203 (sd 0.002, sem 0.0005), seeds 0.200 to 0.207, select at epochs 7 to 14; twelve-seed ensemble 0.203 / 4.99. The flux vector's gain beside GO paired over the same twelve seeds (new PAIRS entry): +0.012 (sd 0.009), 11/12, 0.214 vs 0.203 (the first six gave +0.009 on 5/6). Written as round 172; 031 published v27.

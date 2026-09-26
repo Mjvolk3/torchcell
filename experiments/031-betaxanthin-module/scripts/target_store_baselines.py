@@ -112,6 +112,9 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
             "store": "YPD_bx", "block": "v_deletion", "flux": True, "columns": 4177
         },
         "pfba_highs": {"store": "YPD_bx_pfba", "block": "v_deletion", "flux": True},
+        # The minimum-norm flux at maximal growth (target_physics_store.py --variant l2,
+        # Clarabel QP): strictly convex, one solution per deletion whatever the solver.
+        "pfba_l2": {"store": "YPD_bx_l2", "block": "v_deletion", "flux": True},
         "moma": {"store": "YPD_bx_moma", "block": "v_deletion", "flux": True},
         "gpr_counts": {"store": "YPD_bx_gpronly", "block": "v_deletion", "flux": True},
         "flux_stats": {"store": "YPD_bx", "block": "gene_flux_stats", "flux": False},
@@ -128,6 +131,7 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         # over every annotated gene, alone and appended to the HiGHS parsimonious vector.
         "go": {"store": "YPD_bx_go", "block": "v_deletion", "flux": False},
         "gopfba": {"store": "YPD_bx_gopfba", "block": "v_deletion", "flux": True},
+        "gol2": {"store": "YPD_bx_gol2", "block": "v_deletion", "flux": True},
         # The measured side (target_pool_store.py): the strain's own Mulleder amino-acid
         # pool in mM (log(1 + v), phenotype to phenotype), alone and appended to GO and
         # to GO with the HiGHS vector (target_store_concat.py).

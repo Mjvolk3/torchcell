@@ -456,3 +456,121 @@ strains plus wild type, at 7.5, 12.5 and 17.5 mM furfural in biological triplica
 furfural HAS a genome-confirmed combinatorial validator with released numbers, and
 isobutanol does not. That asymmetry is the argument for asking Avalos for the isobutanol
 equivalent.
+
+## 2026.09.26 - Isobutanol literature sweep: what is published, what is released, and what does not exist
+
+A background agent enumerated the Avalos record exhaustively (PubMed `Avalos JL[Author]`
+2021-2026, 28 records; Europe PMC `AUTH:"Avalos JL" AND SRC:PPR`, all 19 preprints) and
+triaged isobutanol datasets by whether per-strain data is actually released. Two files were
+downloaded and opened BY THIS SESSION and their counts are mine; everything else is
+agent-reported and marked as such.
+
+### Publication status of the dissertation chapters
+
+| Chapter | Published | Evidence |
+|---|---|---|
+| GLN3 branched-chain alcohol tolerance | **YES** | Kuroda et al. Cell Syst 2019;9:534-547.e5, PMID 31734159 |
+| `SPT10` boosting isobutanol production | NO, and no preprint | absent from all 28 PubMed and 19 preprint records |
+| Mitochondrial morphology x the 5-cassette pathway | NO, **in review since early 2025** | cited as ref 17 of Kichuk & Avalos, IJMS 2025;26:2152 (PMC11899761) |
+| `gln3 gcn4` / `gln3 gnp1` doubles plus evolution | NO, and no sequence deposit | no S. cerevisiae isobutanol-tolerant evolved-clone BioProject exists |
+
+The in-review paper's title and authors were recovered verbatim from the review's reference
+list: Montano Lopez J; Duran L; Kichuk T; Lampson-Stixrud D; Morillo K; Shende A; Avalos J.
+"The impact of mitochondrial morphology and mtDNA maintenance on compartmentalized
+biosynthetic pathways in Saccharomyces cerevisiae." 2025; in review. So the multiplex strains
+ARE heading for publication, which changes the ask from "please share unpublished data" to
+"please share on publication, or now under embargo."
+
+**CORRECTION to the 2026.09.25 section of this note**, which listed Kuroda 2019 as Frontiers
+in Bioengineering and Biotechnology. It is Cell Systems, PMID 31734159. The candidate table's
+citation was right.
+
+### Kuroda 2019 released a full quantitative per-strain table, and we missed it
+
+VERIFIED THIS SESSION by opening `1-s2.0-S2405471219303825-mmc2.xlsx` (246,902 bytes), one
+sheet `1st screen`, dimension A1:V4792, titled "Table S2. Tolerance factors for strains from
+yeast deletion library in the initial screen (related to Figure 1)". The layout is FOUR
+side-by-side column blocks plus a `BY4741/WT` reference block, each block carrying OD600 at
+0% isobutanol, OD600 at 1.4% isobutanol, and a tolerance factor.
+
+Counts measured by this session's own parse (regex `^Y[A-P][LR]\d{3}[WC](-[A-Z])?$`):
+
+| block | threshold | ORF entries |
+|---|---|---|
+| Sensitive | TF < 0.2 | 1,020 |
+| Normal | 0.2 <= TF <= 0.8 | 2,666 |
+| Tolerant | 0.8 < TF | 514 |
+| N.D. | OD600(0%) < 0.5 | 224 |
+
+Total 4,424 entries, **4,379 distinct ORFs**, 45 ORFs appearing twice. A loader must do its
+own count: the agent's stricter regex gave 4,411 and 4,384, so the three passes disagree at
+the 1% level and none of them is authoritative. Dropping the N.D. block leaves 4,200
+measurable entries.
+
+This is the dataset the isobutanol arm needed. It is a whole-collection quantitative
+isobutanol TOLERANCE screen with a released matrix, against an ethanol comparator, on the
+same knockout collection class as Vanacloig. It moves from "triaged" to "ingest next" and it
+supersedes the plan in this note's earlier sections of having no external isobutanol
+tolerance check. Also released (agent-reported, not opened here): `mmc3.xlsx` RNA-seq FPKM
+and log2FC for wild type and `gln3` at 0% and 1.3%, reads at ENA PRJEB33652.
+
+### A promised Source Data file that was never deposited
+
+Agent-reported, confirmed three ways by the agent: Montano Lopez et al., Nat Commun
+2022;13:270 (DOI 10.1038/s41467-021-27852-x), the biosensor paper our Lopez 2024 loader cites
+for its construct, states in its Data Availability and in every figure caption that source
+data are provided as a Source Data file. No such file exists. The article lists three
+supplements, all PDFs; the Europe PMC package for PMC8755756 holds the same three; probing
+the Springer CDN for further slots returns 403 while the three known ones return 206.
+
+Recoverable from the Supplementary PDF instead: allele-level genotypes for 24 Ilv6p variants,
+24 Leu4p variants, 6 Ll_IlvD variants, and 6 FACS-isolated colonies with ddPCR cassette copy
+numbers. Roughly 54 typed genotypes whose paired isobutanol AND isopentanol titers are
+figure-only. This is now the strongest item in the data request, because the paper committed
+to releasing it.
+
+### Confirmed absent, so stop looking
+
+No genome-wide CRISPRi, CRISPRa, or transposon library has ever been screened under
+isobutanol or any branched-chain alcohol in S. cerevisiae. The yeast genome-scale CRISPRi
+screens use hydrolysate, furfural, HMF and acetic acid. This settles the activation and
+interference question for isobutanol: Lian 2019 furfural remains the only place where all
+three modalities meet an inhibitor, and no isobutanol equivalent exists to transfer to.
+
+### New yeast candidates worth adding, ranked by ingestibility
+
+1. **Steensels et al. AEM 2014;80:6965** (PMID 25192996). VERIFIED THIS SESSION: downloaded
+   `zam022145787sd1.xlsx` (88,143 bytes), sheet `Blad1`, dimension A1:R304, 301 strain rows
+   (236 S. cerevisiae, 29 S. pastorianus, 36 S. paradoxus) with species and origin labels,
+   and ABSOLUTE ppm values per strain for isobutanol, isoamyl alcohol, propanol, butanol and
+   nine esters. Every row carries an isobutanol value. No join-key problem. The largest
+   absolute-unit fusel panel located, and unclaimed.
+2. **Ho et al. Biotechnol Biofuels 2021;14:211**. 1,125 whole-genome-sequenced F6 inbred
+   segregants with isobutanol in ppm, 1,016 rows complete. BLOCKED on a missing join key:
+   phenotype ids are integers while the sequencing aliases are plate wells, and nothing
+   released maps them. The phenotype table ingests standalone today.
+3. **Gallone 2019 Nat Ecol Evol** (102 strains, ppm, two media) and **Gallone 2016 Cell**
+   (154 strains, z-scores that invert exactly from a released statistics footer, with 32
+   strains reconstructing to 0 that must be treated as MISSING, not zero).
+4. **Zavaleta 2024 mSystems** (33 hybrids, mg/L with three replicates and SD, the
+   best-structured file of the set) and **Eder 2018 BMC Genomics** (130 sequenced F2
+   segregants in mg/L, on Dryad behind a token).
+
+Dead ends confirmed by opening the files: Liu 2021 releases a 161-clone hit list, not a
+matrix. Crook 2016 releases strains and primers only. Si 2017's three workbooks cover the
+glycerol and acetic-acid arms; the isobutanol arm is figure-only. The 1,011-genomes panel
+ships one growth-ratio matrix and no volatiles. Every Peltier and Marullo wine paper releases
+fermentation kinetics and esters but never per-strain higher alcohols.
+
+### Off-species, for the record
+
+**Yuan et al. Sci China Life Sci 2024;67:1051** (PMID 38273187) is an E. coli base-editor
+pooled screen: 31,511 guides encoding designed C-to-T point mutations across 462
+stress-response genes, grown in M9 with 4 g/L isobutanol, released as a per-guide fitness
+log2 and false-discovery rate table. More isobutanol genotype-phenotype records than every
+yeast isobutanol dataset combined. Out of species, and the only place where designed
+point mutations meet this stressor at scale.
+
+One naming trap to record: isoprenol (CID 12988) is not isopentanol (CID 31260). Every
+JBEI and Agile BioFoundry machine-learning strain-design set measures isoprenol, so none of
+them is in chemical scope for isobutanol or isopentanol.

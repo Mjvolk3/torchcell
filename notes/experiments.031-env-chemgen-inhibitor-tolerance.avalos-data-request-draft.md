@@ -40,27 +40,38 @@ same-plate wild type. We cite the 2022 Nature Communications biosensor paper for
 construct and methods. The screen has been valuable, and it is the only isobutanol-related
 genotype-phenotype data in our store.
 
-I am writing about the part of that work we cannot use yet. We are training a model to
-predict isobutanol tolerance from gene perturbations, and the strongest available test of
-such a model is not another screen but engineered strains whose measured behavior is known
-in advance. Your dissertation contains exactly that, and in two forms whose genotypes are
-fully specified in Supplementary Table 1 while the measured values appear only in figures:
+I am writing about three sets of values we cannot use yet. We are training a model to
+predict isobutanol tolerance and production from gene perturbations, and the strongest test
+of such a model is not another screen but engineered strains whose measured behavior is
+already known. Your group's work contains exactly that. In each case below the genotypes are
+released and machine-readable while the measured values appear only in figures.
 
-1. The 23 strains combining a single mitochondrial-morphology deletion (MDM36, MDM35,
-   MDM32, TOM7, FIS1, DNM1, MGM1, FZO1, NUM1, MMM1 and others) with the five-cassette
-   mitochondrial isobutanol pathway, and their isobutanol titers. These appear against
-   mitochondria number and volume in Supplementary Figures 3 to 5.
+1. **The 2022 Nature Communications biosensor paper (10.1038/s41467-021-27852-x).** Its Data
+   Availability statement and its figure captions say source data are provided as a Source
+   Data file, but no such file appears with the article or in the PubMed Central package for
+   PMC8755756, and the three deposited supplements are all PDFs. The Supplementary
+   Information does give allele-level genotypes for the Ilv6p and Leu4p variant sets, the
+   Ll_IlvD variants, and the FACS-isolated high producers with their cassette copy numbers.
+   If the Source Data file exists and simply was not deposited, that would be the single
+   most useful thing you could send: roughly fifty typed genotypes with paired isobutanol
+   and isopentanol measurements.
 
-2. The gln3 gcn4 and gln3 gnp1 double deletions and their tolerance factors, alongside the
-   corresponding single deletions. The statement that the double is not additive over the
-   singles is the specific claim we would most like to test a model against, because
-   predicting it requires an interaction rather than a ranking.
+2. **The mitochondrial morphology strains**, which I understand from the 2025 review in
+   IJMS are in review as Montano Lopez et al. The 23 strains combining one
+   mitochondrial-morphology deletion (MDM36, MDM35, MDM32, TOM7, FIS1, DNM1, MGM1, FZO1,
+   NUM1, MMM1 and others) with the five-cassette mitochondrial isobutanol pathway, and their
+   titers. We are glad to wait for publication, and equally glad to receive them now under
+   any embargo you prefer.
 
-Would you be willing to share the per-strain numbers behind those figures, in whatever form
+3. **The gln3 gcn4 and gln3 gnp1 double deletions** and their tolerance factors, alongside
+   the corresponding single deletions. That the double is not additive over the singles is
+   the specific claim we would most like to test a model against, because predicting it
+   requires an interaction rather than a ranking.
+
+Would you be willing to share the per-strain numbers behind any of these, in whatever form
 they already exist, a spreadsheet or a plain table with one row per strain? We do not need
-raw instrument files, replicate-level traces, or anything unpublished beyond these values.
-Mean and standard deviation per strain per condition, with the replicate count and the
-units, would be enough.
+raw instrument files or replicate-level traces. Mean and standard deviation per strain per
+condition, with the replicate count and the units, would be enough.
 
 On how we would handle it. Every value we store records its source, so the provenance would
 name the dissertation and, for these numbers, a direct communication from your group, with
@@ -72,10 +83,12 @@ timestamped, and for someone in your group to tell us only whether the predicted
 and the predicted sub-additivity are right. That keeps your data with you and still gives
 us the test.
 
-I would also welcome a pointer if any of this work has since been published, or is in
-preparation, in a form that releases the values. We would rather cite and ingest a paper
-than a dissertation, and our records currently carry a flag noting that the dissertation has
-no DOI.
+One more note, offered as a small thank you rather than a request. Your 2019 Cell Systems
+paper with Kuroda and colleagues released its full initial-screen table, and it is the best
+quantitative isobutanol tolerance dataset we have found anywhere: tolerance factors for
+about 4,380 deletion strains with the underlying optical densities at zero and 1.4 percent
+isobutanol. We are ingesting it. Anything at that level of release, for any of the work
+above, is immediately usable by us and by anyone else building on it.
 
 Thank you for considering this, and for the biosensor screen, which is already doing work in
 our database.
@@ -89,9 +102,15 @@ University of Illinois Urbana-Champaign
 
 ### Notes for the sender
 
-- **Verify before sending:** that the dissertation chapters have not since been published
-  with released data. A literature check is running; if a paper exists with a Source Data
-  file, retrieve that instead and drop points 1 and 2 of the ask.
+- **Publication status is now checked** (2026.09.26, exhaustive over PubMed and Europe PMC
+  preprints). The GLN3 tolerance chapter is published as Kuroda et al. Cell Systems 2019,
+  PMID 31734159, and its screen table IS released. The `SPT10` chapter and the
+  double-deletion plus evolution chapter are unpublished with no preprint and no sequence
+  deposit. The mitochondrial morphology chapter is in review, cited as reference 17 of
+  Kichuk and Avalos, IJMS 2025;26:2152. So point 2 of the ask should acknowledge the paper
+  in review, which the current draft does.
+- **Point 1 is the strongest item and the most legitimate**, because the 2022 paper committed
+  in writing to releasing a Source Data file that was never deposited. Lead with it.
 - **Affiliation line** is written from the repository's own records. Correct it if the
   department name or title is wrong.
 - **The blinded-prediction offer in the fifth paragraph is the fallback that costs them

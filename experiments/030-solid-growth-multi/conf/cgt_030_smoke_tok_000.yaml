@@ -3,12 +3,14 @@
 # THE DATASET-TOKEN SMOKE, TOKEN RUN. cgt_030_s3_r_tok_fit_000 (the table arm: the same
 # pool, pin, holdout, vocabulary and constants as the campaign, so this run also warms the
 # split cache the IGB launcher requires) with the synthetic second token switched on and
-# the budget cut to one GPU: every entry is cloned under SyntheticOffsetDataset, 0.3
-# normalized units higher; 4 epochs of 500 training batches, the smoke
+# the budget cut to one GPU: every trigenic entry (the four Kuzmin
+# Tmi/Tmf sources) is cloned under a synthetic twin of its source, 0.3 normalized units
+# higher; 3 epochs of 500 training batches, the smoke
 # measurements logged after every validation epoch (smoke/*); after training the script
 # measures pred(synthetic) - pred(own) on 40 validation batches
-# (results/smoke/cgt_030_smoke_tok_000_seed0.json). Paired with cgt_030_smoke_ctl_000 and
-# read by smoke_report_030.py. Plots and the transformer diagnostics are off; the
+# (results/smoke/cgt_030_smoke_tok_000_seed0.json). Read by smoke_report_030.py; there is no control run
+# (jobs 2863 and 2866: the cross-run spread of the validation loss, 0.06, is above the
+# control's delta^2/4 = 0.0225 floor, so a paired control cannot resolve it). Plots and the transformer diagnostics are off; the
 # essentiality loader runs as in the campaign.
 #
 #   sbatch experiments/030-solid-growth-multi/scripts/gh_smoke_dataset_token.slurm
@@ -22,7 +24,9 @@ wandb:
 smoke:
   enabled: true
   delta: 0.3
-  token_name: SyntheticOffsetDataset
+  # one synthetic twin per source, Synthetic<source>, so the twin's optimal bias is the
+  # source's plus delta at any training stage (a single token over every source is not)
+  sources: [TmiKuzmin2018Dataset, TmiKuzmin2020Dataset, TmfKuzmin2018Dataset, TmfKuzmin2020Dataset]
   labels: [gene_interaction, fitness]
   control: false
   n_val_batches: 40
@@ -34,7 +38,7 @@ data_module:
   val_batch_size: 64
 
 trainer:
-  max_epochs: 4
+  max_epochs: 3
   strategy: auto
   devices: 1
   precision: "bf16-mixed"

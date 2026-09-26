@@ -20,8 +20,9 @@ datasets projected to a small learnable vector (``model.dataset_token``).
 - ``transforms.fit_stats`` names the committed normalization constants fitted on the
   arm's training ENTRY rows (``make_normalization_stats_030.py``); the script recomputes
   the training set and refuses a file fitted on another one.
-- ``smoke`` clones every entry under a fictitious second token, ``delta`` higher, and
-  after training scores the three criteria of the plan (``arm_030.run_smoke_check``).
+- ``smoke`` clones every entry of the named sources under a synthetic twin token,
+  ``delta`` higher, and after training measures the twin against the own token
+  (``arm_030.run_smoke_check``; ``smoke_report_030.py`` applies the criteria).
 
 Validation and test on the pinned triples report one value per genotype under its own
 screen's token (the policy reduction), so ``val/gene_interaction/Pearson`` reads against
@@ -82,6 +83,7 @@ from arm_030 import (  # noqa: E402
     resolve_arm,
     results_dir,
     run_smoke_check,
+    smoke_twins,
 )
 
 log = logging.getLogger(__name__)
@@ -174,7 +176,9 @@ def main(cfg: DictConfig) -> None:
     )
 
     # === Arm definition: pool, split, holdout, token vocabulary ===
-    extra_vocab = [str(smoke_cfg["token_name"])] if smoke_on else []
+    extra_vocab = (
+        [f"Synthetic{src}" for src in smoke_cfg["sources"]] if smoke_on else []
+    )
     arm = resolve_arm(wandb_cfg["subset"], extra_vocabulary=extra_vocab)
     train_records = arm.train_records()
     train_sha = index_sha256(train_records)
@@ -257,7 +261,12 @@ def main(cfg: DictConfig) -> None:
         transforms_list.append(
             SyntheticTokenOffset(
                 delta=float(smoke_cfg["delta"]),
-                token_index=arm.dataset_vocabulary.index(str(smoke_cfg["token_name"])),
+                token_map={
+                    arm.dataset_vocabulary.index(src): arm.dataset_vocabulary.index(
+                        twin
+                    )
+                    for src, twin in smoke_twins(arm, smoke_cfg).items()
+                },
                 labels=list(smoke_cfg["labels"]),
                 normalizer=norm_transform,
                 control=bool(smoke_cfg.get("control", False)),

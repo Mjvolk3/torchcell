@@ -1,4 +1,4 @@
-"""SyntheticTokenOffset: the smoke test's second source, an offset under its own token."""
+"""SyntheticTokenOffset: the smoke test's shifted twin of a source, under its own token."""
 
 import pytest
 import torch
@@ -24,23 +24,28 @@ def _record(values: list[float], types: list[int], tokens: list[int]) -> HeteroD
     return d
 
 
-def test_clones_only_the_named_labels_under_the_synthetic_token() -> None:
-    t = SyntheticTokenOffset(delta=0.3, token_index=7, labels=["gene_interaction"])
-    out = t(_record([0.9, 0.1, -0.2], [0, 1, 1], [3, 0, 1]))
+def test_clones_only_the_named_labels_of_mapped_sources_under_their_twins() -> None:
+    t = SyntheticTokenOffset(
+        delta=0.3, token_map={0: 7, 1: 8}, labels=["gene_interaction"]
+    )
+    # token 3 (fitness) is not cloned: wrong label; token 2 (gi) has no twin
+    out = t(_record([0.9, 0.1, -0.2, 0.5], [0, 1, 1, 1], [3, 0, 1, 2]))
     g = out["gene"]
-    assert g.phenotype_values.tolist() == pytest.approx([0.9, 0.1, -0.2, 0.4, 0.1])
-    assert g.phenotype_type_indices.tolist() == [0, 1, 1, 1, 1]
-    assert g.phenotype_dataset_indices.tolist() == [3, 0, 1, 7, 7]
-    assert g.phenotype_sample_indices.tolist() == [0, 1, 2, 1, 2]
-    assert g.phenotype_synthetic.tolist() == [False, False, False, True, True]
+    assert g.phenotype_values.tolist() == pytest.approx([0.9, 0.1, -0.2, 0.5, 0.4, 0.1])
+    assert g.phenotype_type_indices.tolist() == [0, 1, 1, 1, 1, 1]
+    assert g.phenotype_dataset_indices.tolist() == [3, 0, 1, 2, 7, 8]
+    assert g.phenotype_sample_indices.tolist() == [0, 1, 2, 3, 1, 2]
+    assert g.phenotype_synthetic.tolist() == [False] * 4 + [True] * 2
+    assert t.twin_of(torch.tensor([0, 1, 2, 9])).tolist() == [7, 8, -1, -1]
 
 
 def test_control_keeps_the_original_token_and_nan_rows_are_not_cloned() -> None:
     t = SyntheticTokenOffset(
-        delta=0.3, token_index=7, labels=["gene_interaction"], control=True
+        delta=0.3, token_map={0: 7}, labels=["gene_interaction"], control=True
     )
     out = t(_record([0.9, float("nan")], [0, 1], [3, 0]))
     assert out["gene"].phenotype_values.shape == (2,)
+    assert out["gene"].phenotype_synthetic.tolist() == [False, False]
     out = t(_record([0.9, 0.1], [0, 1], [3, 0]))
     assert out["gene"].phenotype_dataset_indices.tolist() == [3, 0, 0]
 
@@ -62,7 +67,7 @@ def test_original_scale_clone_uses_the_normalizer() -> None:
         fit_stats=stats,
     )
     t = SyntheticTokenOffset(
-        delta=0.3, token_index=7, labels=["gene_interaction"], normalizer=norm
+        delta=0.3, token_map={0: 7}, labels=["gene_interaction"], normalizer=norm
     )
     d = norm(_record([0.9, 0.1], [0, 1], [3, 0]))
     out = t(d)
@@ -76,7 +81,9 @@ def test_original_scale_clone_uses_the_normalizer() -> None:
     assert b["gene"].phenotype_values_batch.tolist() == [0, 0, 0, 1, 1, 1]
 
 
-def test_fit_stats_must_cover_every_label() -> None:
+def test_bad_maps_and_fit_stats_are_rejected() -> None:
+    with pytest.raises(ValueError, match="cannot also be a source"):
+        SyntheticTokenOffset(delta=0.3, token_map={0: 1, 1: 2}, labels=["fitness"])
     with pytest.raises(ValueError, match="no entry for label"):
         COOLabelNormalizationTransform(
             None,  # type: ignore[arg-type]

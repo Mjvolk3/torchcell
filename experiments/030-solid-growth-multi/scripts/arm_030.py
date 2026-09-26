@@ -286,14 +286,24 @@ def make_data_module(
     return data_module
 
 
+def smoke_twins(arm: Arm030, smoke_cfg: Mapping[str, Any]) -> dict[str, str]:
+    """``{source: twin}`` for the smoke: ``smoke.sources`` -> ``Synthetic<source>``."""
+    twins = {str(src): f"Synthetic{src}" for src in smoke_cfg["sources"]}
+    for src, twin in twins.items():
+        if src not in arm.dataset_vocabulary or twin not in arm.dataset_vocabulary:
+            raise ValueError(
+                f"smoke source {src!r} or twin {twin!r} not in the vocabulary"
+            )
+    return twins
+
+
 class SmokeResult(BaseModel):
     """What one smoke run measured after training (plan decision 10)."""
 
     config_name: str
     seed: int
     wandb_run_id: str
-    token_name: str
-    token_index: int
+    twins: dict[str, str] = Field(description="source dataset -> its synthetic twin")
     delta: float
     control: bool
     n_batches: int
@@ -329,15 +339,17 @@ def run_smoke_check(
 ) -> SmokeResult:
     """Score the trained model on validation batches under both tokens.
 
-    For every real ``gene_interaction`` row: its prediction under its own token, and
-    the prediction of the same genotype under the synthetic token from the same encoder
-    pass (``entry_readout``). The report script turns these into the three PASS/FAIL
+    For every real ``gene_interaction`` row of a twinned source: its prediction under
+    its own token, and the prediction of the same genotype under the source's twin
+    token from the same encoder pass (``entry_readout``). The report script turns these into the three PASS/FAIL
     criteria; this function only measures.
     """
     import torch
 
-    token_name = str(smoke_cfg["token_name"])
-    token_index = arm.dataset_vocabulary.index(token_name)
+    twins = smoke_twins(arm, smoke_cfg)
+    lookup = torch.full((len(arm.dataset_vocabulary),), -1, dtype=torch.long)
+    for src, twin in twins.items():
+        lookup[arm.dataset_vocabulary.index(src)] = arm.dataset_vocabulary.index(twin)
     delta = float(smoke_cfg["delta"])
     device = next(task.parameters()).device
     task.eval()
@@ -359,17 +371,20 @@ def run_smoke_check(
                 entry_batch=gene.phenotype_values_batch,
                 entry_dataset=gene.phenotype_dataset_indices,
             )
-            rows, vals, _, _, sel = task._entry_rows(batch, "gene_interaction")
+            rows, vals, _, toks, sel = task._entry_rows(batch, "gene_interaction")
             pred = preds[sel].view(-1)
             is_clone = gene.phenotype_synthetic[sel]
+            twin_tok = lookup.to(toks.device)[toks]
+            # real rows of a twinned source: the population the clones were made from
+            own = (~is_clone) & (twin_tok >= 0)
             resid = pred - vals
-            sq_all.append(resid.pow(2))
-            resid_real.append(resid[~is_clone])
+            sq_all.append(resid.pow(2)[own | is_clone])
+            resid_real.append(resid[own])
             resid_clone.append(resid[is_clone])
-            own_rows = rows[~is_clone]
-            own_pred = pred[~is_clone]
-            own_vals = vals[~is_clone]
-            swapped_tok = torch.full_like(own_rows, token_index)
+            own_rows = rows[own]
+            own_pred = pred[own]
+            own_vals = vals[own]
+            swapped_tok = twin_tok[own]
             swapped_pred, _ = task.model.entry_readout(
                 reps, batch, own_rows, swapped_tok
             )
@@ -382,8 +397,7 @@ def run_smoke_check(
         config_name=config_name,
         seed=seed,
         wandb_run_id=wandb_run_id,
-        token_name=token_name,
-        token_index=token_index,
+        twins=twins,
         delta=delta,
         control=bool(smoke_cfg.get("control", False)),
         n_batches=min(n_batches, len(diffs)),
@@ -399,7 +413,7 @@ def run_smoke_check(
     )
 
 
-class SmokeTrajectory(Callback):  # type: ignore[misc]  # lightning Callback is untyped
+class SmokeTrajectory(Callback):
     """Log the smoke measurements at every validation epoch end.
 
     Job 2863's token run measured pred(synthetic) - pred(own) of 0.93 for a 0.3 offset
@@ -440,7 +454,7 @@ class SmokeTrajectory(Callback):  # type: ignore[misc]  # lightning Callback is 
             for k, v in result.model_dump().items()
             if isinstance(v, (int, float))
             and not isinstance(v, bool)
-            and k not in ("seed", "token_index", "n_batches")
+            and k not in ("seed", "n_batches")
         }
         pl_module.log_dict(values, rank_zero_only=True)
         print(

@@ -72,7 +72,9 @@ transforms:
 smoke:
   enabled: false
   delta: 0.3
-  token_name: SyntheticOffsetDataset
+  # one synthetic twin per source, Synthetic<source>, so the twin's optimal bias is the
+  # source's plus delta at any training stage (a single token over every source is not)
+  sources: [TmiKuzmin2018Dataset, TmiKuzmin2020Dataset, TmfKuzmin2018Dataset, TmfKuzmin2020Dataset]
   labels: [gene_interaction, fitness]
   control: false
   n_val_batches: 40

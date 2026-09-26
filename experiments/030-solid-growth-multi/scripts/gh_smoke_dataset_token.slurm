@@ -38,10 +38,10 @@
 #   mkdir -p experiments/030-solid-growth-multi/slurm/output
 #   sbatch experiments/030-solid-growth-multi/scripts/gh_smoke_dataset_token.slurm
 #SBATCH -p main
-#SBATCH --mem=32g
+#SBATCH --mem=48g
 #SBATCH -N 1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=12
 #SBATCH --gres=gpu:1
 #SBATCH --job-name=030-r1w0-smoke
 #SBATCH --time=12:00:00

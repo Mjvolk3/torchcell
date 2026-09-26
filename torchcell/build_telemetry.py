@@ -24,6 +24,7 @@ from __future__ import annotations
 import csv
 import json
 import logging
+import os
 import threading
 import time
 from pathlib import Path
@@ -47,6 +48,11 @@ class ResourceSample(BaseModel):
     mem_gb: float = Field(description="memory.current in GiB")
     mem_peak_gb: float = Field(description="memory.peak in GiB")
     anon_gb: float = Field(description="memory.stat anon in GiB")
+    parent_cores: float = Field(
+        default=0.0,
+        description="Cores used by the build's main process alone (the CSV writer)",
+    )
+    n_procs: int = Field(default=0, description="Processes in the cgroup")
     adapter: str = ""
     method: str = ""
     phase_kind: str = Field(default="", description="node | edge | setup | finish")
@@ -125,6 +131,13 @@ def _read_anon_bytes() -> int:
 
 
 GIB = 1024**3
+CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
+
+
+def _read_parent_cpu_seconds() -> float:
+    """Utime + stime of this process (the build's main process) in seconds."""
+    fields = Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()
+    return (int(fields[11]) + int(fields[12])) / CLOCK_TICKS
 
 
 class ResourceSampler:
@@ -161,6 +174,7 @@ class ResourceSampler:
 
     def _run(self) -> None:
         last_usage = _read_cpu_usage_usec()
+        last_parent = _read_parent_cpu_seconds()
         last_t = time.time()
         csv_path = self.out_dir / "resource_samples.csv"
         with csv_path.open("w", newline="") as handle:
@@ -172,7 +186,9 @@ class ResourceSampler:
                 now = time.time()
                 usage = _read_cpu_usage_usec()
                 cores = (usage - last_usage) / 1e6 / (now - last_t)
-                last_usage, last_t = usage, now
+                parent = _read_parent_cpu_seconds()
+                parent_cores = (parent - last_parent) / (now - last_t)
+                last_usage, last_parent, last_t = usage, parent, now
                 adapter, method, kind = BuildPhase.current()
                 sample = ResourceSample(
                     t=now,
@@ -181,6 +197,8 @@ class ResourceSampler:
                     mem_gb=_read_int(CGROUP_ROOT / "memory.current") / GIB,
                     mem_peak_gb=_read_int(CGROUP_ROOT / "memory.peak") / GIB,
                     anon_gb=_read_anon_bytes() / GIB,
+                    parent_cores=parent_cores,
+                    n_procs=len((CGROUP_ROOT / "cgroup.procs").read_text().split()),
                     adapter=adapter,
                     method=method,
                     phase_kind=kind,
@@ -194,6 +212,8 @@ class ResourceSampler:
                         "res/mem_gb": sample.mem_gb,
                         "res/mem_peak_gb": sample.mem_peak_gb,
                         "res/anon_gb": sample.anon_gb,
+                        "res/parent_cores": sample.parent_cores,
+                        "res/n_procs": sample.n_procs,
                         "res/elapsed_s": sample.elapsed_s,
                     }
                 )

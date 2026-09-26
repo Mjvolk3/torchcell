@@ -55,6 +55,20 @@ family carries chemistry-to-response signal rather than which checkpoint won.
   model code is vendored under \file{third\_party/mole/}.
 \end{itemize}
 
+%% SOURCE: ENCODER_PROVENANCE in experiments/031-env-chemgen-inhibitor-tolerance/scripts/notes_tex_tables.py
+%% (curated metadata, also written to results/encoder_provenance.csv); rendered by the same script.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Provenance of the twelve encoders: representation family, training corpus,
+objective, an approximate citation band as of September 2026 (a band, not a count),
+and the source. \tcflagext~Temporary: the linked works are not yet in the library
+mirror and are given by their public link; the flag lifts when they are mirrored and
+cited through the bibliography.}
+\label{tab:provenance}
+\input{tables/t9-encoder-provenance}
+\end{table}
+
 \notesec{Left out}
 Chemprop's D-MPNN is trained end to end and belongs to the model phase as an
 architecture, not to an embedding comparison. CLAMP, the strongest frozen model in the

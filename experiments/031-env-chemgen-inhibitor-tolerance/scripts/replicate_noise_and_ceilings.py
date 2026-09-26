@@ -371,7 +371,7 @@ def fig_vanacloig_ceilings(cond: pd.DataFrame) -> str:
     ax.bar(
         x,
         v["ceiling_r_truth"].fillna(0),
-        color=PURPLE,
+        color=ORANGE,
         edgecolor=INK,
         linewidth=0.4,
         label="ceiling on r vs truth, sqrt(reliability)",
@@ -380,7 +380,7 @@ def fig_vanacloig_ceilings(cond: pd.DataFrame) -> str:
         x,
         v["replicate_rho"],
         "o",
-        color=RED,
+        color=PURPLE,
         markersize=2.5,
         markeredgecolor=INK,
         markeredgewidth=0.3,

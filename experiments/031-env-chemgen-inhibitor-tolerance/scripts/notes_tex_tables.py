@@ -384,6 +384,137 @@ def t8_chemsim() -> None:
     )
 
 
+#: Curated provenance of every encoder in ``torchcell.molecule.ENCODERS``: family, training
+#: corpus, objective, an approximate citation band as of 2026-09 (bands, not counts), and
+#: the link to the source. The works are NOT in the library mirror yet; the table is served
+#: as external metadata and flagged as such in its caption.
+ENCODER_PROVENANCE: list[dict[str, str]] = [
+    {
+        "encoder": "ecfp4_count, ecfp4_bit",
+        "family": "fingerprint",
+        "corpus": "none; hashed radius-2 atom environments",
+        "objective": "none",
+        "band": "thousands",
+        "ref": "Rogers and Hahn 2010",
+        "url": "https://doi.org/10.1021/ci100050t",
+    },
+    {
+        "encoder": "fcfp4_count",
+        "family": "fingerprint",
+        "corpus": "none; pharmacophore feature invariants",
+        "objective": "none",
+        "band": "as ECFP",
+        "ref": "Rogers and Hahn 2010",
+        "url": "https://doi.org/10.1021/ci100050t",
+    },
+    {
+        "encoder": "maccs",
+        "family": "fingerprint",
+        "corpus": "none; 166 curated substructure keys",
+        "objective": "none",
+        "band": "thousands",
+        "ref": "Durant et al. 2002",
+        "url": "https://doi.org/10.1021/ci010132r",
+    },
+    {
+        "encoder": "rdkit_2d",
+        "family": "descriptors",
+        "corpus": "none; 217 physicochemical descriptors",
+        "objective": "none",
+        "band": "ubiquitous",
+        "ref": "RDKit 2026.03",
+        "url": "https://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors",
+    },
+    {
+        "encoder": "mol2vec",
+        "family": "fragment embedding",
+        "corpus": "19.9M ZINC and ChEMBL compounds",
+        "objective": "skip-gram over Morgan identifiers",
+        "band": "over 500",
+        "ref": "Jaeger, Fulle and Turk 2018",
+        "url": "https://doi.org/10.1021/acs.jcim.7b00616",
+    },
+    {
+        "encoder": "chemberta2_mlm",
+        "family": "SMILES transformer",
+        "corpus": "77M PubChem SMILES",
+        "objective": "masked language modeling",
+        "band": "several hundred",
+        "ref": "Ahmad et al. 2022",
+        "url": "https://arxiv.org/abs/2209.01712",
+    },
+    {
+        "encoder": "chemberta2_mtr",
+        "family": "SMILES transformer",
+        "corpus": "77M PubChem SMILES",
+        "objective": "multitask regression on RDKit properties",
+        "band": "several hundred",
+        "ref": "Ahmad et al. 2022",
+        "url": "https://arxiv.org/abs/2209.01712",
+    },
+    {
+        "encoder": "molformer_xl",
+        "family": "SMILES transformer",
+        "corpus": "1.1B PubChem and ZINC SMILES; public checkpoint is the 10 percent subset",
+        "objective": "masked language modeling, linear attention",
+        "band": "several hundred",
+        "ref": "Ross et al. 2022",
+        "url": "https://doi.org/10.1038/s42256-022-00580-7",
+    },
+    {
+        "encoder": "roberta_zinc_480m",
+        "family": "SMILES transformer",
+        "corpus": "480M ZINC SMILES",
+        "objective": "masked language modeling",
+        "band": "community model, uncited",
+        "ref": "Hugging Face entropy/roberta_zinc_480m",
+        "url": "https://huggingface.co/entropy/roberta_zinc_480m",
+    },
+    {
+        "encoder": "unimol_v1",
+        "family": "3D",
+        "corpus": "209M conformers",
+        "objective": "atom masking, coordinate denoising, pair distances",
+        "band": "several hundred",
+        "ref": "Zhou et al. 2023 (ICLR)",
+        "url": "https://openreview.net/forum?id=6K2RM6wVqKu",
+    },
+    {
+        "encoder": "mole_static",
+        "family": "graph (GIN)",
+        "corpus": "100k PubChem structures",
+        "objective": "Barlow Twins on masked subgraph views; validated for antimicrobial activity",
+        "band": "young (2025)",
+        "ref": "Olayo-Alarcon et al. 2025",
+        "url": "https://doi.org/10.1038/s41467-025-58804-4",
+    },
+]
+
+
+def t9_encoder_provenance() -> None:
+    pd.DataFrame(ENCODER_PROVENANCE).to_csv(
+        osp.join(RESULTS, "encoder_provenance.csv"), index=False
+    )
+    rows = [
+        [
+            esc(r["encoder"]),
+            esc(r["family"]),
+            esc(r["corpus"]),
+            esc(r["objective"]),
+            esc(r["band"]),
+            f"\\href{{{r['url']}}}{{{esc(r['ref'])}}}",
+        ]
+        for r in ENCODER_PROVENANCE
+    ]
+    write(
+        "t9-encoder-provenance.tex",
+        "ENCODER_PROVENANCE in notes_tex_tables.py (curated metadata, also written to results/encoder_provenance.csv); the linked works are not in the library mirror",
+        "p{2.5cm}p{1.7cm}p{3.5cm}p{3.6cm}p{1.6cm}p{3.0cm}",
+        ["encoder", "family", "trained on", "objective", "citations", "source"],
+        rows,
+    )
+
+
 def main() -> None:
     t1_axes()
     t2_overlap()
@@ -393,6 +524,7 @@ def main() -> None:
     t6_vanacloig_conditions()
     t7_coverage()
     t8_chemsim()
+    t9_encoder_provenance()
 
 
 if __name__ == "__main__":

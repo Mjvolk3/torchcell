@@ -67,6 +67,21 @@ strains agree at 0.06 gives no model more than 0.04 to find.
 
 \input{tables/store_baselines_cooper}
 
+The reverse direction. The betaxanthin study read the strain's measured amino-acid pool
+as an input and found the ladder's forest carrying it at 0.280 (its Section~3); the
+same store form carries the strain's Cachera betaxanthin score, one signed column
+standardized on the training strains, into this target on the same pinned split
+(Table~\ref{tab:store-baselines}). Alone it reads 0.034 by ridge, 0.026 by nearest
+neighbors and 0.071 by forest, mean Spearman over the nineteen amino acids; appended to
+GO, 0.044, 0.024 and 0.078. The forest over one measured column is above every
+genotype-side representation on this target, and with GO it is the highest read of any
+model, transformer or ladder, 0.078 against the forest over GO alone at 0.063 and the
+GO affine's 0.058. The per-amino-acid reads of the column alone follow the
+cross-endpoint correlations (aspartate 0.185, threonine 0.125, tyrosine 0.084 by
+ridge). As on betaxanthin, this is phenotype to phenotype and it says the shared
+strain-level signal transfers in both directions; on a target whose annotation gain is
+0.009, one measured column is worth more than the annotation.
+
 \subsection{The betaxanthin endpoint against the amino-acid pool\secstatus{todo}}
 \label{sec:cross-target}
 

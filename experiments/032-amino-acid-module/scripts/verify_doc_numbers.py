@@ -15,6 +15,7 @@ on any mismatch. Run from the repo root::
 
 from __future__ import annotations
 
+import json
 import os
 import os.path as osp
 import sys
@@ -287,6 +288,27 @@ CHECKS: list[Check] = [
           recompute=ensemble("w177_aadelgopfba_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
     Check(claim="round 174: GO affine twelve-seed ensemble", stated=0.058,
           recompute=ensemble("w170_aadelgo_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
+    # sec:concordance -- the strain's betaxanthin score as an input (2026-09-25).
+    Check(claim="ladder: betaxanthin score ridge", stated=0.034,
+          recompute=store_baseline("amino_acids", "bx_score", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="ladder: betaxanthin score kNN", stated=0.026,
+          recompute=store_baseline("amino_acids", "bx_score", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="ladder: betaxanthin score forest", stated=0.071,
+          recompute=store_baseline("amino_acids", "bx_score", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="ladder: GO with betaxanthin score ridge", stated=0.044,
+          recompute=store_baseline("amino_acids", "go_bxscore", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="ladder: GO with betaxanthin score kNN", stated=0.024,
+          recompute=store_baseline("amino_acids", "go_bxscore", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="ladder: GO with betaxanthin score forest", stated=0.078,
+          recompute=store_baseline("amino_acids", "go_bxscore", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="ladder: GO forest (score comparison)", stated=0.063,
+          recompute=store_baseline("amino_acids", "go", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="ladder: betaxanthin score ridge, aspartate", stated=0.185,
+          recompute=lambda: float(json.load(open(osp.join(RESULTS, "store_baselines_amino_acids.json")))["representations"]["bx_score"]["ridge"]["selected_on_val"]["test_pinned"]["per_feature"]["aspartate"]["spearman"]), tolerance=0.0006),
+    Check(claim="ladder: betaxanthin score ridge, threonine", stated=0.125,
+          recompute=lambda: float(json.load(open(osp.join(RESULTS, "store_baselines_amino_acids.json")))["representations"]["bx_score"]["ridge"]["selected_on_val"]["test_pinned"]["per_feature"]["threonine"]["spearman"]), tolerance=0.0006),
+    Check(claim="ladder: betaxanthin score ridge, tyrosine", stated=0.084,
+          recompute=lambda: float(json.load(open(osp.join(RESULTS, "store_baselines_amino_acids.json")))["representations"]["bx_score"]["ridge"]["selected_on_val"]["test_pinned"]["per_feature"]["tyrosine"]["spearman"]), tolerance=0.0006),
     # sec:concordance -- Cooper's peaks as a ladder target (2026-09-25).
     Check(claim="cooper ladder: test genotypes with a row", stated=816,
           recompute=cooper_ladder("n_test"), tolerance=0.5),

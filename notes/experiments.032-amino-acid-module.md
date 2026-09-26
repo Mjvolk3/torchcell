@@ -278,6 +278,10 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 |---|---|---|---|---|
 | A21 | 174 | w193 | w177 seeds 2706 to 2711 | twelve seeds 0.056 (sd 0.003); vs GO alone -0.002 (2/12) |
 
+## 2026.09.25 - The reverse direction: the strain's betaxanthin score as an input
+
+- The betaxanthin study read the strain's Mulleder pool as an input (forest 0.280); the same store form carries the Cachera score into this target: `target_pool_store.py --source cachera` (one signed column, standardized, never log1p; store `SM_gem_bxscore`, 4,719 strains; GO appended as `SM_gem_gobxscore`). MEASURED (`results/store_baselines_amino_acids.json`, 31 min; every earlier cell reproduced): score alone 0.034 ridge / 0.026 kNN / 0.071 forest; GO + score 0.044 / 0.024 / 0.078, the highest read of any model on this target (forest over GO alone 0.063, GO affine 0.058). Per amino acid by ridge on the column alone: aspartate 0.185, threonine 0.125, tyrosine 0.084, following the cross-endpoint correlations. Written into the 032 document (section 4 and the standing section; published v20).
+
 ## 2026.09.25 - Cooper 2010 as a ladder target
 
 - User direction: linear and kNN baselines over BOTH amino-acid datasets. `target_store_baselines.py --target cooper` (new `CSV_TARGETS`: the 17 peaks read from the loader's `preprocess/data.csv` by the record's deleted gene on the same pinned split; no reference arm in the trainer, so the identity check is skipped; the SM stores of the prototroph stand in for the medium Cooper used). MEASURED (`results/store_baselines_cooper.json`, 31 min; 816 test genotypes with a Cooper row, 561 pinned): every cell between -0.025 and +0.041 mean Spearman over the peaks; the highest the forest over the HiGHS store with ProtT5 (0.041) and the ridge over MOMA (0.039); GO 0.019 by forest, ProtT5 0.028 by ridge. Against the Mulleder ladder's 0.00 to 0.06. Written into the 032 document (section 4, new table `store_baselines_cooper`; published v18).

@@ -3899,7 +3899,13 @@
         2702,
         2703,
         2704,
-        2705
+        2705,
+        2706,
+        2707,
+        2708,
+        2709,
+        2710,
+        2711
       ],
       "single": [
         {
@@ -3937,9 +3943,45 @@
           "spearman": 0.24697924359953563,
           "top50_enrichment": 5.9904761904761905,
           "top50_hits": 30.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2656310828423733,
+          "top50_enrichment": 4.592698412698413,
+          "top50_hits": 23.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.27465472825382325,
+          "top50_enrichment": 4.592698412698413,
+          "top50_hits": 23.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2937987402429186,
+          "top50_enrichment": 5.79079365079365,
+          "top50_hits": 29.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2788752891413064,
+          "top50_enrichment": 4.992063492063492,
+          "top50_hits": 25.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.20550647527043178,
+          "top50_enrichment": 1.198095238095238,
+          "top50_hits": 6.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2865022545427191,
+          "top50_enrichment": 5.591111111111111,
+          "top50_hits": 28.0
         }
       ],
-      "mean_single_spearman": 0.2398572789716027,
+      "mean_single_spearman": 0.253676020343599,
       "n_constant": 0,
       "triples": [
         {
@@ -3964,9 +4006,89 @@
       },
       "all_seeds": {
         "n": 629,
-        "spearman": 0.2918255406827906,
+        "spearman": 0.2967900673783026,
         "top50_enrichment": 5.79079365079365,
         "top50_hits": 29.0
+      },
+      "n_seeds": 12
+    },
+    {
+      "stem": "w204_bxdelgoaapoolmlp_h12l1p1_e200",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.2024602507554924,
+          "top50_enrichment": 3.3946031746031746,
+          "top50_hits": 17.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.21232473709056698,
+          "top50_enrichment": 4.393015873015873,
+          "top50_hits": 22.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.21195406721821106,
+          "top50_enrichment": 5.3914285714285715,
+          "top50_hits": 27.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.19788322283638882,
+          "top50_enrichment": 3.594285714285714,
+          "top50_hits": 18.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.20065020569176445,
+          "top50_enrichment": 5.3914285714285715,
+          "top50_hits": 27.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.21014406795598253,
+          "top50_enrichment": 5.3914285714285715,
+          "top50_hits": 27.0
+        }
+      ],
+      "mean_single_spearman": 0.20590275859140103,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.2102871377506072,
+          "top50_enrichment": 4.592698412698413,
+          "top50_hits": 23.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.20612306895559046,
+          "top50_enrichment": 5.3914285714285715,
+          "top50_hits": 27.0
+        }
+      ],
+      "mean_triple_spearman": 0.20820510335309883,
+      "first_six": {
+        "n": 629,
+        "spearman": 0.20774920400248237,
+        "top50_enrichment": 4.992063492063492,
+        "top50_hits": 25.0
+      },
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.20774920400248237,
+        "top50_enrichment": 4.992063492063492,
+        "top50_hits": 25.0
       },
       "n_seeds": 6
     }

@@ -508,7 +508,13 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B46 | 180 | w199 | del + the pool through a hidden layer of 64 | 0.240 (sd 0.048); vs linear +0.045 (5/6); ens 0.292 / 5.79 |
 | B47 | 181 | w200 | del + the minimum-norm store | 0.093 (sd 0.013); vs HiGHS store -0.037 (1/6); ens 0.094 / 5.19 |
 | B48 | 182 | w201 | del + GO with the minimum-norm store | 0.204 (sd 0.005); vs GO + HiGHS -0.007 (0/6); ens 0.206 / 4.39 |
-| B49 | 185 | w204 | del + GO with the pool through 64 | job 2847, running |
-| B50 | 186 | w205 | w199 seeds 2706 to 2711 | job 2848, running |
+| B49 | 185 | w204 | del + GO with the pool through 64 | 0.206 (sd 0.006); vs pool mlp -0.034 (1/6); vs GO +0.004 (3/6); ens 0.208 / 4.99 |
+| B50 | 186 | w205 | w199 seeds 2706 to 2711 | second six 0.268; twelve 0.254 (sem 0.012); vs GO +0.051 (11/12); ens 0.297 / 5.79 |
 | B51 | 187 | w206 | del + the pool through 256 | job 2853 (2849 cancelled, see 032 note on ESS_STUDY) |
 | B52 | 188 | w207 | del + the three families through 64 | job 2854 (2850 cancelled) |
+
+## 2026.09.26 - B49 and B50 read: the annotation in the hidden layer, twelve seeds of the pool
+
+- B49 (w204, GO + the pool through a hidden layer of 64, 2,381 columns, job 2847, 3 h 33 min; outputs relocated from the 028 trees, see the 032 note on ESS_STUDY): 0.206 (sd 0.006) vs the pool alone through the layer (w199) 0.240 (-0.034, sd 0.052, 1/6), vs the same columns linear (w194) 0.208 (-0.002, 3/6), vs GO alone 0.202 (+0.004, 3/6); top-50 4.59; ensemble 0.208 / 4.99; seeds select at epochs 2 to 4 on validation Pearson 0.22 to 0.29. With GO in the layer the arm behaves as the GO affine and the pool's gain is gone, as the ladder's ridge and kNN lost it when the GO columns joined. Written as round 185.
+- B50 (w205 = w199 seeds 2706 to 2711, job 2848, 3 h 34 min; relocated likewise): second six 0.268 (sd 0.032) vs the first six 0.240; twelve seeds 0.254 (sd 0.041, sem 0.012), seeds 0.159 to 0.300, epochs 4 to 197; twelve-seed ensemble 0.297 / 5.79; paired over twelve seeds +0.178 vs the control (12/12) and +0.051 vs GO alone (11/12); top-50 4.24 vs the annotation's 4.99. The hidden-layer read of the pool holds at its second size. Written as round 186.
+- Next on this line (not yet queued): the pool and the annotation through SEPARATE slots (a hidden layer over the pool beside the linear GO affine), which the trainer does not yet support; the pool through 256 (w206, job 2853) and the three families through 64 (w207, job 2854) are running.

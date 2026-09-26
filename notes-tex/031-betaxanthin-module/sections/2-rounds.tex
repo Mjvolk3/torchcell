@@ -759,4 +759,34 @@ on every seed: whatever the affine reads from the flux vector beside GO lives in
 sparse solution, and the nearest-neighbor read of the same columns at 0.208, the best
 kNN of any genotype-side representation, does not reach the transformer.
 
+Round 185 is read (job 2847, 3 h 33 min): GO with the measured pool, 2,381 columns,
+through the same hidden layer of 64. It reads 0.206 (sd 0.006) against the pool alone
+through the layer at 0.240 ($-0.034$ paired, sd 0.052, one of six), against the same
+columns in the linear affine at 0.208 ($-0.002$, sd 0.008, three of six) and against
+GO alone at 0.202 ($+0.004$, sd 0.007, three of six), top-50 4.59 against 4.03, 4.89
+and 5.03, ensembled 0.208 with a top-50 of 4.99. The seeds select at epochs 2 to 4 on
+validation Pearson 0.22 to 0.29, the earliest selection of any arm, where the pool
+alone through the layer selects at 13 to 197 on 0.35 to 0.38. So the annotation
+appended to the pool takes the nonlinear read back to the annotation's own level: with
+GO in the layer the arm behaves as the GO affine does, in its level, its seed band and
+its early selection, and the pool's 0.034 is gone. The ladder read the same thing on
+the same columns, ridge and nearest neighbors falling when the 2,362 GO columns joined
+the nineteen and only the forest keeping the pool's rank (Section~\ref{sec:physics}).
+A plausible reason, unverified, is that a layer of 64 over 2,381 columns fits the
+annotation's columns in the first epochs and the nineteen pool columns never set its
+selection; a layer that sees the pool and the annotation through separate slots is
+the arm that would separate the two.
+
+Round 186 is read (job 2848, 3 h 34 min): six more seeds of the pool through the
+hidden layer of 64. The second six read 0.268 (sd 0.032) against the first six's 0.240,
+and over twelve the arm reads 0.254 (sd 0.041, standard error 0.012), seeds 0.159 to
+0.300, selecting at epochs 4 to 197; the twelve-seed ensemble reads 0.297 with a top-50
+of 5.79. Paired over the same twelve seeds the arm is $+0.178$ over the affine-free
+control on twelve of twelve and $+0.051$ over GO alone on eleven of twelve, with a
+top-50 of 4.24 against the annotation's 4.99. So the hidden-layer read of the pool
+holds at its second size: the highest single-seed level and the highest ensemble of any
+transformer arm, the ensemble above the ladder's nearest neighbors and forest on the
+same columns, the spread twenty times the annotation arm's, and the call under the
+annotation's on every count.
+
 \input{tables/target_transfer}

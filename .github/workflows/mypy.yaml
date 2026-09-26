@@ -32,6 +32,9 @@ jobs:
     - name: Install mypy dependencies
       run: |
         pip install -r env/requirements_mypy.txt
+        # tests/ is in the diff scope below; without pytest installed every test file
+        # fails with import-not-found and pytest.skip loses its NoReturn narrowing.
+        pip install -r env/requirements_test.txt
 
     - name: Install torchcell package
       run: |

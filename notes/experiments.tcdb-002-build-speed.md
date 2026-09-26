@@ -58,3 +58,29 @@ single-pass node emission; r4 chunk size and worker count in the target box.
 Job 2851, commit dad37766, 48 CPUs / 192 GB (the idle capacity at submit; the two
 pending GPU pack jobs ahead in the FIFO were held for the 30 s it took to start, then
 released). Results below when it finishes.
+
+Correction: job 2851 ran `chunk_size: 4e5`, copied from `kg_small.yaml`, not the
+production `1e5` from `kg_uncapped.yaml`. A 410k-record dataset then splits into 3
+chunks and 3 of 43 workers do the work (DmfKuzmin2018 node methods took 3 to 5 min each
+against about 70 s per method on job 2032). It is scored as a chunk-size arm. The ladder
+config now carries the production adapter settings and an arm deviates only through
+`KG_OVERRIDES` hydra overrides recorded in its `arm.tsv`.
+
+### Arms submitted 2026.09.26, all 48 CPUs / 192 GB, serial in the queue
+
+| job | round | arm | commit | overrides |
+|--:|---|---|---|---|
+| 2851 | r0 | chunk 4e5 (mis-set baseline) | dad37766 | none (config had chunk_size 4e5) |
+| 2856 | r0 | baseline | c248fed8 | none |
+| 2857 | r1 | inproc-small | c248fed8 | `adapters.inprocess_max_records=25000` |
+| 2858 | r2 | cached-constants | f93fb98c | r1 overrides (the cache is always on) |
+| 2859 | r3 | single-pass | f93fb98c | r1 overrides + `adapters.single_pass=true` |
+
+Local verification before submitting, `SmfKuzmin2018Adapter` on the dev LMDB (1,539
+records, 4 process workers, `scratchpad/test_inprocess_equivalence.py`): pool,
+in-process, single-pass, and single-pass plus in-process all emit the same node id set
+(sha 2d0382eef4a03ee3, 12,319 nodes) and edge id set (6a43a44263328f63, 13,855 edges).
+Wall for the whole adapter locally: pool 15.6 s before r2, 8.3 s after r2, 2.8 s with
+single-pass. Cached-constant `transform_item` on 2,000 dev records: dmf_costanzo2016
+1.02 -> 0.16 ms per record, smf_kuzmin2018 1.35 -> 0.10 ms, `model_dump` byte-identical
+(`scratchpad/test_validated_cache.py`).

@@ -1,0 +1,42 @@
+# torchcell/knowledge_graphs/conf/kg_bench_ladder.yaml
+# [[torchcell.knowledge_graphs.conf.kg_bench_ladder.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_bench_ladder.yaml
+#
+# Build-speed benchmark ladder (experiments/tcdb-002-build-speed). A fixed subset of
+# the 51-dataset build chosen so every size class the full build spends its time in is
+# present: five small datasets (the full build's 33 small adapters cost 9.5 h of pure
+# per-method overhead on job 2032), two mid Kuzmin sets, and Costanzo dmf capped to 2M
+# records (the crash case: 20.7M records, one worker at 45 G on job 1996). Everything
+# else about the build is the production path. Every arm runs THIS config; only the
+# code and the launcher's CPU/memory box change between arms.
+
+defaults:
+  - default
+  - _self_
+
+wandb:
+  mode: online
+  project: tcdb
+  tags: [tcdb-002, ladder]
+
+adapters:
+  io_to_total_worker_ratio: 0.1
+  chunk_size: 4e5
+  loader_batch_size: 1e3
+
+datasets:
+  - MetaboliteZelezniak2018Dataset # 95 records
+  - GeneEssentialitySgdDataset # 1,329
+  - SmfKuzmin2018Dataset # 1,539
+  - AminoAcidCooper2010Dataset # 4,313
+  - FattyAcidSmith2006Dataset # 12,747
+  - TmiKuzmin2020Dataset # 301,798
+  - DmfKuzmin2018Dataset # 410,399
+  - DmfCostanzo2016Dataset # 20,705,612, capped below
+
+subset:
+  size: null
+  seed: 42
+  per_dataset:
+    DmfCostanzo2016Dataset: 2000000
+  prefilter: {}

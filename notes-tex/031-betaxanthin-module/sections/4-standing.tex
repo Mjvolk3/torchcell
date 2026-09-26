@@ -115,5 +115,9 @@ appended to the pool inside the layer costs it: the annotation (185, $-0.034$), 
 three families (188, back to the annotation's 0.217) and the flux vector (191,
 $-0.054$, under both parents). The pool's nonlinear read is best taken alone, and the
 head that reads it beside the other families through separate slots is the arm not yet
-built. Cells queued: the pool through 64 with a 400-epoch budget (190), through 512
+built. Without the transformer the same columns give a perceptron 0.236 at width 1,024
+and 0.240 with GO appended, the annotation adding there at every width
+(Section~\ref{sec:physics}): the transformer's hidden slot reads the pool 0.04 above
+any standalone perceptron, and what the annotation does to the pool's read depends on
+the head it enters. Cells queued: the pool through 64 with a 400-epoch budget (190), through 512
 (192) and 128 (194), six more seeds of 256 (193).

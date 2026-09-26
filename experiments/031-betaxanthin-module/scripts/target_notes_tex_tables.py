@@ -499,8 +499,56 @@ def go_models(target: str) -> str | None:
     return write(target, "go_models", body, f"results/go_models_{target}.json")
 
 
+POOL_MLP_WIDTHS = (16, 64, 256, 1024)
+POOL_MLP_LABELS = {
+    "store_mlp": "perceptron over the measured pool",
+    "go_store_mlp": "perceptron over GO with the measured pool",
+}
+
+
+def pool_mlp_sweep() -> str | None:
+    """The measured pool through a perceptron on CPU, one hidden width per row."""
+    rows = []
+    for h in POOL_MLP_WIDTHS:
+        src = results("betaxanthin", f"go_models_betaxanthin_pool_h{h}.json")
+        if not osp.isfile(src):
+            return None
+        with open(src) as fh:
+            d = json.load(fh)
+        assert d["store"] == "YPD_bx_aapool" and d["mlp_hidden"] == h, src
+        for a in d["arms"]:
+            single = f"{a['single_mean_spearman']:+.3f} ({a['single_sd_spearman']:.3f}) / {a['single_mean_top50']:.2f}"
+            ens = f"{a['ensemble_spearman']:+.3f} / {a['ensemble_top50']:.2f}"
+            epochs = f"{min(r['select_epoch'] for r in a['seeds'])} to {max(r['select_epoch'] for r in a['seeds'])}"
+            rows.append(
+                f"    {POOL_MLP_LABELS[a['arm']]} & {h} & {a['seeds'][0]['n_parameters']:,} & "
+                f"{single} & {ens} & {epochs} \\\\"
+            )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The measured pool through a perceptron, by hidden width]{The strain's "
+        "measured amino-acid pool (nineteen columns, log1p then standardized on the training "
+        "rows) alone and with the propagated GO multi-hot, through one ReLU hidden layer of "
+        "the stated width and a linear head, on the ladder's split, full batch, Adam at "
+        "$10^{-3}$, 200 epochs, the epoch selected by a five-epoch moving average of the "
+        "validation per-feature Pearson, on CPU. Columns: hidden width, parameters, the "
+        "single-seed pinned-test Spearman with the standard deviation over six seeds and, "
+        "after the slash, the top-50 enrichment; the six-seed ensemble scored the same way; "
+        "the range of selected epochs. Written by \\texttt{target\\_notes\\_tex\\_tables.py} "
+        "from \\texttt{results/go\\_models\\_betaxanthin\\_pool\\_h<H>.json} "
+        "(\\texttt{target\\_go\\_models.py --store YPD\\_bx\\_aapool --mlp-hidden H}).}\n"
+        "  \\label{tab:pool-mlp-sweep}\n"
+        "  \\begin{tabular}{@{}p{50mm}rrrrp{20mm}@{}}\n    \\hline\n"
+        "    model & width & parameters & single seed (sd) / top-50 & ensemble & epochs \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("betaxanthin", "pool_mlp_sweep", body, "results/go_models_betaxanthin_pool_h<H>.json")
+
+
 def main() -> None:
     paths = [
+        pool_mlp_sweep(),
         target_transfer("betaxanthin"),
         target_transfer("amino_acids"),
         store_baselines("betaxanthin"),

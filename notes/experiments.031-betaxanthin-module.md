@@ -538,3 +538,8 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B56 | 193 | w212 | w206 seeds 2706 to 2711 | job 2869, running |
 | B57 | 194 | w213 | del + the pool through 128 | job 2870, running |
 | B59 | 196 | w215 | del + the pool through 256, 400 epochs | job 2873, pending |
+
+## 2026.09.26 - The pool through a perceptron on CPU: the width sweep
+
+- MEASURED (`slurm/output/031-poolmlp_direct.out`, `results/go_models_betaxanthin_pool_h{16,64,256,1024}.json`, at most 14 s a seed, the whole sweep under 10 min on 8 threads): the pool alone through one ReLU hidden layer reads 0.178, 0.217, 0.219, 0.236 at widths 16, 64, 256, 1024 (sd 0.012, 0.012, 0.042, 0.007; ensemble at 1024 0.240); GO + pool reads 0.237, 0.232, 0.238, 0.240 (sd 0.004, 0.018, 0.003, 0.003; ensemble at 1024 0.241, top-50 5.16, epochs 15 to 16). New table `tables/pool_mlp_sweep.tex` (`pool_mlp_sweep()` in `target_notes_tex_tables.py`); verifier helper `pool_mlp()`.
+- Two contrasts with the transformer's slot: (1) the annotation ADDS to the pool in the standalone perceptron at every width (+0.02 over the pool alone at 1024, +0.04 over the GO perceptron's 0.200), where inside the transformer's hidden layer it took the pool back to 0.206 (round 185); (2) the transformer's pool-through-256 (0.279) is 0.06 above the standalone perceptron at 256 and 0.04 above its best width. The two trainings differ in encoding (standardized vs log1p), batching (full vs 32) and selection (smoothed vs raw validation), so which carries the gap is NOT measured. Written into the 031 document (section 3 and the standing section).

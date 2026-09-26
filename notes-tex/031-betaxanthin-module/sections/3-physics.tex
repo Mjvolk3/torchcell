@@ -221,7 +221,29 @@ signal beyond the gene's identity, at a rank above the sequence, the annotation 
 every flux store. The transformer's affine reads the same columns linearly at 0.195
 alone and 0.208 beside GO (rounds 179, 175), above the ridge and under the distance
 models; through a hidden layer of 64 the pool alone reads 0.240 with a six-seed
-ensemble of 0.292, above the nearest neighbors (round 180).
+ensemble of 0.292, above the nearest neighbors (round 180), and through a layer of 256
+it reads 0.279 (round 187).
+
+The same read without the transformer, on CPU, sets what the columns give a perceptron
+alone (Table~\ref{tab:pool-mlp-sweep}; the GO-models script with the pool as its store
+block, one hidden width per pass, six seeds, at most 14 s a seed). The pool alone
+climbs with width, 0.178, 0.217, 0.219 and 0.236 at 16, 64, 256 and 1024, the last
+with the tightest band (sd 0.007) and a six-seed ensemble of 0.240; GO appended reads
+0.237, 0.232, 0.238 and 0.240 at the same widths, flat in width, sd 0.003 at 1024 with
+an ensemble of 0.241 and the best call of the sweep (top-50 5.16), selecting at epochs
+15 to 16. Two things differ from the transformer's slot. The annotation adds to the
+pool here at every width, 0.02 over the pool alone at 1024 and 0.04 over the GO
+perceptron alone (0.200), where inside the transformer's hidden layer it took the read
+back to the annotation's level (round 185); and the transformer's read of the pool
+alone through 256, 0.279, sits 0.06 above the standalone perceptron at the same width
+and 0.04 above its best width. The two trainings are not one setting under two heads,
+since the perceptron standardizes the columns, trains full batch and selects on a
+smoothed validation curve, so which of those carries the gap is not measured; the
+plain reading is that the columns give a perceptron 0.24 and the transformer's
+hidden slot 0.28, and that the annotation's effect on the pool's read depends on the
+head it enters.
+
+\input{tables/pool_mlp_sweep}
 
 \input{tables/go_models}
 

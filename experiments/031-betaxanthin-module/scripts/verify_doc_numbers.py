@@ -85,6 +85,27 @@ def go_model(arm: str, key: str):
     return run
 
 
+def pool_mlp(hidden: int, arm: str, key: str):
+    """A value of one arm of the CPU perceptron sweep over the measured pool
+    (target_go_models.py --store YPD_bx_aapool --mlp-hidden <hidden>)."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, f"go_models_betaxanthin_pool_h{hidden}.json")))
+        assert d["store"] == "YPD_bx_aapool" and d["mlp_hidden"] == hidden
+        a = next(x for x in d["arms"] if x["arm"] == arm)
+        if key == "select_epoch_min":
+            return float(min(r["select_epoch"] for r in a["seeds"]))
+        if key == "select_epoch_max":
+            return float(max(r["select_epoch"] for r in a["seeds"]))
+        if key == "seconds_max":
+            return float(max(r["seconds"] for r in a["seeds"]))
+        return float(a[key])
+
+    return run
+
+
 def go_model_w20(arm: str, key: str):
     """A value of one arm of the width-20 GO-models read (results/go_models_betaxanthin_w20.json)."""
 
@@ -1635,6 +1656,43 @@ CHECKS: list[Check] = [
           recompute=lambda: float(json.load(open(osp.join(os.environ["EXPERIMENT_ROOT"], "031-betaxanthin-module", "results", "target_store_concat_YPD_bx_aapoolpfba.json")))["n_genes_with_appended_row"]), tolerance=0.5),
     Check(claim="round 191: the pool's genes", stated=4678,
           recompute=lambda: float(json.load(open(osp.join(os.environ["EXPERIMENT_ROOT"], "031-betaxanthin-module", "results", "target_store_concat_YPD_bx_aapoolpfba.json")))["n_genes"]), tolerance=0.5),
+    # sec:physics -- the CPU perceptron sweep over the measured pool (2026-09-26).
+    Check(claim="pool mlp: pool alone 16", stated=0.178,
+          recompute=pool_mlp(16, "store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: pool alone 64", stated=0.217,
+          recompute=pool_mlp(64, "store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: pool alone 256", stated=0.219,
+          recompute=pool_mlp(256, "store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: pool alone 256 sd", stated=0.042,
+          recompute=pool_mlp(256, "store_mlp", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: pool alone 1024", stated=0.236,
+          recompute=pool_mlp(1024, "store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: pool alone 1024 sd", stated=0.007,
+          recompute=pool_mlp(1024, "store_mlp", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: pool alone 1024 ensemble", stated=0.240,
+          recompute=pool_mlp(1024, "store_mlp", "ensemble_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: GO with pool 16", stated=0.237,
+          recompute=pool_mlp(16, "go_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: GO with pool 64", stated=0.232,
+          recompute=pool_mlp(64, "go_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: GO with pool 256", stated=0.238,
+          recompute=pool_mlp(256, "go_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: GO with pool 1024", stated=0.240,
+          recompute=pool_mlp(1024, "go_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: GO with pool 1024 sd", stated=0.003,
+          recompute=pool_mlp(1024, "go_store_mlp", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: GO with pool 1024 ensemble", stated=0.241,
+          recompute=pool_mlp(1024, "go_store_mlp", "ensemble_spearman"), tolerance=0.0006),
+    Check(claim="pool mlp: GO with pool 1024 top-50", stated=5.16,
+          recompute=pool_mlp(1024, "go_store_mlp", "single_mean_top50"), tolerance=0.006),
+    Check(claim="pool mlp: GO with pool 1024 select epoch min", stated=15,
+          recompute=pool_mlp(1024, "go_store_mlp", "select_epoch_min"), tolerance=0.5),
+    Check(claim="pool mlp: GO with pool 1024 select epoch max", stated=16,
+          recompute=pool_mlp(1024, "go_store_mlp", "select_epoch_max"), tolerance=0.5),
+    Check(claim="pool mlp: seconds a seed at 1024 (GO with pool)", stated=14,
+          recompute=pool_mlp(1024, "go_store_mlp", "seconds_max"), tolerance=1.5),
+    Check(claim="pool mlp: GO perceptron alone (existing)", stated=0.200,
+          recompute=go_model("go_mlp", "single_mean_spearman"), tolerance=0.0006),
     # sec:physics -- the minimum-norm (l2) store (2026-09-25).
     Check(claim="l2 store: genes", stated=1155,
           recompute=physics_store("betaxanthin", "l2", "n_genes"), tolerance=0.5),

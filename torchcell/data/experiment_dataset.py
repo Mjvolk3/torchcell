@@ -218,6 +218,21 @@ def canonical_json(obj: Any) -> str:
     return json.dumps(obj, sort_keys=True)
 
 
+class InternedDict(dict):  # type: ignore[type-arg]  # a plain dict that remembers its ref
+    """An interned constant sub-object, spliced back into records by reference.
+
+    Behaves exactly as the dict it wraps (every raw reader sees a dict), and carries
+    the content hash it was interned under so ``transform_item`` can recognize the
+    same constant across records and reuse one validated pydantic instance for it
+    instead of re-validating the same 9.5 KB Environment 20 million times.
+    """
+
+    def __init__(self, data: dict[str, Any], ref: str) -> None:
+        """Wrap ``data`` (shared, never mutated) under content hash ``ref``."""
+        super().__init__(data)
+        self.ref = ref
+
+
 def resolve_interned(obj: Any, interned: dict[str, Any]) -> Any:
     """Recursively splice interned sub-objects back into a record dict.
 
@@ -344,6 +359,12 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
         # env. Kept on its OWN attribute (NOT cleared by close_lmdb, which
         # nulls self.env and re-runs _init_db many times) so it loads exactly once.
         self._interned: dict[str, Any] | None = None
+        # Validated pydantic instances of interned constants, keyed by ref. Filled
+        # lazily by transform_item: the first record carrying a constant validates it
+        # from the dict as before and harvests the instance; every later record gets
+        # the instance spliced in, which pydantic accepts without re-validation
+        # (revalidate_instances is 'never'; the models are frozen so sharing is safe).
+        self._validated_interned: dict[str, Any] = {}
 
         # Automatically set the name based on the class name
         self.name = self.__class__.__name__
@@ -478,7 +499,13 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
             )
             with ienv.begin() as txn:
                 for key, value in txn.cursor():
-                    interned[key.decode()] = pickle.loads(value)
+                    ref = key.decode()
+                    loaded = pickle.loads(value)
+                    interned[ref] = (
+                        InternedDict(loaded, ref)
+                        if isinstance(loaded, dict)
+                        else loaded
+                    )
             ienv.close()
         self._interned = interned
 
@@ -745,18 +772,71 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
+    def _splice_validated(self, obj: Any) -> tuple[Any, bool]:
+        """Replace cached interned constants by their validated instances.
+
+        Copy-on-write: a container is copied only when one of its values changed, so
+        the shared interned dicts are never mutated. The flag reports whether any
+        interned constant was met that has NO cached instance yet.
+        """
+        if isinstance(obj, InternedDict):
+            cached = self._validated_interned.get(obj.ref)
+            return (obj, True) if cached is None else (cached, False)
+        if isinstance(obj, dict):
+            out: dict[str, Any] | None = None
+            pending = False
+            for key, value in obj.items():
+                new_value, value_pending = self._splice_validated(value)
+                pending = pending or value_pending
+                if new_value is not value:
+                    if out is None:
+                        out = dict(obj)
+                    out[key] = new_value
+            return (obj if out is None else out), pending
+        if isinstance(obj, list):
+            new_list = [self._splice_validated(v) for v in obj]
+            pending = any(p for _, p in new_list)
+            if any(nv is not v for (nv, _), v in zip(new_list, obj, strict=True)):
+                return [nv for nv, _ in new_list], pending
+            return obj, pending
+        return obj, False
+
+    def _harvest_validated(self, model: Any, raw: Any) -> None:
+        """Cache the validated instance behind every InternedDict still in ``raw``."""
+        if isinstance(raw, InternedDict):
+            if raw.ref not in self._validated_interned:
+                self._validated_interned[raw.ref] = model
+            return
+        if isinstance(raw, dict):
+            for key, value in raw.items():
+                if isinstance(value, dict | list):
+                    child = (
+                        model[key] if isinstance(model, dict) else getattr(model, key)
+                    )
+                    self._harvest_validated(child, value)
+        elif isinstance(raw, list):
+            for child, value in zip(model, raw, strict=True):
+                if isinstance(value, dict | list):
+                    self._harvest_validated(child, value)
+
+    def _build(self, model_class: Any, data: Any) -> Any:
+        """Validate ``data`` into ``model_class``, reusing cached constant instances."""
+        spliced, pending = self._splice_validated(data)
+        if isinstance(spliced, BaseModel):
+            # The whole object is an interned constant already validated once
+            # (the reference is, for every dataset with one reference).
+            return spliced
+        model = model_class(**spliced)
+        if pending:
+            self._harvest_validated(model, spliced)
+        return model
+
     def transform_item(self, item: dict[str, Any]) -> dict[str, Any]:
         """Rebuild typed experiment/reference/publication objects from a raw item."""
-        experiment_data = item["experiment"]
-        reference_data = item["reference"]
-        publication_data = item["publication"]
-        experiment = self.experiment_class(**experiment_data)
-        reference = self.reference_class(**reference_data)
-        publication = Publication(**publication_data)
         return {
-            "experiment": experiment,
-            "reference": reference,
-            "publication": publication,
+            "experiment": self._build(self.experiment_class, item["experiment"]),
+            "reference": self._build(self.reference_class, item["reference"]),
+            "publication": self._build(Publication, item["publication"]),
         }
 
     def __repr__(self) -> str:

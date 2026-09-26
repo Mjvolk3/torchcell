@@ -36,6 +36,10 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 CHUNKS_PER_WORKER = 2
+
+SINGLE_PASS_NODES = "all node types (chunked)"
+SINGLE_PASS_EDGES = "all edge types (chunked)"
+"""Phase names of the r3 single-pass traversals (one per adapter per kind)."""
 """Chunks a pool worker may handle before the pool is rebuilt with fresh workers.
 
 Bounds a worker's heap, which ratchets up across chunks because CPython does not
@@ -87,6 +91,12 @@ class CellAdapter:
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
         self.inprocess_max_records = inprocess_max_records
+        # r3: one traversal per adapter for every chunked node method (and one for
+        # every chunked edge method) instead of one traversal per method. The
+        # per-record work is identical; only the number of passes over the LMDB and
+        # the pydantic rehydrations change. Set by the build script from the config.
+        self.single_pass = False
+        self._single_pass_methods: list[tuple[str, Callable[..., Any]]] = []
         self.event = 0
         wandb.init()
         self.log_method_table()
@@ -462,7 +472,18 @@ class CellAdapter:
     def get_memory_reduction_factor(
         self, method_name: str, is_edge: bool = False
     ) -> float:
-        """Return the configured memory reduction factor for a method (default 1.0)."""
+        """Return the configured memory reduction factor for a method (default 1.0).
+
+        The single-pass method carries every chunked method's output per record, so
+        its factor is the smallest configured factor divided by the number of
+        methods folded in: a chunk then holds about as much as one method's chunk did.
+        """
+        if method_name in (SINGLE_PASS_NODES, SINGLE_PASS_EDGES):
+            factors = [
+                self.get_memory_reduction_factor(name, is_edge)
+                for name, _ in self._single_pass_methods
+            ]
+            return min(factors) / len(factors)
         method_list = (
             self.config.cell_adapter.edge_methods
             if is_edge
@@ -473,37 +494,68 @@ class CellAdapter:
                 return cast(float, method.get("memory_reduction_factor", 1.0))
         return 1.0
 
+    @data_chunker
+    def _all_chunked(self, data: dict[str, Any], method_name: str) -> list[Any]:
+        """Apply every folded chunked method to one record (single-pass body)."""
+        out: list[Any] = []
+        for _, method in self._single_pass_methods:
+            # ``__wrapped__`` is the undecorated per-record function that
+            # data_chunker wrapped; calling it directly skips a nested loader.
+            result = cast(Any, method).__wrapped__(self, data, method_name)
+            if isinstance(result, list):
+                out.extend(result)
+            else:
+                out.append(result)
+        return out
+
+    def _yield_methods(
+        self,
+        methods: list[tuple[str, Callable[..., Any]]],
+        config_methods: Any,
+        kind: str,
+    ) -> Iterator[Any]:
+        """Run the enabled methods of one kind, per method or as a single pass."""
+        enabled = [
+            (name, method)
+            for name, method in methods
+            if name in [i["method_name"] for i in config_methods]
+        ]
+        chunked = [(n, m) for n, m in enabled if not m.__name__.startswith("_get_")]
+        for method_name, method in enabled:
+            if self.single_pass and not method.__name__.startswith("_get_"):
+                continue
+            log.info(f"Running: {method_name}")
+            BuildPhase.set(type(self).__name__, method_name, kind)
+            if method.__name__.startswith("_get_"):
+                yield from method()
+            else:
+                yield from self.get_data_by_type(
+                    method, method_name, is_edge=kind == "edge"
+                )
+            self.event += 1
+            wandb.log({"event": self.event, "method": method_name, "type": kind})
+        if self.single_pass and chunked:
+            pass_name = SINGLE_PASS_NODES if kind == "node" else SINGLE_PASS_EDGES
+            self._single_pass_methods = chunked
+            log.info(f"Running: {pass_name} ({len(chunked)} methods folded)")
+            BuildPhase.set(type(self).__name__, pass_name, kind)
+            yield from self.get_data_by_type(
+                self._all_chunked, pass_name, is_edge=kind == "edge"
+            )
+            self.event += 1
+            wandb.log({"event": self.event, "method": pass_name, "type": kind})
+
     def get_nodes(self) -> Iterator[BioCypherNode]:
         """Yield BioCypher nodes from every enabled node method in config order."""
-        for method_name, method in self.node_methods:
-            config_method_names = [
-                i["method_name"] for i in self.config.cell_adapter.node_methods
-            ]
-            if method_name in config_method_names:
-                log.info(f"Running: {method_name}")
-                BuildPhase.set(type(self).__name__, method_name, "node")
-                if method.__name__.startswith("_get_"):
-                    yield from method()
-                else:
-                    yield from self.get_data_by_type(method, method_name)
-                self.event += 1
-                wandb.log({"event": self.event, "method": method_name, "type": "node"})
+        yield from self._yield_methods(
+            self.node_methods, self.config.cell_adapter.node_methods, "node"
+        )
 
     def get_edges(self) -> Iterator[BioCypherEdge]:
         """Yield BioCypher edges from every enabled edge method in config order."""
-        for method_name, method in self.edge_methods:
-            config_method_names = [
-                i["method_name"] for i in self.config.cell_adapter.edge_methods
-            ]
-            if method_name in config_method_names:
-                log.info(f"Running: {method_name}")
-                BuildPhase.set(type(self).__name__, method_name, "edge")
-                if method.__name__.startswith("_get_"):
-                    yield from method()
-                else:
-                    yield from self.get_data_by_type(method, method_name, is_edge=True)
-                self.event += 1
-                wandb.log({"event": self.event, "method": method_name, "type": "edge"})
+        yield from self._yield_methods(
+            self.edge_methods, self.config.cell_adapter.edge_methods, "edge"
+        )
 
     @property
     def supported_node_methods(self) -> list[str]:

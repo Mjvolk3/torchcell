@@ -32,6 +32,9 @@ adapters:
   # r1 arm: adapters.inprocess_max_records=25000 (datasets up to that many records
   # run every method in-process, no pool, no loader forks). 0 is production.
   inprocess_max_records: 0
+  # r3 arm: adapters.single_pass=true (one traversal per adapter for all chunked
+  # node methods, one for all chunked edge methods). false is production.
+  single_pass: false
 
 datasets:
   - MetaboliteZelezniak2018Dataset # 95 records

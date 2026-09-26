@@ -46,7 +46,7 @@ from the released array single-mutant fitness) is the row value. Over all 91{,}1
 triples, where the 5{,}000 without a query double fall back to the array screen, $r$ is
 $0.747$; on the deletion-array stratum of 029, $0.803$ against 029's $0.511$.
 
-\notesec{Kuzmin 2020 lacks one more column}
+\notesec{Kuzmin 2020 is two screens, and the build does not know which is which}
 The query-strain double moves the 2020 screen from $0.338$ to $0.660$ on its 255{,}064
 covered triples, and matching the control terms on the array strain changes nothing
 ($0.660$, median residual $0.031$), although the interactions matched on 300{,}185 of
@@ -56,15 +56,28 @@ strain. The 2020 loader emits singles from the query strain standard (Table S5) 
 the array single-mutant fitness of that screen is a column on the interaction rows of
 Tables S1 and S3 that no loader reads. With the row's own value in its place, everything
 else still from the build, $r$ is $0.920$, rmse $0.025$ and the median residual
-$2.8 \times 10^{-5}$: exact for most triples, and the distance to the raw-table $0.976$
-is a tail. The column is also stranger than a strain property: in the raw 2020 table the
-array single-mutant fitness varies within an array strain for 1{,}159 of 4{,}553
-strains, median range $0$, 90th percentile $0.046$, maximum $0.41$, and within the same
-query and array strain for 11{,}443 of 290{,}355 trigenic groups, so a per-strain record
-would reproduce most rows and not all. The remaining action for this screen is a loader
-that emits the 2020 array single-mutant fitness with its strain identifier, admitted as a
-superset the way the query doubles were, with the row-level variation recorded rather
-than averaged away.
+$2.8 \times 10^{-5}$.
+
+The rest is the two tables. Kuzmin 2020 released two screens: Table S1, the 240
+double-mutant queries and their 480 single-mutant controls against the diagnostic array
+of about 1{,}200 strains, and Table S3, pilot screens of 11 double-mutant queries against
+the genome-wide deletion array and the temperature-sensitive array. The supplementary
+text says the array single-mutant fitness came from the 2018 study, but the value on
+the rows is a constant of the array strain inside each table and differs between the
+tables for 1{,}159 of the 4{,}553 strains, median range $0$, 90th percentile $0.046$,
+maximum $0.41$; it is not the 2018 value either, agreeing with it on 1 percent of the
+shared strains at $r = 0.87$ for S1. The loaders read both tables into one dataset and
+record nothing of which table a row came from, so a 2020 triple, its controls and its
+array single can each come from either screen. Recomputed on the raw tables with every
+term taken inside the row's own table
+(\texttt{kuzmin2020\_within\_table\_recompute.py}), the identity reproduces the released
+score at $r = 1.000$, rmse $3.6 \times 10^{-5}$, every residual below $10^{-3}$, on all
+256{,}804 trigenic rows with both controls; pooling the controls over the two tables gives
+$0.977$, the within-screen figure of Section~\ref{sec:strength}, and averaging $f_k$ over
+them $0.906$. The 2020 score is therefore exactly recoverable from released data, and
+what the build needs is two things the loaders drop: the array single-mutant fitness
+per array strain and table, and the table itself on every 2020 record, as the screen
+identity a policy matches on.
 
 \begin{table}[htbp]
 \centering

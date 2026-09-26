@@ -1453,7 +1453,13 @@
         2702,
         2703,
         2704,
-        2705
+        2705,
+        2706,
+        2707,
+        2708,
+        2709,
+        2710,
+        2711
       ],
       "single": [
         {
@@ -1491,9 +1497,45 @@
           "spearman": 0.053952788512727216,
           "top50_enrichment": null,
           "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.05213560295294234,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.05604760007259696,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.05752085773398669,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.055618894053882484,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.05702594456107638,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.060340617085219296,
+          "top50_enrichment": null,
+          "top50_hits": null
         }
       ],
-      "mean_single_spearman": 0.05498481983086762,
+      "mean_single_spearman": 0.05571653628707582,
       "n_constant": 0,
       "triples": [
         {
@@ -1518,11 +1560,11 @@
       },
       "all_seeds": {
         "n": 639,
-        "spearman": 0.0565873945530587,
+        "spearman": 0.05718777975555525,
         "top50_enrichment": null,
         "top50_hits": null
       },
-      "n_seeds": 6
+      "n_seeds": 12
     },
     {
       "stem": "w179_aadelgopfbadrop_h12l1p1_e200",

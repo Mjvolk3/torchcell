@@ -37,7 +37,7 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{2.5pt}
-  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 2 of 4).}
+  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 2 of 5).}
   \label{tab:target-transfer-2}
   \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{78.5mm}rrrrrr@{}}
     \hline
@@ -69,7 +69,7 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{2.5pt}
-  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 3 of 4).}
+  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 3 of 5).}
   \label{tab:target-transfer-3}
   \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{78.5mm}rrrrrr@{}}
     \hline
@@ -101,7 +101,7 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{2.5pt}
-  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 4 of 4).}
+  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 4 of 5).}
   \label{tab:target-transfer-4}
   \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{78.5mm}rrrrrr@{}}
     \hline
@@ -124,6 +124,24 @@
     HiGHS and MOMA stores with GO against MOMA store with GO & 6 & 0.2159 (0.0067) & 0.2079 (0.0027) & $+0.0079$ (0.0061) & 5/6 & 4.73 / 4.46 \\
     GO multi-hot in the affine slot against the control, twelve seeds & 12 & 0.2029 (0.0019) & 0.0759 (0.0547) & $+0.1270$ (0.0544) & 12/12 & 4.99 / 4.06 \\
     HiGHS store with GO appended against GO alone, twelve seeds & 12 & 0.2144 (0.0080) & 0.2029 (0.0019) & $+0.0115$ (0.0085) & 11/12 & 4.98 / 4.99 \\
+    HiGHS and MOMA stores with GO against HiGHS store with GO, twelve seeds & 6 & 0.2159 (0.0067) & 0.2144 (0.0080) & $+0.0044$ (0.0028) & 5/6 & 4.73 / 4.98 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 5 of 5).}
+  \label{tab:target-transfer-5}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{78.5mm}rrrrrr@{}}
+    \hline
+    arm against control & seeds & arm (sd) & control (sd) & difference (sd) & higher & top-50 \\
+    \hline
+    measured amino-acid pool with GO against GO alone & 6 & 0.2082 (0.0024) & 0.2023 (0.0014) & $+0.0059$ (0.0023) & 6/6 & 4.89 / 5.03 \\
+    measured amino-acid pool with GO and the HiGHS vector against GO with the HiGHS vector & 6 & 0.2082 (0.0089) & 0.2114 (0.0068) & $-0.0032$ (0.0136) & 2/6 & 4.66 / 4.83 \\
+    measured amino-acid pool with GO and the HiGHS vector against the pool with GO & 6 & 0.2082 (0.0089) & 0.2082 (0.0024) & $+0.0000$ (0.0071) & 3/6 & 4.66 / 4.89 \\
     \hline
   \end{tabular}
 \end{table}

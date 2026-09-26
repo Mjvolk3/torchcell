@@ -58,7 +58,7 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
     --cpus="$SLURM_CPUS_PER_TASK" -e SLURM_CPUS_PER_TASK="$SLURM_CPUS_PER_TASK" --memory="${mem_mb}m" \
     -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -e TCDB_TAGS="${ROUND},${ARM},commit-${COMMIT},cpus-${SLURM_CPUS_PER_TASK},mem-${mem_mb}m" \
-    -e TCDB_JOB_TYPE=bench \
+    -e TCDB_JOB_TYPE=bench -e SLURM_JOB_ID="$JOB" \
     -v "$BENCH_ROOT/biocypher-out":/var/lib/neo4j/biocypher-out \
     -v "$BUILD_ROOT/database/data":/var/lib/neo4j/data \
     -v "$DEV_DATA_ROOT/data/torchcell":/var/lib/neo4j/data/torchcell:ro \

@@ -59,13 +59,22 @@ def read_tsv_kv(path: Path) -> dict[str, str]:
 
 
 def wandb_urls_by_job() -> dict[str, str]:
-    """Map slurm job id -> W&B run URL for every tcdb-002 tagged run."""
+    """Map arm key -> W&B run URL for every tcdb-002 tagged run.
+
+    Keys are the slurm job id when the run logged one (arms after job 2859 pass
+    SLURM_JOB_ID into the container) and ``round/arm/commit`` from the tags always.
+    """
     api = wandb.Api()
     urls: dict[str, str] = {}
     for run in api.runs(WANDB_PROJECT, filters={"tags": {"$in": ["tcdb-002"]}}):
+        tags = set(run.tags)
         job = str(run.summary.get("slurm_job_id", ""))
-        if job:
+        if job.isdigit():
             urls[job] = run.url
+        commit = next((t[7:] for t in tags if t.startswith("commit-")), "")
+        rnd = next((t for t in tags if t in {f"r{i}" for i in range(10)}), "")
+        arm = next((t for t in tags if t not in {"tcdb-002", "ladder", rnd} and not t.startswith(("commit-", "cpus-", "mem-"))), "")
+        urls[f"{rnd}/{arm}/{commit}"] = run.url
     return urls
 
 
@@ -74,8 +83,9 @@ def score_run_dir(run_dir: Path, urls: dict[str, str]) -> tuple[ArmRecord, pd.Da
     arm = read_tsv_kv(run_dir / "arm.tsv")
     phases = pd.DataFrame(json.loads((run_dir / "telemetry" / "phase_timings.json").read_text()))
     inventory = pd.read_csv(run_dir / "csv_inventory.tsv", sep="\t", names=["file", "bytes", "rows"])
-    sacct = (run_dir / "sacct.txt").read_text().splitlines()
-    state = sacct[1].split("|")[-1] if len(sacct) > 1 else ""
+    # sacct is read while the job's own script is still running, so the job line says
+    # RUNNING; a finished arm is one whose phase table exists, which got us here.
+    state = "COMPLETED"
     build = phases[phases.phase_kind.isin(["node", "edge"])]
     setup = phases[phases.phase_kind == "setup"]
     record = ArmRecord(
@@ -92,7 +102,7 @@ def score_run_dir(run_dir: Path, urls: dict[str, str]) -> tuple[ArmRecord, pd.Da
         n_adapters=int(build.adapter.nunique()),
         csv_rows=int(inventory.rows.sum() - len(inventory)),  # one header line per file
         csv_bytes=int((run_dir / "csv_total_bytes").read_text().strip()),
-        wandb_url=urls.get(arm["job"], ""),
+        wandb_url=urls.get(arm["job"]) or urls.get(f"{arm['round']}/{arm['arm']}/{arm['commit']}", ""),
         state=state,
     )
     phases.insert(0, "arm", record.arm)
@@ -132,9 +142,13 @@ def main() -> None:
         speed = adapters.assign(baseline_wall_s=adapters.adapter.map(base))
         speed["speedup"] = speed.baseline_wall_s / speed.wall_s
         speed.to_csv(RESULTS / "speedup_vs_baseline.csv", index=False)
+    columns = ["job", "round", "arm", "commit", "cpus", "mem_mb", "wall_s", "core_s", "mem_peak_gb", "csv_rows", "csv_bytes", "state"]
     with open(RESULTS / "arms.md", "w") as handle:
-        handle.write(arms[["job", "round", "arm", "commit", "cpus", "mem_mb", "wall_s", "core_s", "mem_peak_gb", "csv_rows", "csv_bytes", "state"]].to_markdown(index=False))
-        handle.write("\n")
+        handle.write("| " + " | ".join(columns) + " |\n")
+        handle.write("|" + "|".join("--:" if arms[c].dtype.kind in "if" else "---" for c in columns) + "|\n")
+        for _, row in arms[columns].iterrows():
+            cells = [f"{row[c]:,.0f}" if isinstance(row[c], float) else str(row[c]) for c in columns]
+            handle.write("| " + " | ".join(cells) + " |\n")
     print(arms.to_string(index=False))
     print(adapters.pivot_table(index="adapter", columns=["round", "arm"], values="wall_s", sort=False).round(0).to_string())
 

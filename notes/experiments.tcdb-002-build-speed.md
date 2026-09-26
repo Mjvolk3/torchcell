@@ -84,3 +84,56 @@ Wall for the whole adapter locally: pool 15.6 s before r2, 8.3 s after r2, 2.8 s
 single-pass. Cached-constant `transform_item` on 2,000 dev records: dmf_costanzo2016
 1.02 -> 0.16 ms per record, smf_kuzmin2018 1.35 -> 0.10 ms, `model_dump` byte-identical
 (`scripts/test_validated_cache.py`).
+
+## 2026.09.26 - Rounds 0 to 3 on the ladder
+
+All five arms at 48 CPUs / 192 GB, every arm emitting the same 29,736,777 CSV rows
+(`experiments/tcdb-002-build-speed/results/arms.csv`, from `scripts/bench_report.py`).
+Wall is generation only, from the first dataset instantiation to the last edge.
+
+| job | round | arm | commit | wall s | core s | peak GB | W&B |
+|--:|---|---|---|--:|--:|--:|---|
+| 2851 | r0 | chunk 4e5 (mis-set) | dad37766 | 11,644 | 31,753 | 121 | g3am6tot |
+| 2856 | r0 | baseline | c248fed8 | 5,496 | 42,117 | 142 | 7iu6wfxe |
+| 2857 | r1 | inproc-small | c248fed8 | 4,508 | 36,414 | 138 | 58wok98r |
+| 2858 | r2 | cached-constants | f93fb98c | 3,066 | 21,789 | 132 | 08amzlgs |
+| 2859 | r3 | single-pass | f93fb98c | 1,489 | 13,126 | 166 | autdlzu8 |
+
+<https://wandb.ai/zhao-group/tcdb/runs/7iu6wfxe>
+<https://wandb.ai/zhao-group/tcdb/runs/58wok98r>
+<https://wandb.ai/zhao-group/tcdb/runs/08amzlgs>
+<https://wandb.ai/zhao-group/tcdb/runs/autdlzu8>
+
+Per adapter, wall seconds (`results/arm_adapters.csv`):
+
+| adapter | records | r0 | r1 | r2 | r3 |
+|---|--:|--:|--:|--:|--:|
+| DmfCostanzo2016 (capped) | 2,000,000 | 2,605 | 1,702 | 1,274 | 1,070 |
+| DmfKuzmin2018 | 410,399 | 2,612 | 1,272 | 808 | 195 |
+| TmiKuzmin2020 | 301,798 | 2,356 | 1,357 | 888 | 167 |
+| Smith2006 | 12,747 | 257 | 93 | 50 | 24 |
+| AminoAcidCooper2010 | 4,313 | 200 | 54 | 25 | 16 |
+| GeneEssentialitySgd | 1,329 | 190 | 4 | 4 | 1 |
+| SmfKuzmin2018 | 1,539 | 179 | 12 | 6 | 3 |
+| MetaboliteZelezniak2018 | 95 | 160 | 1 | 1 | 1 |
+
+Readings:
+
+- The ladder is 3.7x faster after r3. Small datasets went from about 180 s to 1 to 3 s
+  each, the mid Kuzmin sets 13x, Costanzo 2.4x. Costanzo is now 72% of the ladder.
+- The baseline's small datasets confirm the fixed cost is fork-driven: 7 to 12 s per
+  chunked method at a 40 to 65 GB parent, against about 30 s at the 100 GB parent of
+  job 2032.
+- In r3 Costanzo runs at 9.8 cores on average of 48 (p90 25). The minute-by-minute
+  trace alternates between about 15 cores with memory rising to 140 GB and about 1 core
+  with memory falling: the workers fill the in-flight window, then idle while the main
+  process drains results into CSV at about 24k rows per second. The single-threaded
+  BioCypher writer is the bottleneck now, and its backlog is the 166 GB peak.
+- Hypothesis (untested): applying the ladder's per-class speedups to job 2032 puts the
+  full 51-dataset generation near 5 h, with the two Costanzo sets about 4 h of it, which
+  is why round 4 targets the writer.
+
+Round 4 arms: a py-spy profile of the main process on a Costanzo-only 500k arm; loader
+children per chunk cut from 5 to 1 (`adapters.io_to_total_worker_ratio=0.02`, the
+loader now only reads LMDB since transform runs in the chunk worker); and a 4x larger
+single-pass chunk (`adapters.chunk_size=4e5`).

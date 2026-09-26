@@ -54,6 +54,25 @@ solver, and the GLPK path lands on a different one almost every time. Hypothesis
 (untested): the vertex noise is what erased the growth block's signal in round 125, and
 round 139 is the transformer read of the same store without it.
 
+A store without vertices. A faster or better linear solver would pick a third set of
+vertices of the same degenerate optimum, so the vertex noise is removed by the program,
+not the solver: the \texttt{l2} variant of \texttt{target\_physics\_store.py} solves
+the growth LP, then minimizes $\|v\|_2^2$ subject to $Sv=0$, the knocked-out box and
+$v_{biomass}$ held at the LP optimum (less $10^{-6}$ relative), one interior-point QP
+per gene (Clarabel; HiGHS's active-set QP returns a solve error on this 2,831 by 4,177
+model). The squared norm is strictly convex on the optimal face, so each deletion has
+one solution whatever the path to it. The 1,155 genes solve in 49 s with every solve
+converged, the source's 93 lethals and the HiGHS rebuild's 17 moved growth ratios
+reproduced. The minimum-norm point spreads flux where the $\ell_1$ point concentrates
+it: the wild type carries 996 reactions above $10^{-6}$ against the parsimonious
+solution's 426, at an $\ell_1$ norm of 452 against 426. Its degeneracy row
+(Table~\ref{tab:store-degeneracy}) reads 427 no-effect deletions differing from the
+wild type by more than the script's $10^{-6}$ threshold, but at a median relative
+distance of $10^{-8}$ and a ninetieth percentile of $3\times10^{-5}$, against 0.39 for
+the HiGHS store and 0.38 for the GLPK one: interior-point tolerance, not vertex choice.
+The store alone in the affine and appended to GO are queued as rounds 181 and 182,
+paired against the HiGHS store (round 139) and the HiGHS vector with GO (round 151).
+
 The store read without the backbone (Table~\ref{tab:store-baselines};
 \texttt{target\_store\_baselines.py}, the 027 ladder's split, standardization and
 selection, with a random forest added, the Flux Cone Learning form on one point per

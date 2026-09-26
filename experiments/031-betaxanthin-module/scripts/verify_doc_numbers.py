@@ -20,6 +20,7 @@ import os
 import os.path as osp
 import sys
 
+import numpy as np
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -1158,6 +1159,35 @@ CHECKS: list[Check] = [
           recompute=ensemble("w195_bxdelgopfbaaapool_h12l1p1_e200", "spearman"), tolerance=0.0006),
     Check(claim="target-transfer: pool with GO HiGHS six-seed ensemble top-50", stated=4.79,
           recompute=ensemble("w195_bxdelgopfbaaapool_h12l1p1_e200", "top50_enrichment"), tolerance=0.006),
+    # sec:physics -- the minimum-norm (l2) store (2026-09-25).
+    Check(claim="l2 store: genes", stated=1155,
+          recompute=physics_store("betaxanthin", "l2", "n_genes"), tolerance=0.5),
+    Check(claim="l2 store: seconds", stated=49,
+          recompute=physics_store("betaxanthin", "l2", "seconds"), tolerance=0.5),
+    Check(claim="l2 store: not converged", stated=0,
+          recompute=physics_store("betaxanthin", "l2", "n_not_converged"), tolerance=0.5),
+    Check(claim="l2 store: lethal", stated=93,
+          recompute=physics_store("betaxanthin", "l2", "n_lethal"), tolerance=0.5),
+    Check(claim="l2 store: growth ratios moved", stated=17,
+          recompute=physics_store("betaxanthin", "l2", "n_genes_ratio_moved_gt_0.01"), tolerance=0.5),
+    Check(claim="l2 store: wild-type reactions above 1e-6", stated=996,
+          recompute=lambda: float((np.abs(np.load(osp.join(os.environ["DATA_ROOT"], "data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_l2.npz"))["v_wild_type"]) > 1e-6).sum()), tolerance=0.5),
+    Check(claim="l2 store: HiGHS wild-type reactions above 1e-6", stated=426,
+          recompute=lambda: float((np.abs(np.load(osp.join(os.environ["DATA_ROOT"], "data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_pfba.npz"))["v_wild_type"][:4177]) > 1e-6).sum()), tolerance=0.5),
+    Check(claim="l2 store: wild-type l1 norm", stated=452,
+          recompute=lambda: float(np.abs(np.load(osp.join(os.environ["DATA_ROOT"], "data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_l2.npz"))["v_wild_type"].astype(np.float64)).sum()), tolerance=0.5),
+    Check(claim="l2 store: HiGHS wild-type l1 norm", stated=426,
+          recompute=lambda: float(np.abs(np.load(osp.join(os.environ["DATA_ROOT"], "data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_pfba.npz"))["v_wild_type"][:4177].astype(np.float64)).sum()), tolerance=0.5),
+    Check(claim="degeneracy: l2 no-effect vectors differing", stated=427,
+          recompute=degeneracy("YPD_bx_l2", "n_no_effect_vector_differs"), tolerance=0.5),
+    Check(claim="degeneracy: l2 median distance", stated=0.0,
+          recompute=degeneracy("YPD_bx_l2", "median_rel_l2_log1p"), tolerance=1e-7),
+    Check(claim="degeneracy: l2 p90 distance", stated=3e-5,
+          recompute=degeneracy("YPD_bx_l2", "p90_rel_l2_log1p"), tolerance=6e-6),
+    Check(claim="degeneracy: HiGHS p90 distance", stated=0.39,
+          recompute=degeneracy("YPD_bx_pfba", "p90_rel_l2_log1p"), tolerance=0.005),
+    Check(claim="degeneracy: GLPK p90 distance", stated=0.38,
+          recompute=degeneracy("YPD_bx", "p90_rel_l2_log1p"), tolerance=0.005),
     # sec:physics -- the measured amino-acid pool in the ladder (2026-09-25).
     Check(claim="ladder: pool ridge", stated=0.149,
           recompute=store_baseline("betaxanthin", "aa_pool", "ridge", "mean_spearman"), tolerance=0.0006),

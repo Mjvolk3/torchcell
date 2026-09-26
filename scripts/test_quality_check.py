@@ -23,8 +23,10 @@ Three rules, all decided from the ``ast`` of each ``test_*.py`` file (Decision 1
     that call touched. "Touched" is tracked through simple name binding (``out = f(...)``,
     then any later ``out = g(out)`` or ``d[k] = out``), ``for`` targets over a derived
     iterable, and the arguments handed to the call (a tensor whose ``.grad`` the call
-    fills). ``pytest.raises`` around the call counts as the assertion. Conservative on
-    purpose: calls made through fixtures or module-level helpers are not tracked.
+    fills). ``pytest.raises`` around the call counts as the assertion, and so does an
+    assertion on a capture fixture (``capsys``, ``caplog``): stdout is the only output a
+    print-based function has. Conservative on purpose: calls made through fixtures or
+    module-level helpers are not tracked.
 
 A test that legitimately trips a rule (a function whose only contract is "does not
 raise", say) carries ``# test-quality: allow <reason>`` on its ``def`` line or a
@@ -208,12 +210,19 @@ def _allowed(source_lines: list[str], func: Func) -> bool:
     return any(ALLOW_MARKER in line for line in source_lines[first - 1 : last])
 
 
+CAPTURE_FIXTURES = {"capsys", "capfd", "caplog", "capsysbinary", "capfdbinary"}
+
+
 class _Taint:
     """Names a test derives from its torchcell calls, to a fixpoint."""
 
-    def __init__(self, nodes: list[ast.AST], tc_names: set[str]) -> None:
+    def __init__(
+        self, nodes: list[ast.AST], tc_names: set[str], seed: set[str] | None = None
+    ) -> None:
         self.tc_names = tc_names
-        self.derived: set[str] = set()
+        # pytest's capture fixtures observe stdout/stderr/logs, the only output a
+        # print-based function has, so whatever a torchcell call wrote reaches them.
+        self.derived: set[str] = set(seed or ())
         binders = [
             n
             for n in nodes
@@ -353,7 +362,8 @@ def check_function(
             isinstance(n, ast.Call) and _root(n.func) in local_tc for n in _nodes(node)
         ):
             local_tc.add(node.name)
-    taint = _Taint(nodes, local_tc)
+    captured = {a.arg for a in func.args.args if a.arg in CAPTURE_FIXTURES}
+    taint = _Taint(nodes, local_tc, seed=captured)
     if tc_names and any(taint.calls_torchcell(stmt) for stmt in func.body):
         asserted = (
             any(taint.touches(a.test) for a in asserts)
@@ -364,6 +374,13 @@ def check_function(
                 for node in nodes
                 if isinstance(node, (ast.With, ast.AsyncWith))
                 for item in node.items
+            )
+            # ``if <touched>: raise AssertionError`` is an assertion on the result.
+            or any(
+                taint.touches(node.test)
+                for node in nodes
+                if isinstance(node, ast.If)
+                and any(_raises_assertion_error(n) for n in ast.walk(node))
             )
         )
         if not asserted:

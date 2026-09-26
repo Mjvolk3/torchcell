@@ -405,3 +405,38 @@ Live-critical: importer graph (scripts/legacy_partition.py) @ 509f3bc0b
 ### Quality audit
 
 Reviewer: independent agent (Fable 5.1, read-only, re-derived every constant; all reproduced). Files: 4. Test functions: 39 before, 40 after. Rejected: 2 (`test_response_basis_head_shapes_for_scalar_and_distributional_output`, an all-zeros tensor's shape; `test_global_and_cross_attention_heads_shapes`, five shape assertions), both replaced by identity tests (exact zero at init then nonzero; CLS-only rows identical across the batch; cross-attention invariant to gene-token order). Rewritten: 11, each adding the structural identity the source promises: HyperSAGNN's init closed form (set mean of squared static residuals), LowRankBilinear as the product of its two projections, CrossGeneMixing spreading one gene to every gene of its sample only, PerturbationHead's sum pooling (order-invariant, empty set is `mlp([h_CLS, 0])`), PerMetaboliteHead locality (gene 0 reaches metabolites 0 and 2, never 1), graph propagation routing (genes 3 and 4 receive their own updates, six others one identical bias update), the equivariance test also proving the transform is not the identity, ObservedLabelEncoder's non-identity at full mask (finding above), DCell's term-1 activation equal to its subsystem on the exact gene states, the malformed-stratum test driven through the public constructor instead of mutating internals, and the trainer forward test asserting equality with the model's forward and clone reuse. Accepted with note: 9 (leaf heads untrained by the prediction and the rezero LayerNorms named as pinned quirks; `moved` truthiness tightened to `moved == every parameter` in both trainer tests; the 4.2228178933 constant now derived as `3 ln(e + e^2 + e^3) - 6`; the artifact-timing latent defect recorded). Accepted: 17. Wrong constants: 0. After the audit: 47 passed.
+
+## 2026.09.26 - Phase 3, kg/graph/data/ontology (PR-3)
+
+Five test files, none needing a data root: [[tests.torchcell.data.test_mean_experiment_deduplicate]] (grouping, the fitness and gene-interaction merges, and the vector family through `create_deduplicate_entry` on two `MetaboliteExperiment` duplicates), [[tests.torchcell.data.test_cell_data_synthetic]] (`to_cell_data` and `compute_strata` on three genes and a four-term GO DAG), [[tests.torchcell.data.test_graph_processor]] (the `Perturbation` processor, exact tensors), [[tests.torchcell.graph.test_gene_graph]] (`GeneGraph`, `GeneMultiGraph` and the four GO filters on hand-built graphs) and [[tests.torchcell.ontology.test_tc_ontology]] (`print_schema_mappings` line by line; the module header called it untested). `tests/torchcell/graph/test_graph.py` now carries `pytest.mark.data` beside its skipif so the SGD-backed tests are opt-in by flag as well as by presence. Adapters and `graph/validation` are deferred to a later phase. The anti-padding lint gained two rules in this PR: the capture fixtures (`capsys`, `capfd`, `caplog`, `capsysbinary`, `capfdbinary`) seed the taint, so an assertion on captured output after a torchcell call is an assertion about that call, and `if <touched>: raise AssertionError` counts as asserting the touched value (found by the Phase 4 tests of the lint itself).
+
+Findings the tests produced, pinned as behavior and named in the tests:
+
+- GO edges point child -> parent (`create_G_go`, graph.py line 1082). `compute_strata` gives the root stratum 0 and children their depth from it; DCell iterates the strata in descending order, so the leaves are processed first. The function's own docstring says leaves are stratum 0, which is not what it does.
+- `compute_strata`'s cycle fallback puts the whole remaining component into one stratum after the acyclic part, flattening whatever depth the component had.
+- `GeneGraph`'s `graph` field validator runs before `max_gene_set` is parsed (pydantic field order), so its "nodes not in max_gene_set" warning never fires; two foreign nodes are kept silently.
+- `filter_redundant_terms` removes the PARENT of a pair with identical gene sets (its walk starts at the roots) and rewires the child to the grandparent; the docstring says the term equal to "one of its parents" goes.
+- `MeanExperimentDeduplicator._compute_p_value_for_mean` reads its `p_values` argument only for a length check: the merged gene-interaction p-value is a one-sample t-test of the scores against zero (0.1 and 0.3 give 2 * t.sf(2, df = 1) = 0.2951672353), and a duplicate group in which one record has `gene_interaction_p_value = None` cannot be merged (ValueError from the length check).
+- The `Perturbation` processor builds a fresh `HeteroData` with the gene store alone: no edge type of the cell graph is copied (the fixture carries four physical edges to make that falsifiable).
+- `print_schema_mappings` prints hard-coded group headers, "NODES (16 total)" and "EDGES (11 total)", whatever the schema holds; the summary arithmetic below them is computed.
+
+Runs: behavioral suite under the sentinel, PR-3 tip on top of 52dd368b1: 1973 passed, 81 skipped, 402 deselected (import-all), 9 xfailed, 57 s; the five files alone: 29 passed; `test-quality` 147 files clean with the patched lint. Diff coverage vs `origin/main`: no source lines changed. Local table, rows that moved:
+
+Generated by: python scripts/coverage_gaps.py --before coverage-p2.json --after coverage-p3.json --import-only coverage-import.json
+Live-critical: importer graph (scripts/legacy_partition.py) @ 52dd368b1
+
+| Module | Live-critical | Statements | before @ 52dd368b1 | after @ 52dd368b1 | import-only @ 52dd368b1 | Delta |
+|---|---|---|---|---|---|---|
+| `torchcell/data/graph_processor.py` | yes | 1041 | 6.7% | 13.2% | 6.7% | +6.5 |
+| `torchcell/data/deduplicate.py` | yes | 113 | 18.6% | 20.7% | 18.6% | +2.1 |
+| `torchcell/data/cell_data.py` | yes | 267 | 3.4% | 27.1% | 3.4% | +23.8 |
+| `torchcell/graph/graph.py` | yes | 722 | 17.2% | 32.2% | 17.2% | +15.0 |
+| `torchcell/models/equivariant_cell_graph_transformer.py` | yes | 1146 | 52.1% | 52.2% | 5.3% | +0.1 |
+| `torchcell/data/mean_experiment_deduplicate.py` | yes | 161 | 12.3% | 85.7% | 12.3% | +73.4 |
+| `torchcell/ontology/tc_ontology.py` | yes | 145 | 0.0% | 86.4% | 3.3% | +86.4 |
+| TOTAL (line+branch) |  | 68290 | 24.9% | 25.7% | 15.4% | +0.8 |
+| TOTAL (line only) | | 68290 | 27.1% | 27.8% | 19.6% | |
+
+### Quality audit
+
+Reviewer: independent agent (Fable 5.1, read-only, re-derived every constant; all reproduced). Files: 5. Test functions: 27 before, 29 after. Rejected: 0. Rewritten: 4: the vector family now runs end to end through `create_deduplicate_entry` on two `MetaboliteExperiment` duplicates (mean level, RMS-pooled se, summed replicates, target-id map from the first record that has one) instead of the dict helpers alone; the gene-interaction merge asserts `graph_level` and the 0.2951672353 p-value and names that the records' own p-values do not enter it; the `to_cell_data` sort test builds its base graph from an unsorted plain list, since a `GeneSet` is already sorted and could not show the sort; `_cell_graph()` in the processor test carries a physical edge so "no edges copied" is falsifiable. Accepted with note: 6, among them the strata docstring wording (DCell reads the strata descending, not "root first"), the lossy cycle fallback, the hard-coded tc_ontology headers, and the coarse caplog seeding in the lint (any assertion on `caplog` after a torchcell call satisfies the rule). Accepted: 17. Wrong constants: 0. Added after the audit: the None-p-value refusal test. After the audit: 29 passed.

@@ -24,10 +24,13 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 # genome data under DATA_ROOT, which is not present in CI. Skip the whole module
 # when that dataset directory is absent (it runs locally where the data exists).
 _GENOME_DIR = os.path.join(DATA_ROOT, "data/sgd/genome") if DATA_ROOT else None
-pytestmark = pytest.mark.skipif(
-    not (_GENOME_DIR and os.path.exists(_GENOME_DIR)),
-    reason="requires SGD genome dataset at $DATA_ROOT/data/sgd/genome (absent in CI)",
-)
+pytestmark = [
+    pytest.mark.data,
+    pytest.mark.skipif(
+        not (_GENOME_DIR and os.path.exists(_GENOME_DIR)),
+        reason="requires SGD genome dataset at $DATA_ROOT/data/sgd/genome (absent in CI)",
+    ),
+]
 
 
 @pytest.fixture

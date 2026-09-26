@@ -1,0 +1,17 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_smoke_ctl_000.yaml
+#
+# THE DATASET-TOKEN SMOKE, CONTROL RUN. cgt_030_smoke_tok_000 with the clones written under
+# their ORIGINAL token: two targets 0.3 apart for one genotype under one source, which no
+# readout can separate, so the MSE floor over the cloned rows is delta^2/4 above the token
+# run's. smoke_report_030.py compares the two files.
+#
+#   sbatch experiments/030-solid-growth-multi/scripts/gh_smoke_dataset_token.slurm
+defaults:
+  - cgt_030_smoke_tok_000
+  - _self_
+
+wandb:
+  tags: [smoke, smoke_control, dataset_token, per_entry, s3, split_R, gilahyper]
+
+smoke:
+  control: true

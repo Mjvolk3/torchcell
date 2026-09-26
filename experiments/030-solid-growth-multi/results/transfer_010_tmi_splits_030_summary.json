@@ -1,0 +1,23 @@
+{
+  "source_split_cache": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/010-kuzmin-tmi/001-small-build/data_module_cache/index_seed_42.json",
+  "source_lmdb": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/010-kuzmin-tmi/001-small-build/processed/lmdb",
+  "target_entries_parquet": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/030-solid-growth-multi/closure/entries.parquet",
+  "identities_010": 376732,
+  "triples_030": 376732,
+  "matched": 376732,
+  "unmatched_010": 0,
+  "unclaimed_030": 0,
+  "multi_matched_010": 0,
+  "pinned_counts": {
+    "train": 301386,
+    "val": 37673,
+    "test": 37673
+  },
+  "expected_pinned_counts": {
+    "train": 301386,
+    "val": 37673,
+    "test": 37673
+  },
+  "all_pinned_order_3": true,
+  "join_key": "tuple(sorted(set(systematic_gene_name of the perturbations)))"
+}

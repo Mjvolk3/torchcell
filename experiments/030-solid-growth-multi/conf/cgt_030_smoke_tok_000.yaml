@@ -1,0 +1,46 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_smoke_tok_000.yaml
+#
+# THE DATASET-TOKEN SMOKE, TOKEN RUN. cgt_030_s3_r_tok_fit_000 (the table arm: the same
+# pool, pin, holdout, vocabulary and constants as the campaign, so this run also warms the
+# split cache the IGB launcher requires) with the synthetic second token switched on and
+# the budget cut to one GPU: every entry is cloned under SyntheticOffsetDataset, 0.3
+# normalized units higher; 3 epochs of 500 training batches; after training the script
+# measures pred(synthetic) - pred(own) on 40 validation batches
+# (results/smoke/cgt_030_smoke_tok_000_seed0.json). Paired with cgt_030_smoke_ctl_000 and
+# read by smoke_report_030.py. Plots and the transformer diagnostics are off; the
+# essentiality loader runs as in the campaign.
+#
+#   sbatch experiments/030-solid-growth-multi/scripts/gh_smoke_dataset_token.slurm
+defaults:
+  - cgt_030_s3_r_tok_fit_000
+  - _self_
+
+wandb:
+  tags: [smoke, dataset_token, per_entry, s3, split_R, gilahyper]
+
+smoke:
+  enabled: true
+  delta: 0.3
+  token_name: SyntheticOffsetDataset
+  labels: [gene_interaction, fitness]
+  control: false
+  n_val_batches: 40
+
+data_module:
+  num_workers: 8
+  batch_size: 256
+  val_batch_size: 64
+
+trainer:
+  max_epochs: 3
+  strategy: auto
+  devices: 1
+  precision: "bf16-mixed"
+  limit_train_batches: 500
+  limit_val_batches: 60
+
+regression_task:
+  plot_every_n_epochs: 1000
+  plot_transformer_diagnostics_every_n_epochs: 1000
+  plot_edge_recovery_every_n_epochs: 1000
+  gradient_probe_epochs: [0]

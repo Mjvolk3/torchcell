@@ -164,3 +164,36 @@ array strain identifier, admitted as a superset like the query doubles, with the
 variation kept (one entry per interaction row's value, or per (query strain, array strain))
 rather than averaged into one number per strain. Results: `results/closure_030_by_screen.csv`
 (every stratum and form), `results/t10-030-closure.tex` (the document subset).
+
+## 2026.09.25 - The two 2020 array SMF values are two screens; within one table the score is exact
+
+The SI (si1.md line 45) says the array single-mutant fitness estimates came from the 2018 study
+(ref 37), but the raw tables say otherwise. Kuzmin 2020 released two screens: Table S1 (240
+double-mutant queries and 480 single-mutant controls against the diagnostic array, ~1,200 strains)
+and Table S3 (pilot screens of 11 double-mutant queries against the genome-wide deletion array and
+the temperature-sensitive array). Every one of the 1,159 varying strains is separated by table
+(none by mutant type, 70 by allele-name spelling); inside a table the value is a strain constant;
+the S1 value equals the 2018 value for 1 percent of the 1,170 shared strains (r 0.87), S3 for
+1.7 percent (r 0.99). The loaders concatenate S1 and S3 into one dataset with no record of the
+table.
+
+`scripts/kuzmin2020_within_table_recompute.py` on the raw tables, every term inside the row's own
+table (f_ijk, f_ij, f_k from the row; eps_ik, eps_jk from the control rows against the same array
+strain in the same table):
+
+| rows | controls within the table | controls pooled over tables | f_k averaged over tables |
+|---|---|---|---|
+| S1, n 215,569 | r 1.000, rmse 3.5e-5, 100% of residuals < 1e-3 | 0.986 | 0.890 |
+| S3, n 41,235 | r 1.000, rmse 3.9e-5, 100% | 0.944 | 0.981 |
+| both, n 256,804 | r 1.000 | 0.977 (the within-screen figure) | 0.906 |
+
+So the 2020 trigenic score is exactly recoverable from released data, and the build lacks two
+things the loaders drop: the array single-mutant fitness per (array strain, table), and the table
+on every 2020 record (tmi, tmf, dmi, dmf) as the screen identity a policy matches on. Both are
+loader work; the second changes the stored records of a served dataset (a field, or a split of the
+S3 pilot rows into their own dataset classes), which is the full-rebuild case of the rebuild
+policy, not a superset admission. For training, the same identity says the screen (dataset and
+table) belongs in the input as a token: the identity holds inside a screen and not across them,
+so a model without the token is asked to fit two standards for one genotype. Table 9 of Section 8
+in `notes-tex/025-s3-closure` (PR #435) carries the per-table recompute; the script's note is
+[[experiments.030-solid-growth-multi.scripts.kuzmin2020_within_table_recompute]].

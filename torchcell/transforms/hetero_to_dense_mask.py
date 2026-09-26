@@ -122,8 +122,11 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
                 size = [num_nodes - store.pos.size(0)] + list(store.pos.size())[1:]
                 store.pos = torch.cat([store.pos, store.pos.new_zeros(size)], dim=0)
 
-            # Safely pad all tensor attributes with proper dimensions
-            for attr in dir(store):
+            # Safely pad all tensor attributes with proper dimensions. ``store.keys()``
+            # lists the stored attributes; ``dir(store)`` did not, so this loop padded
+            # nothing until tests/torchcell/transforms/test_hetero_to_dense_mask.py
+            # checked a second node tensor (2026.09.26).
+            for attr in list(store.keys()):
                 # Skip special attributes, non-tensor attributes, and already processed attributes
                 if attr.startswith("_") or attr in [
                     "x",

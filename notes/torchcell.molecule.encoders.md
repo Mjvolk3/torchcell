@@ -71,3 +71,33 @@ Sanity check from the tests (cosine similarity, ethanol vs acetic acid and ethan
 vanillin): every encoder puts ethanol closer to acetic acid, asserted for the four
 fingerprints and only printed for the rest. `molformer_xl` gives 0.100 vs 0.016,
 `chemberta2_mtr` 0.721 vs 0.028, `mol2vec` 0.776 vs 0.688, `unimol_v1` 0.787 vs 0.694.
+
+## 2026.09.25 - Why these twelve, and what was left out
+
+Three principles: the 25-model benchmark (arXiv 2508.06199) found almost every
+pretrained embedding indistinguishable from count ECFP, so fingerprints are the mandatory
+baseline; everything installs from RDKit, pip or the Hugging Face hub (MolE is the one
+vendored exception, because it is the antimicrobial-specific encoder); and the four
+representation families are each present so a transfer test can attribute signal to a
+family, not a checkpoint.
+
+| encoder | family | corpus | objective | citation band (approx., 2026.09) |
+|---|---|---|---|---|
+| ecfp4_count, ecfp4_bit, fcfp4_count, maccs | fingerprint | none | hashed / curated substructures | thousands |
+| rdkit_2d | descriptors | none | 217 physchem descriptors | ubiquitous |
+| mol2vec | fragment embedding | 19.9M ZINC + ChEMBL | skip-gram on Morgan ids | over 500 |
+| chemberta2_mlm, chemberta2_mtr | SMILES transformer | 77M PubChem | MLM; multitask regression on RDKit properties | several hundred |
+| molformer_xl | SMILES transformer | 1.1B PubChem + ZINC (public checkpoint: 10% subset) | MLM, linear attention | several hundred |
+| roberta_zinc_480m | SMILES transformer | 480M ZINC | MLM | community model, uncited; first to cut |
+| unimol_v1 | 3D | 209M conformers | atom masking, coordinate denoising, pair distances | several hundred |
+| mole_static | graph (GIN) | 100k PubChem | Barlow Twins on masked subgraphs; validated for antimicrobials | young (Nat Commun 2025) |
+
+Left out: Chemprop (supervised end to end, a model not an embedding); MolR, dGbyG and
+reaction hypergraphs (reaction context places a metabolite, not an inhibitor); CLAMP
+(repo-only, mammalian assay text; second pass if fingerprints win); MolCLR, GraphMVP,
+3D Infomax, Mole-BERT, KPGT (GIN family, research repos); GEM (PaddlePaddle); CLOOME,
+MoCoP, InfoAlign (human Cell Painting or expression phenotypes); MoleculeSTM, MolBERT,
+R-MAT, CDDD (SMILES family already covered).
+
+Caveat: the corpora are drug-like (20 to 40 heavy atoms); ethanol and isobutanol have 3
+and 5, so ECFP is nearly empty and transformer embeddings are poorly determined for them.

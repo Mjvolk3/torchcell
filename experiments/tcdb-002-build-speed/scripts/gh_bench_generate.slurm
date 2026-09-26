@@ -40,6 +40,17 @@ KG_MODULE="${KG_MODULE:-torchcell.knowledge_graphs.create_scerevisiae_kg_small}"
 KG_CONFIG="${KG_CONFIG:-kg_bench_ladder}"
 KG_OVERRIDES="${KG_OVERRIDES:-}"
 KEEP_CSV="${KEEP_CSV:-0}"
+# PROFILE=1 records the MAIN process (the CSV writer) with py-spy at 50 Hz into
+# <run dir>/parent.speedscope. Workers are not sampled; their cost shows in the
+# cgroup telemetry. Needs CAP_SYS_PTRACE in the container.
+PROFILE="${PROFILE:-0}"
+if [ "$PROFILE" = "1" ]; then
+    PTRACE_OPT=(--cap-add SYS_PTRACE)
+    RUNNER="python -m pip install --no-cache-dir py-spy >/dev/null && mkdir -p /var/lib/neo4j/biocypher-out/_run_${SLURM_JOB_ID} && py-spy record --format speedscope --rate 50 --idle -o /var/lib/neo4j/biocypher-out/_run_${SLURM_JOB_ID}/parent.speedscope -- python"
+else
+    PTRACE_OPT=()
+    RUNNER="python"
+fi
 : "${WHEEL_DIR:?submit through submit_bench.sh}" "${ROUND:?}" "${ARM:?}" "${COMMIT:?}"
 
 RUN_DIR="$BENCH_ROOT/runs/${JOB}_${ROUND}_${ARM}"
@@ -54,7 +65,7 @@ GEN_LOG="$RUN_DIR/generate.log"
 
 # Same mounts as the production generate step: build tree for genome/graph caches and
 # the container env, dev tree datasets read-only, CSVs to the bench output dir.
-docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
+docker run --rm --entrypoint bash --name "$GEN_CONTAINER" "${PTRACE_OPT[@]}" \
     --cpus="$SLURM_CPUS_PER_TASK" -e SLURM_CPUS_PER_TASK="$SLURM_CPUS_PER_TASK" --memory="${mem_mb}m" \
     -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -e TCDB_TAGS="${ROUND},${ARM},commit-${COMMIT},cpus-${SLURM_CPUS_PER_TASK},mem-${mem_mb}m" \
@@ -74,7 +85,7 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
         set -a; source /.env; set +a
         wandb login \$WANDB_API_KEY >/dev/null
         echo container_cpu_max=\$(cat /sys/fs/cgroup/cpu.max) memory_max=\$(cat /sys/fs/cgroup/memory.max)
-        python -m $KG_MODULE --config-name $KG_CONFIG $KG_OVERRIDES
+        $RUNNER -m $KG_MODULE --config-name $KG_CONFIG $KG_OVERRIDES
         CALL=\$(cat biocypher_file_name.txt)
         OUT_DIR=/var/lib/neo4j/\$(dirname \$CALL)
         echo GENERATION_OUT=\$OUT_DIR

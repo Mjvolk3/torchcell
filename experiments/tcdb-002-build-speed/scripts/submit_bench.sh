@@ -26,7 +26,7 @@ mkdir -p "$WHEEL_DIR" "$BENCH_ROOT/slurm"
 ls "$WHEEL_DIR"/torchcell-*.whl >/dev/null
 chmod -R a+rX "$WHEEL_DIR"
 export KG_OVERRIDES="${KG_OVERRIDES:-}"
-sbatch --export=ALL,WHEEL_DIR="$WHEEL_DIR",ROUND="$ROUND",ARM="$ARM",COMMIT="$COMMIT",KG_CONFIG="${KG_CONFIG:-kg_bench_ladder}",KEEP_CSV="${KEEP_CSV:-0}" \
+sbatch --export=ALL,WHEEL_DIR="$WHEEL_DIR",ROUND="$ROUND",ARM="$ARM",COMMIT="$COMMIT",KG_CONFIG="${KG_CONFIG:-kg_bench_ladder}",KEEP_CSV="${KEEP_CSV:-0}",PROFILE="${PROFILE:-0}" \
     -J "tcdb002-${ROUND}-${ARM}" --cpus-per-task="$CPUS" --mem="$MEM" "$@" \
     "$SRC/experiments/tcdb-002-build-speed/scripts/gh_bench_generate.slurm"
 echo "wheel: $WHEEL_DIR (commit $COMMIT)"

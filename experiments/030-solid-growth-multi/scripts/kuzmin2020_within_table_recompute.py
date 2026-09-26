@@ -99,6 +99,39 @@ def controls(df: pd.DataFrame) -> pd.DataFrame:
     return ctrl
 
 
+def _write_table(out: pd.DataFrame, path: str) -> None:
+    """The per-table result for notes-tex/025-s3-closure, in the style of its other tables."""
+    names = {
+        "S1": "S1, diagnostic array",
+        "S3": "S3, pilot screens",
+        "both": "both tables",
+    }
+    lines = [
+        "%% SOURCE: experiments/030-solid-growth-multi/scripts/kuzmin2020_within_table_recompute.py "
+        "(results/kuzmin2020_within_table_recompute.csv) -- GENERATED, do not edit",
+        "",
+        r"\begin{tabular}{llrrrrr}",
+        r"\toprule",
+        r"rows & terms & $n$ & $r$ & slope & rmse & $|$residual$|<10^{-3}$ \\",
+        r"\midrule",
+    ]
+    for table, group in out.groupby("table", sort=False):
+        for k, (_, r) in enumerate(group.iterrows()):
+            first = names[str(table)] if k == 0 else ""
+            form = str(r["form"]).replace("f_k", "$f_k$")
+            rr = f"{r['pearson']:.3f}"
+            rr = rf"\textbf{{{rr}}}" if k == 0 else rr
+            lines.append(
+                f"{first} & {form} & {int(r['n']):,} & {rr} & {r['slope']:.3f} & "
+                f"{r['rmse']:.5f} & {100 * r['frac_abs_residual_below_1e-3']:.1f}\\% \\\\"
+            )
+        lines.append(r"\midrule")
+    lines[-1] = r"\bottomrule"
+    lines.append(r"\end{tabular}")
+    with open(path, "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 def main() -> None:
     os.makedirs(RESULTS, exist_ok=True)
     df = load()
@@ -171,6 +204,7 @@ def main() -> None:
         )
     out = pd.DataFrame(rows)
     out.to_csv(osp.join(RESULTS, "kuzmin2020_within_table_recompute.csv"), index=False)
+    _write_table(out, osp.join(RESULTS, "t11-kuzmin2020-within-table.tex"))
     summary = {
         "n_trigenic_rows": int(len(tri)),
         "n_trigenic_by_table": tri["table"].value_counts().to_dict(),

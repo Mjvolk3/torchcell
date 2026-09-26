@@ -95,8 +95,9 @@ columns (0.149) and 0.09 under their nearest-neighbor read: the ceiling is the s
 The same columns through a hidden layer of 64 read 0.240, $+0.045$ over the linear
 slot on five of six and the highest single-seed mean of any transformer arm, with a
 six-seed ensemble of 0.292 that passes the ladder's nearest neighbors (round 180): the
-pool's nonlinear signal does reach the transformer once the slot is nonlinear, and one
-seed selects at the budget's end, so 0.240 is a lower bound. The minimum-norm flux
+pool's nonlinear signal does reach the transformer once the slot is nonlinear; a
+400-epoch budget selects the same epochs and reads the same values on every seed
+(190), so 0.240 is the arm's level, not a bound. The minimum-norm flux
 store, the unique point with no vertex noise, reads under the sparse HiGHS vertex both
 alone (0.093 against 0.130, round 181) and beside GO (0.204 against 0.211 on six of six,
 round 182): the flux side's gain beside the annotation lives in the sparse solution.
@@ -119,5 +120,9 @@ built. Without the transformer the same columns give a perceptron 0.236 at width
 and 0.240 with GO appended, the annotation adding there at every width
 (Section~\ref{sec:physics}): the transformer's hidden slot reads the pool 0.04 above
 any standalone perceptron, and what the annotation does to the pool's read depends on
-the head it enters. Cells queued: the pool through 64 with a 400-epoch budget (190), through 512
-(192) and 128 (194), six more seeds of 256 (193).
+the head it enters. The perceptron with two slots, GO linear beside the pool's hidden
+layer, reads 0.265, above the shared layer (0.240) and the pool alone (0.236) at every
+width, and holds under depth where the pool alone falls to 0.19: the annotation adds
+to the pool when the two do not share a hidden unit. That two-slot head inside the
+transformer is the next arm. Cells queued: the pool through 512 (192) and 128 (194),
+six more seeds of 256 (193), 256 with a 400-epoch budget (196).

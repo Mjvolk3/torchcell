@@ -827,4 +827,12 @@ store appended to the pool inside one hidden layer has cost it (rounds 185, 188,
 so the pool's nonlinear read is best taken alone, and a head that reads the pool and
 the other families through separate slots is the arm that would test whether they add.
 
+Round 190 is read (job 2864, 6 h 55 min): the pool through the hidden layer of 64
+with a budget of 400 epochs, the same six seeds as round 180. Every seed selects the
+epoch it selected under 200 and reads the same value to the fourth digit, 0.240 (sd
+0.048) with a paired difference of exactly zero: the validation curve never passes its
+first 200 epochs' peak in the second 200, on the seed that selected at 197 as on the
+others. So round 180's level was not a lower bound set by the budget, and the
+selection at 197 was a peak, not a truncation.
+
 \input{tables/target_transfer}

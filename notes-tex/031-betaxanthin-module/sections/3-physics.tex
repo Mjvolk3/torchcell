@@ -241,7 +241,19 @@ since the perceptron standardizes the columns, trains full batch and selects on 
 smoothed validation curve, so which of those carries the gap is not measured; the
 plain reading is that the columns give a perceptron 0.24 and the transformer's
 hidden slot 0.28, and that the annotation's effect on the pool's read depends on the
-head it enters. The ladder agrees with the transformer on the flux side: the pool
+head it enters. A head with two slots, the GO multi-hot through a linear map and the
+pool through the hidden layer, summed before the output so the two never share a
+hidden unit, reads 0.260 at width 256 and 0.265 at 1,024 (sd 0.006, ensemble 0.266,
+top-50 5.36, 23,872 parameters): above the shared layer over the same columns (0.240)
+and the pool alone (0.236) at every width, the highest single-seed read of any
+perceptron in the study and the best call of the sweep. Depth costs the pool alone
+and not the two-slot head: at width 1,024 a second and a third hidden layer take the
+pool alone to 0.185 and 0.195 and the shared layer to 0.247 and 0.243, while the two
+slots hold at 0.262 and 0.258. So what the annotation does to the pool's read is set
+by whether the two share a hidden layer: sharing costs the pool 0.02 to 0.03 in the
+perceptron and 0.03 in the transformer, and a linear slot beside the pool's hidden
+layer adds 0.03 to the pool alone in the perceptron. That head is the transformer arm
+the study has not built. The ladder agrees with the transformer on the flux side: the pool
 with the HiGHS vector appended on the pool's own genes (round 191's store) reads 0.095,
 0.153 and 0.220 by ridge, nearest neighbors and forest against the pool alone's 0.149,
 0.285 and 0.280, under it on every model and by 0.13 for the neighbors

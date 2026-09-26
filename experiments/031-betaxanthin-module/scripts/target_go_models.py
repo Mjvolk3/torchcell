@@ -107,7 +107,13 @@ ARMS = (
     "go_store_mlp",
     "go_prot_mlp",
     "go_prot_store_mlp",
+    "go_linear_store_mlp",
 )
+#: The two-slot arm (2026-09-26): the GO multi-hot through a linear map and the store
+#: block through the hidden layers, summed before the output, so the annotation and
+#: the store never share a hidden unit; the perceptron form of the head the
+#: transformer study has not built (rounds 185, 188, 191).
+TWO_SLOT_ARMS = ("go_linear_store_mlp",)
 #: The two hierarchy arms: the shared per-term gene input, and DCell's published input,
 #: one weight vector per (gene, term) annotation pair. Under a split by gene the
 #: published input's columns for a held-out gene receive no gradient, so that arm reads
@@ -121,6 +127,7 @@ DCELL_ARMS = ("dcell_style_shared", "dcell_published_input")
 ARM_INPUTS = {
     "go_mlp": ("go",),
     "store_mlp": ("store",),
+    "go_linear_store_mlp": ("go", "store"),
     "prot_mlp": ("prot",),
     "go_store_mlp": ("go", "store"),
     "go_prot_mlp": ("go", "prot"),
@@ -175,6 +182,7 @@ class Report(BaseModel):
     seconds: float
     store: str = ""  # the study's flux store (STORE_SPEC) when empty
     mlp_hidden: int = HIDDEN_MLP
+    mlp_depth: int = 1
 
 
 class TargetDCell(DCellStyle):
@@ -219,6 +227,34 @@ class TargetDCell(DCellStyle):
         return aux, self.out_head(state[:, -1, :])
 
 
+def perceptron(n_in: int, hidden: int, depth: int, n_out: int) -> nn.Sequential:
+    """``depth`` ReLU hidden layers of ``hidden`` units and a linear output."""
+    layers: list[nn.Module] = []
+    width = n_in
+    for _ in range(depth):
+        layers += [nn.Linear(width, hidden), nn.ReLU()]
+        width = hidden
+    layers.append(nn.Linear(width, n_out))
+    return nn.Sequential(*layers)
+
+
+class TwoSlot(nn.Module):
+    """A linear map over the first ``n_linear`` columns plus a perceptron over the rest."""
+
+    def __init__(
+        self, n_linear: int, n_rest: int, hidden: int, depth: int, n_out: int
+    ) -> None:
+        """The two slots are summed; neither sees the other's columns."""
+        super().__init__()
+        self.n_linear = n_linear
+        self.linear = nn.Linear(n_linear, n_out)
+        self.mlp = perceptron(n_rest, hidden, depth, n_out)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """The sum of the linear slot's and the perceptron slot's outputs."""
+        return self.linear(x[:, : self.n_linear]) + self.mlp(x[:, self.n_linear :])
+
+
 class Task(BaseModel):
     """One (arm, seed) cell and the settings it trains under."""
 
@@ -228,6 +264,7 @@ class Task(BaseModel):
     epochs: int
     width: int
     hidden: int = HIDDEN_MLP
+    depth: int = 1
 
 
 # worker state, inherited by fork
@@ -278,9 +315,11 @@ def run_task(task: Task) -> SeedRead:
         x = torch.from_numpy(
             np.concatenate([_BLOCKS[b] for b in ARM_INPUTS[task.arm]], axis=1)
         )
-        net = nn.Sequential(
-            nn.Linear(x.shape[1], task.hidden), nn.ReLU(), nn.Linear(task.hidden, n_out)
-        )
+        if task.arm in TWO_SLOT_ARMS:
+            n_go = _BLOCKS["go"].shape[1]
+            net = TwoSlot(n_go, x.shape[1] - n_go, task.hidden, task.depth, n_out)
+        else:
+            net = perceptron(x.shape[1], task.hidden, task.depth, n_out)
     params = list(net.parameters())
     opt = torch.optim.Adam(params, lr=1e-3)
     obs_val = np.isfinite(_Y[_ROWS["val"]])
@@ -367,6 +406,7 @@ def main() -> None:
     # through the same perceptrons. The hidden width of every ``*_mlp`` arm.
     ap.add_argument("--store", default=None)
     ap.add_argument("--mlp-hidden", type=int, default=HIDDEN_MLP)
+    ap.add_argument("--mlp-depth", type=int, default=1)
     # MEASURED 2026-09-24: a forked pool of two workers sat idle for 77 min with no cell
     # finished (the parent had initialized torch's thread pool before forking, the
     # deadlock the fork warning names); in-process with 16 threads a DCell cell takes
@@ -520,7 +560,12 @@ def main() -> None:
     )
     tasks = [
         Task(
-            arm=a, seed=s, epochs=args.epochs, width=args.width, hidden=args.mlp_hidden
+            arm=a,
+            seed=s,
+            epochs=args.epochs,
+            width=args.width,
+            hidden=args.mlp_hidden,
+            depth=args.mlp_depth,
         )
         for a in args.arms
         for s in args.seeds
@@ -593,6 +638,7 @@ def main() -> None:
         seconds=time.time() - started,
         store=args.store or "",
         mlp_hidden=args.mlp_hidden,
+        mlp_depth=args.mlp_depth,
     )
     out = args.out or osp.join(
         EXPERIMENT_ROOT, STUDY[args.target], "results", f"go_models_{args.target}.json"
@@ -607,9 +653,14 @@ def main() -> None:
             previous.width,
             previous.store,
             previous.mlp_hidden,
-        ) == (report.epochs, report.width, report.store, report.mlp_hidden), (
-            "settings differ from the file's"
-        )
+            previous.mlp_depth,
+        ) == (
+            report.epochs,
+            report.width,
+            report.store,
+            report.mlp_hidden,
+            report.mlp_depth,
+        ), "settings differ from the file's"
         kept = [a for a in previous.arms if a.arm not in {b.arm for b in report.arms}]
         order = {a: i for i, a in enumerate(ARMS)}
         report.arms = sorted(kept + report.arms, key=lambda a: order[a.arm])

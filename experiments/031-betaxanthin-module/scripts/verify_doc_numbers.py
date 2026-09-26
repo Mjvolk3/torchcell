@@ -85,14 +85,15 @@ def go_model(arm: str, key: str):
     return run
 
 
-def pool_mlp(hidden: int, arm: str, key: str):
+def pool_mlp(hidden: int, arm: str, key: str, name: str | None = None):
     """A value of one arm of the CPU perceptron sweep over the measured pool
-    (target_go_models.py --store YPD_bx_aapool --mlp-hidden <hidden>)."""
+    (target_go_models.py --store YPD_bx_aapool --mlp-hidden <hidden>); ``name`` picks a
+    result file past the width series (the two-slot and depth runs)."""
 
     def run() -> float:
         import json
 
-        d = json.load(open(osp.join(RESULTS, f"go_models_betaxanthin_pool_h{hidden}.json")))
+        d = json.load(open(osp.join(RESULTS, name or f"go_models_betaxanthin_pool_h{hidden}.json")))
         assert d["store"] == "YPD_bx_aapool" and d["mlp_hidden"] == hidden
         a = next(x for x in d["arms"] if x["arm"] == arm)
         if key == "select_epoch_min":
@@ -1719,6 +1720,44 @@ CHECKS: list[Check] = [
           recompute=lambda: float(json.load(open(osp.join(RESULTS, "target_pool_store_YPD_bx_cooperpool.json")))["n_genes"]), tolerance=0.5),
     Check(claim="Cooper pool store: percent of cells missing", stated=8.5,
           recompute=lambda: 100.0 * json.load(open(osp.join(RESULTS, "target_pool_store_YPD_bx_cooperpool.json")))["n_missing_cells_filled_with_reference"] / (4313 * 17), tolerance=0.06),
+    # sec:physics -- the two-slot perceptron and depth over the pool (2026-09-26).
+    Check(claim="pool mlp: two slots 256", stated=0.260,
+          recompute=pool_mlp(256, "go_linear_store_mlp", "single_mean_spearman", "go_models_betaxanthin_pool_twoslot_h256.json"), tolerance=0.0006),
+    Check(claim="pool mlp: two slots 1024", stated=0.265,
+          recompute=pool_mlp(1024, "go_linear_store_mlp", "single_mean_spearman", "go_models_betaxanthin_pool_twoslot_h1024.json"), tolerance=0.0006),
+    Check(claim="pool mlp: two slots 1024 sd", stated=0.006,
+          recompute=pool_mlp(1024, "go_linear_store_mlp", "single_sd_spearman", "go_models_betaxanthin_pool_twoslot_h1024.json"), tolerance=0.0006),
+    Check(claim="pool mlp: two slots 1024 ensemble", stated=0.266,
+          recompute=pool_mlp(1024, "go_linear_store_mlp", "ensemble_spearman", "go_models_betaxanthin_pool_twoslot_h1024.json"), tolerance=0.0006),
+    Check(claim="pool mlp: two slots 1024 top-50", stated=5.36,
+          recompute=pool_mlp(1024, "go_linear_store_mlp", "single_mean_top50", "go_models_betaxanthin_pool_twoslot_h1024.json"), tolerance=0.006),
+    Check(claim="pool mlp: two slots 1024 parameters", stated=23872,
+          recompute=lambda: float(next(a for a in json.load(open(osp.join(RESULTS, "go_models_betaxanthin_pool_twoslot_h1024.json")))["arms"] if a["arm"] == "go_linear_store_mlp")["seeds"][0]["n_parameters"]), tolerance=0.5),
+    Check(claim="pool mlp: pool alone 1024 depth 2", stated=0.185,
+          recompute=pool_mlp(1024, "store_mlp", "single_mean_spearman", "go_models_betaxanthin_pool_h1024_d2.json"), tolerance=0.0006),
+    Check(claim="pool mlp: pool alone 1024 depth 3", stated=0.195,
+          recompute=pool_mlp(1024, "store_mlp", "single_mean_spearman", "go_models_betaxanthin_pool_h1024_d3.json"), tolerance=0.0006),
+    Check(claim="pool mlp: shared layer 1024 depth 2", stated=0.247,
+          recompute=pool_mlp(1024, "go_store_mlp", "single_mean_spearman", "go_models_betaxanthin_pool_h1024_d2.json"), tolerance=0.0006),
+    Check(claim="pool mlp: shared layer 1024 depth 3", stated=0.243,
+          recompute=pool_mlp(1024, "go_store_mlp", "single_mean_spearman", "go_models_betaxanthin_pool_h1024_d3.json"), tolerance=0.0006),
+    Check(claim="pool mlp: two slots 1024 depth 2", stated=0.262,
+          recompute=pool_mlp(1024, "go_linear_store_mlp", "single_mean_spearman", "go_models_betaxanthin_pool_h1024_d2.json"), tolerance=0.0006),
+    Check(claim="pool mlp: two slots 1024 depth 3", stated=0.258,
+          recompute=pool_mlp(1024, "go_linear_store_mlp", "single_mean_spearman", "go_models_betaxanthin_pool_h1024_d3.json"), tolerance=0.0006),
+    Check(claim="pool mlp: two slots over the pool alone at 1024", stated=0.03,
+          recompute=lambda: pool_mlp(1024, "go_linear_store_mlp", "single_mean_spearman", "go_models_betaxanthin_pool_twoslot_h1024.json")() - pool_mlp(1024, "store_mlp", "single_mean_spearman")(), tolerance=0.006),
+    # sec:rounds -- round 190, the pool through 64 at 400 epochs.
+    Check(claim="round 190: pool mlp e400 arm", stated=0.240,
+          recompute=transfer("betaxanthin: measured amino-acid pool through a hidden layer of 64 with a budget of 400 epochs against the budget of 200", "mean_spearman", "arm"), tolerance=0.0006),
+    Check(claim="round 190: pool mlp e400 arm sd", stated=0.048,
+          recompute=transfer("betaxanthin: measured amino-acid pool through a hidden layer of 64 with a budget of 400 epochs against the budget of 200", "sd_spearman", "arm"), tolerance=0.0006),
+    Check(claim="round 190: paired difference is zero", stated=0.0,
+          recompute=transfer("betaxanthin: measured amino-acid pool through a hidden layer of 64 with a budget of 400 epochs against the budget of 200", "mean_difference"), tolerance=0.00005),
+    Check(claim="round 190: paired sd is zero", stated=0.0,
+          recompute=transfer("betaxanthin: measured amino-acid pool through a hidden layer of 64 with a budget of 400 epochs against the budget of 200", "sd_difference"), tolerance=0.00005),
+    Check(claim="round 190: select epoch max is the same 197", stated=197,
+          recompute=pair_cells("betaxanthin: measured amino-acid pool through a hidden layer of 64 with a budget of 400 epochs against the budget of 200", "arm", "select_epoch", "max"), tolerance=0.5),
     # sec:physics -- the minimum-norm (l2) store (2026-09-25).
     Check(claim="l2 store: genes", stated=1155,
           recompute=physics_store("betaxanthin", "l2", "n_genes"), tolerance=0.5),

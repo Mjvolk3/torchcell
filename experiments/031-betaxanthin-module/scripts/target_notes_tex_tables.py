@@ -505,25 +505,36 @@ POOL_MLP_WIDTHS = (16, 64, 256, 1024)
 POOL_MLP_LABELS = {
     "store_mlp": "perceptron over the measured pool",
     "go_store_mlp": "perceptron over GO with the measured pool",
+    "go_linear_store_mlp": "GO linear beside the pool's perceptron (two slots)",
 }
+#: The sweep's result files past the width series (2026-09-26): the two-slot arm at two
+#: widths, and depth 2 and 3 at width 1,024 for every perceptron arm.
+POOL_MLP_EXTRA = (
+    "go_models_betaxanthin_pool_twoslot_h256.json",
+    "go_models_betaxanthin_pool_twoslot_h1024.json",
+    "go_models_betaxanthin_pool_h1024_d2.json",
+    "go_models_betaxanthin_pool_h1024_d3.json",
+)
 
 
 def pool_mlp_sweep() -> str | None:
-    """The measured pool through a perceptron on CPU, one hidden width per row."""
+    """The measured pool through a perceptron on CPU, one (arm, width, depth) per row."""
     rows = []
-    for h in POOL_MLP_WIDTHS:
-        src = results("betaxanthin", f"go_models_betaxanthin_pool_h{h}.json")
+    files = [f"go_models_betaxanthin_pool_h{h}.json" for h in POOL_MLP_WIDTHS] + list(POOL_MLP_EXTRA)
+    for name in files:
+        src = results("betaxanthin", name)
         if not osp.isfile(src):
             return None
         with open(src) as fh:
             d = json.load(fh)
-        assert d["store"] == "YPD_bx_aapool" and d["mlp_hidden"] == h, src
+        assert d["store"] == "YPD_bx_aapool", src
+        h, depth = d["mlp_hidden"], d.get("mlp_depth", 1)
         for a in d["arms"]:
             single = f"{a['single_mean_spearman']:+.3f} ({a['single_sd_spearman']:.3f}) / {a['single_mean_top50']:.2f}"
             ens = f"{a['ensemble_spearman']:+.3f} / {a['ensemble_top50']:.2f}"
             epochs = f"{min(r['select_epoch'] for r in a['seeds'])} to {max(r['select_epoch'] for r in a['seeds'])}"
             rows.append(
-                f"    {POOL_MLP_LABELS[a['arm']]} & {h} & {a['seeds'][0]['n_parameters']:,} & "
+                f"    {POOL_MLP_LABELS[a['arm']]} & {h} & {depth} & {a['seeds'][0]['n_parameters']:,} & "
                 f"{single} & {ens} & {epochs} \\\\"
             )
     body = (
@@ -533,15 +544,19 @@ def pool_mlp_sweep() -> str | None:
         "rows) alone and with the propagated GO multi-hot, through one ReLU hidden layer of "
         "the stated width and a linear head, on the ladder's split, full batch, Adam at "
         "$10^{-3}$, 200 epochs, the epoch selected by a five-epoch moving average of the "
-        "validation per-feature Pearson, on CPU. Columns: hidden width, parameters, the "
-        "single-seed pinned-test Spearman with the standard deviation over six seeds and, "
-        "after the slash, the top-50 enrichment; the six-seed ensemble scored the same way; "
-        "the range of selected epochs. Written by \\texttt{target\\_notes\\_tex\\_tables.py} "
-        "from \\texttt{results/go\\_models\\_betaxanthin\\_pool\\_h<H>.json} "
-        "(\\texttt{target\\_go\\_models.py --store YPD\\_bx\\_aapool --mlp-hidden H}).}\n"
+        "validation per-feature Pearson, on CPU. The two-slot rows read the GO multi-hot "
+        "through a linear map and the pool through the hidden layers, summed before the "
+        "output, so the two never share a hidden unit. Columns: hidden width, the number "
+        "of hidden layers, parameters, the single-seed pinned-test Spearman with the "
+        "standard deviation over six seeds and, after the slash, the top-50 enrichment; "
+        "the six-seed ensemble scored the same way; the range of selected epochs. Written "
+        "by \\texttt{target\\_notes\\_tex\\_tables.py} from "
+        "\\texttt{results/go\\_models\\_betaxanthin\\_pool\\_*.json} "
+        "(\\texttt{target\\_go\\_models.py --store YPD\\_bx\\_aapool --mlp-hidden H "
+        "--mlp-depth D}).}\n"
         "  \\label{tab:pool-mlp-sweep}\n"
-        "  \\begin{tabular}{@{}p{50mm}rrrrp{20mm}@{}}\n    \\hline\n"
-        "    model & width & parameters & single seed (sd) / top-50 & ensemble & epochs \\\\\n    \\hline\n"
+        "  \\begin{tabular}{@{}p{46mm}rrrrrp{18mm}@{}}\n    \\hline\n"
+        "    model & width & depth & parameters & single seed (sd) / top-50 & ensemble & epochs \\\\\n    \\hline\n"
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )

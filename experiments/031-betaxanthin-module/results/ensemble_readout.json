@@ -4253,6 +4253,86 @@
       "n_seeds": 6
     },
     {
+      "stem": "w209_bxdelaapoolmlp_h12l1p1_e400",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.21865533878732046,
+          "top50_enrichment": 1.5974603174603175,
+          "top50_hits": 8.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.15921720039367096,
+          "top50_enrichment": 1.5974603174603175,
+          "top50_hits": 8.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.24599127308007038,
+          "top50_enrichment": 4.992063492063492,
+          "top50_hits": 25.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2999546246455201,
+          "top50_enrichment": 5.591111111111111,
+          "top50_hits": 28.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.26834599332349857,
+          "top50_enrichment": 4.393015873015873,
+          "top50_hits": 22.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.24697924359953563,
+          "top50_enrichment": 5.9904761904761905,
+          "top50_hits": 30.0
+        }
+      ],
+      "mean_single_spearman": 0.2398572789716027,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.25602081769185553,
+          "top50_enrichment": 4.393015873015873,
+          "top50_hits": 22.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2965978128211174,
+          "top50_enrichment": 5.9904761904761905,
+          "top50_hits": 30.0
+        }
+      ],
+      "mean_triple_spearman": 0.2763093152564865,
+      "first_six": {
+        "n": 629,
+        "spearman": 0.2918255406827906,
+        "top50_enrichment": 5.79079365079365,
+        "top50_hits": 29.0
+      },
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.2918255406827906,
+        "top50_enrichment": 5.79079365079365,
+        "top50_hits": 29.0
+      },
+      "n_seeds": 6
+    },
+    {
       "stem": "w210_bxdelaapoolpfbamlp_h12l1p1_e200",
       "head": "betaxanthin",
       "seeds": [

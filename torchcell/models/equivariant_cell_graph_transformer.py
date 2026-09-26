@@ -1261,12 +1261,20 @@ class PerturbationHead(nn.Module):
     Implements Type II Virtual Instrument: H_genes_pert → y_GI
     """
 
-    def __init__(self, hidden_dim: int, dropout: float = 0.1, pooling: str = "sum"):
+    def __init__(
+        self,
+        hidden_dim: int,
+        dropout: float = 0.1,
+        pooling: str = "sum",
+        token_dim: int = 0,
+    ):
         """Build the prediction MLP mapping [h_CLS || z_S] to a scalar.
 
         Args:
             hidden_dim: Model hidden dimension.
             dropout: Dropout probability.
+            token_dim: Width of the per-entry source-dataset token appended to
+                ``[h_CLS || z_S]`` (``CellGraphTransformer.dataset_token``); 0 = none.
             pooling: ``sum`` (default) or ``mean`` over the perturbed-gene tokens.
 
                 SUM IS THE DEFAULT because a MEAN is cardinality-blind: it makes z_S for
@@ -1291,33 +1299,27 @@ class PerturbationHead(nn.Module):
         if pooling not in ("sum", "mean"):
             raise ValueError(f"pooling must be 'sum' or 'mean', got {pooling!r}")
         self.pooling = pooling
+        # Width of the source-dataset token appended per ENTRY row (see
+        # CellGraphTransformer.dataset_token); 0 keeps the layer shapes, and the
+        # state_dict keys, exactly those of the model without a token.
+        self.token_dim = int(token_dim)
 
-        # Prediction MLP: [h_CLS || z_S] -> scalar
+        # Prediction MLP: [h_CLS || z_S (|| token)] -> scalar
         self.mlp = nn.Sequential(
-            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.Linear(hidden_dim * 2 + self.token_dim, hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(hidden_dim, 1),
         )
 
-    def forward(
+    def combined(
         self,
         h_CLS: torch.Tensor,
         H_genes_pert: torch.Tensor,
         perturbation_indices: torch.Tensor,
         batch_assignment: torch.Tensor,
     ) -> torch.Tensor:
-        """Forward pass of perturbation head.
-
-        Args:
-            h_CLS: [d] - whole-cell CLS representation
-            H_genes_pert: [batch, N, d] - perturbed gene embeddings (EQUIVARIANT)
-            perturbation_indices: [total_pert_genes] - indices of perturbed genes
-            batch_assignment: [total_pert_genes] - batch index for each perturbed gene
-
-        Returns:
-            predictions: [batch_size, 1] gene interaction predictions
-        """
+        """``[h_CLS || z_S]`` per genotype, ``[batch, 2d]``, the input of the MLP."""
         batch_size = H_genes_pert.shape[0]
 
         # Aggregate perturbed genes per sample
@@ -1347,12 +1349,47 @@ class PerturbationHead(nn.Module):
         h_CLS_expanded = (
             h_CLS if h_CLS.dim() == 2 else h_CLS.unsqueeze(0).expand(batch_size, -1)
         )  # [batch_size, d]
-        combined = torch.cat([h_CLS_expanded, z_S], dim=-1)  # [batch_size, 2*d]
+        return torch.cat([h_CLS_expanded, z_S], dim=-1)  # [batch_size, 2*d]
 
-        # Predict gene interaction
+    def forward(
+        self,
+        h_CLS: torch.Tensor,
+        H_genes_pert: torch.Tensor,
+        perturbation_indices: torch.Tensor,
+        batch_assignment: torch.Tensor,
+    ) -> torch.Tensor:
+        """Forward pass of perturbation head.
+
+        Args:
+            h_CLS: [d] - whole-cell CLS representation
+            H_genes_pert: [batch, N, d] - perturbed gene embeddings (EQUIVARIANT)
+            perturbation_indices: [total_pert_genes] - indices of perturbed genes
+            batch_assignment: [total_pert_genes] - batch index for each perturbed gene
+
+        Returns:
+            predictions: [batch_size, 1] gene interaction predictions
+        """
+        if self.token_dim:
+            raise RuntimeError(
+                "PerturbationHead was built with a dataset token; call forward_entries"
+            )
+        combined = self.combined(
+            h_CLS, H_genes_pert, perturbation_indices, batch_assignment
+        )
         predictions = self.mlp(combined)  # [batch_size, 1]
-
         return cast(torch.Tensor, predictions)
+
+    def forward_entries(
+        self, combined: torch.Tensor, entry_batch: torch.Tensor, token: torch.Tensor
+    ) -> torch.Tensor:
+        """One prediction per ENTRY row: ``mlp([combined[entry_batch] || token])``.
+
+        ``combined`` is the per-genotype ``[batch, 2d]`` input of :meth:`combined`,
+        ``entry_batch`` ``[E]`` names the genotype of each entry row, and ``token``
+        ``[E, token_dim]`` is the projected source-dataset one-hot of that row.
+        """
+        rows = combined[entry_batch]  # [E, 2d]
+        return cast(torch.Tensor, self.mlp(torch.cat([rows, token], dim=-1)))
 
 
 class GlobalHead(nn.Module):
@@ -1374,10 +1411,13 @@ class GlobalHead(nn.Module):
         dropout: float = 0.1,
         param_dim: int = 1,
         linear: bool = False,
+        token_dim: int = 0,
     ):
         """Build the MLP mapping [h_CLS (|| GlobalPool(H_genes_pert))] to output_dim.
 
         Args:
+            token_dim: Width of the per-entry source-dataset token appended to the
+                head input (``CellGraphTransformer.dataset_token``); 0 = none.
             hidden_dim: Model hidden dimension.
             output_dim: Output vector dimension (e.g. 501 morphology, 1 scalar). This is the
                 FEATURE count F -- it stays the phenotype dimensionality regardless of the
@@ -1397,8 +1437,10 @@ class GlobalHead(nn.Module):
         self.output_dim = output_dim
         self.use_gene_pool = use_gene_pool
         self.param_dim = param_dim
+        # Per-entry source token width; 0 leaves shapes and state_dict keys unchanged.
+        self.token_dim = int(token_dim)
 
-        in_dim = hidden_dim * 2 if use_gene_pool else hidden_dim
+        in_dim = (hidden_dim * 2 if use_gene_pool else hidden_dim) + self.token_dim
         self.mlp: nn.Module
         if linear:
             self.mlp = nn.Linear(in_dim, output_dim * param_dim)
@@ -1409,6 +1451,17 @@ class GlobalHead(nn.Module):
                 nn.Dropout(dropout),
                 nn.Linear(hidden_dim, output_dim * param_dim),
             )
+
+    def features(self, h_CLS: torch.Tensor, H_genes_pert: torch.Tensor) -> torch.Tensor:
+        """Per-genotype input of the MLP, ``[batch, d]`` or ``[batch, 2d]``."""
+        batch_size = H_genes_pert.shape[0]
+        h = (
+            h_CLS if h_CLS.dim() == 2 else h_CLS.unsqueeze(0).expand(batch_size, -1)
+        )  # [batch, d]
+        if self.use_gene_pool:
+            pooled = H_genes_pert.mean(dim=1)  # [batch, d]
+            h = torch.cat([h, pooled], dim=-1)  # [batch, 2d]
+        return h
 
     def forward(self, h_CLS: torch.Tensor, H_genes_pert: torch.Tensor) -> torch.Tensor:
         """Forward pass of the global head.
@@ -1421,16 +1474,24 @@ class GlobalHead(nn.Module):
             predictions: [batch_size, output_dim] global phenotype predictions, or
             [batch_size, output_dim, param_dim] when param_dim > 1 (distributional).
         """
+        if self.token_dim:
+            raise RuntimeError(
+                "GlobalHead was built with a dataset token; call forward_entries"
+            )
         batch_size = H_genes_pert.shape[0]
-        h = (
-            h_CLS if h_CLS.dim() == 2 else h_CLS.unsqueeze(0).expand(batch_size, -1)
-        )  # [batch, d]
-        if self.use_gene_pool:
-            pooled = H_genes_pert.mean(dim=1)  # [batch, d]
-            h = torch.cat([h, pooled], dim=-1)  # [batch, 2d]
-        out = self.mlp(h)  # [batch, output_dim * param_dim]
+        out = self.mlp(self.features(h_CLS, H_genes_pert))
         if self.param_dim > 1:
             out = out.view(batch_size, self.output_dim, self.param_dim)
+        return cast(torch.Tensor, out)
+
+    def forward_entries(
+        self, features: torch.Tensor, entry_batch: torch.Tensor, token: torch.Tensor
+    ) -> torch.Tensor:
+        """One prediction per ENTRY row: ``mlp([features[entry_batch] || token])``."""
+        rows = features[entry_batch]
+        out = self.mlp(torch.cat([rows, token], dim=-1))
+        if self.param_dim > 1:
+            out = out.view(rows.shape[0], self.output_dim, self.param_dim)
         return cast(torch.Tensor, out)
 
 
@@ -1923,10 +1984,25 @@ class CellGraphTransformer(nn.Module):
         ) = None,  # GEARS-style pooled cross-gene mixing
         perturb_cls: bool = False,  # Run the CLS token through the perturbation operator
         perturbation_head_cls: str = "wildtype",  # Which CLS the interaction head reads
+        dataset_token: dict[str, Any] | None = None,  # Per-entry source-dataset token
     ):
         """Build embeddings, transformer encoder, and perturbation heads.
 
         Args:
+            dataset_token: ``{"enabled", "vocab_size", "dim", "mode"}``. When enabled,
+                the model predicts one value per stored ENTRY rather than per genotype:
+                ``forward`` takes ``entry_batch`` ``[E]`` (the genotype of each entry
+                row, ``phenotype_values_batch``) and ``entry_dataset`` ``[E]`` (the
+                row's source index in the pool's dataset vocabulary), projects the
+                one-hot of the source through ``token_proj`` (``Linear(vocab_size,
+                dim, bias=False)``, an embedding table written as a matrix so the
+                one-hot stays literal) and appends the ``dim``-vector to the input of
+                BOTH readouts, which then return ``[E, 1]``. The encoder and the
+                perturbation operator are untouched, so any change in a score is
+                attributable to readout conditioning on the screen. ``mode`` is
+                ``"readout"``; ``"input"`` (the token as an encoder token) is reserved
+                for an ablation and raises until it is built. Disabled or ``None``:
+                no parameters, no new keys, the forward is the pre-change one.
             perturb_cls: Send the CLS token through ``EquivariantPerturbationTransform``
                 as one more query beside the N gene tokens, over the same deleted-gene
                 keys. Today the encoder runs once on the wild-type graph and h_CLS is
@@ -2140,6 +2216,27 @@ class CellGraphTransformer(nn.Module):
             ),
         )
 
+        # === Per-entry source-dataset token (see __init__ docstring) ===
+        token_cfg = dataset_token or {}
+        self.dataset_token_dim = 0
+        self.dataset_vocab_size = 0
+        self.token_proj: nn.Linear | None = None
+        if token_cfg.get("enabled", False):
+            mode = str(token_cfg.get("mode", "readout"))
+            if mode == "input":
+                raise NotImplementedError(
+                    "dataset_token.mode='input' is the deferred ablation; use 'readout'"
+                )
+            if mode != "readout":
+                raise ValueError(f"dataset_token.mode must be 'readout', got {mode!r}")
+            self.dataset_vocab_size = int(token_cfg["vocab_size"])
+            self.dataset_token_dim = int(token_cfg.get("dim", 8))
+            if self.dataset_vocab_size < 1 or self.dataset_token_dim < 1:
+                raise ValueError("dataset_token needs vocab_size >= 1 and dim >= 1")
+            self.token_proj = nn.Linear(
+                self.dataset_vocab_size, self.dataset_token_dim, bias=False
+            )
+
         # Perturbation readout head (Type II Virtual Instrument). `pooling` is read once
         # and shared with the per-gene z_S site so the two can never disagree.
         self.pert_pooling = str(pert_head_config.get("pooling", "sum"))
@@ -2147,6 +2244,7 @@ class CellGraphTransformer(nn.Module):
             hidden_dim=hidden_channels,
             dropout=pert_head_config.get("dropout", dropout),
             pooling=self.pert_pooling,
+            token_dim=self.dataset_token_dim,
         )
         self.perturb_cls = bool(perturb_cls)
         if perturbation_head_cls not in ("wildtype", "perturbed"):
@@ -2243,8 +2341,13 @@ class CellGraphTransformer(nn.Module):
                     dropout=g_cfg.get("dropout", dropout),
                     param_dim=g_param_dim,
                     linear=bool(g_cfg.get("linear", False)),
+                    token_dim=self.dataset_token_dim,
                 )
             elif g_decoder == "s3_xattn":
+                if self.dataset_token_dim:
+                    raise ValueError(
+                        "dataset_token is implemented for the s1_pool global head only"
+                    )
                 self.global_head = CrossAttnHead(
                     hidden_dim=hidden_channels,
                     output_dim=g_cfg.get("output_dim", 501),
@@ -2698,6 +2801,8 @@ class CellGraphTransformer(nn.Module):
         return_attention: bool = False,
         observed_values: torch.Tensor | None = None,
         observed_mask: torch.Tensor | None = None,
+        entry_batch: torch.Tensor | None = None,
+        entry_dataset: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Forward pass of Equivariant Cell Graph Transformer.
 
@@ -2707,6 +2812,11 @@ class CellGraphTransformer(nn.Module):
             return_attention: If True, store and return attention weights (memory
                 intensive: it forces the manual softmax path, which materializes a
                 [1, heads, N+1, N+1] matrix per layer instead of using the fused kernel)
+            entry_batch: [E] genotype row of each stored entry (``phenotype_values_batch``);
+                required when ``dataset_token`` is enabled, forbidden otherwise.
+            entry_dataset: [E] source-dataset index of each entry
+                (``phenotype_dataset_indices``); same rule. With the token the
+                predictions and the ``global`` head output are ``[E, 1]``, one per entry.
             observed_values: [batch, N] partially observed measured labels for masked
                 prediction, or None. Only consumed when the model was built with an
                 ``observed_label_config``.
@@ -2927,23 +3037,40 @@ class CellGraphTransformer(nn.Module):
         # 6. Perturbation readout head (Type II Virtual Instrument)
         #    This is the ORIGINAL single (gene-interaction) head; kept as the first
         #    returned element so single-head behavior is unchanged.
-        predictions = self.perturbation_head(
-            (
-                h_CLS_pert
-                if self.perturbation_head_cls == "perturbed" and h_CLS_pert is not None
-                else h_CLS
-            ),
-            H_genes_pert,
-            batch["gene"].perturbation_indices,
-            batch["gene"].perturbation_indices_batch,
-        )
+        head_outputs: dict[str, torch.Tensor] = {}
+        if self.dataset_token_dim:
+            if entry_batch is None or entry_dataset is None:
+                raise ValueError(
+                    "dataset_token is enabled: forward needs entry_batch and "
+                    "entry_dataset (phenotype_values_batch, phenotype_dataset_indices)"
+                )
+            predictions, global_entries = self.entry_heads(
+                h_CLS, h_CLS_pert, H_genes_pert, batch, entry_batch, entry_dataset
+            )
+            if global_entries is not None:
+                head_outputs["global"] = global_entries
+        else:
+            if entry_batch is not None or entry_dataset is not None:
+                raise ValueError(
+                    "entry_batch/entry_dataset were given but dataset_token is disabled"
+                )
+            predictions = self.perturbation_head(
+                (
+                    h_CLS_pert
+                    if self.perturbation_head_cls == "perturbed"
+                    and h_CLS_pert is not None
+                    else h_CLS
+                ),
+                H_genes_pert,
+                batch["gene"].perturbation_indices,
+                batch["gene"].perturbation_indices_batch,
+            )
 
         # 7. Multitask decoder heads (config-selectable). graph_level selects the
         #    head downstream: global -> class-token, node -> per-gene,
         #    metabolism -> per-metabolite. When no heads are configured this dict is
         #    empty and nothing here runs.
-        head_outputs: dict[str, torch.Tensor] = {}
-        if self.global_head is not None:
+        if self.global_head is not None and not self.dataset_token_dim:
             # The whole-cell head reads the perturbed CLS when there is one, so a
             # CLS-only readout (use_gene_pool=False) is a probe of the cell state
             # rather than a constant.
@@ -3030,6 +3157,76 @@ class CellGraphTransformer(nn.Module):
             "head_outputs": head_outputs,
         }
 
+    def entry_heads(
+        self,
+        h_CLS: torch.Tensor,
+        h_CLS_pert: torch.Tensor | None,
+        H_genes_pert: torch.Tensor,
+        batch: HeteroData,
+        entry_batch: torch.Tensor,
+        entry_dataset: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """Both readouts on ENTRY rows under the source token of each row.
+
+        Returns ``(interaction [E, 1], fitness [E, 1] or None)``. Separate from
+        ``forward`` so a caller holding the encoder outputs can re-read the same batch
+        under other tokens (the token-swap ablation, the essentiality holdout under the
+        Costanzo and SGD tokens) without running the encoder again.
+        """
+        assert self.token_proj is not None
+        if (
+            entry_dataset.numel()
+            and int(entry_dataset.max()) >= self.dataset_vocab_size
+        ):
+            raise ValueError(
+                f"entry_dataset holds index {int(entry_dataset.max())} but the "
+                f"vocabulary has {self.dataset_vocab_size} names"
+            )
+        token = self.token_proj(
+            nn.functional.one_hot(entry_dataset, self.dataset_vocab_size).to(
+                H_genes_pert.dtype
+            )
+        )  # [E, dim]
+        cls_for_interaction = (
+            h_CLS_pert
+            if self.perturbation_head_cls == "perturbed" and h_CLS_pert is not None
+            else h_CLS
+        )
+        combined = self.perturbation_head.combined(
+            cls_for_interaction,
+            H_genes_pert,
+            batch["gene"].perturbation_indices,
+            batch["gene"].perturbation_indices_batch,
+        )
+        interaction = self.perturbation_head.forward_entries(
+            combined, entry_batch, token
+        )
+        fitness: torch.Tensor | None = None
+        if self.global_head is not None:
+            assert isinstance(self.global_head, GlobalHead)
+            features = self.global_head.features(
+                h_CLS_pert if h_CLS_pert is not None else h_CLS, H_genes_pert
+            )
+            fitness = self.global_head.forward_entries(features, entry_batch, token)
+        return interaction, fitness
+
+    def entry_readout(
+        self,
+        representations: dict[str, Any],
+        batch: HeteroData,
+        entry_batch: torch.Tensor,
+        entry_dataset: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """:meth:`entry_heads` from a previous forward's returned representations."""
+        return self.entry_heads(
+            representations["h_CLS"],
+            representations["h_CLS_pert"],
+            representations["H_genes_pert"],
+            batch,
+            entry_batch,
+            entry_dataset,
+        )
+
     @property
     def num_parameters(self) -> dict[str, int]:
         """Count parameters in each component."""
@@ -3063,6 +3260,8 @@ class CellGraphTransformer(nn.Module):
             counts["per_gene_head"] = count_params(self.per_gene_head)
         if self.per_metabolite_head is not None:
             counts["per_metabolite_head"] = count_params(self.per_metabolite_head)
+        if self.token_proj is not None:
+            counts["dataset_token"] = count_params(self.token_proj)
         counts["total"] = sum(counts.values())
         return counts
 

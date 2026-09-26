@@ -34,6 +34,31 @@ ORDER_PHENOTYPE_NAMES: dict[str, dict[int, str]] = {
 }
 
 
+def token_precedence_rank(dataset_name: str) -> int:
+    """Rank of a source dataset under ``LabelPolicy``'s default precedence, low first.
+
+    Kuzmin 2018 before Kuzmin 2020 before Costanzo 2016 before a converted 0 (SGD
+    essentiality, SynthLethDB), the order ``torchcell.data.label_policy.LabelPolicy``
+    ranks source keys in. The validation reduction of the per-entry path keeps, per
+    genotype and label, the rows of the lowest rank present and averages them, so its
+    target is the policy's choice (plain mean where the policy would weight
+    same-source replicates by inverse variance; the deviation is measured by
+    ``make_pinned_eval_table_030.py``). ``Synthetic`` names are the smoke test's
+    fictitious second token and rank last. Any other name is a configuration error.
+    """
+    if "Kuzmin2018" in dataset_name:
+        return 0
+    if "Kuzmin2020" in dataset_name:
+        return 1
+    if "Costanzo2016" in dataset_name:
+        return 2
+    if "GeneEssentialitySgd" in dataset_name or "SynthLethality" in dataset_name:
+        return 3
+    if dataset_name.startswith("Synthetic"):
+        return 4
+    raise ValueError(f"no precedence rank for dataset {dataset_name!r}")
+
+
 class RegressionTask(L.LightningModule):
     """Lightning module training the transformer cell model on gene interactions."""
 
@@ -68,8 +93,33 @@ class RegressionTask(L.LightningModule):
         fitness_lambda: float | None = None,
         gradient_probe_epochs: list[int] | None = None,
         per_order_metrics: bool = False,
+        per_entry: bool = False,
+        dataset_vocabulary: list[str] | None = None,
+        essentiality_eval: dict[str, Any] | None = None,
     ):
         """Set up the model, cloned cell graph, loss, metrics, and execution mode.
+
+        ``per_entry`` trains one row per STORED ENTRY instead of one per genotype, for
+        a build that keeps every source measurement (030). The model must carry a
+        ``dataset_token``; the batch must carry ``phenotype_values_batch`` and
+        ``phenotype_dataset_indices``; ``dataset_vocabulary`` is the token list the
+        processor emitted against. Losses are masked MSE over entry rows. Training
+        metrics are per entry. Validation and test report the 025-comparable number,
+        one value per pinned genotype per label: the entries of the highest-precedence
+        source present (Kuzmin 2018, then Kuzmin 2020, then Costanzo, converted zeros
+        last, the order of ``LabelPolicy``) averaged, scored under that source's own
+        token; beside it the per-entry, per-token and cross-token (Kuzmin 2018 rows
+        under the 2020 token and back) Pearson. ``_coo_label``'s conflict rule is not
+        used on this path: two values of one label under different tokens are two
+        targets, which is the point.
+
+        ``essentiality_eval`` scores a second validation loader (``dataloader_idx``
+        1) of held-out single-deletion genotypes: ``{"token_smf": <name>, "token_sgd":
+        <name>, "released": {node_index: 0/1}, "matched": {node_index: 0/1}}``. Each
+        genotype's fitness is read under the Costanzo single token (the reported
+        score) and the SGD token (a diagnostic), and AUROC of ``-fitness`` against
+        the essential label is logged per set at epoch end after an all-gather, so
+        every rank logs the same four keys.
 
         ``per_order_metrics`` adds, for every stage, the same MSE / RMSE / Pearson
         collections split by perturbation order (the number of perturbed genes in the
@@ -197,6 +247,102 @@ class RegressionTask(L.LightningModule):
                         ),
                     )
 
+        # === Per-entry rows with the source-dataset token (see __init__) ===
+        self.per_entry = bool(per_entry)
+        self.dataset_vocabulary: list[str] = list(dataset_vocabulary or [])
+        self._token_rank: torch.Tensor | None = None
+        self._crosstoken_pair: tuple[int, int] | None = None
+        self._entry_counts: dict[str, dict[str, int]] = {
+            stage: {"gene_interaction": 0, "fitness": 0}
+            for stage in ("train", "val", "test")
+        }
+        self._token_counts: dict[str, dict[str, list[int]]] = {}
+        if self.per_entry:
+            if not self.dataset_vocabulary:
+                raise ValueError("per_entry needs the dataset_vocabulary")
+            self.register_buffer(
+                "_token_rank_buffer",
+                torch.tensor(
+                    [token_precedence_rank(n) for n in self.dataset_vocabulary],
+                    dtype=torch.long,
+                ),
+                persistent=False,
+            )
+            self._token_rank = cast(torch.Tensor, self._token_rank_buffer)
+            names = self.dataset_vocabulary
+            if "TmiKuzmin2018Dataset" in names and "TmiKuzmin2020Dataset" in names:
+                self._crosstoken_pair = (
+                    names.index("TmiKuzmin2018Dataset"),
+                    names.index("TmiKuzmin2020Dataset"),
+                )
+            per_entry_labels = ["gene_interaction"] + (
+                ["fitness"] if fitness_lambda is not None else []
+            )
+            for stage in ("train", "val", "test"):
+                # Original-scale metrics over every entry row (train's primary metric,
+                # val/test's secondary one beside the policy-reduced collection).
+                setattr(
+                    self,
+                    f"{stage}_entry_metrics",
+                    nn.ModuleDict(
+                        {
+                            label: reg_metrics.clone(prefix=f"{stage}/entries/{label}/")
+                            for label in per_entry_labels
+                        }
+                    ),
+                )
+                # One Pearson per (label, token); every key is logged on every rank in
+                # vocabulary order, NaN when the rank saw no row of that token.
+                setattr(
+                    self,
+                    f"{stage}_token_metrics",
+                    nn.ModuleDict(
+                        {
+                            label: nn.ModuleDict(
+                                {str(i): PearsonCorrCoef() for i in range(len(names))}
+                            )
+                            for label in per_entry_labels
+                        }
+                    ),
+                )
+                self._token_counts[stage] = {
+                    label: [0] * len(names) for label in per_entry_labels
+                }
+                setattr(self, f"{stage}_crosstoken_metric", PearsonCorrCoef())
+        # === Essentiality holdout (second validation loader) ===
+        self.essentiality_eval: dict[str, Any] | None = None
+        self._ess_buffer: dict[str, list[torch.Tensor]] = {
+            "node": [],
+            "smf": [],
+            "sgd": [],
+        }
+        if essentiality_eval is not None:
+            if not self.per_entry:
+                raise ValueError("essentiality_eval needs per_entry=True")
+            for key in ("token_smf", "token_sgd", "released", "matched"):
+                if key not in essentiality_eval:
+                    raise ValueError(f"essentiality_eval lacks {key!r}")
+            for key in ("token_smf", "token_sgd"):
+                if essentiality_eval[key] not in self.dataset_vocabulary:
+                    raise ValueError(
+                        f"essentiality_eval[{key!r}]={essentiality_eval[key]!r} is "
+                        "not in the dataset vocabulary"
+                    )
+            self.essentiality_eval = {
+                "token_smf": self.dataset_vocabulary.index(
+                    essentiality_eval["token_smf"]
+                ),
+                "token_sgd": self.dataset_vocabulary.index(
+                    essentiality_eval["token_sgd"]
+                ),
+                "released": {
+                    int(k): int(v) for k, v in essentiality_eval["released"].items()
+                },
+                "matched": {
+                    int(k): int(v) for k, v in essentiality_eval["matched"].items()
+                },
+            }
+
         # Separate accumulators for train, validation, and test samples
         self.train_samples: dict[str, Any] = {
             "true_values": [],
@@ -280,6 +426,144 @@ class RegressionTask(L.LightningModule):
             rows, vals = rows[keep], vals[keep]
         out[rows] = vals
         return out.unsqueeze(1)
+
+    # ------------------------------------------------------------ per-entry rows
+    def _entry_rows(
+        self, batch: HeteroData, label: str
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Entry rows of ``label``: (genotype row, value, original value, token, mask).
+
+        ``mask`` selects the rows of ``label`` among ALL entry rows of the batch, so a
+        per-entry model output ``[E, 1]`` is indexed by it. Placeholder rows (a
+        genotype with no value, NaN) are dropped.
+        """
+        gene = batch["gene"]
+        types = gene.phenotype_types
+        if isinstance(types[0], list):
+            types = types[0]
+        sel = gene.phenotype_type_indices == types.index(label)
+        values = gene.phenotype_values
+        sel = sel & ~torch.isnan(values)
+        original = (
+            gene.phenotype_values_original
+            if hasattr(gene, "phenotype_values_original")
+            else values
+        )
+        return (
+            gene.phenotype_values_batch[sel],
+            values[sel],
+            original[sel],
+            gene.phenotype_dataset_indices[sel],
+            sel,
+        )
+
+    def _policy_reduce(
+        self,
+        rows: torch.Tensor,
+        values: torch.Tensor,
+        preds: torch.Tensor,
+        tokens: torch.Tensor,
+        batch_size: int,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """One (target, prediction) per genotype from its highest-precedence source.
+
+        Returns ``(targets [B], preds [B], present [B])``; genotypes without a row of
+        this label are absent. Rows of the lowest precedence rank present in a
+        genotype are kept and averaged (see ``token_precedence_rank``).
+        """
+        assert self._token_rank is not None
+        rank = self._token_rank.to(tokens.device)[tokens]
+        big = torch.iinfo(rank.dtype).max
+        best = torch.full((batch_size,), big, dtype=rank.dtype, device=rank.device)
+        best = best.scatter_reduce(0, rows, rank, reduce="amin")
+        keep = rank == best[rows]
+        rows_k, vals_k, preds_k = rows[keep], values[keep], preds[keep]
+        counts = torch.bincount(rows_k, minlength=batch_size).to(values.dtype)
+        present = counts > 0
+        denom = counts.clamp(min=1)
+        target = torch.zeros(batch_size, dtype=values.dtype, device=values.device)
+        target = target.index_add(0, rows_k, vals_k) / denom
+        pred = torch.zeros(batch_size, dtype=preds.dtype, device=preds.device)
+        pred = pred.index_add(0, rows_k, preds_k) / denom
+        return target, pred, present
+
+    def _update_order_metrics_rows(
+        self,
+        stage: str,
+        attr: str,
+        order: torch.Tensor,
+        preds: torch.Tensor,
+        targets: torch.Tensor,
+    ) -> None:
+        """Per-order collections fed with rows whose order is given per row."""
+        if not self.per_order_metrics:
+            return
+        collections = getattr(self, attr)
+        for k in self.metric_orders:
+            sel = order == k
+            n = int(sel.sum())
+            if n == 0:
+                continue
+            collections[str(k)].update(preds[sel].view(-1), targets[sel].view(-1))
+            self._order_counts[attr][k] += n
+
+    def _update_token_metrics(
+        self,
+        stage: str,
+        label: str,
+        tokens: torch.Tensor,
+        preds: torch.Tensor,
+        targets: torch.Tensor,
+    ) -> None:
+        collections = getattr(self, f"{stage}_token_metrics")[label]
+        for t in torch.unique(tokens).tolist():
+            sel = tokens == t
+            collections[str(int(t))].update(preds[sel].view(-1), targets[sel].view(-1))
+            self._token_counts[stage][label][int(t)] += int(sel.sum())
+
+    def _log_per_entry_epoch_metrics(self, stage: str) -> None:
+        """Log the per-entry, per-token, cross-token and count keys of ``stage``."""
+        if not self.per_entry:
+            return
+        for label, collection in getattr(self, f"{stage}_entry_metrics").items():
+            for key, value in self._compute_metrics_safely(collection).items():
+                self.log(key, value, sync_dist=True)
+            collection.reset()
+            self.log(
+                f"{stage}/n_entries/{label}",
+                float(self._entry_counts[stage][label]),
+                sync_dist=True,
+                reduce_fx="sum",
+            )
+            self._entry_counts[stage][label] = 0
+        for label, per_token in getattr(self, f"{stage}_token_metrics").items():
+            for i, name in enumerate(self.dataset_vocabulary):
+                metric = per_token[str(i)]
+                # Every key on every rank, in vocabulary order: a token this rank
+                # never saw logs NaN rather than being skipped.
+                value = (
+                    metric.compute()
+                    if self._token_counts[stage][label][i] >= 2
+                    else torch.tensor(float("nan"))
+                )
+                self.log(f"{stage}/token/{name}/{label}/Pearson", value, sync_dist=True)
+                self.log(
+                    f"{stage}/token/{name}/{label}/n_entries",
+                    float(self._token_counts[stage][label][i]),
+                    sync_dist=True,
+                    reduce_fx="sum",
+                )
+                metric.reset()
+                self._token_counts[stage][label][i] = 0
+        if self._crosstoken_pair is not None and stage != "train":
+            metric = getattr(self, f"{stage}_crosstoken_metric")
+            for key, value in self._compute_metrics_safely(
+                MetricCollection({"Pearson": metric})
+            ).items():
+                self.log(
+                    f"{stage}/crosstoken/gene_interaction/{key}", value, sync_dist=True
+                )
+            metric.reset()
 
     def _inverse_scalar(self, predictions: torch.Tensor, label: str) -> torch.Tensor:
         """Map ``[B, 1]`` normalized predictions of ``label`` back to the label scale."""
@@ -915,8 +1199,14 @@ class RegressionTask(L.LightningModule):
                 stage="val",
             )
 
-    def forward(self, batch: HeteroData, return_attention: bool = False) -> Any:
-        """Run a forward pass, optionally returning attention diagnostics."""
+    def forward(
+        self, batch: HeteroData, return_attention: bool = False, **model_kwargs: Any
+    ) -> Any:
+        """Run a forward pass, optionally returning attention diagnostics.
+
+        ``model_kwargs`` reach the model unchanged (the per-entry path passes
+        ``entry_batch`` and ``entry_dataset``).
+        """
         # Get device from batch - handle different batch structures
         if hasattr(batch["gene"], "x"):
             batch_device = batch["gene"].x.device
@@ -936,7 +1226,9 @@ class RegressionTask(L.LightningModule):
             self._cell_graph_device = batch_device
 
         # Return all outputs from the model
-        return self.model(self.cell_graph, batch, return_attention=return_attention)
+        return self.model(
+            self.cell_graph, batch, return_attention=return_attention, **model_kwargs
+        )
 
     def _ensure_no_unused_params_loss(self) -> torch.Tensor | int:
         """Add a dummy loss to ensure all parameters are used in backward pass."""
@@ -1009,6 +1301,9 @@ class RegressionTask(L.LightningModule):
             )
 
             return loss, None, None
+
+        if self.per_entry:
+            return self._shared_step_per_entry(batch, batch_idx, stage)
 
         # Normal training/validation/test execution
         # Get model outputs - only request attention weights during validation on diagnostic epochs
@@ -1570,6 +1865,289 @@ class RegressionTask(L.LightningModule):
 
         return loss, predictions, gene_interaction_orig
 
+    def _interaction_loss(
+        self,
+        predictions: torch.Tensor,
+        targets: torch.Tensor,
+        representations: dict[str, Any],
+        stage: str,
+        batch_size: int,
+    ) -> torch.Tensor:
+        """The configured interaction loss on ``[N, 1]`` rows, components logged.
+
+        The per-entry path's counterpart of the inline block of ``_shared_step``:
+        PointDistGraphReg (point + distribution + graph prior, its dict logged),
+        LogCosh, or a plain module; the graph prior is added once, by whichever of
+        the two owns it.
+        """
+        if self.loss_func is None:
+            raise ValueError("No loss function provided")
+        if isinstance(self.loss_func, PointDistGraphReg):
+            loss, loss_dict = self.loss_func(
+                predictions, targets, representations, epoch=self.current_epoch
+            )
+            for key, value in loss_dict.items():
+                if isinstance(value, torch.Tensor) and value.numel() == 1:
+                    self.log(
+                        f"{stage}/{key}",
+                        value.item(),
+                        batch_size=batch_size,
+                        sync_dist=True,
+                    )
+                elif isinstance(value, (int, float)):
+                    self.log(
+                        f"{stage}/{key}", value, batch_size=batch_size, sync_dist=True
+                    )
+            return cast(torch.Tensor, loss)
+        loss = self.loss_func(predictions, targets)
+        if isinstance(loss, tuple):
+            loss = loss[0]
+        if "graph_reg_loss" in representations:
+            graph_reg_loss = representations["graph_reg_loss"]
+            loss = loss + graph_reg_loss
+            self.log(
+                f"{stage}/graph_reg_loss",
+                graph_reg_loss,
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+        return cast(torch.Tensor, loss)
+
+    def _per_entry_label_metrics(
+        self,
+        batch: HeteroData,
+        stage: str,
+        label: str,
+        preds_norm: torch.Tensor,
+        targets_norm: torch.Tensor,
+        targets_orig: torch.Tensor,
+        rows: torch.Tensor,
+        tokens: torch.Tensor,
+        batch_size: int,
+        order_attr: str,
+        metrics_attr: str,
+        transformed_attr: str,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Feed every metric collection of ``label`` from its entry rows.
+
+        Returns the original-scale (prediction, target) pairs used for the primary
+        collection: every entry row in training, the policy-reduced one per genotype
+        in validation and test.
+        """
+        self._entry_counts[stage][label] += int(rows.numel())
+        preds_orig = self._inverse_scalar(preds_norm.detach(), label)
+        # transformed (normalized-scale) and per-entry original-scale collections
+        getattr(self, transformed_attr).update(
+            preds_norm.detach().view(-1), targets_norm.view(-1)
+        )
+        getattr(self, f"{stage}_entry_metrics")[label].update(
+            preds_orig.view(-1), targets_orig.view(-1)
+        )
+        self._update_token_metrics(
+            stage, label, tokens, preds_orig.view(-1), targets_orig.view(-1)
+        )
+        order_all = self._perturbation_order(batch, batch_size)
+        if stage == "train":
+            primary_pred, primary_target = preds_orig.view(-1), targets_orig.view(-1)
+            order = order_all[rows]
+        else:
+            target_r, pred_r, present = self._policy_reduce(
+                rows, targets_orig.view(-1), preds_orig.view(-1), tokens, batch_size
+            )
+            primary_pred, primary_target = pred_r[present], target_r[present]
+            order = order_all[present]
+        getattr(self, metrics_attr).update(primary_pred, primary_target)
+        self._update_order_metrics_rows(
+            stage, order_attr, order, primary_pred, primary_target
+        )
+        return primary_pred, primary_target
+
+    def _shared_step_per_entry(
+        self, batch: HeteroData, batch_idx: int, stage: str
+    ) -> tuple[torch.Tensor, torch.Tensor | None, torch.Tensor | None]:
+        """Loss and metrics on ENTRY rows under the source-dataset token."""
+        gene = batch["gene"]
+        batch_size = self._get_batch_size(batch)
+        entry_batch = gene.phenotype_values_batch
+        entry_dataset = gene.phenotype_dataset_indices
+        predictions, representations = self(
+            batch,
+            return_attention=False,
+            entry_batch=entry_batch,
+            entry_dataset=entry_dataset,
+        )  # predictions [E, 1]
+
+        rows, vals, orig, toks, sel = self._entry_rows(batch, "gene_interaction")
+        pred_gi = predictions[sel]  # [E_gi, 1]
+        loss = self._interaction_loss(
+            pred_gi, vals.unsqueeze(1), representations, stage, batch_size
+        )
+        gi_pred_primary, gi_target_primary = self._per_entry_label_metrics(
+            batch,
+            stage,
+            "gene_interaction",
+            pred_gi,
+            vals,
+            orig,
+            rows,
+            toks,
+            batch_size,
+            f"{stage}_order_metrics",
+            f"{stage}_metrics",
+            f"{stage}_transformed_metrics",
+        )
+
+        # Cross-token ablation: the Kuzmin 2018 rows re-read under the 2020 token and
+        # the 2020 rows under the 2018 token, on the encoder outputs already computed.
+        if self._crosstoken_pair is not None and stage != "train":
+            a, b = self._crosstoken_pair
+            swap = (toks == a) | (toks == b)
+            if bool(swap.any()):
+                swapped = toks.clone()
+                swapped[toks == a] = b
+                swapped[toks == b] = a
+                with torch.no_grad():
+                    cross_pred, _ = cast(Any, self.model).entry_readout(
+                        representations, batch, rows[swap], swapped[swap]
+                    )
+                    cross_orig = self._inverse_scalar(cross_pred, "gene_interaction")
+                getattr(self, f"{stage}_crosstoken_metric").update(
+                    cross_orig.view(-1), orig[swap].view(-1)
+                )
+
+        fitness_term: torch.Tensor | None = None
+        if self.fitness_lambda is not None:
+            fit_all = representations["head_outputs"]["global"]  # [E, 1]
+            rows_f, vals_f, orig_f, toks_f, sel_f = self._entry_rows(batch, "fitness")
+            pred_f = fit_all[sel_f]
+            fitness_loss = nn.functional.mse_loss(pred_f, vals_f.unsqueeze(1))
+            self.log(
+                f"{stage}/fitness_loss",
+                fitness_loss,
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+            self._per_entry_label_metrics(
+                batch,
+                stage,
+                "fitness",
+                pred_f,
+                vals_f,
+                orig_f,
+                rows_f,
+                toks_f,
+                batch_size,
+                f"{stage}_order_fitness_metrics",
+                f"{stage}_fitness_metrics",
+                f"{stage}_transformed_fitness_metrics",
+            )
+            fitness_term = self.fitness_lambda * fitness_loss
+            loss = loss + fitness_term
+
+        if (
+            stage == "train"
+            and batch_idx == 0
+            and self.current_epoch in self.gradient_probe_epochs
+            and isinstance(self.loss_func, PointDistGraphReg)
+        ):
+            terms = dict(self.loss_func.last_terms)
+            if fitness_term is not None:
+                terms["fitness"] = fitness_term
+            self._log_gradient_probe(terms, loss, batch_size)
+
+        loss = loss + self._ensure_no_unused_params_loss()
+        self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)
+        h_CLS_pert = representations.get("h_CLS_pert")
+        if h_CLS_pert is not None and h_CLS_pert.shape[0] > 1:
+            self.log(
+                f"{stage}/cls_pert_strain_sd",
+                h_CLS_pert.detach().float().std(dim=0).mean(),
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+
+        samples = getattr(self, f"{stage}_samples")
+        if stage == "test" or self._is_scheduled(self.hparams["plot_every_n_epochs"]):
+            if (
+                sum(t.size(0) for t in samples["true_values"])
+                < self.hparams["plot_sample_ceiling"]
+            ):
+                samples["true_values"].append(gi_target_primary.detach().view(-1, 1))
+                samples["predictions"].append(gi_pred_primary.detach().view(-1, 1))
+        return loss, gi_pred_primary.view(-1, 1), gi_target_primary.view(-1, 1)
+
+    def _essentiality_step(self, batch: HeteroData) -> None:
+        """Buffer each held-out single's fitness under the Costanzo and SGD tokens."""
+        assert self.essentiality_eval is not None
+        batch_size = self._get_batch_size(batch)
+        order = self._perturbation_order(batch, batch_size)
+        if bool((order != 1).any()):
+            raise ValueError(
+                "the essentiality loader must hold single-deletion genotypes only"
+            )
+        device = batch["gene"].perturbation_indices.device
+        entry_batch = torch.arange(batch_size, device=device)
+        smf = torch.full(
+            (batch_size,), self.essentiality_eval["token_smf"], device=device
+        )
+        sgd = torch.full(
+            (batch_size,), self.essentiality_eval["token_sgd"], device=device
+        )
+        with torch.no_grad():
+            _, representations = self(
+                batch,
+                return_attention=False,
+                entry_batch=entry_batch,
+                entry_dataset=smf,
+            )
+            fit_smf = representations["head_outputs"]["global"].view(-1)
+            _, fit_sgd_out = cast(Any, self.model).entry_readout(
+                representations, batch, entry_batch, sgd
+            )
+            assert fit_sgd_out is not None
+        self._ess_buffer["node"].append(
+            batch["gene"].perturbation_indices.detach().cpu()
+        )
+        self._ess_buffer["smf"].append(fit_smf.detach().float().cpu())
+        self._ess_buffer["sgd"].append(fit_sgd_out.view(-1).detach().float().cpu())
+
+    def _log_essentiality_epoch(self) -> None:
+        """AUROC of ``-fitness`` against the essential label, per set and token."""
+        if self.essentiality_eval is None:
+            return
+        from torchmetrics.functional.classification import binary_auroc
+
+        local = {
+            k: (torch.cat(v) if v else torch.zeros(0))
+            for k, v in self._ess_buffer.items()
+        }
+        self._ess_buffer = {"node": [], "smf": [], "sgd": []}
+        gathered: list[dict[str, torch.Tensor]] = [local]
+        if torch.distributed.is_available() and torch.distributed.is_initialized():
+            world = torch.distributed.get_world_size()
+            holder: list[Any] = [None] * world
+            torch.distributed.all_gather_object(holder, local)
+            gathered = cast(list[dict[str, torch.Tensor]], holder)
+        node = torch.cat([g["node"] for g in gathered]).long()
+        preds = {
+            token: torch.cat([g[token] for g in gathered]) for token in ("smf", "sgd")
+        }
+        for set_name in ("released", "matched"):
+            labels_map = self.essentiality_eval[set_name]
+            keep = torch.tensor([int(n) in labels_map for n in node.tolist()])
+            y = torch.tensor(
+                [labels_map[int(n)] for n in node[keep].tolist()], dtype=torch.long
+            )
+            for token in ("smf", "sgd"):
+                score = -preds[token][keep]
+                value = (
+                    binary_auroc(score, y)
+                    if y.numel() >= 2 and y.min() != y.max()
+                    else torch.tensor(float("nan"))
+                )
+                self.log(f"val_ess/auroc_{set_name}_{token}", value, sync_dist=False)
+            self.log(f"val_ess/n_{set_name}", float(y.numel()), sync_dist=False)
+
     def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
@@ -1627,8 +2205,19 @@ class RegressionTask(L.LightningModule):
         # print(f"Loss: {loss}")
         return loss
 
-    def validation_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
-        """Run the validation shared step and periodically free CUDA cache."""
+    def validation_step(
+        self, batch: HeteroData, batch_idx: int, dataloader_idx: int = 0
+    ) -> torch.Tensor | None:
+        """Run the validation shared step and periodically free CUDA cache.
+
+        ``dataloader_idx`` 1 is the essentiality holdout loader (see
+        ``CellDataModule.extra_val_indices``); it is scored, not trained or plotted.
+        """
+        if dataloader_idx == 1:
+            self._essentiality_step(batch)
+            return None
+        if dataloader_idx > 1:
+            raise ValueError(f"unexpected validation dataloader_idx {dataloader_idx}")
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
 
         # Defragment GPU memory every 50 batches to prevent OOM from fragmentation
@@ -1762,6 +2351,7 @@ class RegressionTask(L.LightningModule):
         self.train_transformed_metrics.reset()
         self._log_fitness_epoch_metrics("train")
         self._log_order_epoch_metrics("train")
+        self._log_per_entry_epoch_metrics("train")
 
         # Plot training samples
         if (
@@ -1867,6 +2457,8 @@ class RegressionTask(L.LightningModule):
         self.val_transformed_metrics.reset()
         self._log_fitness_epoch_metrics("val")
         self._log_order_epoch_metrics("val")
+        self._log_per_entry_epoch_metrics("val")
+        self._log_essentiality_epoch()
 
         # Log edge recovery metrics (now includes layer and head info)
         for metric_key, acc in self.edge_recovery_accumulators.items():
@@ -1938,6 +2530,7 @@ class RegressionTask(L.LightningModule):
         self.test_transformed_metrics.reset()
         self._log_fitness_epoch_metrics("test")
         self._log_order_epoch_metrics("test")
+        self._log_per_entry_epoch_metrics("test")
 
         # Plot test samples
         if self.test_samples["true_values"]:

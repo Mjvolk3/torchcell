@@ -284,8 +284,17 @@ class CellDataModule(L.LightningDataModule):
         pinned_split_indices: Mapping[str, Iterable[int]] | None = None,
         index_subset: Iterable[int] | None = None,
         unpinned_to_train: bool = False,
+        extra_val_indices: Mapping[str, Iterable[int]] | None = None,
     ) -> None:
         """Store dataloader/split configuration and compute the split indices.
+
+        ``extra_val_indices`` names additional validation loaders, ``{name: record
+        indices}``, served AFTER the pinned validation loader (Lightning's
+        ``dataloader_idx`` 1, 2, ...). They are for held-out evaluations that are not a
+        split of the pool, such as the 030 essentiality holdout: the records are
+        excluded from the pool through ``index_subset`` (so they train nowhere) and
+        read here under their own name. Construction raises if one of them is also in
+        train, val or test.
 
         ``unpinned_to_train`` sends every pool record that ``pinned_split_indices`` does
         not name into TRAIN instead of the seed-driven 80/10/10. This is the "train on
@@ -353,6 +362,10 @@ class CellDataModule(L.LightningDataModule):
         unknown = set(self.pinned_split_indices) - {"train", "val", "test"}
         assert not unknown, f"pinned_split_indices has unknown splits: {unknown}"
         self.unpinned_to_train = unpinned_to_train
+        self.extra_val_indices: dict[str, list[int]] = {
+            str(name): sorted(set(int(i) for i in indices))
+            for name, indices in (extra_val_indices or {}).items()
+        }
         assert not unpinned_to_train or self.pinned_split_indices, (
             "unpinned_to_train needs pinned_split_indices to define what is pinned"
         )
@@ -704,6 +717,18 @@ class CellDataModule(L.LightningDataModule):
         self.train_dataset = torch.utils.data.Subset(self.dataset, self.index.train)
         self.val_dataset = torch.utils.data.Subset(self.dataset, self.index.val)
         self.test_dataset = torch.utils.data.Subset(self.dataset, self.index.test)
+        placed = set(self.index.train) | set(self.index.val) | set(self.index.test)
+        self.extra_val_datasets: dict[str, torch.utils.data.Subset[Any]] = {}
+        for name, indices in self.extra_val_indices.items():
+            overlap = placed.intersection(indices)
+            if overlap:
+                raise ValueError(
+                    f"extra validation loader {name!r} shares {len(overlap)} records "
+                    "with train/val/test; exclude them from the pool with index_subset"
+                )
+            self.extra_val_datasets[name] = torch.utils.data.Subset(
+                self.dataset, indices
+            )
 
     def _get_dataloader(
         self,
@@ -767,9 +792,23 @@ class CellDataModule(L.LightningDataModule):
         """Return a dataloader over the training subset."""
         return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
-    def val_dataloader(self) -> DataLoader | PrefetchLoader:
-        """Return a dataloader over the validation subset."""
-        return self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
+    def val_dataloader(
+        self,
+    ) -> DataLoader | PrefetchLoader | list[DataLoader | PrefetchLoader]:
+        """Return the validation loader, plus one per ``extra_val_indices`` entry.
+
+        A single loader keeps every existing caller's ``dataloader_idx`` semantics; a
+        list appears only when extra loaders were requested, in insertion order after
+        the pinned validation set.
+        """
+        val = self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
+        if not self.extra_val_datasets:
+            return val
+        extras = [
+            self._get_dataloader(subset, batch_size=self.val_batch_size)
+            for subset in self.extra_val_datasets.values()
+        ]
+        return [val, *extras]
 
     def test_dataloader(self) -> DataLoader | PrefetchLoader:
         """Return a dataloader over the test subset."""

@@ -1,0 +1,116 @@
+{
+  "entries_parquet": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/030-solid-growth-multi/closure/entries.parquet",
+  "n_single_records": 5694,
+  "n_single_genes": 5694,
+  "one_record_per_gene": true,
+  "n_essential_sgd": 1140,
+  "n_measured": 5461,
+  "n_essential_with_measured": 907,
+  "n_essential_only": 233,
+  "n_nonessential_measured_only": 4554,
+  "released_split_path": "/scratch/projects/torchcell-scratch/data/merzbacher2025_fcl/deletionprediction-main/data/yeast_essentiality_test_split.csv",
+  "n_released_rows": 1159,
+  "n_released_unlabeled_rows": 38,
+  "n_released_test_genes": 223,
+  "n_released_test_in_030_singles": 198,
+  "n_released_test_resolved_028": 195,
+  "released_test_absent_from_030": [
+    "Q0105",
+    "Q0275",
+    "YBR021W",
+    "YBR127C",
+    "YDL198C",
+    "YDR377W",
+    "YEL039C",
+    "YEL051W",
+    "YER010C",
+    "YER014W",
+    "YER015W",
+    "YER024W",
+    "YGL154C",
+    "YHR026W",
+    "YIR034C",
+    "YJL088W",
+    "YKL194C",
+    "YLR382C",
+    "YMR062C",
+    "YNL169C",
+    "YNL292W",
+    "YNL316C",
+    "YNR050C",
+    "YOR202W",
+    "YPL271W"
+  ],
+  "released_vs_030_label_disagreements": [
+    {
+      "gene": "YBR121C",
+      "released": 0,
+      "build_030": 1
+    },
+    {
+      "gene": "YBR128C",
+      "released": 0,
+      "build_030": 1
+    },
+    {
+      "gene": "YCL004W",
+      "released": 0,
+      "build_030": 1
+    },
+    {
+      "gene": "YCR068W",
+      "released": 0,
+      "build_030": 1
+    }
+  ],
+  "released": {
+    "n_genes": 198,
+    "n_essential": 31,
+    "n_nonessential": 167,
+    "n_record_indices": 198
+  },
+  "matched": {
+    "n_genes": 500,
+    "n_essential": 250,
+    "n_nonessential": 250,
+    "n_record_indices": 500
+  },
+  "matching": {
+    "seed": 0,
+    "n_per_class": 250,
+    "covariates": [
+      "n_s3_closure_doubles_containing_gene",
+      "n_triples_containing_gene"
+    ],
+    "pool_essential_with_measured": 877,
+    "pool_nonessential": 4391,
+    "distance_mean": 0.10510164495055736,
+    "distance_median": 0.0,
+    "distance_max": 5.385164807134504,
+    "n_exact_matches": 238,
+    "coverage_auroc_unmatched_pools": 0.3739084193161179,
+    "coverage_auroc_matched": 0.500024,
+    "acceptance_band": [
+      0.47,
+      0.53
+    ],
+    "accepted": true,
+    "doubles_median_essential": 20.0,
+    "doubles_median_nonessential": 20.0,
+    "triples_median_essential": 10.0,
+    "triples_median_nonessential": 10.0
+  },
+  "ppi_degree": {
+    "source": "/scratch/projects/torchcell-scratch/data/sgd/genome/graph/G_physical.pkl",
+    "n_nodes": 5721,
+    "n_edges": 139463,
+    "auroc_released": 0.5907861695962913,
+    "auroc_matched": 0.706312,
+    "n_released_genes_absent_from_graph": 0,
+    "n_matched_genes_absent_from_graph": 24
+  },
+  "n_excluded_record_indices": 698,
+  "excluded_all_order_1": true,
+  "excluded_disjoint_from_pinned_val_test": true,
+  "label_convention": "released: the CSV column `essential` is a viability flag, inverted once, class counts asserted; matched: 1 = a GeneEssentialitySgdDataset entry under the single, 0 = measured entries only"
+}

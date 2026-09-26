@@ -844,6 +844,24 @@ PAIRS = [
         "w199_bxdelaapoolmlp_h12l1p1_e200",
     ),
     (
+        "betaxanthin: measured amino-acid pool through a hidden layer of 64 with a budget of 400 epochs against the budget of 200",
+        "betaxanthin",
+        "w209_bxdelaapoolmlp_h12l1p1_e400",
+        "w199_bxdelaapoolmlp_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: pool with the HiGHS vector through a hidden layer of 64 against the pool alone through the same layer",
+        "betaxanthin",
+        "w210_bxdelaapoolpfbamlp_h12l1p1_e200",
+        "w199_bxdelaapoolmlp_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: pool with the HiGHS vector through a hidden layer of 64 against the HiGHS store alone",
+        "betaxanthin",
+        "w210_bxdelaapoolpfbamlp_h12l1p1_e200",
+        "w156_bxdelpfba_h12l1p1_e200",
+    ),
+    (
         "amino acids: GO alone standardized against GO alone under log1p",
         "mulleder19",
         "w208_aadelgostd_h12l1p1_e200",

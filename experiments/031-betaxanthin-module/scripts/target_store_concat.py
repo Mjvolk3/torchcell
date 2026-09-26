@@ -49,6 +49,7 @@ class ConcatStoreProvenance(StoreProvenance):
     appended_sha256: str
     n_genes_with_appended_row: int
     column_layout: str
+    flux_fields_from: str = "base"
 
 
 def load(stem: str) -> dict:
@@ -86,8 +87,20 @@ def main() -> None:
     )
     v_wt = np.concatenate([base["v_wild_type"], app["v_wild_type"]])
     names = base["rxn_ids"] + [f"{args.append}:{r}" for r in app["rxn_ids"]]
-    bp = base["provenance"]
-    keep = {k: bp[k] for k in StoreProvenance.model_fields if k in bp}
+    bp, ap = base["provenance"], app["provenance"]
+    # The flux-store fields of the record come from the base when the base is a flux
+    # store, and from the appended store when the base is a measured store (the pool)
+    # that carries no flux provenance; which one is recorded.
+    keep = {
+        k: (bp[k] if k in bp else ap[k])
+        for k in StoreProvenance.model_fields
+        if k in bp or k in ap
+    }
+    flux_fields_from = (
+        "base"
+        if all(k in bp for k in ("n_lethal_zero_flux", "background_genes"))
+        else "appended"
+    )
     keep.update(
         method=(
             f"the {args.base} store with the {args.append} store's columns appended per gene "
@@ -105,6 +118,7 @@ def main() -> None:
         appended_sha256=hashlib.sha256(app["v_deletion"].tobytes()).hexdigest(),
         n_genes_with_appended_row=n_app,
         column_layout=f"{args.base} ({len(base['rxn_ids'])}) | {args.append} ({len(app['rxn_ids'])})",
+        flux_fields_from=flux_fields_from,
     )
     path = osp.join(args.out_dir, f"ess_solve_encodings_{args.out}.npz")
     assert not osp.exists(path), f"{path} exists; stores are never overwritten"

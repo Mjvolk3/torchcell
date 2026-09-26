@@ -440,6 +440,20 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B41 | -- | w194 | del + GO with the measured amino-acid pool | job 2836, pending |
 | B42 | -- | w195 | del + HiGHS store with GO and the pool | job 2837, pending |
 
+## 2026.09.25 - B41, B42 read: the pool in the affine; packs B43 to B46
+
+- B41 (w194, GO + pool, job 2836, 3 h 38 min): 0.208 (sd 0.002) vs GO alone (B23) 0.202 (+0.006, sd 0.002, 6/6); top-50 4.89 vs 5.03; ensemble 0.209 / 4.79; seeds select at 7 to 13. B42 (w195, GO + HiGHS + pool, job 2837, 3 h 42 min): 0.208 (sd 0.009) vs GO + HiGHS (B24) 0.211 (-0.003, sd 0.014, 2/6) and vs GO + pool 0.208 (+0.000, 3/6); top-50 4.66; ensemble 0.209 / 4.79. The affine reads the 19 columns as the ridge does (a small addition), where the ladder's kNN and forest read them at 0.285 / 0.280 alone: the pool's signal is not linear in the concentrations, and the slot bounds the transformer's read, not the data. Written as rounds 175 and 176; 031 published v31.
+- User direction (18:20): keep the GPUs full and drive the direction. Submitted B43 = w196 (w190 seeds 2706 to 2711, twelve seeds of the new best, job 2839), B44 = w197 (three families: GO + HiGHS + MOMA + pool, store `YPD_bx_gopfbamomaaapool`, 10,735 columns, job 2840; vs w190 and w195), B45 = w198 (the pool ALONE in the affine, job 2841; vs w137 and w167), B46 = w199 (the pool alone through `--ess-solve-head-hidden 64`, the nonlinear read, job 2842; vs w198 and w137).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B41 | 175 | w194 | del + GO with the measured amino-acid pool | 0.208 (sd 0.002); ens 0.209 / 4.79 |
+| B42 | 176 | w195 | del + HiGHS store with GO and the pool | 0.208 (sd 0.009); ens 0.209 / 4.79 |
+| B43 | -- | w196 | w190 seeds 2706 to 2711 | job 2839, pending |
+| B44 | -- | w197 | del + GO, HiGHS, MOMA and the pool | job 2840, pending |
+| B45 | -- | w198 | del + the pool alone in the affine | job 2841, pending |
+| B46 | -- | w199 | del + the pool alone, hidden layer 64 | job 2842, pending |
+
 ## 2026.09.25 - B39 read: twelve seeds of the annotation-only arm
 
 - B39 (w191 = w167 seeds 2706 to 2711, job 2831, 3 h 40 min): the second six read 0.204 (sd 0.002) against the first six's 0.202 (sd 0.001); over twelve 0.203 (sd 0.002, sem 0.0005), seeds 0.200 to 0.207, select at epochs 7 to 14; twelve-seed ensemble 0.203 / 4.99. The flux vector's gain beside GO paired over the same twelve seeds (new PAIRS entry): +0.012 (sd 0.009), 11/12, 0.214 vs 0.203 (the first six gave +0.009 on 5/6). Written as round 172; 031 published v27.

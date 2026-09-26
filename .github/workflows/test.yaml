@@ -68,11 +68,33 @@ jobs:
     # hermetic contract. tests/conftest.py sets a sentinel DATA_ROOT, skips every
     # gpu/slow/data/neo4j/network/wandb-marked test unless its flag is given, and
     # fails any unmarked test that reaches the network, a cluster, Neo4j, or wandb.
-    - name: Run pytest with coverage (blocking)
+    # The behavioral run is the reported number: import-all is deselected here and
+    # measured in its own step below, so executing def/class lines never counts as
+    # testing behavior (Decision 17).
+    - name: Run pytest with coverage (behavioral, blocking)
       run: |
-        coverage run -m pytest tests/torchcell
+        coverage run -m pytest tests/torchcell --deselect tests/torchcell/test_import_all.py
         coverage report
         coverage xml
+        coverage json -o coverage.json
+
+    # Import-only coverage: the parametrized import of every module, kept as a
+    # separate data file for the import-only column of scripts/coverage_gaps.py.
+    - name: Import-all smoke test (import-only coverage, blocking)
+      run: |
+        coverage run --data-file=.coverage.import -m pytest tests/torchcell/test_import_all.py -q --durations=10
+        coverage json --data-file=.coverage.import -o coverage-import.json
+
+    - name: Coverage gaps table (campaign artifact)
+      run: python scripts/coverage_gaps.py --after coverage.json --import-only coverage-import.json
+
+    - name: Upload coverage tables
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-json
+        path: |
+          coverage.json
+          coverage-import.json
 
     # Anti-padding lint (Decision 19): a test with no assertion, a truthiness-only
     # parametrized sweep, or a torchcell call nothing is asserted on fails the job.

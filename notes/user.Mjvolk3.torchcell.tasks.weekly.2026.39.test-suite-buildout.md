@@ -14,4 +14,4 @@ created: 1790376915792
 
 - [x] PR-0a of [[plan.test-suite-buildout.2026.09.25]]: [[tests.conftest]] (sentinel `DATA_ROOT`, six opt-in flags, boundary guards), [[tests.torchcell.conftest]] (CGT, FakeTxn, DCell fixtures), the three gate scripts [[scripts.test_quality_check]], [[scripts.check_paired_tests]], [[scripts.legacy_partition]], `[tool.torchcell.test_exceptions]`, Makefile test/cov targets, diff-cover + paired-test + quality steps in test.yaml, mypy diff-scope on tests/, [[torchcell.metabolism]] package marker
 - [ ] Confirm the computed legacy move list before PR-0d (`make legacy-table`); `models/dcell.py` and `trainers/neo_regression.py` are init-only until their Phase 2 tests land
-- [ ] PR-0b: `tests/torchcell/test_import_all.py`, `scripts/coverage_gaps.py`, campaign note with the Phase 0 table
+- [x] PR-0b: [[tests.torchcell.test_import_all]] (384 modules import, 18 strict xfails, 2 more never-import modules found by the network guard), [[scripts.coverage_gaps]], the behavioral / import-only split in test.yaml with the coverage JSONs uploaded as a workflow artifact, and the Phase 0 baseline table in [[test-campaign.2026.09.25]]

@@ -76,6 +76,7 @@ smoke:
   labels: [gene_interaction, fitness]
   control: false
   n_val_batches: 40
+  n_trajectory_batches: 10
 
 profiler:
   enabled: false

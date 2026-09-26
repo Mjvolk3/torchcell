@@ -74,6 +74,7 @@ from torchcell.transforms.synthetic_token_offset import SyntheticTokenOffset
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 from arm_030 import (  # noqa: E402
     EXPERIMENT,
+    SmokeTrajectory,
     build_dataset,
     index_sha256,
     load_json_artifact,
@@ -417,6 +418,12 @@ def main(cfg: DictConfig) -> None:
             dirpath=checkpoint_dir, save_last=True, filename=f"{run.id}-last"
         ),
     ]
+    if smoke_on:
+        callbacks.append(
+            SmokeTrajectory(
+                arm, smoke_cfg, n_batches=int(smoke_cfg["n_trajectory_batches"])
+            )
+        )
 
     torch.set_float32_matmul_precision("medium")
     print(f"devices: {devices}; starting training ({timestamp()})")

@@ -4,7 +4,8 @@
 # pool, pin, holdout, vocabulary and constants as the campaign, so this run also warms the
 # split cache the IGB launcher requires) with the synthetic second token switched on and
 # the budget cut to one GPU: every entry is cloned under SyntheticOffsetDataset, 0.3
-# normalized units higher; 3 epochs of 500 training batches; after training the script
+# normalized units higher; 4 epochs of 500 training batches, the smoke
+# measurements logged after every validation epoch (smoke/*); after training the script
 # measures pred(synthetic) - pred(own) on 40 validation batches
 # (results/smoke/cgt_030_smoke_tok_000_seed0.json). Paired with cgt_030_smoke_ctl_000 and
 # read by smoke_report_030.py. Plots and the transformer diagnostics are off; the
@@ -25,6 +26,7 @@ smoke:
   labels: [gene_interaction, fitness]
   control: false
   n_val_batches: 40
+  n_trajectory_batches: 10
 
 data_module:
   num_workers: 8
@@ -32,7 +34,7 @@ data_module:
   val_batch_size: 64
 
 trainer:
-  max_epochs: 3
+  max_epochs: 4
   strategy: auto
   devices: 1
   precision: "bf16-mixed"

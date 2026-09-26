@@ -37,6 +37,7 @@ import os.path as osp
 from collections.abc import Iterable, Mapping
 from typing import Any
 
+from lightning.pytorch.callbacks import Callback
 from pydantic import BaseModel, Field
 
 EXPERIMENT = "030-solid-growth-multi"
@@ -396,3 +397,56 @@ def run_smoke_check(
         mean_resid_clone=float(torch.cat(resid_clone).float().mean()),
         callback_metrics=dict(callback_metrics),
     )
+
+
+class SmokeTrajectory(Callback):  # type: ignore[misc]  # lightning Callback is untyped
+    """Log the smoke measurements at every validation epoch end.
+
+    Job 2863's token run measured pred(synthetic) - pred(own) of 0.93 for a 0.3 offset
+    after 1,500 steps with nothing recorded in between, so it could not say whether the
+    readout was converging on the offset or sitting past it. A few validation batches
+    per epoch under both tokens answer that (``smoke/mean_diff`` and friends over
+    epochs), at the cost of ``n_batches`` extra forward passes per epoch.
+    """
+
+    def __init__(
+        self, arm: Arm030, smoke_cfg: Mapping[str, Any], n_batches: int
+    ) -> None:
+        """Keep the arm, the smoke config and the per-epoch batch budget."""
+        super().__init__()
+        self.arm = arm
+        self.smoke_cfg = dict(smoke_cfg)
+        self.n_batches = int(n_batches)
+
+    def on_validation_epoch_end(self, trainer: Any, pl_module: Any) -> None:
+        """Measure on the pinned validation loader and log under ``smoke/``."""
+        if trainer.sanity_checking or not trainer.is_global_zero:
+            return
+        loaders = trainer.val_dataloaders
+        loader = loaders[0] if isinstance(loaders, list) else loaders
+        result = run_smoke_check(
+            task=pl_module,
+            loader=loader,
+            arm=self.arm,
+            config_name="trajectory",
+            seed=0,
+            smoke_cfg=self.smoke_cfg,
+            n_batches=self.n_batches,
+            callback_metrics={},
+            wandb_run_id="",
+        )
+        values = {
+            f"smoke/{k}": float(v)
+            for k, v in result.model_dump().items()
+            if isinstance(v, (int, float))
+            and not isinstance(v, bool)
+            and k not in ("seed", "token_index", "n_batches")
+        }
+        pl_module.log_dict(values, rank_zero_only=True)
+        print(
+            f"smoke epoch {trainer.current_epoch}: mean_diff {result.mean_diff:+.4f} "
+            f"sd_diff {result.sd_diff:.4f} mse_own {result.mse_own:.4f} "
+            f"mse_swapped {result.mse_swapped:.4f} mse_all {result.mse_all_rows:.4f} "
+            f"resid real {result.mean_resid_real:+.4f} clone {result.mean_resid_clone:+.4f}",
+            flush=True,
+        )

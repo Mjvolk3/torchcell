@@ -1,0 +1,26 @@
+{
+  "chemberta2_mlm": {},
+  "chemberta2_mtr": {},
+  "ecfp4_bit": {},
+  "ecfp4_count": {},
+  "fcfp4_count": {},
+  "maccs": {},
+  "mol2vec": {},
+  "mole_static": {},
+  "molformer_xl": {},
+  "rdkit_2d": {},
+  "roberta_zinc_480m": {},
+  "unimol_v1": {
+    "FAPWRFPIFSIZLT-UHFFFAOYSA-M": "ValueError: unimol_v1: no conformer (all-zero coordinates) for '[Cl-].[Na+]'",
+    "GLFNIEUTAYBVOC-UHFFFAOYSA-L": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[Cl][Mn][Cl]'",
+    "GVPFVAHMJGGAJG-UHFFFAOYSA-L": "ValueError: unimol_v1: no conformer (all-zero coordinates) for '[Cl-].[Cl-].[Co+2]'",
+    "JIAARYAFYJHUJI-UHFFFAOYSA-L": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[Cl][Zn][Cl]'",
+    "KWGKDLIKAYFUFQ-UHFFFAOYSA-M": "ValueError: unimol_v1: no conformer (all-zero coordinates) for '[Cl-].[Li+]'",
+    "LWJROJCJINYWOX-UHFFFAOYSA-L": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[Cl][Hg][Cl]'",
+    "MWUXSHHQAYIFBG-UHFFFAOYSA-N": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[N]=O'",
+    "OYVAGSVQBOHSSS-WXFSZRTFSA-O": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for 'Cc1c(N)nc(C(CC(N)=O)NCC(N)C(N)=O)nc1C(=O)NC(C(=O)NC(C)C(O)C(C)C(=O)NC(C(=O)NCCc1nc(-c2nc(C(=O)NCCC[S+](C)C)cs2)cs1)C(C)O)C(OC1OC(CO)C(O)C(O)C1OC1OC(CO)C(O)C(OC(N)=O)C1O)c1cnc[nH]1'",
+    "PTLRDCMBXHILCL-UHFFFAOYSA-M": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for 'O=[As][O-].[Na+]'",
+    "PUZPDOWCWNUUKD-UHFFFAOYSA-M": "ValueError: unimol_v1: no conformer (all-zero coordinates) for '[F-].[Na+]'",
+    "YKYOUMDCQGMQQO-UHFFFAOYSA-L": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[Cl][Cd][Cl]'"
+  }
+}

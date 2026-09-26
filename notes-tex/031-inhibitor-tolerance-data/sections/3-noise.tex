@@ -1,0 +1,101 @@
+%% notes-tex/031-inhibitor-tolerance-data/sections/3-noise.tex
+
+\section{Replication, error, and the ceiling on prediction\secstatus{todo}}
+\label{sec:noise}
+
+Two views of noise are available for every condition, and where they can be joined
+they check each other (\file{replicate\_noise\_and\_ceilings.py}).
+
+\notesec{The served view}
+The served record carries the replicate count and, where the source released it, a
+sample SD from which the SE is derived. Per condition the reliability index
+$\mathrm{rel} = 1 - \overline{\mathrm{SE}^2}/\mathrm{Var}(\text{response})$ over genes
+is the share of the across-gene spread that replicate noise cannot produce. Under the
+usual measurement model, response $=$ truth $+$ noise with the noise independent of the
+truth, $\sqrt{\mathrm{rel}}$ is the ceiling on the Pearson correlation between a
+measurement and the noise-free truth, and $\mathrm{rel}$ itself is the ceiling on the
+correlation between two independent measurements of the same condition, which is what a
+held-out replicate, or a second dataset, can reach.
+
+\notesec{The empirical view}
+The raw matrices the loaders consumed hold the replicates the served SD summarizes:
+Vanacloig's three batches, each a log2 CPM ratio against its own batch's control columns
+(the loader's quantity), and Hillenmeyer's replicate arrays of one condition label.
+Pairwise Spearman between replicates over genes, and the Jaccard of their bottom-5\% hit
+sets, are the model-free reliability of a condition and of its hits. Raw labels are
+mapped to served compound names with the loaders' own resolver, so the two views join.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/replicate_noise_and_ceilings.py ->
+%% results/noise_summary.csv, rendered by notes_tex_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Replication and error per dataset. The reliability index and the ceiling on
+$r$ come from the served SE; the replicate Spearman and hit Jaccard from the raw
+replicates. The last row is the rank correlation between the two views over the
+conditions that have both.}
+\label{tab:noise}
+\input{tables/t4-noise}
+\end{table}
+
+\notesec{What the two views say}
+Vanacloig's three batches agree at a median Spearman of 0.33 and its hit sets at a
+Jaccard of 0.24 (Table~\ref{tab:noise}, Figure~\ref{fig:noise}b,c). Its served index
+tracks the raw agreement at a rank correlation of 0.87 (Figure~\ref{fig:index}d), so
+the served SE is an honest per-compound noise estimate for this dataset. For Hillenmeyer
+it is not: the served index has a median of 0.92 for HOM and 0.84 for HET while the
+raw replicate arrays agree at 0.39 and 0.26, and the two views correlate at only 0.40
+and 0.43. Plausible reason, unverified: the served SD exists only for the third of
+records with more than one array and describes array-to-array scatter within one
+control set, while the raw replicates of a label span control sets and scanners. For
+Hillenmeyer the raw replicate agreement is the ceiling to quote.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/replicate_noise_and_ceilings.py ->
+%% noise_distributions.svg. Panel a: results/condition_noise_<dataset>.csv column
+%% reliability; b, c: results/raw_replicate_agreement.csv columns replicate_rho, hit_jaccard.
+\tcfig{figures/noise_distributions.pdf}{Noise per condition in the three datasets.
+\textbf{(a)} The served-SE reliability index, one point per condition, bar at the
+median. \textbf{(b)} Pairwise Spearman between raw replicates of a condition over genes.
+\textbf{(c)} Jaccard of the bottom-5\% hit sets between raw replicates. Vanacloig has
+41 conditions in every panel; Hillenmeyer's counts differ between panels because the
+served SE exists only where a source SD was released and raw replicates only where a
+label was run on two or more arrays.}{fig:noise}
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/replicate_noise_and_ceilings.py ->
+%% reliability_index_vs_replicates.svg, from results/condition_noise_<dataset>.csv.
+\tcfig{figures/reliability_index_vs_replicates.pdf}{The served index against the raw
+agreement, one point per condition. \textbf{(d)} Against replicate Spearman.
+\textbf{(e)} Against hit Jaccard. The legend carries the rank correlation per dataset.
+Vanacloig's index is a faithful summary of its replicate agreement; Hillenmeyer's
+overstates it.}{fig:index}
+
+\notesec{The ceiling per Vanacloig compound}
+Figure~\ref{fig:ceilings} and Table~\ref{tab:vconditions} give every Vanacloig compound
+its ceiling. Methyl methanesulfonate, 2,2'-bipyridine, crystal violet, ferulic acid and
+methylglyoxal sit above 0.92. Isobutanol is at 0.89, furfural at 0.88, ethanol at 0.91.
+Six compounds have an index below 0.1, and three of those (sodium glyoxylate, sodium
+butyrate, 5-hydroxymethylfurfural) are at or below zero: at the doses used, their
+replicate scatter is as large as the spread between genes, and there is nothing for a
+model to predict. 5-hydroxymethylfurfural is the one loss that matters for the
+hydrolysate question.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/replicate_noise_and_ceilings.py ->
+%% vanacloig_ceilings.svg, from results/condition_noise_vanacloig2022.csv.
+\tcfig{figures/vanacloig_ceilings.pdf}{\textbf{(f)} Every Vanacloig compound, ordered
+by its ceiling on the correlation with the noise-free response (bars,
+$\sqrt{\mathrm{rel}}$), with the raw three-batch replicate Spearman (circles) and the
+between-batch hit Jaccard (squares). A compound with no bar has an index at or below
+zero.}{fig:ceilings}
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/replicate_noise_and_ceilings.py
+%% (results/condition_noise_vanacloig2022.csv) and cross_dataset_similarity.py
+%% (results/top_matches_hom.csv), rendered by notes_tex_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Every Vanacloig compound: served reliability index, ceiling on $r$ versus the
+truth, raw replicate Spearman over three batches, between-batch hit Jaccard, and the
+best-correlated Hillenmeyer HOM condition with its cross Spearman.}
+\label{tab:vconditions}
+\input{tables/t6-vanacloig-conditions}
+\end{table}

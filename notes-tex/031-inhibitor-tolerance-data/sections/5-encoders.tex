@@ -1,0 +1,124 @@
+%% notes-tex/031-inhibitor-tolerance-data/sections/5-encoders.tex
+
+\section{Molecular encoders and their coverage\secstatus{todo}}
+\label{sec:encoders}
+
+A compound enters a model as a vector, and the choice of encoder is a modeling
+decision that should be made on measured coverage and measured behavior rather than
+on a reading list. Twelve small-molecule encoders now live in
+\file{torchcell/molecule/}: a \texttt{MoleculeEncoder} turns a list of SMILES into one
+fixed-width float32 vector per molecule, raises on a SMILES it cannot parse rather than
+returning zeros, and is deterministic across calls. Four are RDKit fingerprints and
+descriptors with no learned weights (count and bit ECFP4 at 2{,}048, feature-class
+FCFP4, MACCS keys, and the 217 RDKit 2D descriptors); one is Mol2Vec, a skip-gram over
+Morgan substructure identifiers; four are SMILES transformers (the two ChemBERTa-2
+heads, MoLFormer-XL, a ZINC RoBERTa); one is Uni-Mol, which embeds an ETKDG conformer;
+and one is MolE, the contrastively pretrained graph network built for antimicrobial
+activity. Weights that are not on the Hugging Face hub (Mol2Vec, MolE) sit under
+\file{\$DATA\_ROOT} with a pydantic manifest recording the source URL, the retrieval
+command and the sha256, re-hashed on every load. The registry and its tests are
+described in the dendron note \texttt{torchcell.molecule.encoders}.
+
+\notesec{Why these twelve}
+Three principles chose the set. The benchmark of 25 pretrained embeddings on 25
+datasets found almost every one statistically indistinguishable from count ECFP
+\external{arXiv 2508.06199, September 2026 revision}, so fingerprints are the mandatory
+baseline and every learned encoder has to earn its place against them. Everything
+installs from RDKit, pip or the Hugging Face hub, with one vendored exception. And the
+four representation families are each present, so the transfer test can say which
+family carries chemistry-to-response signal rather than which checkpoint won.
+\begin{itemize}
+\item \textbf{Fingerprints and descriptors} (count and bit ECFP4, FCFP4, MACCS, the 217
+  RDKit descriptors): no training corpus, hashed or curated substructures and
+  physicochemical properties \external{Rogers and Hahn 2010, \texttt{10.1021/ci100050t};
+  Durant et al.\ 2002, \texttt{10.1021/ci010132r}}. FCFP4 tests whether pharmacophore
+  feature classes beat atom identity; the descriptors are what a tolerance biologist
+  reasons with (logP, molecular weight, polar surface area).
+\item \textbf{Mol2Vec}: skip-gram over Morgan identifiers on 19.9 million ZINC and ChEMBL
+  compounds, 300 dimensions, still the metabolomics workhorse \external{Jaeger, Fulle
+  and Turk 2018, \texttt{10.1021/acs.jcim.7b00616}}.
+\item \textbf{SMILES transformers}: ChemBERTa-2 in its masked-language and
+  multitask-regression heads on 77 million PubChem SMILES \external{Ahmad et al.\ 2022,
+  arXiv 2209.01712}, MoLFormer-XL on 1.1 billion PubChem and ZINC SMILES with linear
+  attention, of which the public checkpoint carries the 10 percent subset \external{Ross
+  et al.\ 2022, \texttt{10.1038/s42256-022-00580-7}}, and a community ZINC RoBERTa at
+  480 million SMILES added for availability. The two ChemBERTa heads share a backbone,
+  which separates SMILES syntax from property supervision.
+\item \textbf{3D}: Uni-Mol, pretrained on 209 million conformers by atom masking,
+  coordinate denoising and pair-distance prediction \external{Zhou et al.\ 2023, ICLR};
+  the one encoder that can say whether conformation matters for the small solvents
+  and the phenolics.
+\item \textbf{Graph}: MolE, a GIN pretrained with a Barlow Twins objective on 100{,}000
+  PubChem structures and validated experimentally for antimicrobial discovery
+  \external{Olayo-Alarcon et al.\ 2025, \texttt{10.1038/s41467-025-58804-4}}; whole-cell
+  growth inhibition is the published task closest to inhibitor tolerance, and its
+  model code is vendored under \file{third\_party/mole/}.
+\end{itemize}
+
+%% SOURCE: ENCODER_PROVENANCE in experiments/031-env-chemgen-inhibitor-tolerance/scripts/notes_tex_tables.py
+%% (curated metadata, also written to results/encoder_provenance.csv); rendered by the same script.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Provenance of the twelve encoders: representation family, training corpus,
+objective, an approximate citation band as of September 2026 (a band, not a count),
+and the source. \tcflagext~Temporary: the linked works are not yet in the library
+mirror and are given by their public link; the flag lifts when they are mirrored and
+cited through the bibliography.}
+\label{tab:provenance}
+\input{tables/t9-encoder-provenance}
+\end{table}
+
+\notesec{Left out}
+Chemprop's D-MPNN is trained end to end and belongs to the model phase as an
+architecture, not to an embedding comparison. CLAMP, the strongest frozen model in the
+benchmark, aligns fingerprints to mammalian and enzymatic assay text and ships only as
+a research repository; it is the first candidate for a second pass if the fingerprint
+arm wins. MolCLR, GraphMVP, 3D Infomax, Mole-BERT and KPGT are GIN checkpoints of
+MolE's family in research repositories; GEM is PaddlePaddle only; CLOOME, MoCoP and
+InfoAlign encode human Cell Painting or expression phenotypes whose transfer to yeast
+growth is untested; MoleculeSTM, MolBERT, R-MAT and CDDD are covered by the SMILES
+family already present.
+
+\notesec{Two caveats for these molecules}
+The corpora are drug-like, 20 to 40 heavy atoms. Ethanol and isobutanol have 3 and 5,
+so ECFP is nearly empty and a transformer embedding is poorly determined for them,
+which is part of why isobutanol has no chemical neighbor anywhere
+(Section~\ref{sec:chemistry}). The salts (sodium acetate, the imidazolium chlorides)
+are multi-fragment SMILES that fingerprints handle and Uni-Mol cannot conformer.
+
+Reaction-aware encoders were left out on purpose. A reaction-hypergraph embedding places
+a metabolite by the reactions it takes part in, which is the right context for a
+Yeast9 metabolite and no context at all for an inhibitor or a drug whose fate in the
+cell is not in the model. When the medium components enter the environment encoding
+(Section~\ref{sec:next}) the metabolites among them can carry a reaction branch; the
+inhibitors cannot.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/embed_compounds.py ->
+%% results/embedding_coverage.csv, rendered by notes_tex_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Coverage of every encoder over the compounds of the three datasets (distinct
+InChIKeys with a dosed record: 41, 114 and 290; 343 in the union). Seconds are wall
+time over the union on one shared GPU, model load excluded.}
+\label{tab:coverage}
+\input{tables/t7-coverage}
+\end{table}
+
+\notesec{Coverage}
+Every one of the 343 compounds has a SMILES in the pinned identity table, and eleven of
+the twelve encoders embed all of them (Table~\ref{tab:coverage}). Uni-Mol embeds 332:
+its wrapper library substitutes flat or all-zero coordinates when a conformer cannot be
+generated (metal dihalides, isolated ions, nitric oxide, and bleomycin at 180 atoms) and
+would have embedded eleven Hillenmeyer compounds from nothing. The encoder's
+\texttt{check} method now reruns the conformer step and raises on either signature, so
+those eleven are counted as failures rather than served as vectors. None of them is a
+Vanacloig compound. One dosed Hillenmeyer name, tunicamycin, is a homologue mixture
+with no InChIKey and is counted as not a compound.
+
+\notesec{Cost}
+The fingerprints, Mol2Vec and MolE embed the union in well under a second; the SMILES
+transformers in under a second; the RDKit descriptors in two seconds; Uni-Mol in fifty
+because of conformer generation. At the scale of these datasets no encoder is
+expensive, and the choice can be made on what the vectors do.

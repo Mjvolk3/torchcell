@@ -1,0 +1,2 @@
+n_shared_genes,mean_response_spearman,n_mean_genes,mantel_genes,mantel_spearman,mantel_null_mean,mantel_null_sd,n_perm,cross_median,cross_p95,cross_max,n_v_conditions,n_h_conditions
+3550,0.11815627718012865,3550,1350,0.06849403692594355,-0.0033716498147828696,0.006315537103565429,20,0.010097022969134714,0.07513184463286128,0.22248371872194145,41,140

@@ -34,7 +34,7 @@ Findings that define the rounds:
 - Every method re-traverses the whole dataset. Costanzo dmf ran 17 chunked passes over
   20.7M records at 10 to 20 min each.
 - Per record, pydantic rehydration is 1.06 ms against 0.08 ms for the LMDB read
-  (`scratchpad/record_cost.py` on the dev dmf_costanzo2016 LMDB, 2,000 records). The
+  (`scripts/record_cost.py` on the dev dmf_costanzo2016 LMDB, 2,000 records). The
   constant Environment is 0.45 ms of that and the constant reference 0.43 ms, and the
   reference is constructed twice in `transform_item`.
 - sacct: job 2032 was allocated 48 CPUs under the memory floor and the container was
@@ -77,10 +77,10 @@ config now carries the production adapter settings and an arm deviates only thro
 | 2859 | r3 | single-pass | f93fb98c | r1 overrides + `adapters.single_pass=true` |
 
 Local verification before submitting, `SmfKuzmin2018Adapter` on the dev LMDB (1,539
-records, 4 process workers, `scratchpad/test_inprocess_equivalence.py`): pool,
+records, 4 process workers, `scripts/test_inprocess_equivalence.py`): pool,
 in-process, single-pass, and single-pass plus in-process all emit the same node id set
 (sha 2d0382eef4a03ee3, 12,319 nodes) and edge id set (6a43a44263328f63, 13,855 edges).
 Wall for the whole adapter locally: pool 15.6 s before r2, 8.3 s after r2, 2.8 s with
 single-pass. Cached-constant `transform_item` on 2,000 dev records: dmf_costanzo2016
 1.02 -> 0.16 ms per record, smf_kuzmin2018 1.35 -> 0.10 ms, `model_dump` byte-identical
-(`scratchpad/test_validated_cache.py`).
+(`scripts/test_validated_cache.py`).

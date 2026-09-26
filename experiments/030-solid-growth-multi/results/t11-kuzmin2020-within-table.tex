@@ -1,0 +1,19 @@
+%% SOURCE: experiments/030-solid-growth-multi/scripts/kuzmin2020_within_table_recompute.py (results/kuzmin2020_within_table_recompute.csv) -- GENERATED, do not edit
+
+\begin{tabular}{llrrrrr}
+\toprule
+rows & terms & $n$ & $r$ & slope & rmse & $|$residual$|<10^{-3}$ \\
+\midrule
+S1, diagnostic array & controls within the row's table & 215,569 & \textbf{1.000} & 1.000 & 0.00004 & 100.0\% \\
+ & controls pooled over both tables & 215,576 & 0.985 & 0.975 & 0.01027 & 95.2\% \\
+ & within-table controls, $f_k$ averaged over tables & 215,569 & 0.890 & 0.993 & 0.03119 & 3.9\% \\
+\midrule
+S3, pilot screens & controls within the row's table & 41,235 & \textbf{1.000} & 1.000 & 0.00004 & 100.0\% \\
+ & controls pooled over both tables & 41,235 & 0.944 & 0.935 & 0.02344 & 75.1\% \\
+ & within-table controls, $f_k$ averaged over tables & 41,235 & 0.981 & 1.001 & 0.01389 & 75.4\% \\
+\midrule
+both tables & controls within the row's table & 256,804 & \textbf{1.000} & 1.000 & 0.00004 & 100.0\% \\
+ & controls pooled over both tables & 256,811 & 0.977 & 0.967 & 0.01330 & 92.0\% \\
+ & within-table controls, $f_k$ averaged over tables & 256,804 & 0.906 & 0.995 & 0.02912 & 15.4\% \\
+\bottomrule
+\end{tabular}

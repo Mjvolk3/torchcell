@@ -1,0 +1,35 @@
+%% SOURCE: experiments/030-solid-growth-multi/scripts/closure_recompute_030.py (results/closure_030_by_screen.csv) -- GENERATED, do not edit
+
+\begin{tabular}{lllrrrr}
+\toprule
+build & screen, stratum & form & $n$ & $r$ & slope & rmse \\
+\midrule
+025 & both & symmetric, mean over entries & 352,505 & \textbf{0.230} & 0.63 & 0.171 \\
+\midrule
+029 & Kuzmin 2018 deletion & symmetric & 57,451 & 0.504 & 0.91 & 0.079 \\
+ &  & array-screen double (029 reading) & 57,451 & \textbf{0.511} & 0.92 & 0.079 \\
+\midrule
+029 & Kuzmin 2020 deletion & symmetric & 231,611 & 0.278 & 0.90 & 0.212 \\
+ &  & array-screen double (029 reading) & 236,225 & \textbf{0.325} & 0.93 & 0.165 \\
+\midrule
+030 & Kuzmin 2018 deletion & array-screen double (029 reading) & 57,445 & 0.511 & 0.92 & 0.079 \\
+ &  & query-strain double & 57,877 & 0.778 & 0.87 & 0.037 \\
+ &  & + array-strain controls & 57,877 & \textbf{0.803} & 0.88 & 0.034 \\
+ &  & + $f_k$ from the source row (diagnostic) & 57,877 & \textbf{0.803} & 0.88 & 0.034 \\
+\midrule
+030 & Kuzmin 2018 every term strain-matched & array-screen double (029 reading) & 85,206 & 0.435 & 0.96 & 0.102 \\
+ &  & query-strain double & 86,111 & 0.951 & 0.98 & 0.016 \\
+ &  & + array-strain controls & 86,111 & \textbf{0.987} & 0.99 & 0.008 \\
+ &  & + $f_k$ from the source row (diagnostic) & 86,111 & \textbf{0.987} & 0.99 & 0.008 \\
+\midrule
+030 & Kuzmin 2020 deletion & array-screen double (029 reading) & 236,264 & 0.325 & 0.93 & 0.165 \\
+ &  & query-strain double & 250,062 & 0.543 & 0.94 & 0.090 \\
+ &  & + array-strain controls & 250,023 & 0.548 & 0.94 & 0.089 \\
+ &  & + $f_k$ from the source row (diagnostic) & 250,293 & \textbf{0.651} & 0.96 & 0.068 \\
+\midrule
+030 & Kuzmin 2020 every term strain-matched & array-screen double (029 reading) & 238,537 & 0.338 & 0.91 & 0.160 \\
+ &  & query-strain double & 254,977 & 0.659 & 0.92 & 0.068 \\
+ &  & + array-strain controls & 254,977 & 0.660 & 0.93 & 0.068 \\
+ &  & + $f_k$ from the source row (diagnostic) & 254,977 & \textbf{0.920} & 0.94 & 0.025 \\
+\bottomrule
+\end{tabular}

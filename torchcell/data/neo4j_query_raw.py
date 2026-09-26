@@ -10,8 +10,9 @@ import logging
 import multiprocessing as mp
 import os
 import os.path as osp
+from collections import deque
 from collections.abc import Iterator, Sequence
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import Future, ProcessPoolExecutor
 from typing import Any, cast
 
 import lmdb
@@ -24,7 +25,49 @@ from torchcell.datamodels.schema import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
     EXPERIMENT_TYPE_MAP,
 )
+from torchcell.lmdb_map_size import BUILD_LMDB_MAP_SIZE
 from torchcell.sequence import GeneSet
+
+RAW_BATCH_RECORDS = 2000
+"""Records per worker task and per LMDB write transaction in the raw stage.
+
+At about 23 KB per serialized record a batch is about 46 MB, and with two batches in
+flight per worker the raw stage holds under 2 GB of pending rows at ten workers.
+"""
+
+
+def _serialize_raw_batch(
+    batch: list[tuple[int, str, str]],
+) -> list[tuple[bytes, bytes]]:
+    """Validate ``(index, experiment json, reference json)`` rows into LMDB rows.
+
+    Runs in a worker process. Constructing the pydantic experiment and reference is
+    the raw stage's CPU cost and its schema check; the driver thread only hands over
+    the two strings each record carries.
+    """
+    rows: list[tuple[bytes, bytes]] = []
+    for i, e_json, ref_json in batch:
+        e_node_data = json.loads(e_json)
+        experiment_class = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]]
+        experiment = experiment_class(
+            dataset_name=e_node_data["dataset_name"],
+            genotype=e_node_data["genotype"],
+            environment=e_node_data["environment"],
+            phenotype=e_node_data["phenotype"],
+        )
+        ref_node_data = json.loads(ref_json)
+        experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+            ref_node_data["experiment_reference_type"]
+        ]
+        experiment_reference = experiment_reference_class(**ref_node_data)
+        data_dict = {
+            "experiment": experiment,
+            "experiment_reference": experiment_reference,
+        }
+        data_json = json.dumps(data_dict, default=lambda o: o.model_dump())
+        rows.append((f"data_{i}".encode(), data_json.encode()))
+    return rows
+
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -156,13 +199,28 @@ class Neo4jQueryRaw:
         os.makedirs(self.raw_dir, exist_ok=True)
         os.makedirs(self.lmdb_dir, exist_ok=True)
 
-        if not os.path.exists(osp.join(self.lmdb_dir, "data.mdb")):
+        # Resume marker, as the later stages have (neo4j_cell.py): the raw LMDB is
+        # created before the first record is written, so a build killed mid-query leaves
+        # a partial store whose existence alone must never count as completion. The
+        # 030 build (slurm 2681) was cancelled 1.5M records into a 44M-record query; had
+        # it been restarted on the old rule, the dataset would have been silently
+        # truncated to those 1.5M.
+        marker = osp.join(self.raw_dir, "STAGE_COMPLETE")
+        if not osp.exists(marker):
+            if osp.exists(osp.join(self.lmdb_dir, "data.mdb")):
+                raise RuntimeError(
+                    f"{self.lmdb_dir} holds a raw LMDB but {marker} is absent: the query "
+                    "that wrote it did not finish (or predates the marker). Move the raw "
+                    "directory aside and rebuild; a partial raw store is not resumable."
+                )
             self._init_lmdb(readonly=False)
             self.process()
             self.close_lmdb()
+            with open(marker, "w") as f:
+                f.write("")
 
         # Initialize LMDB environment
-        self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12), readonly=True)
+        self.env = lmdb.open(self.lmdb_dir, map_size=BUILD_LMDB_MAP_SIZE, readonly=True)
 
     def close_lmdb(self) -> None:
         """Close the LMDB environment if it is open."""
@@ -196,7 +254,7 @@ class Neo4jQueryRaw:
             self.close_lmdb()
         self.env = lmdb.open(
             self.lmdb_dir,
-            map_size=int(1e12),
+            map_size=BUILD_LMDB_MAP_SIZE,
             readonly=readonly,
             lock=not readonly,
             readahead=False,
@@ -208,66 +266,66 @@ class Neo4jQueryRaw:
         with self.env.begin(write=True) as txn:
             txn.put(key, value)
 
+    def _write_rows(self, rows: list[tuple[bytes, bytes]]) -> None:
+        """Commit a batch of rows in ONE write transaction."""
+        with self.env.begin(write=True) as txn:
+            for key, value in rows:
+                txn.put(key, value)
+
     def process(self) -> None:
-        """Stream query results into LMDB and build the reference and gene-set indices."""
+        """Stream query results into LMDB and build the reference and gene-set indices.
+
+        The driver thread pulls records and hands batches of their two serialized
+        strings to ``num_workers`` processes, which validate them into pydantic models
+        and return LMDB rows; each returned batch is committed in one write
+        transaction, in query order. The previous loop validated and committed one
+        record per transaction on the driver thread: 700 records/s at half a core
+        (slurm 2687), most of it waiting on the per-commit flush, 19 h for 44M records.
+        """
         log.info("Processing data...")
-        i = -1
-        for i, record in tqdm(enumerate(self.fetch_data())):
-            # Two record shapes, by what the query RETURNs. Property shape
-            # (e_serialized/ref_serialized strings) is REQUIRED at scale: returning
-            # whole nodes makes the driver register every hydrated Node in the
-            # result's Graph cache (neo4j/graph/__init__.py, graph._nodes) for the
-            # life of the result, retaining 13.6 KB/record -- measured on the 025
-            # build, which held 29 GB of heap at 2.2M records and projects past
-            # machine RAM at 44M. Returning the serialized_data property instead
-            # measures 3 B/record. Node shape (RETURN e, ref) stays supported for
-            # the existing experiment queries, which are historical records.
-            if "e_serialized" in record.keys():
-                e_node_data = json.loads(record["e_serialized"])
-            else:
-                e_node_data = json.loads(record["e"]["serialized_data"])
+        # Two record shapes, by what the query RETURNs. Property shape
+        # (e_serialized/ref_serialized strings) is REQUIRED at scale: returning whole
+        # nodes makes the driver register every hydrated Node in the result's Graph
+        # cache (neo4j/graph/__init__.py, graph._nodes) for the life of the result,
+        # retaining 13.6 KB/record -- measured on the 025 build, which held 29 GB of
+        # heap at 2.2M records and projects past machine RAM at 44M. Returning the
+        # serialized_data property instead measures 3 B/record. Node shape (RETURN e,
+        # ref) stays supported for the existing experiment queries.
+        if self.num_workers is None:
+            raise ValueError("num_workers must be set to run the raw stage")
+        n_workers: int = self.num_workers
+        n_written = 0
+        pending: deque[Future[list[tuple[bytes, bytes]]]] = deque()
+        max_in_flight = 2 * n_workers
+        progress = tqdm(unit="rec", unit_scale=True)
 
-            # Create an instance of the FitnessExperiment model
-            experiment_class = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]]
-            experiment = experiment_class(
-                dataset_name=e_node_data["dataset_name"],
-                genotype=e_node_data["genotype"],
-                environment=e_node_data["environment"],
-                phenotype=e_node_data["phenotype"],
-            )
+        def drain_one() -> None:
+            nonlocal n_written
+            rows = pending.popleft().result()
+            self._write_rows(rows)
+            n_written += len(rows)
+            progress.update(len(rows))
 
-            # Extract the serialized data from the 'ref' node (same two shapes).
-            if "ref_serialized" in record.keys():
-                ref_node_data = json.loads(record["ref_serialized"])
-            else:
-                ref_node_data = json.loads(record["ref"]["serialized_data"])
-
-            experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
-                ref_node_data["experiment_reference_type"]
-            ]
-            # Create an instance of the FitnessExperimentReference model
-            experiment_reference = experiment_reference_class(**ref_node_data)
-
-            # Create a dictionary with experiment and reference objects
-            data_dict = {
-                "experiment": experiment,
-                "experiment_reference": experiment_reference,
-            }
-
-            # Serialize the dictionary to JSON
-            data_json = json.dumps(data_dict, default=lambda o: o.model_dump())
-
-            # Generate a key for the data
-            data_key = f"data_{i}".encode()
-
-            # Write the serialized dictionary to LMDB
-            self.write_to_lmdb(data_key, data_json.encode())
-
-            # Log progress every log_batch_size records
-            # if (i + 1) % log_batch_size == 0:
-            #     log.info(f"Processed {i + 1} records")
-
-        log.info(f"Total records processed: {i + 1}")
+        with ProcessPoolExecutor(max_workers=n_workers) as pool:
+            batch: list[tuple[int, str, str]] = []
+            for i, record in enumerate(self.fetch_data()):
+                if "e_serialized" in record.keys():
+                    e_json, ref_json = record["e_serialized"], record["ref_serialized"]
+                else:
+                    e_json = record["e"]["serialized_data"]
+                    ref_json = record["ref"]["serialized_data"]
+                batch.append((i, e_json, ref_json))
+                if len(batch) == RAW_BATCH_RECORDS:
+                    pending.append(pool.submit(_serialize_raw_batch, batch))
+                    batch = []
+                    if len(pending) >= max_in_flight:
+                        drain_one()
+            if batch:
+                pending.append(pool.submit(_serialize_raw_batch, batch))
+            while pending:
+                drain_one()
+        progress.close()
+        log.info(f"Total records processed: {n_written}")
 
         self.experiment_reference_index
         self.gene_set = self.compute_gene_set()

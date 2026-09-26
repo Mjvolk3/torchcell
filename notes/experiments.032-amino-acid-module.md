@@ -285,3 +285,16 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 ## 2026.09.25 - Cooper 2010 as a ladder target
 
 - User direction: linear and kNN baselines over BOTH amino-acid datasets. `target_store_baselines.py --target cooper` (new `CSV_TARGETS`: the 17 peaks read from the loader's `preprocess/data.csv` by the record's deleted gene on the same pinned split; no reference arm in the trainer, so the identity check is skipped; the SM stores of the prototroph stand in for the medium Cooper used). MEASURED (`results/store_baselines_cooper.json`, 31 min; 816 test genotypes with a Cooper row, 561 pinned): every cell between -0.025 and +0.041 mean Spearman over the peaks; the highest the forest over the HiGHS store with ProtT5 (0.041) and the ridge over MOMA (0.039); GO 0.019 by forest, ProtT5 0.028 by ridge. Against the Mulleder ladder's 0.00 to 0.06. Written into the 032 document (section 4, new table `store_baselines_cooper`; published v18).
+
+## 2026.09.26 - A22 and A23 read: the betaxanthin score in the transformer's affine
+
+- A22 (w202, GO + the Cachera score, 2,363 columns standardized, job 2845, 3 h 36 min): 0.053 (sd 0.010) vs GO alone (w170) 0.058 (-0.005, sd 0.010, 2/6) and vs the control (w141) 0.049 (+0.004, sd 0.013, 5/6); ensemble 0.056; seeds 0.040 to 0.065, select at epochs 2 to 166 on validation Pearson 0.056 to 0.077 (the GO affine under log1p: epochs 2 to 3, 0.106 to 0.112). CONFOUND: w170 encodes GO as log1p while w202's store standardizes the multi-hot and the score as one table, so the annotation's columns enter at a different scale. Written as round 183.
+- A23 (w203, the score ALONE, one standardized column, job 2846, 3 h 33 min): 0.060 (sd 0.015) vs w202 0.053 (+0.006, 4/6), vs GO alone 0.058 (+0.002, 3/6), vs the control 0.049 (+0.010, 4/6); six-seed ensemble 0.073, above the control's twelve-seed ensemble (0.067) and the highest ensemble of any arm on the target; seeds 0.036 to 0.080, epochs 30 to 151, validation Pearson 0.098 to 0.123 (the highest of any arm). Written as round 184.
+- A24 = w208 (GO alone standardized, the encoding control for w202; job 2855, pending; vs w170 and w202). Reserved round 189.
+- Submission fault, 2026-09-26: w203 to w208 went out WITHOUT `ESS_STUDY`, so the launcher routed them to the 028 trees (results, test-predictions-028, checkpoints-028, the 028 W&B project); the readouts said "no cells yet". w203's outputs were moved with the new `experiments/031-betaxanthin-module/scripts/relocate_pack_outputs.py` (paths rewritten, `relocated_from` recorded; the W&B run stays in the 028 project). 2849, 2850 and 2852 were cancelled before their first epoch and resubmitted with the study set as 2853 (w206), 2854 (w207) and 2855 (w208); 2847 (w204) and 2848 (w205) were an hour in and run to completion, to be relocated when they land.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A22 | 183 | w202 | del + GO with the betaxanthin score (standardized) | 0.053 (sd 0.010); vs GO -0.005 (2/6); ens 0.056 |
+| A23 | 184 | w203 | del + the betaxanthin score alone | 0.060 (sd 0.015); vs GO +0.002 (3/6); ens 0.073 |
+| A24 | 189 | w208 | del + GO alone, standardized | job 2855, pending |

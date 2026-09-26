@@ -844,6 +844,18 @@ PAIRS = [
         "w199_bxdelaapoolmlp_h12l1p1_e200",
     ),
     (
+        "amino acids: GO alone standardized against GO alone under log1p",
+        "mulleder19",
+        "w208_aadelgostd_h12l1p1_e200",
+        "w170_aadelgo_h12l1p1_e200",
+    ),
+    (
+        "amino acids: measured betaxanthin score with GO against GO alone under the same standardized encoding",
+        "mulleder19",
+        "w202_aadelgobxscore_h12l1p1_e200",
+        "w208_aadelgostd_h12l1p1_e200",
+    ),
+    (
         "amino acids: measured betaxanthin score alone in the affine against the score with GO",
         "mulleder19",
         "w203_aadelbxscore_h12l1p1_e200",

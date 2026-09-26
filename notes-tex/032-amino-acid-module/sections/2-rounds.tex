@@ -285,4 +285,37 @@ ensembles are 0.057 and 0.058. So the reading of round 160 holds at twice the se
 this target the flux vector takes a little from the annotation on almost every seed,
 where on betaxanthin it adds 0.012 on eleven of twelve.
 
+Round 183 is read (job 2845, 3 h 36 min): the reverse direction in the transformer's
+affine, the strain's measured Cachera betaxanthin score appended to GO, 2,363 columns
+read standardized because the score is signed. It reads 0.053 (sd 0.010) against GO
+alone at 0.058 ($-0.005$ paired, sd 0.010, two of six) and against the control's 0.049
+($+0.004$, sd 0.013, five of six), ensembled 0.056; the seeds read 0.040 to 0.065 and
+select at epochs 2 to 166 on validation Pearson 0.056 to 0.077, where the GO affine
+under log1p selects at epochs 2 to 3 on 0.106 to 0.112. So the column the ladder's
+forest reads at 0.071 alone and 0.078 beside GO adds nothing to the annotation in the
+affine, as the flux vector added nothing (round 174). The pair is not clean: the GO
+affine it is read against encodes the multi-hot as log1p, and this arm's store, the
+score and the multi-hot together, is standardized as one table, so the annotation's
+own columns enter at a different scale and the halved validation correlation may be the
+encoding's, not the score's. GO alone standardized (round 189) is the control that
+separates the two, and the score alone in the affine, one column and no annotation, is
+round 184.
+
+Round 184 is read (job 2846, 3 h 33 min): the strain's betaxanthin score alone in the
+affine, one standardized column and no annotation. It reads 0.060 (sd 0.015) against
+the score with GO at 0.053 ($+0.006$ paired, sd 0.020, four of six), against GO alone
+at 0.058 ($+0.002$, sd 0.016, three of six) and against the control's 0.049 ($+0.010$,
+sd 0.018, four of six); the six-seed ensemble reads 0.073, above the control's
+twelve-seed ensemble of 0.067 and the highest ensemble of any arm on this target. The
+seeds read 0.036 to 0.080 and select at epochs 30 to 151 on validation Pearson 0.098 to
+0.123, the highest validation correlation of any arm, from one column, where the GO
+affine's 2,362 columns give 0.106 to 0.112 and the same column beside GO under the
+standardized encoding gave 0.056 to 0.077 (round 183). So the measured score is the
+one input the transformer reads at the annotation's level on its own and above it
+ensembled, and the annotation appended to it under one standardized table (183) reads
+under either alone: the encoding control (189) decides whether that is the score and
+the annotation failing to add or the multi-hot's scale under standardization. The
+spread, sd 0.015 against the GO affine's 0.001, is the widest of any affine arm on
+this target.
+
 \input{tables/target_transfer}

@@ -508,7 +508,7 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B46 | 180 | w199 | del + the pool through a hidden layer of 64 | 0.240 (sd 0.048); vs linear +0.045 (5/6); ens 0.292 / 5.79 |
 | B47 | 181 | w200 | del + the minimum-norm store | 0.093 (sd 0.013); vs HiGHS store -0.037 (1/6); ens 0.094 / 5.19 |
 | B48 | 182 | w201 | del + GO with the minimum-norm store | 0.204 (sd 0.005); vs GO + HiGHS -0.007 (0/6); ens 0.206 / 4.39 |
-| B49 | 183 | w204 | del + GO with the pool through 64 | job 2847, running |
-| B50 | 184 | w205 | w199 seeds 2706 to 2711 | job 2848, running |
-| B51 | 185 | w206 | del + the pool through 256 | job 2849, pending |
-| B52 | 186 | w207 | del + the three families through 64 | job 2850, pending |
+| B49 | 185 | w204 | del + GO with the pool through 64 | job 2847, running |
+| B50 | 186 | w205 | w199 seeds 2706 to 2711 | job 2848, running |
+| B51 | 187 | w206 | del + the pool through 256 | job 2853 (2849 cancelled, see 032 note on ESS_STUDY) |
+| B52 | 188 | w207 | del + the three families through 64 | job 2854 (2850 cancelled) |

@@ -176,6 +176,25 @@ def cross_summary(key: str):
     return run
 
 
+def aa_pair_cells(pair: str, side: str, key: str, which: str):
+    """The per-seed cells of one side of an amino-acid transfer-readout pair: ``min`` or
+    ``max`` of ``select_epoch``, ``select_val_pearson`` or ``spearman``."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "transfer_readout.json")))
+        p = next(q for q in d["pairs"] if q["name"] == pair)
+        v = [c[key] for c in p[side]["cells"]]
+        if which == "min":
+            return float(min(v))
+        if which == "max":
+            return float(max(v))
+        raise KeyError(which)
+
+    return run
+
+
 def aa_seed_level(stem: str, which: str):
     """A single-seed statistic of one amino-acid arm over its seeds, from the ensemble
     readout: mean over all seeds, its sd, the lowest and highest seed."""
@@ -288,6 +307,98 @@ CHECKS: list[Check] = [
           recompute=ensemble("w177_aadelgopfba_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
     Check(claim="round 174: GO affine twelve-seed ensemble", stated=0.058,
           recompute=ensemble("w170_aadelgo_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
+    # sec:rounds -- round 183, the betaxanthin score with GO in the affine.
+    Check(claim="round 183: score with GO arm", stated=0.053,
+          recompute=transfer("amino acids: measured betaxanthin score with GO against GO alone", "mean_spearman", "arm"), tolerance=0.0006),
+    Check(claim="round 183: score with GO arm sd", stated=0.010,
+          recompute=transfer("amino acids: measured betaxanthin score with GO against GO alone", "sd_spearman", "arm"), tolerance=0.0006),
+    Check(claim="round 183: GO alone level (pair)", stated=0.058,
+          recompute=transfer("amino acids: measured betaxanthin score with GO against GO alone", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="round 183: vs GO alone", stated=-0.005,
+          recompute=transfer("amino acids: measured betaxanthin score with GO against GO alone", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 183: vs GO alone sd", stated=0.010,
+          recompute=transfer("amino acids: measured betaxanthin score with GO against GO alone", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 183: vs GO alone seeds above", stated=2,
+          recompute=transfer("amino acids: measured betaxanthin score with GO against GO alone", "n_positive"), tolerance=0.5),
+    Check(claim="round 183: control level (pair)", stated=0.049,
+          recompute=transfer("amino acids: measured betaxanthin score with GO against the control", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="round 183: vs control", stated=0.004,
+          recompute=transfer("amino acids: measured betaxanthin score with GO against the control", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 183: vs control sd", stated=0.013,
+          recompute=transfer("amino acids: measured betaxanthin score with GO against the control", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 183: vs control seeds above", stated=5,
+          recompute=transfer("amino acids: measured betaxanthin score with GO against the control", "n_positive"), tolerance=0.5),
+    Check(claim="round 183: score with GO six-seed ensemble", stated=0.056,
+          recompute=ensemble("w202_aadelgobxscore_h12l1p1_e200", "spearman"), tolerance=0.0006),
+    Check(claim="round 183: seed min", stated=0.040,
+          recompute=aa_seed_level("w202_aadelgobxscore_h12l1p1_e200", "min"), tolerance=0.0006),
+    Check(claim="round 183: seed max", stated=0.065,
+          recompute=aa_seed_level("w202_aadelgobxscore_h12l1p1_e200", "max"), tolerance=0.0006),
+    Check(claim="round 183: select epoch min", stated=2,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score with GO against GO alone", "arm", "select_epoch", "min"), tolerance=0.5),
+    Check(claim="round 183: select epoch max", stated=166,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score with GO against GO alone", "arm", "select_epoch", "max"), tolerance=0.5),
+    Check(claim="round 183: validation Pearson min", stated=0.056,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score with GO against GO alone", "arm", "select_val_pearson", "min"), tolerance=0.0006),
+    Check(claim="round 183: validation Pearson max", stated=0.077,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score with GO against GO alone", "arm", "select_val_pearson", "max"), tolerance=0.0006),
+    Check(claim="round 183: GO alone select epoch min (pair)", stated=2,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score with GO against GO alone", "control", "select_epoch", "min"), tolerance=0.5),
+    Check(claim="round 183: GO alone select epoch max (pair)", stated=3,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score with GO against GO alone", "control", "select_epoch", "max"), tolerance=0.5),
+    Check(claim="round 183: GO alone validation Pearson min (pair)", stated=0.106,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score with GO against GO alone", "control", "select_val_pearson", "min"), tolerance=0.0006),
+    Check(claim="round 183: GO alone validation Pearson max (pair)", stated=0.112,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score with GO against GO alone", "control", "select_val_pearson", "max"), tolerance=0.0006),
+    Check(claim="round 183: the store's columns", stated=2363,
+          recompute=lambda: float(json.load(open(osp.join(RESULTS, "target_store_concat_SM_gem_gobxscore.json")))["n_columns"]), tolerance=0.5),
+    # sec:rounds -- round 184, the betaxanthin score alone in the affine.
+    Check(claim="round 184: score alone arm", stated=0.060,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone", "mean_spearman", "arm"), tolerance=0.0006),
+    Check(claim="round 184: score alone arm sd", stated=0.015,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone", "sd_spearman", "arm"), tolerance=0.0006),
+    Check(claim="round 184: score with GO level (pair)", stated=0.053,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the score with GO", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="round 184: vs score with GO", stated=0.006,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the score with GO", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 184: vs score with GO sd", stated=0.020,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the score with GO", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 184: vs score with GO seeds above", stated=4,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the score with GO", "n_positive"), tolerance=0.5),
+    Check(claim="round 184: GO alone level (pair)", stated=0.058,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="round 184: vs GO alone", stated=0.002,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 184: vs GO alone sd", stated=0.016,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 184: vs GO alone seeds above", stated=3,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone", "n_positive"), tolerance=0.5),
+    Check(claim="round 184: control level (pair)", stated=0.049,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the control", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="round 184: vs control", stated=0.010,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the control", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 184: vs control sd", stated=0.018,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the control", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 184: vs control seeds above", stated=4,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the control", "n_positive"), tolerance=0.5),
+    Check(claim="round 184: score alone six-seed ensemble", stated=0.073,
+          recompute=ensemble("w203_aadelbxscore_h12l1p1_e200", "spearman"), tolerance=0.0006),
+    Check(claim="round 184: control twelve-seed ensemble", stated=0.067,
+          recompute=ensemble("w141_aadel_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
+    Check(claim="round 184: seed min", stated=0.036,
+          recompute=aa_seed_level("w203_aadelbxscore_h12l1p1_e200", "min"), tolerance=0.0006),
+    Check(claim="round 184: seed max", stated=0.080,
+          recompute=aa_seed_level("w203_aadelbxscore_h12l1p1_e200", "max"), tolerance=0.0006),
+    Check(claim="round 184: select epoch min", stated=30,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score alone in the affine against GO alone", "arm", "select_epoch", "min"), tolerance=0.5),
+    Check(claim="round 184: select epoch max", stated=151,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score alone in the affine against GO alone", "arm", "select_epoch", "max"), tolerance=0.5),
+    Check(claim="round 184: validation Pearson min", stated=0.098,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score alone in the affine against GO alone", "arm", "select_val_pearson", "min"), tolerance=0.0006),
+    Check(claim="round 184: validation Pearson max", stated=0.123,
+          recompute=aa_pair_cells("amino acids: measured betaxanthin score alone in the affine against GO alone", "arm", "select_val_pearson", "max"), tolerance=0.0006),
+    Check(claim="round 184: GO affine sd (pair)", stated=0.001,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone", "sd_spearman", "control"), tolerance=0.0006),
     # sec:concordance -- the strain's betaxanthin score as an input (2026-09-25).
     Check(claim="ladder: betaxanthin score ridge", stated=0.034,
           recompute=store_baseline("amino_acids", "bx_score", "ridge", "mean_spearman"), tolerance=0.0006),

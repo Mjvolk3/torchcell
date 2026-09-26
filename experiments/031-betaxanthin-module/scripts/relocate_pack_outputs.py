@@ -39,6 +39,8 @@ SOURCE_STUDY = "028-gene-essentiality"
 
 
 class Relocation(BaseModel):
+    """Where one seed's result, dump and checkpoint were and where they went."""
+
     stem: str
     seed: int
     result_from: str
@@ -72,12 +74,20 @@ def relocate(stem: str, study: str) -> list[Relocation]:
         ckpt_from = result["checkpoint_path"]
         assert f"test-predictions-{src_num}" in dump_from, dump_from
         assert f"checkpoints-{src_num}" in ckpt_from, ckpt_from
-        dump_to = dump_from.replace(f"test-predictions-{src_num}", f"test-predictions-{dst_num}")
+        dump_to = dump_from.replace(
+            f"test-predictions-{src_num}", f"test-predictions-{dst_num}"
+        )
         ckpt_to = ckpt_from.replace(f"checkpoints-{src_num}", f"checkpoints-{dst_num}")
         result_to = osp.join(dst_results, osp.basename(result_from))
         rec = Relocation(
-            stem=stem, seed=seed, result_from=result_from, result_to=result_to,
-            dump_from=dump_from, dump_to=dump_to, checkpoint_from=ckpt_from, checkpoint_to=ckpt_to,
+            stem=stem,
+            seed=seed,
+            result_from=result_from,
+            result_to=result_to,
+            dump_from=dump_from,
+            dump_to=dump_to,
+            checkpoint_from=ckpt_from,
+            checkpoint_to=ckpt_to,
         )
         _move(dump_from, dump_to)
         _move(ckpt_from, ckpt_to)
@@ -96,7 +106,11 @@ def relocate(stem: str, study: str) -> list[Relocation]:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--stem", required=True)
-    ap.add_argument("--study", required=True, choices=["031-betaxanthin-module", "032-amino-acid-module"])
+    ap.add_argument(
+        "--study",
+        required=True,
+        choices=["031-betaxanthin-module", "032-amino-acid-module"],
+    )
     args = ap.parse_args()
     for rec in relocate(args.stem, args.study):
         print(f"seed {rec.seed}: {rec.result_from} -> {rec.result_to}")

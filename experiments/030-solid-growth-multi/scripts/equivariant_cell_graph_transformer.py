@@ -247,7 +247,9 @@ def main(cfg: DictConfig) -> None:
             }
         )
     wandb.log({"arm/norm_fit_records": stats_file["n_train_records"]})
-    inverse_transform = COOInverseCompose(transforms_list)
+    # A COPY of the list: COOInverseCompose keeps the list it is given, and the smoke
+    # transform appended below has no inverse (job 2861 failed in the sanity check).
+    inverse_transform = COOInverseCompose([norm_transform])
     if smoke_on:
         # After the normalizer, so delta is a normalized offset; not part of the
         # inverse, which maps predictions back to label units.

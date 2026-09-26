@@ -25,6 +25,8 @@
 #   ROUND ARM   round id (r0, r1, ...) and arm name (baseline, inproc-small, ...)
 #   COMMIT      short sha the wheel was built from (a W&B tag)
 #   KG_CONFIG   hydra config name (default kg_bench_ladder)
+#   KG_OVERRIDES  space-separated hydra overrides that define the arm's deviation from
+#               the config (e.g. "adapters.inprocess_max_records=25000"); empty = none
 #   KEEP_CSV    1 keeps the generated CSVs; default 0 removes them after the row counts
 #               and byte sizes are recorded (a ladder arm writes tens of GB)
 set -euo pipefail
@@ -36,6 +38,7 @@ BUILD_ROOT="${BUILD_ROOT:-/scratch/projects/torchcell}"
 IMAGE="${IMAGE:-michaelvolk/tc-neo4j:5.26.28-browser.1}"
 KG_MODULE="${KG_MODULE:-torchcell.knowledge_graphs.create_scerevisiae_kg_small}"
 KG_CONFIG="${KG_CONFIG:-kg_bench_ladder}"
+KG_OVERRIDES="${KG_OVERRIDES:-}"
 KEEP_CSV="${KEEP_CSV:-0}"
 : "${WHEEL_DIR:?submit through submit_bench.sh}" "${ROUND:?}" "${ARM:?}" "${COMMIT:?}"
 
@@ -44,7 +47,7 @@ mkdir -p "$RUN_DIR" "$BENCH_ROOT/biocypher-out"
 WHEEL=$(ls "$WHEEL_DIR"/torchcell-*.whl | head -1)
 [ -n "$WHEEL" ] || { echo "no wheel in $WHEEL_DIR"; exit 1; }
 mem_mb=$((SLURM_MEM_PER_NODE))
-echo "arm=$ARM round=$ROUND commit=$COMMIT job=$JOB cpus=$SLURM_CPUS_PER_TASK mem_mb=$mem_mb wheel=$(basename "$WHEEL")"
+echo "arm=$ARM round=$ROUND commit=$COMMIT job=$JOB cpus=$SLURM_CPUS_PER_TASK mem_mb=$mem_mb wheel=$(basename "$WHEEL") overrides='$KG_OVERRIDES'"
 echo "started $(date)"
 GEN_CONTAINER="tcdb002-gen-${JOB}"
 GEN_LOG="$RUN_DIR/generate.log"
@@ -71,7 +74,7 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
         set -a; source /.env; set +a
         wandb login \$WANDB_API_KEY >/dev/null
         echo container_cpu_max=\$(cat /sys/fs/cgroup/cpu.max) memory_max=\$(cat /sys/fs/cgroup/memory.max)
-        python -m $KG_MODULE --config-name $KG_CONFIG
+        python -m $KG_MODULE --config-name $KG_CONFIG $KG_OVERRIDES
         CALL=\$(cat biocypher_file_name.txt)
         OUT_DIR=/var/lib/neo4j/\$(dirname \$CALL)
         echo GENERATION_OUT=\$OUT_DIR
@@ -87,6 +90,6 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
 mv "$BENCH_ROOT/biocypher-out/_run_${JOB}"/* "$RUN_DIR/"
 rmdir "$BENCH_ROOT/biocypher-out/_run_${JOB}"
 sacct -j "$JOB" --format=JobID,ReqCPUS,AllocCPUS,ReqMem,Elapsed,MaxRSS,State -P > "$RUN_DIR/sacct.txt"
-printf 'job\t%s\nround\t%s\narm\t%s\ncommit\t%s\ncpus\t%s\nmem_mb\t%s\nkg_config\t%s\nwheel\t%s\n' \
-    "$JOB" "$ROUND" "$ARM" "$COMMIT" "$SLURM_CPUS_PER_TASK" "$mem_mb" "$KG_CONFIG" "$(basename "$WHEEL")" > "$RUN_DIR/arm.tsv"
+printf 'job\t%s\nround\t%s\narm\t%s\ncommit\t%s\ncpus\t%s\nmem_mb\t%s\nkg_config\t%s\noverrides\t%s\nwheel\t%s\n' \
+    "$JOB" "$ROUND" "$ARM" "$COMMIT" "$SLURM_CPUS_PER_TASK" "$mem_mb" "$KG_CONFIG" "$KG_OVERRIDES" "$(basename "$WHEEL")" > "$RUN_DIR/arm.tsv"
 echo "finished $(date); results in $RUN_DIR"

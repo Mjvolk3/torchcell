@@ -702,4 +702,20 @@ the annotation with the flux side and the measured side reads between 0.208 and
 0.218: the affine's ceiling on this input family, with the measured side's nonlinear
 signal (0.285 by nearest neighbors on the pool alone) the one thing it does not reach.
 
+Round 179 is read (job 2841, 3 h 36 min): the strain's measured amino-acid pool alone
+in the affine, nineteen columns and no annotation, on the deletion-only graph. It reads
+0.195 (sd 0.029) against the affine-free control's 0.058 ($+0.137$ paired, sd 0.088, six
+of six) and against GO alone at 0.202 ($-0.008$, sd 0.030, four of six), top-50 2.53
+against 3.39 and 5.03, the lowest call of any store arm, ensembled 0.211 with a top-50
+of 3.00. The seeds select at epochs 13 to 32 on validation Pearson 0.33 to 0.41, the
+highest validation correlation of any arm in the study against the annotation arm's 0.26,
+and read 0.150 to 0.220, a spread twenty times the annotation arm's. Beside the ladder on
+the same columns the affine sits above the ridge (0.149) and 0.09 under the nearest
+neighbors (0.285) and the forest (0.280): the pool's linear read in the transformer is
+a little more than a ridge and far short of what the distance models take from the same
+nineteen numbers, and its validation-to-test gap is the widest of any arm. So the
+affine's ceiling of round 178 is the slot's, not the backbone's, and the hidden layer
+of 64 over the same columns (round 180) is the direct test of whether the transformer
+can read the pool nonlinearly at all.
+
 \input{tables/target_transfer}

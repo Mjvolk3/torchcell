@@ -162,6 +162,25 @@ def seed_level(stem: str, which: str):
     return run
 
 
+def pair_cells(pair: str, side: str, key: str, which: str):
+    """The per-seed cells of one side of a transfer-readout pair: ``min`` or ``max`` of
+    ``select_epoch``, ``select_val_pearson`` or ``spearman``."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(os.environ["EXPERIMENT_ROOT"], "031-betaxanthin-module", "results", "transfer_readout.json")))
+        p = next(q for q in d["pairs"] if q["name"] == pair)
+        v = [c[key] for c in p[side]["cells"]]
+        if which == "min":
+            return float(min(v))
+        if which == "max":
+            return float(max(v))
+        raise KeyError(which)
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:standing -- the comparators on the same split and the cross-target read.
     Check(claim="ladder: GO ridge", stated=0.076,
@@ -1217,6 +1236,61 @@ CHECKS: list[Check] = [
           recompute=ensemble("w197_bxdelgopfbamomaaapool_h12l1p1_e200", "top50_enrichment"), tolerance=0.006),
     Check(claim="round 178: the store's columns", stated=10735,
           recompute=lambda: float(json.load(open(osp.join(os.environ["EXPERIMENT_ROOT"], "031-betaxanthin-module", "results", "target_store_concat_YPD_bx_gopfbamomaaapool.json")))["n_columns"]), tolerance=0.5),
+    # sec:rounds -- round 179, the pool alone in the affine.
+    Check(claim="round 179: pool alone arm", stated=0.195,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against the control", "mean_spearman", "arm"), tolerance=0.0006),
+    Check(claim="round 179: pool alone arm sd", stated=0.029,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against the control", "sd_spearman", "arm"), tolerance=0.0006),
+    Check(claim="round 179: control level (pair)", stated=0.058,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against the control", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="round 179: vs control", stated=0.137,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against the control", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 179: vs control sd", stated=0.088,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against the control", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 179: vs control seeds above", stated=6,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against the control", "n_positive"), tolerance=0.5),
+    Check(claim="round 179: GO alone level (pair)", stated=0.202,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against GO alone", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="round 179: vs GO alone", stated=-0.008,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against GO alone", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 179: vs GO alone sd", stated=0.030,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against GO alone", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 179: vs GO alone seeds above", stated=4,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against GO alone", "n_positive"), tolerance=0.5),
+    Check(claim="round 179: pool alone top-50", stated=2.53,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against the control", "mean_top50_enrichment", "arm"), tolerance=0.006),
+    Check(claim="round 179: control top-50 (pair)", stated=3.39,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against the control", "mean_top50_enrichment", "control"), tolerance=0.006),
+    Check(claim="round 179: GO alone top-50 (pair)", stated=5.03,
+          recompute=transfer("betaxanthin: measured amino-acid pool alone in the affine against GO alone", "mean_top50_enrichment", "control"), tolerance=0.006),
+    Check(claim="round 179: pool alone six-seed ensemble", stated=0.211,
+          recompute=ensemble("w198_bxdelaapool_h12l1p1_e200", "spearman"), tolerance=0.0006),
+    Check(claim="round 179: pool alone six-seed ensemble top-50", stated=3.00,
+          recompute=ensemble("w198_bxdelaapool_h12l1p1_e200", "top50_enrichment"), tolerance=0.006),
+    Check(claim="round 179: select epoch min", stated=13,
+          recompute=pair_cells("betaxanthin: measured amino-acid pool alone in the affine against the control", "arm", "select_epoch", "min"), tolerance=0.5),
+    Check(claim="round 179: select epoch max", stated=32,
+          recompute=pair_cells("betaxanthin: measured amino-acid pool alone in the affine against the control", "arm", "select_epoch", "max"), tolerance=0.5),
+    Check(claim="round 179: validation Pearson min", stated=0.33,
+          recompute=pair_cells("betaxanthin: measured amino-acid pool alone in the affine against the control", "arm", "select_val_pearson", "min"), tolerance=0.006),
+    Check(claim="round 179: validation Pearson max", stated=0.41,
+          recompute=pair_cells("betaxanthin: measured amino-acid pool alone in the affine against the control", "arm", "select_val_pearson", "max"), tolerance=0.006),
+    Check(claim="round 179: GO alone validation Pearson max", stated=0.26,
+          recompute=pair_cells("betaxanthin: measured amino-acid pool alone in the affine against GO alone", "control", "select_val_pearson", "max"), tolerance=0.006),
+    Check(claim="round 179: seed min", stated=0.150,
+          recompute=seed_level("w198_bxdelaapool_h12l1p1_e200", "min"), tolerance=0.0006),
+    Check(claim="round 179: seed max", stated=0.220,
+          recompute=seed_level("w198_bxdelaapool_h12l1p1_e200", "max"), tolerance=0.0006),
+    Check(claim="round 179: seed spread ratio to GO alone (twenty times)", stated=20,
+          recompute=lambda: transfer("betaxanthin: measured amino-acid pool alone in the affine against GO alone", "sd_spearman", "arm")() / transfer("betaxanthin: measured amino-acid pool alone in the affine against GO alone", "sd_spearman", "control")(), tolerance=1.5),
+    Check(claim="round 179: pool ridge on the ladder", stated=0.149,
+          recompute=store_baseline("betaxanthin", "aa_pool", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="round 179: pool kNN on the ladder", stated=0.285,
+          recompute=store_baseline("betaxanthin", "aa_pool", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="round 179: pool forest on the ladder", stated=0.280,
+          recompute=store_baseline("betaxanthin", "aa_pool", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="round 179: gap under the pool kNN", stated=0.09,
+          recompute=lambda: store_baseline("betaxanthin", "aa_pool", "knn", "mean_spearman")() - transfer("betaxanthin: measured amino-acid pool alone in the affine against the control", "mean_spearman", "arm")(), tolerance=0.006),
     # sec:physics -- the minimum-norm (l2) store (2026-09-25).
     Check(claim="l2 store: genes", stated=1155,
           recompute=physics_store("betaxanthin", "l2", "n_genes"), tolerance=0.5),

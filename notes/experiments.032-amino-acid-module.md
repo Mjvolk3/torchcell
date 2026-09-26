@@ -304,3 +304,7 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
 | A25 | 195 | w214 | w203 seeds 2706 to 2711 | job 2871, pending |
+
+## 2026.09.26 - The betaxanthin score through a perceptron on CPU
+
+- MEASURED (`slurm/output/032-scoremlp_direct.out`, `results/go_models_amino_acids_bxscore_h{16,256,1024}.json`, seconds a seed, run directly on 8 threads): the score alone through one ReLU hidden layer reads 0.050 / 0.054 / 0.055 at widths 16 / 256 / 1024 (the two wider select at epoch 198, peaks not established); GO + score reads 0.056 / 0.064 / 0.066 (sd 0.002 at 1024, ensemble 0.066, epochs 10 to 11). Against the GO perceptron alone (0.054) the score adds 0.012 at 1024, the forest's direction (+0.015), where the transformer's affine gave +0.001 beside GO under one encoding (round 189). The forest over GO + score (0.078) remains the highest read on the target. New table `tables/score_mlp_sweep.tex` (`score_mlp_sweep()` in `target_notes_tex_tables.py`), verifier helper `score_mlp()` (429 checks). Written into the 032 document (section 3).

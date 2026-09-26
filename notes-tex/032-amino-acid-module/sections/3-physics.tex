@@ -89,6 +89,21 @@ sequence sets the level, 0.065 against a strain-level retest of 0.20
 
 \input{tables/go_models}
 
+The strain's measured betaxanthin score through the same perceptrons, on CPU
+(Table~\ref{tab:score-mlp-sweep}; the GO-models script with the score as its store
+block, one hidden width per pass, six seeds, seconds a seed): the score alone reads
+0.050, 0.054 and 0.055 at widths 16, 256 and 1,024, the two wider settings selecting
+at epoch 198 of 200, so their peaks are not established; GO with the score reads 0.056,
+0.064 and 0.066, ensembled 0.066 at 1,024 with a band of 0.002 and selection at epochs
+10 to 11. Against the GO perceptron alone (0.054) the score adds 0.012 at the widest
+setting, the same direction as the forest's 0.015 (Section~\ref{sec:concordance}) and
+the opposite of the transformer's affine, where beside GO under one encoding it adds
+0.001 (round 189). So on this target too the score adds to the annotation in a head
+trained alone and not in the transformer's slot; the forest over the same columns,
+0.078, stays the highest read of any model.
+
+\input{tables/score_mlp_sweep}
+
 \input{tables/store_degeneracy}
 
 \input{tables/store_baselines}

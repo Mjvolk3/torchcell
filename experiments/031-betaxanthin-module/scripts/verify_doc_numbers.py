@@ -1693,6 +1693,15 @@ CHECKS: list[Check] = [
           recompute=pool_mlp(1024, "go_store_mlp", "seconds_max"), tolerance=1.5),
     Check(claim="pool mlp: GO perceptron alone (existing)", stated=0.200,
           recompute=go_model("go_mlp", "single_mean_spearman"), tolerance=0.0006),
+    # sec:physics -- the pool with the HiGHS vector on the ladder (2026-09-26).
+    Check(claim="ladder: pool with HiGHS ridge", stated=0.095,
+          recompute=store_baseline("betaxanthin", "aapool_pfba", "ridge", "mean_spearman"), tolerance=0.0006),
+    Check(claim="ladder: pool with HiGHS kNN", stated=0.153,
+          recompute=store_baseline("betaxanthin", "aapool_pfba", "knn", "mean_spearman"), tolerance=0.0006),
+    Check(claim="ladder: pool with HiGHS forest", stated=0.220,
+          recompute=store_baseline("betaxanthin", "aapool_pfba", "forest", "mean_spearman"), tolerance=0.0006),
+    Check(claim="ladder: pool with HiGHS kNN gap under the pool alone", stated=0.13,
+          recompute=lambda: store_baseline("betaxanthin", "aa_pool", "knn", "mean_spearman")() - store_baseline("betaxanthin", "aapool_pfba", "knn", "mean_spearman")(), tolerance=0.006),
     # sec:physics -- the minimum-norm (l2) store (2026-09-25).
     Check(claim="l2 store: genes", stated=1155,
           recompute=physics_store("betaxanthin", "l2", "n_genes"), tolerance=0.5),

@@ -138,6 +138,7 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         "aa_pool": {"store": "YPD_bx_aapool", "block": "v_deletion", "flux": True},
         "go_aapool": {"store": "YPD_bx_goaapool", "block": "v_deletion", "flux": True},
         "gopfba_aapool": {"store": "YPD_bx_gopfbaaapool", "block": "v_deletion", "flux": True},
+        "aapool_pfba": {"store": "YPD_bx_aapoolpfba", "block": "v_deletion", "flux": True},
     },
     "amino_acids": {
         "pfba_highs": {"store": "SM_gem", "block": "v_deletion", "flux": True},

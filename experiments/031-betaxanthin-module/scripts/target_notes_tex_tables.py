@@ -170,6 +170,7 @@ STORE_LABELS = {
     "aa_pool": "measured M\\\"ulleder amino-acid pool of the strain (19 mM columns)",
     "go_aapool": "GO multi-hot with the measured pool appended",
     "gopfba_aapool": "HiGHS parsimonious store with GO and the measured pool appended",
+    "aapool_pfba": "measured pool with the HiGHS parsimonious vector appended, on the pool's genes",
 }
 
 
@@ -546,9 +547,58 @@ def pool_mlp_sweep() -> str | None:
     return write("betaxanthin", "pool_mlp_sweep", body, "results/go_models_betaxanthin_pool_h<H>.json")
 
 
+SCORE_MLP_WIDTHS = (16, 256, 1024)
+SCORE_MLP_LABELS = {
+    "store_mlp": "perceptron over the measured betaxanthin score",
+    "go_store_mlp": "perceptron over GO with the measured betaxanthin score",
+}
+
+
+def score_mlp_sweep() -> str | None:
+    """The strain's betaxanthin score through a perceptron on the amino acids, by width."""
+    rows = []
+    for h in SCORE_MLP_WIDTHS:
+        src = results("amino_acids", f"go_models_amino_acids_bxscore_h{h}.json")
+        if not osp.isfile(src):
+            return None
+        with open(src) as fh:
+            d = json.load(fh)
+        assert d["store"] == "SM_gem_bxscore" and d["mlp_hidden"] == h, src
+        for a in d["arms"]:
+            single = f"{a['single_mean_spearman']:+.3f} ({a['single_sd_spearman']:.3f})"
+            ens = f"{a['ensemble_spearman']:+.3f}"
+            epochs = f"{min(r['select_epoch'] for r in a['seeds'])} to {max(r['select_epoch'] for r in a['seeds'])}"
+            rows.append(
+                f"    {SCORE_MLP_LABELS[a['arm']]} & {h} & {a['seeds'][0]['n_parameters']:,} & "
+                f"{single} & {ens} & {epochs} \\\\"
+            )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The betaxanthin score through a perceptron, by hidden width]{The strain's "
+        "measured Cachera betaxanthin score (one column, standardized on the training rows) "
+        "alone and with the propagated GO multi-hot, through one ReLU hidden layer of the "
+        "stated width and a linear head over the nineteen amino acids, on the ladder's split, "
+        "full batch, Adam at $10^{-3}$, 200 epochs, the epoch selected by a five-epoch moving "
+        "average of the validation per-feature Pearson, on CPU. Columns: hidden width, "
+        "parameters, the single-seed mean pinned-test Spearman over the amino acids with the "
+        "standard deviation over six seeds, the six-seed ensemble, the range of selected "
+        "epochs. Written by \\texttt{target\\_notes\\_tex\\_tables.py} from "
+        "\\texttt{results/go\\_models\\_amino\\_acids\\_bxscore\\_h<H>.json} "
+        "(\\texttt{target\\_go\\_models.py --target amino\\_acids --store SM\\_gem\\_bxscore "
+        "--mlp-hidden H}).}\n"
+        "  \\label{tab:score-mlp-sweep}\n"
+        "  \\begin{tabular}{@{}p{58mm}rrrrp{20mm}@{}}\n    \\hline\n"
+        "    model & width & parameters & single seed (sd) & ensemble & epochs \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("amino_acids", "score_mlp_sweep", body, "results/go_models_amino_acids_bxscore_h<H>.json")
+
+
 def main() -> None:
     paths = [
         pool_mlp_sweep(),
+        score_mlp_sweep(),
         target_transfer("betaxanthin"),
         target_transfer("amino_acids"),
         store_baselines("betaxanthin"),

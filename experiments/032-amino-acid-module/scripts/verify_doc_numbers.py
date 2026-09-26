@@ -53,6 +53,25 @@ def polytope(*keys: str):
     return run
 
 
+def score_mlp(hidden: int, arm: str, key: str):
+    """A value of one arm of the CPU perceptron sweep over the betaxanthin score
+    (target_go_models.py --target amino_acids --store SM_gem_bxscore --mlp-hidden <hidden>)."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, f"go_models_amino_acids_bxscore_h{hidden}.json")))
+        assert d["store"] == "SM_gem_bxscore" and d["mlp_hidden"] == hidden
+        a = next(x for x in d["arms"] if x["arm"] == arm)
+        if key == "select_epoch_min":
+            return float(min(r["select_epoch"] for r in a["seeds"]))
+        if key == "select_epoch_max":
+            return float(max(r["select_epoch"] for r in a["seeds"]))
+        return float(a[key])
+
+    return run
+
+
 def go_model(arm: str, key: str):
     """A value of one arm of the GO-models read (target_go_models.py)."""
 
@@ -436,6 +455,37 @@ CHECKS: list[Check] = [
           recompute=store_baseline("amino_acids", "go_bxscore", "forest", "mean_spearman"), tolerance=0.0006),
     Check(claim="round 189: forest GO alone (ladder)", stated=0.063,
           recompute=store_baseline("amino_acids", "go", "forest", "mean_spearman"), tolerance=0.0006),
+    # sec:physics -- the CPU perceptron sweep over the betaxanthin score (2026-09-26).
+    Check(claim="score mlp: score alone 16", stated=0.050,
+          recompute=score_mlp(16, "store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="score mlp: score alone 256", stated=0.054,
+          recompute=score_mlp(256, "store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="score mlp: score alone 1024", stated=0.055,
+          recompute=score_mlp(1024, "store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="score mlp: score alone 256 select epoch min", stated=198,
+          recompute=score_mlp(256, "store_mlp", "select_epoch_min"), tolerance=0.5),
+    Check(claim="score mlp: score alone 1024 select epoch max", stated=198,
+          recompute=score_mlp(1024, "store_mlp", "select_epoch_max"), tolerance=0.5),
+    Check(claim="score mlp: GO with score 16", stated=0.056,
+          recompute=score_mlp(16, "go_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="score mlp: GO with score 256", stated=0.064,
+          recompute=score_mlp(256, "go_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="score mlp: GO with score 1024", stated=0.066,
+          recompute=score_mlp(1024, "go_store_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="score mlp: GO with score 1024 sd", stated=0.002,
+          recompute=score_mlp(1024, "go_store_mlp", "single_sd_spearman"), tolerance=0.0006),
+    Check(claim="score mlp: GO with score 1024 ensemble", stated=0.066,
+          recompute=score_mlp(1024, "go_store_mlp", "ensemble_spearman"), tolerance=0.0006),
+    Check(claim="score mlp: GO with score 1024 select epoch min", stated=10,
+          recompute=score_mlp(1024, "go_store_mlp", "select_epoch_min"), tolerance=0.5),
+    Check(claim="score mlp: GO with score 1024 select epoch max", stated=11,
+          recompute=score_mlp(1024, "go_store_mlp", "select_epoch_max"), tolerance=0.5),
+    Check(claim="score mlp: GO perceptron alone (existing)", stated=0.054,
+          recompute=go_model("go_mlp", "single_mean_spearman"), tolerance=0.0006),
+    Check(claim="score mlp: score adds beside GO at 1024", stated=0.012,
+          recompute=lambda: score_mlp(1024, "go_store_mlp", "single_mean_spearman")() - go_model("go_mlp", "single_mean_spearman")(), tolerance=0.0006),
+    Check(claim="score mlp: forest gain (ladder)", stated=0.015,
+          recompute=lambda: store_baseline("amino_acids", "go_bxscore", "forest", "mean_spearman")() - store_baseline("amino_acids", "go", "forest", "mean_spearman")(), tolerance=0.0006),
     # sec:concordance -- the strain's betaxanthin score as an input (2026-09-25).
     Check(claim="ladder: betaxanthin score ridge", stated=0.034,
           recompute=store_baseline("amino_acids", "bx_score", "ridge", "mean_spearman"), tolerance=0.0006),

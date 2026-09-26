@@ -241,7 +241,11 @@ since the perceptron standardizes the columns, trains full batch and selects on 
 smoothed validation curve, so which of those carries the gap is not measured; the
 plain reading is that the columns give a perceptron 0.24 and the transformer's
 hidden slot 0.28, and that the annotation's effect on the pool's read depends on the
-head it enters.
+head it enters. The ladder agrees with the transformer on the flux side: the pool
+with the HiGHS vector appended on the pool's own genes (round 191's store) reads 0.095,
+0.153 and 0.220 by ridge, nearest neighbors and forest against the pool alone's 0.149,
+0.285 and 0.280, under it on every model and by 0.13 for the neighbors
+(Table~\ref{tab:store-baselines}).
 
 \input{tables/pool_mlp_sweep}
 

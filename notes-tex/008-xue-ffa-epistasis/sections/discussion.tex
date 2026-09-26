@@ -219,6 +219,11 @@ compose and where they do not would turn the reachability question into a calcul
 performed before the strains are built. The pieces exist for enzymes in a flux
 network~\citep{segreModularEpistasisYeast2005,kryazhimskiyEmergencePropagationEpistasis2021},
 and what is missing is the step from a regulator deletion to the flux changes it causes.
-That model does not exist yet for titer, and the enrichment result above says it will not
-be recovered from connectivity alone. Building it is the direction this line of work
-points.
+That step is not a refinement of a mapping that already exists. None of the ten factors is
+a gene of the genome-scale model, whose 1{,}161 genes are the ones with a metabolic
+function, so a constraint-based model has no handle on the perturbation this design applies
+and has to route it through regulatory targets, which rescales up to a third of the network
+for a single deletion (\suppnoteref{note:fluxmodel}). A model of titer under these
+perturbations therefore begins with the regulator to flux map rather than ending with it,
+and the enrichment result above says that map will not be recovered from connectivity
+alone. Building it is the direction this line of work points.

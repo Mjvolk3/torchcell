@@ -64,6 +64,25 @@ This is a property of the released data rather than a choice made here, and it b
 the interaction scores mean: they are interactions on volumetric titer, which is the
 quantity a titer-screened campaign selects on.
 
+\subsection*{What the strain records fix, and what they leave open}
+
+The released records are one workbook of two sheets: the single-letter code for each
+transcription factor, and the per-replicate titers. A strain is named by a genotype string
+that lists the additional factor deletions and a total deletion count, with the three
+chassis deletions implicit in that count, and the loader asserts the count against the
+letters for every row. The deletions named there are therefore the whole of what the records
+fix about a genotype.
+
+No strain construction record was released with them. An edit beyond those deletions, an
+overexpressed native gene or a heterologous thioesterase, can be neither confirmed nor
+excluded from what is held here. The
+cultivation medium and temperature are absent from the workbook as well and are taken as
+synthetic complete at 30\,\textdegree C. Every interaction score in this document is a ratio
+of measured titers and is unaffected by the gap, since an unrecorded edit is present in the
+base strain and in all 175 deletion strains alike. What the gap bounds is any mechanistic
+model of these strains: a model can represent the deletions the records name and nothing
+further, so a production gene beyond them would change what such a model stands for.
+
 \subsection*{Epistasis models}
 
 An interaction score is a residual, and a residual is only defined once the expectation is

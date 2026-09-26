@@ -159,9 +159,16 @@ is worth reporting, because what the model does is not what it was asked.
 applied first. The readout is the maximum of the summed export flux of the five measured
 species with growth held at half the base strain's maximum growth, divided by the base
 strain's value, so the base strain reads 1 as it does throughout this document. Two arms
-of ten genes are perturbed. The regulator arm is the ten deleted factors, none of which is
-a gene of the model, so each acts through its targets in the SGD regulatory graph and
-TFLink, taken in the factor to target direction and restricted to genes of the model. The
+of ten genes are perturbed. The regulator arm is the ten deleted factors, and none of the
+ten is among the model's 1{,}161 genes. That is not a gap in the reconstruction. Yeast9
+carries the genes with a metabolic function, and a transcription factor has none, so the
+perturbation this design actually applies has no representation in the model at all and can
+only be routed through targets: here through the SGD regulatory graph and TFLink, taken in
+the factor to target direction and restricted to genes of the model. The routing is the
+whole of the mechanism, and it is a coarse one, reaching between 323 and 1{,}401 of the
+model's 4{,}131 reactions per factor. A single deletion in this arm therefore rescales
+between 8 and 34 percent of the network, so the routing rule rather than the deletion sets
+the size of the perturbation. The
 enzyme arm is the ten of the thirteen pathway genes with the most reactions in the model,
 each acting on the reactions it catalyzes. A deletion multiplies both bounds of every
 reaction in its set by a capacity multiplier, or sets them to zero in the binary arm, and
@@ -191,8 +198,8 @@ which share reactions so their multipliers compound.
 model's reaction-metabolite graph with currency metabolites dropped, the regulator arm
 sits a median of 3 reactions from the five readout exchanges and the enzyme arm a median
 of 4. The reason is mechanical: a regulator's reaction set is the union over 125 to 605
-model genes, 323 to 1{,}401 reactions, and a union that large nearly always contains
-something adjacent to the fatty acid exchanges, while an enzyme acts on 2 to 18. Within
+model genes, and a union that large nearly always contains something adjacent to the fatty
+acid exchanges, while an enzyme acts on 2 to 18 reactions. Within
 the regulator arm the rank correlation between a triple's mean hop count and $|\tau|$
 changes sign across settings, from $\rho = -0.33$ at 0.05 to $\rho = +0.52$ at 0.01, so
 there is no stable relation to report.

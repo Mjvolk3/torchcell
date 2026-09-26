@@ -3,4 +3,54 @@
 \section{Molecular encoders and their coverage\secstatus{todo}}
 \label{sec:encoders}
 
-Pending the embedding run (\file{embed\_compounds.py}).
+A compound enters a model as a vector, and the choice of encoder is a modeling
+decision that should be made on measured coverage and measured behavior rather than
+on a reading list. Twelve small-molecule encoders now live in
+\file{torchcell/molecule/}: a \texttt{MoleculeEncoder} turns a list of SMILES into one
+fixed-width float32 vector per molecule, raises on a SMILES it cannot parse rather than
+returning zeros, and is deterministic across calls. Four are RDKit fingerprints and
+descriptors with no learned weights (count and bit ECFP4 at 2{,}048, feature-class
+FCFP4, MACCS keys, and the 217 RDKit 2D descriptors); one is Mol2Vec, a skip-gram over
+Morgan substructure identifiers; four are SMILES transformers (the two ChemBERTa-2
+heads, MoLFormer-XL, a ZINC RoBERTa); one is Uni-Mol, which embeds an ETKDG conformer;
+and one is MolE, the contrastively pretrained graph network built for antimicrobial
+activity. Weights that are not on the Hugging Face hub (Mol2Vec, MolE) sit under
+\file{\$DATA\_ROOT} with a pydantic manifest recording the source URL, the retrieval
+command and the sha256, re-hashed on every load. The registry and its tests are
+described in the dendron note \texttt{torchcell.molecule.encoders}.
+
+Reaction-aware encoders were left out on purpose. A reaction-hypergraph embedding places
+a metabolite by the reactions it takes part in, which is the right context for a
+Yeast9 metabolite and no context at all for an inhibitor or a drug whose fate in the
+cell is not in the model. When the medium components enter the environment encoding
+(Section~\ref{sec:next}) the metabolites among them can carry a reaction branch; the
+inhibitors cannot.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/embed_compounds.py ->
+%% results/embedding_coverage.csv, rendered by notes_tex_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Coverage of every encoder over the compounds of the three datasets (distinct
+InChIKeys with a dosed record: 41, 114 and 290; 343 in the union). Seconds are wall
+time over the union on one shared GPU, model load excluded.}
+\label{tab:coverage}
+\input{tables/t7-coverage}
+\end{table}
+
+\notesec{Coverage}
+Every one of the 343 compounds has a SMILES in the pinned identity table, and eleven of
+the twelve encoders embed all of them (Table~\ref{tab:coverage}). Uni-Mol embeds 332:
+its wrapper library substitutes flat or all-zero coordinates when a conformer cannot be
+generated (metal dihalides, isolated ions, nitric oxide, and bleomycin at 180 atoms) and
+would have embedded eleven Hillenmeyer compounds from nothing. The encoder's
+\texttt{check} method now reruns the conformer step and raises on either signature, so
+those eleven are counted as failures rather than served as vectors. None of them is a
+Vanacloig compound. One dosed Hillenmeyer name, tunicamycin, is a homologue mixture
+with no InChIKey and is counted as not a compound.
+
+\notesec{Cost}
+The fingerprints, Mol2Vec and MolE embed the union in well under a second; the SMILES
+transformers in under a second; the RDKit descriptors in two seconds; Uni-Mol in fifty
+because of conformer generation. At the scale of these datasets no encoder is
+expensive, and the choice can be made on what the vectors do.

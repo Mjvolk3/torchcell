@@ -3,4 +3,71 @@
 \section{Chemical similarity across the datasets\secstatus{todo}}
 \label{sec:chemistry}
 
-Pending the embedding run (\file{chemical\_similarity.py}).
+Exact overlap is two compounds per arm (Section~\ref{sec:axes}). The softer question
+is whether Vanacloig's inhibitors have chemical neighbors in Hillenmeyer, and whether
+chemical similarity carries any information about response similarity, because that is
+the route by which a model could use Hillenmeyer on inhibitors it never dosed
+(\file{chemical\_similarity.py}). Both are measured for every encoder: Tanimoto
+similarity for the fingerprints, cosine similarity for the dense embeddings.
+
+\notesec{Nearest neighbors}
+Under count ECFP4 the median Vanacloig compound's nearest HOM compound is at Tanimoto
+0.33, and only three Vanacloig compounds have a HOM neighbor above 0.5: the two exact
+matches and cinnamic acid against benzaldehyde at 0.54. Isobutanol's nearest HOM
+compound is sorbitol at 0.14, which is no neighbor at all. HET is richer for the
+phenolics because it dosed ferulic acid: ferulamide (0.77), caffeic acid (0.66),
+vanillin (0.62), vanillic acid (0.59), sinapic acid (0.56), acetovanillone (0.52) and
+p-coumaric acid (0.51) all have ferulic acid as their nearest HET compound, and
+4-hydroxybenzoic acid has 4-aminobenzoic acid at 0.64. The cosine nearest-neighbor
+similarities of the dense encoders (0.8 to 0.95) are not comparable to Tanimoto: cosine
+between mean-pooled transformer states is high for any two molecules, so only the
+fingerprint numbers say how close the chemistry is.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/chemical_similarity.py ->
+%% results/chemical_similarity_summary.csv, rendered by notes_tex_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Per encoder and Hillenmeyer arm: the median similarity of each Vanacloig
+compound to its nearest partner compound, the number of Vanacloig compounds with a
+neighbor above 0.5 (meaningful for the Tanimoto rows only), the Spearman between
+chemical similarity and cross-dataset response Spearman over every condition pair, and
+the median response Spearman of the top decile of pairs by chemistry against the rest.}
+\label{tab:chemsim}
+\input{tables/t8-chemsim}
+\end{table}
+
+\notesec{Chemistry against response}
+Over the 4{,}674 Vanacloig-by-HOM condition pairs, chemical similarity and response
+similarity correlate at Spearman 0.08 to 0.09 for count and bit ECFP4, MoLFormer-XL and
+Mol2Vec ($p < 10^{-7}$), at 0.05 to 0.06 for the ChemBERTa-2 heads, and not at all for
+MolE, the RDKit descriptors and the ZINC RoBERTa (Table~\ref{tab:chemsim},
+Figure~\ref{fig:chemsim}). The effect is real and it is small: the top decile of pairs
+by chemistry has a median response Spearman of 0.011 to 0.022 against 0.011 for the
+rest. Against HET every correlation is below 0.04. Figure~\ref{fig:chemsim} shows why
+the number is small: under ECFP4 almost every pair sits at a Tanimoto below 0.25, where
+the response similarity is centered on zero with a spread of $\pm 0.1$, and the few pairs
+above 0.5 do not stand out from it.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/chemical_similarity.py ->
+%% chemistry_vs_response_hom.svg, from results/cross_spearman_hom.csv and results/embeddings/.
+\tcfig{figures/chemistry_vs_response_hom.pdf}{Chemical similarity against
+cross-dataset response Spearman, one point per (Vanacloig condition, HOM condition)
+pair, for every encoder; the top decile of pairs by chemistry in red. Panels
+\textbf{(a)} to \textbf{(l)} are the twelve encoders in alphabetical order; the title
+carries the Spearman between the two axes and the median nearest-neighbor similarity.}{fig:chemsim}
+
+\notesec{What this says for transfer}
+A model that represents compounds with ECFP4 or a SMILES transformer gets a weak prior
+from Hillenmeyer about which genes an unseen inhibitor will hurt, weak because
+chemically close pairs are barely more response-similar than distant ones. That is the
+expected outcome for a dataset whose compounds are drugs and metabolic poisons chosen
+for coverage of mechanism, against a panel of small hydrolysate molecules: the two
+compound sets occupy different regions of chemical space, and the pairs that would test
+the prior at high similarity do not exist. For the phenolic inhibitors the HET arm
+offers ferulic acid as a neighbor at Tanimoto 0.5 to 0.77, and ferulic acid itself did
+not transfer at the doses used (Section~\ref{sec:structure}). For isobutanol there is
+no neighbor in either arm. The transfer test of Section~\ref{sec:next} therefore has a
+prior of a small positive effect for the fingerprint and transformer encoders and no
+effect for MolE, and it should be read against that prior rather than against the hope
+that chemistry alone bridges the two datasets.

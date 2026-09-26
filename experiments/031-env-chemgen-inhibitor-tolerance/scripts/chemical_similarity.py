@@ -195,16 +195,16 @@ def fig_partner(
 ) -> str:
     encoders = list(per_encoder)
     n = len(encoders)
-    ncol = min(n, 4)
+    ncol = min(n, 3)
     nrow = int(np.ceil(n / ncol))
     fig, axes = plt.subplots(
         nrow,
         ncol,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(40 * nrow + 8)),
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(min(40 * nrow + 8, 168))),
         squeeze=False,
     )
     fig.subplots_adjust(
-        left=0.06, right=0.99, top=0.93, bottom=0.10, wspace=0.3, hspace=0.55
+        left=0.07, right=0.99, top=0.94, bottom=0.07, wspace=0.32, hspace=0.75
     )
     letters = "abcdefghijklmnop"
     for k, enc in enumerate(encoders):
@@ -223,9 +223,9 @@ def fig_partner(
         )
         r = spearmanr(chem, resp)[0]
         ax.set_title(
-            f"{enc}: rho {r:+.3f}, NN median {np.median(nb['similarity']):.2f}"
+            f"{enc}\nchem vs response rho {r:+.3f}; NN median {np.median(nb['similarity']):.2f}"
         )
-        ax.set_xlabel("chemical similarity (Tanimoto / cosine)")
+        ax.set_xlabel("Tanimoto" if enc in FINGERPRINTS else "cosine")
         ax.set_ylabel(f"response Spearman vs {partner.upper()}")
         ax.yaxis.set_major_locator(MultipleLocator(0.1))
         ax.grid(True, linewidth=0.3, alpha=0.3)

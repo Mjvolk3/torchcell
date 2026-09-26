@@ -1277,6 +1277,17 @@ class BxCell(BaseModel):
             "through 40. Round 41 asks whether the linear read is the vector's ceiling."
         ),
     )
+    ess_solve_head_linear_columns: int = Field(
+        default=0,
+        description=(
+            "With a hidden layer, the number of LEADING solve columns read through a "
+            "linear map instead, the rest through the hidden layer, the two summed (a "
+            "two-slot head): GO's 2,362 columns linear beside the measured pool's "
+            "nineteen through the layer (2026-09-26; the CPU perceptron read 0.265 this "
+            "way against 0.240 with the two sharing a layer). 0 is one head over "
+            "everything."
+        ),
+    )
     ib_readout: str = Field(
         default=IB_READOUT_FLUX_SCALAR,
         description=(
@@ -2365,6 +2376,7 @@ def build_cell(
     ess_solve_encoding: str = "standardized",
     ess_solve_zero_init: bool = False,
     ess_solve_head_hidden: int = 0,
+    ess_solve_head_linear_columns: int = 0,
     ess_solve_columns: str = "",
     ess_affine_weight_decay: float | None = None,
     ess_affine_lr_mult: float = 1.0,
@@ -2480,6 +2492,7 @@ def build_cell(
         ess_solve_encoding=ess_solve_encoding,
         ess_solve_zero_init=ess_solve_zero_init,
         ess_solve_head_hidden=ess_solve_head_hidden,
+        ess_solve_head_linear_columns=ess_solve_head_linear_columns,
         ess_solve_columns=ess_solve_columns,
         ess_affine_weight_decay=ess_affine_weight_decay,
         ess_affine_lr_mult=ess_affine_lr_mult,
@@ -4114,6 +4127,32 @@ def apply_solve_zero_init(cell: BxCell, affine: FbaAffine) -> None:
     )
 
 
+class TwoSlotSolveHead(nn.Module):
+    """A linear map over the leading columns plus a GELU hidden layer over the rest.
+
+    The affine's input is ``[media ratios | solve columns]``; the first ``n_linear``
+    columns (the media ratios and the leading solve columns, GO's multi-hot) go through
+    ``Linear(n_linear, out)`` and the remaining columns (the measured pool) through
+    ``Linear(n_rest, h) -> GELU -> Linear(h, out)``, the two summed. Neither slot sees
+    the other's columns, the perceptron form that read the pool at 0.265 beside the
+    annotation where one shared layer read 0.240 (2026-09-26).
+    """
+
+    def __init__(self, n_linear: int, n_rest: int, hidden: int, out_features: int) -> None:
+        """Build the two slots; ``n_rest`` must be positive."""
+        super().__init__()
+        assert n_rest > 0, (n_linear, n_rest)
+        self.n_linear = n_linear
+        self.linear = nn.Linear(n_linear, out_features)
+        self.mlp = nn.Sequential(
+            nn.Linear(n_rest, hidden), nn.GELU(), nn.Linear(hidden, out_features)
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """The sum of the linear slot and the hidden-layer slot."""
+        return self.linear(x[:, : self.n_linear]) + self.mlp(x[:, self.n_linear :])
+
+
 def apply_solve_head(cell: BxCell, affine: FbaAffine) -> None:
     """Round 41: one GELU hidden layer in the affine, when the cell asks for it.
 
@@ -4121,12 +4160,28 @@ def apply_solve_head(cell: BxCell, affine: FbaAffine) -> None:
     the same input (the media ratios and the solve columns), so the readout's forward
     and its place in the logit are unchanged and only the read of the columns is
     nonlinear. Applied after ``apply_solve_zero_init``, which it supersedes: the hidden
-    layer starts at its default initialization. No-op at width 0.
+    layer starts at its default initialization. No-op at width 0. With
+    ``ess_solve_head_linear_columns`` the head has two slots (:class:`TwoSlotSolveHead`):
+    the media ratios and that many leading solve columns linear, the rest through the
+    layer.
     """
     if cell.ess_solve_head_hidden <= 0:
         return
     m = affine.linear.in_features
     h = cell.ess_solve_head_hidden
+    if cell.ess_solve_head_linear_columns > 0:
+        n_linear = len(cell.ess_fba_media) + cell.ess_solve_head_linear_columns
+        assert n_linear < m, (n_linear, m)
+        affine.linear = TwoSlotSolveHead(n_linear, m - n_linear, h, affine.out_features).to(
+            affine.fba_table.device
+        )
+        print(
+            f"[solve-head] two slots over {m} columns: Linear({n_linear}, {affine.out_features}) "
+            f"over the media ratios and the first {cell.ess_solve_head_linear_columns} solve "
+            f"columns, plus Linear({m - n_linear}, {h}) -> GELU -> Linear({h}, {affine.out_features}) "
+            "over the rest, summed"
+        )
+        return
     affine.linear = nn.Sequential(
         nn.Linear(m, h), nn.GELU(), nn.Linear(h, affine.out_features)
     ).to(affine.fba_table.device)
@@ -7190,6 +7245,16 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--ess-solve-head-linear-columns",
+        type=int,
+        default=0,
+        help=(
+            "With --ess-solve-head-hidden, the number of leading solve columns read "
+            "linearly beside the hidden layer over the rest, the two summed (two-slot "
+            "head, 2026-09-26); 0 is one head over every column."
+        ),
+    )
+    parser.add_argument(
         "--pos-weight-balanced",
         action="store_true",
         help=(
@@ -7701,6 +7766,7 @@ def main() -> None:
         deletion_only_graph=args.deletion_only_graph,
         ess_solve_zero_init=args.ess_solve_zero_init,
         ess_solve_head_hidden=args.ess_solve_head_hidden,
+        ess_solve_head_linear_columns=args.ess_solve_head_linear_columns,
         perturb_cls=args.perturb_cls,
         flux_capacity_scale=args.flux_capacity_scale,
         flux_lp_slack_penalty=args.flux_lp_slack_penalty,

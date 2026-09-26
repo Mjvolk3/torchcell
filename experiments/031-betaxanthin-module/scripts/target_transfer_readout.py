@@ -913,6 +913,48 @@ PAIRS = [
         "w206_bxdelaapoolmlp256_h12l1p1_e200",
     ),
     (
+        "betaxanthin: two-slot head, GO linear beside the pool through 64, against the same columns through one shared layer of 64",
+        "betaxanthin",
+        "w216_bxdelgolinaapoolmlp_h12l1p1_e200",
+        "w204_bxdelgoaapoolmlp_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head, GO linear beside the pool through 64, against the pool alone through 64",
+        "betaxanthin",
+        "w216_bxdelgolinaapoolmlp_h12l1p1_e200",
+        "w199_bxdelaapoolmlp_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head, GO linear beside the pool through 64, against the same columns in the linear affine",
+        "betaxanthin",
+        "w216_bxdelgolinaapoolmlp_h12l1p1_e200",
+        "w194_bxdelgoaapool_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head, GO linear beside the pool through 64, against GO alone",
+        "betaxanthin",
+        "w216_bxdelgolinaapoolmlp_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head, GO linear beside the pool through 256, against the pool alone through 256",
+        "betaxanthin",
+        "w217_bxdelgolinaapoolmlp256_h12l1p1_e200",
+        "w206_bxdelaapoolmlp256_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head, GO linear beside the pool through 256, against the two slots at 64",
+        "betaxanthin",
+        "w217_bxdelgolinaapoolmlp256_h12l1p1_e200",
+        "w216_bxdelgolinaapoolmlp_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head, GO linear beside the pool through 256, against GO alone",
+        "betaxanthin",
+        "w217_bxdelgolinaapoolmlp256_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
         "amino acids: measured betaxanthin score alone in the affine against GO alone, twelve seeds",
         "mulleder19",
         "w203_aadelbxscore_h12l1p1_e200",

@@ -454,6 +454,16 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B45 | -- | w198 | del + the pool alone in the affine | job 2841, pending |
 | B46 | -- | w199 | del + the pool alone, hidden layer 64 | job 2842, pending |
 
+## 2026.09.25 - B43, B44 read: twelve seeds of the new best; the three families
+
+- B43 (w196 = w190 seeds 2706 to 2711, job 2839, 3 h 40 min): the second six read 0.219 (sd 0.003) vs the first six's 0.216 (sd 0.007); over twelve 0.217 (sd 0.005, sem 0.0015), seeds 0.206 to 0.223, select at 5 to 14; twelve-seed ensemble 0.218 / 4.79. Paired vs w168 over twelve: +0.003 (sd 0.007), 8/12 (the first six gave +0.004 on 5/6, sd 0.003; on the second six 0.219 vs 0.218). Round 171's gain does not hold at its first size; the two arms share one level (0.214 to 0.217). Written as round 177.
+- B44 (w197, GO + HiGHS + MOMA + pool, 10,735 columns, job 2840, 3 h 40 min): 0.218 (sd 0.002) vs w190 0.216 (+0.002, sd 0.008, 3/6) and vs w195 0.208 (+0.010, sd 0.009, 5/6); top-50 4.63 vs 4.73 and 4.66; ensemble 0.218 / 4.59; seeds select at 10 to 14, read 0.216 to 0.221. The pool adds nothing beside the flux programs; every linear combination of annotation, flux and measured sides reads 0.208 to 0.218, the affine's ceiling on this family. Written as round 178; 031 published v34.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B43 | 177 | w196 | w190 seeds 2706 to 2711 | twelve seeds 0.217 (sem 0.0015); vs w168 +0.003 (8/12); ens 0.218 / 4.79 |
+| B44 | 178 | w197 | del + GO, HiGHS, MOMA and the pool | 0.218 (sd 0.002); ens 0.218 / 4.59 |
+
 ## 2026.09.25 - The minimum-norm flux store: uniqueness from the program, not the solver
 
 - The Gurobi question (user, 17:00): a faster LP solver would pick a third set of vertices of the degenerate l1 parsimonious optimum, not remove the vertex noise rounds 139 and 152 measured. The fix is a strictly convex program. `target_physics_store.py --variant l2`: the growth LP (scipy HiGHS), then min ||v||^2 s.t. Sv = 0 on the knocked-out box with v_biomass held at the LP optimum less 1e-6 relative, one Clarabel interior-point QP per gene. HiGHS's active-set QP (`highspy` 1.15.1) returned "Solve error" on the 2,831 x 4,177 strain model with presolve on or off; Clarabel 0.11.1 solves the wild type in 0.22 s, bit-identical on a repeat, |Sv| under 1e-6 (pinned in `env/requirements.txt`).

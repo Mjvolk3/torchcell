@@ -83,6 +83,11 @@ amino-acid target, where averaging the control's seed noise passed the annotatio
 small gain, here the gain is five times what the averaging recovers. The measured pool in
 the affine adds 0.006 to GO on every seed and nothing beside the HiGHS vector (rounds
 175, 176), a linear read of columns whose signal the ladder's nearest neighbors carry at
-0.285: the slot bounds the read, not the data. Cells queued: twelve seeds of both flux
-programs beside GO (177), the three families in one affine (178), the pool alone in the
-affine and through a hidden layer of 64 (179, 180).
+0.285: the slot bounds the read, not the data. On twelve seeds the two flux programs
+beside GO read 0.217 against the parsimonious vector's 0.214, $+0.003$ within a paired
+spread of 0.007 (round 177), so round 171's gain does not hold at its first size and
+the two arms share one level; the three families in one affine read 0.218 (round 178),
+the pool adding nothing beside the flux programs. Every linear combination of the
+annotation with the flux and measured sides reads 0.208 to 0.218: the affine's ceiling
+on this input family. Cells queued: the pool alone in the affine and through a hidden
+layer of 64 (179, 180), the minimum-norm store alone and with GO (181, 182).

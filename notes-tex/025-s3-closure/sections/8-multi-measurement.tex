@@ -1,0 +1,121 @@
+%% notes-tex/025-s3-closure/sections/8-multi-measurement.tex
+
+\section{The multi-measurement build\secstatus{todo}}
+\label{sec:multi-measurement}
+
+The missing record of Section~\ref{sec:deletion-query} is now a record. Build 030
+(\texttt{experiments/030-solid-growth-multi/}, build 001, 2026-09-24) runs the 025 query,
+every allele, on the 029 store shape, every source entry kept, and both Kuzmin
+double-mutant fitness loaders emit the query strain's own fitness from the released query
+strain tables as of commit 4c4a4f950: 172 Kuzmin 2018 and 200 Kuzmin 2020 double-mutant
+query strains, each carrying the strain identifier \texttt{GENE1+GENE2\_tmNNNN} that the
+triples of that screen carry on their query perturbations. Because each query strain was
+screened against hundreds of array genes, those 372 records cover 86{,}111 of the 91{,}111
+Kuzmin 2018 triples and 255{,}296 of the 300{,}187 Kuzmin 2020 triples. The store holds
+43{,}820{,}352 raw records in 13{,}525{,}088 genotype groups; roles resolve on all
+376{,}732 triples, and every perturbation carries its strain identifier, so a triple's
+array strain is readable beside its query strain.
+
+\notesec{The same identity, term by term from the build}
+Table~\ref{tab:multi-measurement} scores the published form on identical records under
+the same Kuzmin-first policy with the triple's own year promoted, with the terms chosen
+four ways. The 029 reading takes $f_{ij}$ from the pair's digenic array screen with the
+query-strain entries excluded; it reproduces 029 to three decimals on both screens on
+the deletion-array stratum, $0.511$ and $0.325$, so the extra alleles of the 025 query
+and the larger store change nothing on that reading and the two builds are comparable
+term by term. The second reading takes $f_{ij}$ by
+\texttt{LabelPolicy.select\_double}, which prefers the entry whose strain token equals
+the triple's query strain. The third also matches the control terms on the triple's
+own array strain, which is how the source computed them (Section~\ref{sec:strength}):
+$\epsilon_{ik}$ and $\epsilon_{jk}$ from the single-mutant control queries' scores
+against that array strain in the triple's own screen, and $f_k$ from that strain's own
+single, the screen's array single where the build holds one and Costanzo's single of the
+same deletion strain otherwise. The fourth is a diagnostic, not a build value: $f_k$
+taken from the array single-mutant fitness the source wrote on the trigenic row itself,
+read from the raw tables.
+
+\notesec{Kuzmin 2018 closes}
+On the 86{,}111 triples whose query double is in the build, the query-strain double
+alone moves $r$ from $0.435$ to $0.951$ and the median absolute residual from $0.046$ to
+$3.3 \times 10^{-5}$; matching the control terms on the array strain takes it to
+$r = 0.987$, rmse $0.008$, median residual $2.9 \times 10^{-5}$, against the $0.985$ of
+the raw-table recompute. The residual is the rounding of the published five-decimal
+score: the build reproduces the source. The raw-table $f_k$ changes nothing on this
+screen, because the 2018 array single the build holds (\texttt{SmfKuzmin2018Dataset},
+from the released array single-mutant fitness) is the row value. Over all 91{,}111
+triples, where the 5{,}000 without a query double fall back to the array screen, $r$ is
+$0.747$; on the deletion-array stratum of 029, $0.803$ against 029's $0.511$.
+
+\notesec{Kuzmin 2020 is two screens, and the build does not know which is which}
+The query-strain double moves the 2020 screen from $0.338$ to $0.660$ on its 255{,}064
+covered triples, and matching the control terms on the array strain changes nothing
+($0.660$, median residual $0.031$), although the interactions matched on 300{,}185 of
+300{,}187 triples. What did not match is $f_k$: the build holds no Kuzmin 2020 array
+single-mutant fitness, so all 299{,}862 values came from Costanzo's single of the same
+strain. The 2020 loader emits singles from the query strain standard (Table S5) only;
+the array single-mutant fitness of that screen is a column on the interaction rows of
+Tables S1 and S3 that no loader reads. With the row's own value in its place, everything
+else still from the build, $r$ is $0.920$, rmse $0.025$ and the median residual
+$2.8 \times 10^{-5}$.
+
+The rest is the two tables. Kuzmin 2020 released two screens: Table S1, the 240
+double-mutant queries and their 480 single-mutant controls against the diagnostic array
+of about 1{,}200 strains, and Table S3, pilot screens of 11 double-mutant queries against
+the genome-wide deletion array and the temperature-sensitive array (794{,}772 and
+139{,}823 rows; 256{,}861 and 44{,}937 of them trigenic). The supplementary methods say
+of the array term, ``The mean single mutant fitness estimates of each array strain were
+obtained from a previous study (37)'' (\texttt{si1.md} line 45; reference 37 is the 2018
+study), but the value on the rows is a constant of the array strain inside each table and
+differs between the tables for 1{,}159 of the 4{,}553 strains, median range $0$, 90th
+percentile $0.046$, maximum $0.41$, and every one of those strains is separated by table,
+none by mutant type. Nor is it the 2018 value: the S1 value agrees with the 2018 array
+single-mutant fitness on 1 percent of the 1{,}170 shared strains at $r = 0.87$, the S3
+value on 1.7 percent of 1{,}165 at $r = 0.99$. The loaders read both tables into one
+dataset and record nothing of which table a row came from, so a 2020 triple, its
+controls and its array single can each come from either screen; 24{,}193 control gene and
+array strain pairs appear in both. Recomputed on the raw tables with every term taken
+inside the row's own table (Table~\ref{tab:within-table},
+\texttt{kuzmin2020\_within\_table\_recompute.py}), the identity reproduces the released
+score at $r = 1.000$, rmse $3.6 \times 10^{-5}$, every residual below $10^{-3}$, on all
+256{,}804 trigenic rows with both controls; pooling the controls over the two tables gives
+$0.977$, the within-screen figure of Section~\ref{sec:strength}, and averaging $f_k$ over
+them $0.906$. The 2020 score is therefore exactly recoverable from released data, and
+what the build needs is two things the loaders drop: the array single-mutant fitness
+per array strain and table, 5{,}712 records, and the table itself on every 2020 record,
+as the screen identity a policy matches on. The first is additive; the second changes
+the stored records of a served dataset, a field or a split of the pilot rows into their
+own dataset classes, which is the full-rebuild case of the rebuild policy. The same
+statement fixes a model input: the identity holds inside a screen and not across them,
+so a model trained on merged screens is asked to hold two standards for one genotype
+(Section~\ref{sec:deletion-query}), and the screen, dataset and table, belongs in its
+input as a token.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The Kuzmin 2020 trigenic score recomputed on the raw tables. $f_{ijk}$, $f_{ij}$
+and $f_k$ come from the trigenic row; $\epsilon_{ik}$ and $\epsilon_{jk}$ from the
+single-mutant control queries' rows against the same array strain, inside the row's own
+table, or pooled over both tables; the third form keeps the within-table controls and
+averages $f_k$ over the two tables. Generated by
+\texttt{kuzmin2020\_within\_table\_recompute.py}.}
+\label{tab:within-table}
+\input{tables/t11-kuzmin2020-within-table}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The published identity on the 025, 029 and 030 builds. 025 is the merged
+build under the symmetric form (Section~\ref{sec:strength}); 029 and 030 use the
+Kuzmin-first policy with the triple's own year promoted. ``array-screen double'' is the
+029 reading; ``query-strain double'' takes $f_{ij}$ from the double-mutant query
+strain's own record; ``array-strain controls'' also matches $\epsilon_{ik}$,
+$\epsilon_{jk}$ and $f_k$ on the triple's array strain; the last form is the diagnostic
+with $f_k$ from the source's own row. ``Deletion'' is the stratum whose three genes carry
+deletion alleles, the 029 universe; ``every term strain-matched'' is the stratum whose
+query strain has a record and whose control terms matched. Generated by
+\texttt{closure\_recompute\_030.py}.}
+\label{tab:multi-measurement}
+\input{tables/t10-030-closure}
+\end{table}

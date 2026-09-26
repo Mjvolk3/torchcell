@@ -1,25 +1,25 @@
 ---
 name: uber-implement
-description: End-to-end autonomous pipeline -- plans with /plan-4.8 (3 scouts, deliberator, plan-writer, reducer-critic), then implements with /wt-implement in an isolated worktree. No manual approval between plan and implementation.
+description: End-to-end autonomous pipeline -- plans with /best-claude-plan (3 scouts, deliberator, plan-writer, reducer-critic), then implements with /wt-implement in an isolated worktree. No manual approval between plan and implementation.
 ---
 
 # Uber Implement
 
-End-to-end pipeline: plan a change with the full `/plan-4.8` pipeline, then immediately implement it in a worktree via `/wt-implement`. No manual approval gate between planning and implementation.
+End-to-end pipeline: plan a change with the full `/best-claude-plan` pipeline, then immediately implement it in a worktree via `/wt-implement`. No manual approval gate between planning and implementation.
 
 ## Usage
 
 `/uber-implement <request> [merge when done]`
 
-The request is the same natural language you would pass to `/plan-4.8`. Append "merge when done" to auto-merge the PR after implementation.
+The request is the same natural language you would pass to `/best-claude-plan`. Append "merge when done" to auto-merge the PR after implementation.
 
 ## Model
 
-The whole pipeline runs on Claude Fable 5.1. Phase A's six agents (three scouts, deliberator, plan-writer, reducer-critic) each pass `model: "fable"` on their Agent call, as `/plan-4.8` specifies. Phase B runs in the orchestrating session itself, which must be a Fable 5.1 session; if it is not, stop and say so rather than implementing on a weaker model.
+The whole pipeline runs on Claude Fable 5.1. Phase A's six agents (three scouts, deliberator, plan-writer, reducer-critic) each pass `model: "fable"` on their Agent call, as `/best-claude-plan` specifies. Phase B runs in the orchestrating session itself, which must be a Fable 5.1 session; if it is not, stop and say so rather than implementing on a weaker model.
 
-## Phase A: Plan (plan-4.8 phases 0--5)
+## Phase A: Plan (best-claude-plan phases 0--5)
 
-Run `/plan-4.8` phases 0 through 5 exactly as documented:
+Run `/best-claude-plan` phases 0 through 5 exactly as documented:
 
 1. **Phase 0: Setup** -- create the plan note (`dendron-cli note write --fname "plan.<slug>.YYYY.MM.DD"`)
 2. **Phase 1: Three Parallel Scouts**
@@ -61,8 +61,8 @@ Files changed:
 
 ## Important Rules
 
-- **No approval gate between plan and implement.** The reducer-critic in `/plan-4.8` Phase 4 is the only quality gate.
-- **All `/plan-4.8` rules apply** during Phase A; **all `/wt-implement` rules apply** during Phase B.
+- **No approval gate between plan and implement.** The reducer-critic in `/best-claude-plan` Phase 4 is the only quality gate.
+- **All `/best-claude-plan` rules apply** during Phase A; **all `/wt-implement` rules apply** during Phase B.
 - **Commit the plan note before implementation.**
 - **Do NOT use EnterPlanMode/ExitPlanMode** -- this skill replaces plan mode.
 - **Do NOT ask extra approval questions** -- tool approval prompts are the gates.

@@ -1,6 +1,6 @@
 ---
 name: wt-write
-description: Draft and revise long-form prose (manuscripts, proposals, strategy docs, design memos) as Dendron notes inside an isolated git worktree, iterate with the user, then hand off to /merge-worktree. The writing counterpart to /plan-4.8 -- worktree-first, but for words instead of an implementation plan. Use when the deliverable is a document, not code.
+description: Draft and revise long-form prose (manuscripts, proposals, strategy docs, design memos) as Dendron notes inside an isolated git worktree, iterate with the user, then hand off to /merge-worktree. The writing counterpart to /best-claude-plan -- worktree-first, but for words instead of an implementation plan. Use when the deliverable is a document, not code.
 ---
 
 # WT-Write
@@ -14,7 +14,7 @@ then landed via `/merge-worktree`. Code stays out of scope -- this is for words.
 
 - `/wt-write` -- the deliverable is a **document** (manuscript, proposal,
   strategy, synthesis, SOP). No code change implied.
-- `/plan-4.8` -- the deliverable is an **implementation plan** for a code change
+- `/best-claude-plan` -- the deliverable is an **implementation plan** for a code change
   (scouts fan out over the codebase, a reducer-critic tightens to ~300 lines).
 - `/update-src-notes` / `/update-notes` -- you are documenting a code change that
   already happened in the paired module note.
@@ -32,7 +32,7 @@ chat** or pointed to as a file/scratch-note path. If the user references pasted
 text you cannot actually see in the conversation, **say so and stop** -- do not
 invent content. Ask them to re-paste or save it to a path you can read.
 
-## Why worktree-first (same invariant as /plan-4.8)
+## Why worktree-first (same invariant as /best-claude-plan)
 
 A note committed to local `main` is never pushed (landings go worktree -> origin
 via `/merge-worktree`), so it sits un-pushed and every later worktree inherits
@@ -119,7 +119,7 @@ conventions exactly:
   user wants display text; `dendron.yml` sets `aliasMode: none`).
 
 Aim for the document the user asked for -- there is no artificial length target
-here (unlike `/plan-4.8`). Density and clarity over word count.
+here (unlike `/best-claude-plan`). Density and clarity over word count.
 
 ## Phase 4: Revision loop (the core of this skill)
 
@@ -181,7 +181,7 @@ Nothing after this block.
 - **No Unicode emojis** (xelatex export).
 - **This is a writing skill, not a coding skill.** It does not edit `torchcell/`
   source or run code. If the work turns out to need code, hand off to
-  `/plan-4.8`.
+  `/best-claude-plan`.
 - **Land via `/merge-worktree`, never `gh pr merge`.** The user's tool-approval
   prompts are the gates -- do not ask extra confirmation questions.
 

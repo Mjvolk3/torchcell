@@ -1,11 +1,11 @@
 ---
-name: plan-4.8
-description: Three scouts explore the codebase in parallel, argue the approach, and a plan-writer agent synthesizes the deliberation into a concise Dendron note. A reducer-critic then smart-tightens the plan (flagging low-value content for cuts, not truncating) until the plan is dense and human-readable. Built for Claude Fable 5.1 agents (every Agent call passes model fable) -- literal instruction-following, self-verification, long-running coherence -- so plans describe what and why, not every line of code.
+name: best-claude-plan
+description: Three scouts explore the codebase in parallel, argue the approach, and a plan-writer agent synthesizes the deliberation into a concise Dendron note. A reducer-critic then smart-tightens the plan (flagging low-value content for cuts, not truncating) until the plan is dense and human-readable. Planning runs on the best available Claude model, Fable 5.1 today (every Agent call passes model fable) -- literal instruction-following, self-verification, long-running coherence -- so plans describe what and why, not every line of code.
 ---
 
-# Plan-4.8
+# Best Claude Plan
 
-A lightweight, high-level planning skill built for Fable 5.1 implementation agents.
+A lightweight, high-level planning skill that runs every planning agent on the best available Claude model, Fable 5.1 today, for Fable-class implementation agents. Renamed from plan-4.8 on 2026-09-25: the name tracks the intent, the best model, not a version.
 
 ## Model
 
@@ -25,7 +25,7 @@ Together: a plan that reads like a design memo -- file paths, gotchas, key decis
 
 ## Usage
 
-`/plan-4.8 <request>`
+`/best-claude-plan <request>`
 
 Freeform request. Scouts read the codebase to ground the plan.
 
@@ -229,5 +229,5 @@ After presenting, enter a revision loop: answer questions from context; make spe
 ## Example
 
 ```text
-/plan-4.8 Add a COO classification head for fitness regression in torchcell/transforms and wire it through the dcell model and the 010-kuzmin-tmi inference scripts.
+/best-claude-plan Add a COO classification head for fitness regression in torchcell/transforms and wire it through the dcell model and the 010-kuzmin-tmi inference scripts.
 ```

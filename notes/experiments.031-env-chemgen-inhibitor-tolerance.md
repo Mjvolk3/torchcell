@@ -361,3 +361,98 @@ on the deletion collection), Gonzalez-Ramos et al. 2013 (Biotechnol Biofuels, de
 collection screen for butanol tolerance), Kuroda et al. 2019 (Front Bioeng Biotechnol,
 deletion collection screen for isobutanol tolerance). Each needs the mirror-and-verify
 pass before it can be judged.
+
+## 2026.09.26 - The Avalos isobutanol strains are the key external validator, and their numbers are figure-only
+
+**KEY VALIDATOR.** The isobutanol arm of Vanacloig has no external check inside the graph.
+The nearest one that exists anywhere we can reach is the Avalos lab's own engineered
+strains, and it is worth naming now because the prediction it would test is the one this
+experiment is for: does a tolerance model trained on a deletion-collection chemogenomic
+screen rank a real engineered tolerance gain correctly.
+
+### What is already served
+
+Lopez 2024 is Avalos-lab data and it IS in the built store, contrary to a reading of the
+candidate table (below). Two datasets from Jose de Jesus Montano Lopez's 2024 Princeton
+dissertation, both `built=True`:
+
+- `isobutanol_screen_lopez2024`, 4,554 records, one per resolved ORF.
+- `isobutanol_validated_lopez2024`, 224 records, the triplicate re-screen of strong hits.
+
+Both are single-gene knockouts carrying a constant Leu3p/`LEU1`-promoter yEGFP biosensor,
+and the readout is a median-GFP fold change against the same-plate wild type. So the served
+Avalos data is production proxy on single deletions. It is not tolerance and it is not
+multiplex.
+
+### What the same dissertation holds that we did not ingest
+
+Read from `thesis.txt` in the mirror (`lopezSystemsMetabolicEngineering2024`, sha256-pinned):
+
+- **23 multiplex strains.** Supplementary Table 1 lists strains described as carrying a
+  mitochondrial isobutanol pathway: five heterologous cassettes integrated at `HIS3`
+  (`ILV2`, `ILV3`, `ILV5`, `ARO10`, and a *Lactococcus lactis* `adhA-RE1` variant, two of
+  them carrying a CoxIV mitochondrial targeting sequence), each crossed with ONE
+  mitochondrial-morphology gene deletion. The deletions named are `MDM36`, `MDM35`,
+  `MDM32`, `TOM7`, `FIS1`, `MDM33`, `MDM30`, `MDM10`, `DNM1`, `MDM34`, `MDM12`, `MDV1`,
+  `MDM31`, `MMM1`, `MDM38`, `NUM1`, `FZO1`, `MGM1`, `MDM39`, `MDM37`. A genotype here is
+  one deletion plus five overexpressions, which is the only pathway-plus-deletion genotype
+  in reach on this phenotype.
+- **Two double deletions on the tolerance side.** `gln3` with `gcn4`, and `gln3` with
+  `gnp1`. The dissertation states the tolerance factor was not additive across the two
+  single deletions, which is an explicit epistasis observation on isobutanol tolerance.
+  Both doubles were then evolved under rising isobutanol with whole-genome sequencing;
+  `GNP1` acquired mutations in every background that did not already delete it.
+- **`SPT10`.** A histone-modification deletion reported to raise isobutanol production and
+  the production of other chemicals.
+
+### Why none of it is ingestible today
+
+The mirrored `supplementary_tables.xlsx` carries only `Table S2` and `Table S3`, the two
+single-deletion screens. The titers and tolerance factors for the multiplex strains and the
+doubles live in figures (Supplementary Figures 3 to 5 plot mitochondria number and volume
+against isobutanol titer), there is no released per-strain titer table, and the thesis
+carries no data-availability statement pointing at a deposit. Digitizing bars would violate
+the provenance rule, so the genotypes are documented and machine-readable while the
+phenotype values are not. Requesting the numbers is drafted, NOT sent:
+[[experiments.031-env-chemgen-inhibitor-tolerance.avalos-data-request-draft]].
+
+### The prediction to make without the numbers
+
+Since the values are not available, make and record the prediction first, then check it if
+the data arrives. A model trained on Vanacloig (isobutanol ceiling 0.786) plus HOM as a
+gene prior should, on isobutanol:
+
+1. rank `GLN3` deletion among the strongest tolerance-increasing single deletions;
+2. rank `GNP1` deletion high as well, the dissertation's second most tolerant;
+3. predict `gln3 gcn4` and `gln3 gnp1` as SUB-ADDITIVE against the sum of their singles,
+   which is the direction the dissertation reports.
+
+Point 3 is the informative one, because it needs an interaction and not a ranking. Points 1
+and 2 are single-gene and a per-gene additive ridge can reach them.
+
+### A stale exclusion to fix
+
+The candidate table's excluded list carries a row named "Avalos lab isobutanol-biosensor
+deletion screen", reason "Described only in a PhD thesis and a DOE report. Track for
+publication; not citable as a dataset." That is exactly what the built Lopez 2024 loader
+serves, from the dissertation's sha256-pinned supplementary tables, citing the lab's 2022
+Nature Communications biosensor paper for the construct. The row should move from excluded
+to built. The dissertation itself has no DOI or PMID, only the Princeton DataSpace handle
+`88435/dsp019s161956t`, which is the DOI-less-source problem recorded in memory
+`data-privacy-and-doi-less-sources`.
+
+### The furfural side now has its genome-confirmed set
+
+For the Lian 2019 external check of Section "What follows", the paper's Source Data file was
+retrieved this session and deposited in the raw mirror
+(`41467_2019_13621_MOESM8_ESM.xlsx`, sha256
+`1d2d412cf56f3e4b138cb6698395e0354f90b654ef6f7d044743bae149ac954d`, via
+`torchcell.literature.retrieve.springer_esm`). It carries the per-replicate relative-biomass
+values behind Figures 2, 3, 4, 5b, 5d and Supplementary Figures 1, 4, 6, 7, 9, 10. Sheet
+`Fig. 4` is the fully crossed genome-integrated `SIZ1i` by `NAT1a` by `PDR1i` design, seven
+strains plus wild type, at 7.5, 12.5 and 17.5 mM furfural in biological triplicate. At
+17.5 mM the means are wild type 1.03, `SIZ1i` alone 1.95, `NAT1a` alone 0.77, `PDR1i` alone
+0.48, `SIZ1i NAT1a` 55.7, `SIZ1i PDR1i` 25.7, `NAT1a PDR1i` 0.53, and the triple 142.2. So
+furfural HAS a genome-confirmed combinatorial validator with released numbers, and
+isobutanol does not. That asymmetry is the argument for asking Avalos for the isobutanol
+equivalent.

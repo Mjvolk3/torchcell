@@ -20,17 +20,21 @@
 # The job's own exit code is the report's, so `sacct` shows the verdict. Per-step logs
 # stay in the one output file, separated by banners.
 #
-# MEMORY. One rank opens the 13.5M-record build (025 measured 5.5 GB RSS per rank) plus
-# 8 spawned workers that re-import the stack; 96 GB is generous. The cache warm holds the
-# three split-index JSONs of the build at once (the 025 note: most of the RSS).
+# MEMORY AND CPUS. One rank opens the 13.5M-record build (025 measured 5.5 GB RSS per
+# rank) plus 6 spawned workers that re-import the stack; the cache warm holds the split-
+# index JSONs of the build at once (the 025 note: most of the RSS). 32 GB covers that,
+# and it is also the most 8 CPUs can ask for: GilaHyper's MaxMemPerCPU is 4.1 GB, so a
+# --mem above cpus x 4.1 GB silently RAISES the CPU request (96 GB became 24 CPUs and the
+# job sat on "Resources" behind three 1-GPU jobs while a GPU and 8 CPUs were free, job
+# 2860, 2026-09-26). Size --mem from the CPUs, not the other way round.
 #
 #   mkdir -p experiments/030-solid-growth-multi/slurm/output
 #   sbatch experiments/030-solid-growth-multi/scripts/gh_smoke_dataset_token.slurm
 #SBATCH -p main
-#SBATCH --mem=96g
+#SBATCH --mem=32g
 #SBATCH -N 1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=10
+#SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
 #SBATCH --job-name=030-r1w0-smoke
 #SBATCH --time=12:00:00

@@ -1,0 +1,112 @@
+{
+  "n_trigenic_rows": 301798,
+  "n_trigenic_by_table": {
+    "S1": 256861,
+    "S3": 44937
+  },
+  "n_control_gene_array_pairs_in_both_tables": 24193,
+  "n_array_strains": 4553,
+  "n_array_strains_with_two_f_a": 1159,
+  "n_array_strains_f_a_varies_within_a_table": 0,
+  "rows": [
+    {
+      "table": "S1",
+      "form": "controls within the row's table",
+      "n": 215569,
+      "pearson": 0.9999998303084451,
+      "spearman": 0.9999996557948225,
+      "slope": 0.9999950011882512,
+      "rmse": 3.53408254947864e-05,
+      "median_abs_residual": 2.679999999989635e-05,
+      "frac_abs_residual_below_1e-3": 1.0
+    },
+    {
+      "table": "S1",
+      "form": "controls pooled over both tables",
+      "n": 215576,
+      "pearson": 0.9854995684036378,
+      "spearman": 0.9851201305815773,
+      "slope": 0.9750977460357977,
+      "rmse": 0.010271306378945367,
+      "median_abs_residual": 2.8000000000055758e-05,
+      "frac_abs_residual_below_1e-3": 0.9523045236946599
+    },
+    {
+      "table": "S1",
+      "form": "within-table controls, f_k averaged over tables",
+      "n": 215569,
+      "pearson": 0.889688270159178,
+      "spearman": 0.8415943445838056,
+      "slope": 0.9927146398828683,
+      "rmse": 0.031191626128491228,
+      "median_abs_residual": 0.01609975000000008,
+      "frac_abs_residual_below_1e-3": 0.03937022484680079
+    },
+    {
+      "table": "S3",
+      "form": "controls within the row's table",
+      "n": 41235,
+      "pearson": 0.9999998497141842,
+      "spearman": 0.9999996411991487,
+      "slope": 0.9999958146554588,
+      "rmse": 3.9450995540890736e-05,
+      "median_abs_residual": 2.8850000000038567e-05,
+      "frac_abs_residual_below_1e-3": 1.0
+    },
+    {
+      "table": "S3",
+      "form": "controls pooled over both tables",
+      "n": 41235,
+      "pearson": 0.9443565878579742,
+      "spearman": 0.928563479639821,
+      "slope": 0.9352555652836888,
+      "rmse": 0.023442787313864333,
+      "median_abs_residual": 4.0899999999934045e-05,
+      "frac_abs_residual_below_1e-3": 0.7505274645325573
+    },
+    {
+      "table": "S3",
+      "form": "within-table controls, f_k averaged over tables",
+      "n": 41235,
+      "pearson": 0.9813166050850173,
+      "spearman": 0.9739726298857472,
+      "slope": 1.0009896686256305,
+      "rmse": 0.013892939897125565,
+      "median_abs_residual": 4.0899999999934045e-05,
+      "frac_abs_residual_below_1e-3": 0.7541894022068631
+    },
+    {
+      "table": "both",
+      "form": "controls within the row's table",
+      "n": 256804,
+      "pearson": 0.9999998325648999,
+      "spearman": 0.999999655150704,
+      "slope": 0.9999960021469718,
+      "rmse": 3.6032406014886415e-05,
+      "median_abs_residual": 2.6999999999994476e-05,
+      "frac_abs_residual_below_1e-3": 1.0
+    },
+    {
+      "table": "both",
+      "form": "controls pooled over both tables",
+      "n": 256811,
+      "pearson": 0.9770026827880897,
+      "spearman": 0.9749214964544154,
+      "slope": 0.9668833629060264,
+      "rmse": 0.013296661352913375,
+      "median_abs_residual": 2.950000000005032e-05,
+      "frac_abs_residual_below_1e-3": 0.91990607878946
+    },
+    {
+      "table": "both",
+      "form": "within-table controls, f_k averaged over tables",
+      "n": 256804,
+      "pearson": 0.9063844547711039,
+      "spearman": 0.8632900025295249,
+      "slope": 0.9948993255012657,
+      "rmse": 0.029115089714140167,
+      "median_abs_residual": 0.013378199999999986,
+      "frac_abs_residual_below_1e-3": 0.15414868927275277
+    }
+  ]
+}

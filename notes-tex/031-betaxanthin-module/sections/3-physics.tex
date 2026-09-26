@@ -70,8 +70,19 @@ solution's 426, at an $\ell_1$ norm of 452 against 426. Its degeneracy row
 wild type by more than the script's $10^{-6}$ threshold, but at a median relative
 distance of $10^{-8}$ and a ninetieth percentile of $3\times10^{-5}$, against 0.39 for
 the HiGHS store and 0.38 for the GLPK one: interior-point tolerance, not vertex choice.
-The store alone in the affine and appended to GO are queued as rounds 181 and 182,
-paired against the HiGHS store (round 139) and the HiGHS vector with GO (round 151).
+On the ladder (Table~\ref{tab:store-baselines}) the minimum-norm store reads 0.068 by
+ridge, 0.126 by nearest neighbors and 0.133 by forest, against the HiGHS $\ell_1$
+store's 0.098, 0.195 and 0.117: less rank under the two distance models, a little more
+under the forest, and the weakest calls of any flux store (0.40 to 2.00). Appended to
+GO it reads 0.068, 0.208 and 0.173 against the $\ell_1$ vector's 0.123, 0.198 and
+0.204: the highest nearest-neighbor read of any genotype-side representation, and less
+by ridge and forest. So removing the vertex noise does not add rank on its own; a
+plausible reason, unverified, is that the $\ell_1$ point's sparsity pattern, which
+reactions carry flux at all, is what the cosine neighborhoods read, and the
+minimum-norm point spreads that pattern over twice the reactions. The store alone in
+the affine and appended to GO are queued as rounds 181 and 182, paired against the
+HiGHS store (round 139) and the HiGHS vector with GO (round 151), which read whether
+the transformer's affine prefers the unique point or the sparse one.
 
 The store read without the backbone (Table~\ref{tab:store-baselines};
 \texttt{target\_store\_baselines.py}, the 027 ladder's split, standardization and

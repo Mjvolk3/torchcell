@@ -163,6 +163,7 @@ def main(cfg: DictConfig) -> None:
     chunk_size = int(wandb.config.adapters["chunk_size"])
     loader_batch_size = int(wandb.config.adapters["loader_batch_size"])
     inprocess_max_records = int(wandb.config.adapters.get("inprocess_max_records", 0))
+    single_pass = bool(wandb.config.adapters.get("single_pass", False))
 
     wandb.log(
         {
@@ -303,6 +304,7 @@ def main(cfg: DictConfig) -> None:
         # Set after construction: the 52 adapter subclasses each spell out the base
         # constructor's arguments, and this knob is a build setting, not per adapter.
         adapters[-1].inprocess_max_records = inprocess_max_records
+        adapters[-1].single_pass = single_pass
     log.info(
         "Built %d adapters; skipped %d with no LMDB: %s",
         len(adapters),

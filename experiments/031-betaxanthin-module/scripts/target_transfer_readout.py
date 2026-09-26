@@ -782,6 +782,24 @@ PAIRS = [
         "w141_aadel_h12l1p1_e200",
     ),
     (
+        "amino acids: measured betaxanthin score alone in the affine against the score with GO",
+        "mulleder19",
+        "w203_aadelbxscore_h12l1p1_e200",
+        "w202_aadelgobxscore_h12l1p1_e200",
+    ),
+    (
+        "amino acids: measured betaxanthin score alone in the affine against GO alone",
+        "mulleder19",
+        "w203_aadelbxscore_h12l1p1_e200",
+        "w170_aadelgo_h12l1p1_e200",
+    ),
+    (
+        "amino acids: measured betaxanthin score alone in the affine against the control",
+        "mulleder19",
+        "w203_aadelbxscore_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
         "amino acids: GO multi-hot in the affine slot against the control, twelve seeds",
         "mulleder19",
         "w170_aadelgo_h12l1p1_e200",

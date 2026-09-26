@@ -102,6 +102,7 @@ ARMS = [
     ("w176_bxdelgodrop_h12l1p1_e200", "betaxanthin"),
     ("w177_aadelgopfba_h12l1p1_e200", "mulleder19"),
     ("w202_aadelgobxscore_h12l1p1_e200", "mulleder19"),
+    ("w203_aadelbxscore_h12l1p1_e200", "mulleder19"),
     ("w178_bxdelgopfbadrop_h12l1p1_e200", "betaxanthin"),
     ("w179_aadelgopfbadrop_h12l1p1_e200", "mulleder19"),
     ("w180_bxdelgopfbapoly_h12l1p1_e200", "betaxanthin"),

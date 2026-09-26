@@ -5,7 +5,9 @@
 # Freeze the worktree into a wheel, then submit one benchmark arm with that wheel.
 #   submit_bench.sh <round> <arm> [cpus] [mem] [extra sbatch args...]
 # e.g. submit_bench.sh r0 baseline 48 192G
+#      KG_OVERRIDES="adapters.inprocess_max_records=25000" submit_bench.sh r1 inproc-small 48 192G
 # The commit is recorded as a tag; a dirty tree is refused so the tag means something.
+# KG_OVERRIDES (hydra overrides) is the arm's deviation from the ladder config.
 set -euo pipefail
 ROUND="${1:?round (r0, r1, ...)}"; ARM="${2:?arm name}"
 CPUS="${3:-48}"; MEM="${4:-192G}"; shift 4 2>/dev/null || shift $#
@@ -23,6 +25,7 @@ mkdir -p "$WHEEL_DIR" "$BENCH_ROOT/slurm"
 "$PY" -m pip wheel --no-deps --no-build-isolation -w "$WHEEL_DIR" "$SRC" >/dev/null
 ls "$WHEEL_DIR"/torchcell-*.whl >/dev/null
 chmod -R a+rX "$WHEEL_DIR"
+export KG_OVERRIDES="${KG_OVERRIDES:-}"
 sbatch --export=ALL,WHEEL_DIR="$WHEEL_DIR",ROUND="$ROUND",ARM="$ARM",COMMIT="$COMMIT",KG_CONFIG="${KG_CONFIG:-kg_bench_ladder}",KEEP_CSV="${KEEP_CSV:-0}" \
     -J "tcdb002-${ROUND}-${ARM}" --cpus-per-task="$CPUS" --mem="$MEM" "$@" \
     "$SRC/experiments/tcdb-002-build-speed/scripts/gh_bench_generate.slurm"

@@ -22,6 +22,7 @@ from omegaconf import DictConfig
 from torch_geometric.data import Dataset
 from tqdm import tqdm
 
+from torchcell.build_telemetry import BuildPhase
 from torchcell.datamodels.identity import (
     environment_identity,
     environment_perturbation_identity,
@@ -29,7 +30,6 @@ from torchcell.datamodels.identity import (
     media_identity,
     temperature_identity,
 )
-from torchcell.knowledge_graphs.build_telemetry import BuildPhase
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 
 logging.basicConfig(level=logging.INFO)
@@ -56,6 +56,7 @@ class CellAdapter:
         io_workers: int,
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
+        inprocess_max_records: int = 0,
     ):
         """Store config, dataset, and worker/chunk sizes for graph generation.
 
@@ -67,6 +68,12 @@ class CellAdapter:
             chunk_size: Number of dataset items processed per chunk.
             loader_batch_size: Batch size used within each chunk; must not
                 exceed ``chunk_size``.
+            inprocess_max_records: Datasets with at most this many records run
+                every chunked method in THIS process, with no worker pool and no
+                loader children. 0 disables the path. On job 2032 a method cost
+                about 30 s of fixed overhead (pool fork from a ~100 GB parent,
+                loader forks, LMDB open, teardown) whatever the dataset size, so
+                33 small datasets took 9.5 h for a median of 1,484 records each.
         """
         if loader_batch_size > chunk_size:
             raise ValueError(
@@ -79,6 +86,7 @@ class CellAdapter:
         self.io_workers = io_workers
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
+        self.inprocess_max_records = inprocess_max_records
         self.event = 0
         wandb.init()
         self.log_method_table()
@@ -326,6 +334,14 @@ class CellAdapter:
         memory_reduction_factor = self.get_memory_reduction_factor(method_name, is_edge)
         chunk_size = int(self.chunk_size * memory_reduction_factor)
 
+        # Small datasets: one chunk, this process, no forks. The whole dataset is
+        # the chunk, and data_chunker's in-process branch iterates it directly.
+        if 0 < len(self.dataset) <= self.inprocess_max_records:
+            whole = self.dataset[0 : len(self.dataset)]
+            self.dataset.close_lmdb()
+            yield from chunk_processing_func(whole, method_name, inprocess=True)
+            return
+
         # Every chunk view is built BEFORE the first submission, and the dataset's LMDB
         # environment is closed once afterwards, so that no chunk is ever built while
         # submissions are in flight. Dataset.__getitem__ routes through len(), which
@@ -400,8 +416,22 @@ class CellAdapter:
 
         @wraps(data_creation_logic)
         def decorator(
-            self: "CellAdapter", data_chunk: Any, method_name: str
+            self: "CellAdapter",
+            data_chunk: Any,
+            method_name: str,
+            inprocess: bool = False,
         ) -> list[Any]:
+            if inprocess:
+                datas_inproc: list[Any] = []
+                for i in range(len(data_chunk)):
+                    transformed = data_chunk.transform_item(data_chunk[i])
+                    out = data_creation_logic(self, transformed, method_name)
+                    if isinstance(out, list):
+                        datas_inproc.extend(out)
+                    else:
+                        datas_inproc.append(out)
+                data_chunk.close_lmdb()
+                return datas_inproc
             memory_reduction_factor = self.get_memory_reduction_factor(method_name)
             loader_batch_size = int(self.loader_batch_size * memory_reduction_factor)
             # loader_batch_size = self.loader_batch_size

@@ -26,8 +26,8 @@ from omegaconf import DictConfig, OmegaConf
 
 import torchcell
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
+from torchcell.build_telemetry import BuildPhase, ResourceSampler
 from torchcell.graph import SCerevisiaeGraph
-from torchcell.knowledge_graphs.build_telemetry import BuildPhase, ResourceSampler
 from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 from torchcell.knowledge_graphs.incremental_import import (
     INCREMENTAL_CALL_FILENAME,
@@ -162,6 +162,7 @@ def main(cfg: DictConfig) -> None:
     process_workers = num_workers - io_workers
     chunk_size = int(wandb.config.adapters["chunk_size"])
     loader_batch_size = int(wandb.config.adapters["loader_batch_size"])
+    inprocess_max_records = int(wandb.config.adapters.get("inprocess_max_records", 0))
 
     wandb.log(
         {
@@ -299,6 +300,9 @@ def main(cfg: DictConfig) -> None:
                 loader_batch_size=loader_batch_size,
             )
         )
+        # Set after construction: the 52 adapter subclasses each spell out the base
+        # constructor's arguments, and this knob is a build setting, not per adapter.
+        adapters[-1].inprocess_max_records = inprocess_max_records
     log.info(
         "Built %d adapters; skipped %d with no LMDB: %s",
         len(adapters),

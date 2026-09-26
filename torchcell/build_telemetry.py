@@ -1,7 +1,7 @@
-# torchcell/knowledge_graphs/build_telemetry
-# [[torchcell.knowledge_graphs.build_telemetry]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/build_telemetry
-# Test file: tests/torchcell/knowledge_graphs/test_build_telemetry.py
+# torchcell/build_telemetry
+# [[torchcell.build_telemetry]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/build_telemetry
+# Test file: tests/torchcell/test_build_telemetry.py
 """Container-level resource telemetry for the KG build, paired with build phases.
 
 W&B's own system metrics see only the parent process: on job 2032 they reported 2% CPU

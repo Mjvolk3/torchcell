@@ -297,4 +297,10 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 |---|---|---|---|---|
 | A22 | 183 | w202 | del + GO with the betaxanthin score (standardized) | 0.053 (sd 0.010); vs GO -0.005 (2/6); ens 0.056 |
 | A23 | 184 | w203 | del + the betaxanthin score alone | 0.060 (sd 0.015); vs GO +0.002 (3/6); ens 0.073 |
-| A24 | 189 | w208 | del + GO alone, standardized | job 2855, pending |
+| A24 | 189 | w208 | del + GO alone, standardized | 0.053 (sd 0.012); vs log1p GO -0.005 (2/6); score with GO vs it +0.001 (2/6); ens 0.061 |
+
+- A24 read (w208, GO alone standardized, job 2855, 3 h 33 min): 0.053 (sd 0.012) vs the log1p GO affine 0.058 (-0.005, sd 0.013, 2/6); w202 (score + GO standardized) vs it +0.001 (2/6); ensemble 0.061; seeds 0.039 to 0.073, epochs 2 to 196, validation Pearson 0.036 to 0.075. Standardizing the multi-hot costs the affine 0.005 and its early selection; the score adds nothing beside GO in the affine (it adds 0.015 in the forest). Written as round 189. Queued A25 = w214 = w203 seeds 2706 to 2711 (job 2871, pending), round 195.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| A25 | 195 | w214 | w203 seeds 2706 to 2711 | job 2871, pending |

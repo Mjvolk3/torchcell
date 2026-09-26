@@ -510,8 +510,8 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B48 | 182 | w201 | del + GO with the minimum-norm store | 0.204 (sd 0.005); vs GO + HiGHS -0.007 (0/6); ens 0.206 / 4.39 |
 | B49 | 185 | w204 | del + GO with the pool through 64 | 0.206 (sd 0.006); vs pool mlp -0.034 (1/6); vs GO +0.004 (3/6); ens 0.208 / 4.99 |
 | B50 | 186 | w205 | w199 seeds 2706 to 2711 | second six 0.268; twelve 0.254 (sem 0.012); vs GO +0.051 (11/12); ens 0.297 / 5.79 |
-| B51 | 187 | w206 | del + the pool through 256 | job 2853 (2849 cancelled, see 032 note on ESS_STUDY) |
-| B52 | 188 | w207 | del + the three families through 64 | job 2854 (2850 cancelled) |
+| B51 | 187 | w206 | del + the pool through 256 | 0.279 (sd 0.023); vs 64 +0.039 (5/6); vs linear +0.084 (6/6); ens 0.288 / 5.19 |
+| B52 | 188 | w207 | del + the three families through 64 | 0.217 (sd 0.009); vs linear -0.002 (2/6); vs pool mlp -0.023 (1/6); ens 0.227 |
 
 ## 2026.09.26 - B49 and B50 read: the annotation in the hidden layer, twelve seeds of the pool
 
@@ -522,5 +522,19 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
-| B53 | 189 | w209 | del + the pool through 64, 400 epochs | job 2864, pending |
-| B54 | 190 | w210 | del + the pool with the HiGHS vector through 64 | job 2865, pending |
+| B53 | 190 | w209 | del + the pool through 64, 400 epochs | job 2864, running |
+| B54 | 191 | w210 | del + the pool with the HiGHS vector through 64 | 0.186 (sd 0.035); vs pool mlp -0.054 (1/6); vs HiGHS store +0.056 (6/6); ens 0.207 |
+
+## 2026.09.26 - B51, B52, B54 read: width helps the pool, every appended family costs it
+
+- B51 (w206, the pool through a hidden layer of 256, job 2853, 3 h 30 min): 0.279 (sd 0.023) vs 64 (w199) 0.240 (+0.039, sd 0.051, 5/6) and vs the linear slot (w198) 0.195 (+0.084, sd 0.035, 6/6); top-50 4.69; ensemble 0.288 / 5.19; seeds 0.242 to 0.303, epochs 29 to 138, validation Pearson 0.36 to 0.40 (the highest of any arm; half the spread of 64). The single-seed level sits at the ladder's kNN (0.285) with the ensemble above it. Written as round 187.
+- B52 (w207, the three families through 64, job 2854, 3 h 34 min): 0.217 (sd 0.009) vs the same columns linear (w197) 0.218 (-0.002, 2/6), vs GO + pool through 64 (w204) +0.011 (5/6), vs the pool through 64 -0.023 (1/6); ensemble 0.227 / 4.19; epochs 5 to 20. The annotation in the layer sets the level again. Written as round 188.
+- B54 (w210, the pool + HiGHS vector on the pool's genes through 64, job 2865, 3 h 33 min): 0.186 (sd 0.035) vs the pool through 64 -0.054 (sd 0.058, 1/6) and vs the HiGHS store alone (w156) 0.130 (+0.056, 6/6); top-50 2.90; ensemble 0.207 / 4.59; epochs 29 to 66. The flux columns cost the pool more than the annotation did and bring no level of their own. Written as round 191. Every family appended to the pool inside one hidden layer has cost it (185, 188, 191): the pool's nonlinear read is best taken alone; a two-slot head (pool through a layer beside the linear GO affine) is the unbuilt arm.
+- Queued (all with `ESS_STUDY`): B55 = w211 the pool through 512 (job 2868); B56 = w212 = w206 seeds 2706 to 2711 (2869); B57 = w213 the pool through 128 (2870); B59 = w215 the pool through 256 at 400 epochs (2873); B53 = w209 (64 at 400 epochs) still running (2864). On CPU (user: half the CPUs and RAM are free), `gh_pool_mlp_sweep.slurm` run directly (nohup; slurm's CPU allocation was full): `target_go_models.py --store YPD_bx_aapool --arms store_mlp go_store_mlp --mlp-hidden {16,64,256,1024}`, the perceptron sibling of rounds 180, 185 and 187 in minutes; the script gained `--store` and `--mlp-hidden` (Report records `store`, `mlp_hidden`) and its pre-existing ruff errors were fixed (unused imports, import order, docstrings; ruff-formatted). Log `slurm/output/031-poolmlp_direct.out`, results `results/go_models_betaxanthin_pool_h<H>.json`.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B55 | 192 | w211 | del + the pool through 512 | job 2868, running |
+| B56 | 193 | w212 | w206 seeds 2706 to 2711 | job 2869, running |
+| B57 | 194 | w213 | del + the pool through 128 | job 2870, running |
+| B59 | 196 | w215 | del + the pool through 256, 400 epochs | job 2873, pending |

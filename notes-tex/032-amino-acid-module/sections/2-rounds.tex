@@ -318,4 +318,16 @@ the annotation failing to add or the multi-hot's scale under standardization. Th
 spread, sd 0.015 against the GO affine's 0.001, is the widest of any affine arm on
 this target.
 
+Round 189 is read (job 2855, 3 h 33 min): the encoding control, GO alone standardized
+instead of log1p. It reads 0.053 (sd 0.012) against the log1p GO affine's 0.058
+($-0.005$ paired, sd 0.013, two of six), ensembled 0.061; the seeds read 0.039 to 0.073
+and select at epochs 2 to 196 on validation Pearson 0.036 to 0.075, where the log1p
+affine selects at 2 to 3 on 0.106 to 0.112. Against it the score with GO under the same
+encoding (round 183) is $+0.001$ (sd 0.013, two of six). So round 183's deficit was the
+encoding's: standardizing the multi-hot costs the annotation 0.005 and its early,
+tight selection, and the score appended to it under that encoding adds nothing. The
+score adds to the annotation in the forest (0.078 against 0.063) and not in the affine
+beside it, while alone in the affine it reaches the annotation's level from one column
+(184); the twelve-seed level of that arm is round 195.
+
 \input{tables/target_transfer}

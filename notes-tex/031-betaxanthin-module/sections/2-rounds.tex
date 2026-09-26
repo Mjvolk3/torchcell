@@ -789,4 +789,42 @@ transformer arm, the ensemble above the ladder's nearest neighbors and forest on
 same columns, the spread twenty times the annotation arm's, and the call under the
 annotation's on every count.
 
+Round 187 is read (job 2853, 3 h 30 min): the pool alone through a hidden layer of
+256. It reads 0.279 (sd 0.023) against the layer of 64 at 0.240 ($+0.039$ paired, sd
+0.051, five of six) and against the linear slot at 0.195 ($+0.084$, sd 0.035, six of
+six), top-50 4.69 against 4.03 and 2.53, ensembled 0.288 with a top-50 of 5.19. The
+seeds read 0.242 to 0.303 and select at epochs 29 to 138 on validation Pearson 0.36 to
+0.40, half the spread of the layer of 64 and the highest validation correlation of any
+arm. So the width of the nonlinear read matters on these nineteen columns: 64 to 256
+adds 0.039 with the seed band halved, and the single-seed level now sits at the
+ladder's nearest-neighbor read of the same columns (0.285) with the ensemble above it.
+The layer of 128 and the layer of 512 are queued (rounds 194, 192), with six more seeds
+of this arm (193).
+
+Round 188 is read (job 2854, 3 h 34 min): the three families, GO with both flux
+programs and the pool, through the hidden layer of 64. It reads 0.217 (sd 0.009)
+against the same columns in the linear affine at 0.218 ($-0.002$ paired, sd 0.009, two
+of six), against GO with the pool through the layer at 0.206 ($+0.011$, sd 0.014, five
+of six) and against the pool alone through the layer at 0.240 ($-0.023$, sd 0.046, one
+of six), top-50 4.53, ensembled 0.227 with a top-50 of 4.19. The seeds read 0.200 to
+0.226 and select at epochs 5 to 20 on validation Pearson 0.25 to 0.27. With the
+annotation in the layer the read is again the annotation's, as in round 185, and the
+flux programs add their usual 0.01 beside it: the layer does not separate the nineteen
+pool columns from the 10,716 others.
+
+Round 191 is read (job 2865, 3 h 33 min): the pool with the HiGHS parsimonious vector
+appended on the pool's own 4,678 genes, 4,196 columns with 815 genes carrying a flux
+row and the rest the flux wild type, through the hidden layer of 64. It reads 0.186
+(sd 0.035) against the pool alone through the layer at 0.240 ($-0.054$ paired, sd
+0.058, one of six) and against the HiGHS store alone in the linear affine at 0.130
+($+0.056$, sd 0.024, six of six), top-50 2.90 against 4.03 and 4.46, ensembled 0.207
+with a top-50 of 4.59. The seeds read 0.138 to 0.234 and select at epochs 29 to 66 on
+validation Pearson 0.34 to 0.37. So the flux columns take from the pool's read as the
+annotation columns did, by 0.054 against the annotation's 0.034, and unlike the
+annotation they do not bring their own level with them: the layer over the joined
+store reads under both the pool through the layer and the annotation affine. Every
+store appended to the pool inside one hidden layer has cost it (rounds 185, 188, 191),
+so the pool's nonlinear read is best taken alone, and a head that reads the pool and
+the other families through separate slots is the arm that would test whether they add.
+
 \input{tables/target_transfer}

@@ -37,7 +37,7 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{2.5pt}
-  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 2 of 5).}
+  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 2 of 6).}
   \label{tab:target-transfer-2}
   \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{78.5mm}rrrrrr@{}}
     \hline
@@ -69,7 +69,7 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{2.5pt}
-  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 3 of 5).}
+  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 3 of 6).}
   \label{tab:target-transfer-3}
   \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{78.5mm}rrrrrr@{}}
     \hline
@@ -101,7 +101,7 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{2.5pt}
-  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 4 of 5).}
+  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 4 of 6).}
   \label{tab:target-transfer-4}
   \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{78.5mm}rrrrrr@{}}
     \hline
@@ -133,7 +133,7 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{2.5pt}
-  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 5 of 5).}
+  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 5 of 6).}
   \label{tab:target-transfer-5}
   \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{78.5mm}rrrrrr@{}}
     \hline
@@ -157,6 +157,27 @@
     GO with the measured pool through a hidden layer of 64 against GO alone & 6 & 0.2059 (0.0063) & 0.2023 (0.0014) & $+0.0036$ (0.0066) & 3/6 & 4.59 / 5.03 \\
     measured amino-acid pool through a hidden layer of 64 against the control, twelve seeds & 12 & 0.2537 (0.0414) & 0.0759 (0.0547) & $+0.1777$ (0.0688) & 12/12 & 4.24 / 4.06 \\
     measured amino-acid pool through a hidden layer of 64 against GO alone, twelve seeds & 12 & 0.2537 (0.0414) & 0.2029 (0.0019) & $+0.0507$ (0.0416) & 11/12 & 4.24 / 4.99 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \caption[The rounds on betaxanthin: arm against control, continued]{Table~\ref{tab:target-transfer}, continued (part 6 of 6).}
+  \label{tab:target-transfer-6}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{78.5mm}rrrrrr@{}}
+    \hline
+    arm against control & seeds & arm (sd) & control (sd) & difference (sd) & higher & top-50 \\
+    \hline
+    measured amino-acid pool through a hidden layer of 256 against the layer of 64 & 6 & 0.2788 (0.0234) & 0.2399 (0.0479) & $+0.0389$ (0.0510) & 5/6 & 4.69 / 4.03 \\
+    measured amino-acid pool through a hidden layer of 256 against the pool in the linear affine & 6 & 0.2788 (0.0234) & 0.1947 (0.0288) & $+0.0840$ (0.0350) & 6/6 & 4.69 / 2.53 \\
+    three families through a hidden layer of 64 against the same columns in the linear affine & 6 & 0.2165 (0.0089) & 0.2183 (0.0022) & $-0.0018$ (0.0085) & 2/6 & 4.53 / 4.63 \\
+    three families through a hidden layer of 64 against GO with the pool through the same layer & 6 & 0.2165 (0.0089) & 0.2059 (0.0063) & $+0.0106$ (0.0142) & 5/6 & 4.53 / 4.59 \\
+    three families through a hidden layer of 64 against the pool alone through the same layer & 6 & 0.2165 (0.0089) & 0.2399 (0.0479) & $-0.0234$ (0.0462) & 1/6 & 4.53 / 4.03 \\
+    pool with the HiGHS vector through a hidden layer of 64 against the pool alone through the same layer & 6 & 0.1862 (0.0350) & 0.2399 (0.0479) & $-0.0536$ (0.0583) & 1/6 & 2.90 / 4.03 \\
+    pool with the HiGHS vector through a hidden layer of 64 against the HiGHS store alone & 6 & 0.1862 (0.0350) & 0.1302 (0.0335) & $+0.0560$ (0.0244) & 6/6 & 2.90 / 4.46 \\
     \hline
   \end{tabular}
 \end{table}

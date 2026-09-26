@@ -29,10 +29,13 @@ _MIRROR_SI = osp.join(
     "1-s2.0-S109671761200081X-mmc1.xlsx",
 )
 
-pytestmark = pytest.mark.skipif(
-    not osp.exists(_MIRROR_SI),
-    reason=f"requires Ozaydin SI mirror at {_MIRROR_SI} (absent in CI)",
-)
+pytestmark = [
+    pytest.mark.data,
+    pytest.mark.skipif(
+        not osp.exists(_MIRROR_SI),
+        reason=f"requires Ozaydin SI mirror at {_MIRROR_SI} (absent in CI)",
+    ),
+]
 
 
 @pytest.mark.slow

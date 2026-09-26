@@ -26,10 +26,13 @@ if DATA_ROOT is None:
 _RAW_DIR = osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2020/raw")
 _RAW_FILES = ["aaz5667-Table-S1.xlsx", "aaz5667-Table-S3.xlsx", "aaz5667-Table-S5.xlsx"]
 
-pytestmark = pytest.mark.skipif(
-    not all(osp.exists(osp.join(_RAW_DIR, f)) for f in _RAW_FILES),
-    reason=f"requires the Kuzmin 2020 raw supplementary tables in {_RAW_DIR}",
-)
+pytestmark = [
+    pytest.mark.data,
+    pytest.mark.skipif(
+        not all(osp.exists(osp.join(_RAW_DIR, f)) for f in _RAW_FILES),
+        reason=f"requires the Kuzmin 2020 raw supplementary tables in {_RAW_DIR}",
+    ),
+]
 
 # The digenic row used by the regression test, addressed by strain ids.
 _DIGENIC_QUERY_STRAIN = "YAL015C+YDL227C_tm461"

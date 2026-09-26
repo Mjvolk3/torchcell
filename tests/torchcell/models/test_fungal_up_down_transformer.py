@@ -11,6 +11,11 @@ import torch
 
 from torchcell.models.fungal_up_down_transformer import FungalUpDownTransformer
 
+# ``from_pretrained`` reaches the HuggingFace Hub API (repo template listing) even when
+# the weights are cached, and a fresh runner downloads them; the module is network-gated
+# and runs only with --network.
+pytestmark = pytest.mark.network
+
 
 class TestFungalUpDownTransformerUpstream:
     """Tests for the upstream-species variant of the transformer."""

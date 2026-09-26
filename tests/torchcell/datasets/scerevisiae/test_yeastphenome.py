@@ -41,6 +41,8 @@ _RAW_FILES = [f"{s['pmid']}_{s['stem']}_valuez.txt" for s in _SUBSET]
 if not all(osp.exists(osp.join(_RAW_MIRROR, f)) for f in _RAW_FILES):
     pytest.skip("requires the YeastPhenome raw mirror", allow_module_level=True)
 
+pytestmark = pytest.mark.data
+
 
 @pytest.fixture(scope="module")
 def dataset(tmp_path_factory, monkeypatch_module):

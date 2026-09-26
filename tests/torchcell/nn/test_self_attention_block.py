@@ -318,7 +318,7 @@ def test_gpu_flex_attention_error_propagation():
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
-def test_gpu_performance():
+def test_gpu_performance():  # test-quality: allow GPU timing benchmark, prints only
     """Test performance on GPU vs CPU."""
     hidden_dim = 64
     batch_size = 4

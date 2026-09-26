@@ -210,10 +210,46 @@ module = ["torchcell.sga.models", "torchcell.sga.cellpose_seg"]
 disallow_subclassing_any = false
 
 [tool.pytest.ini_options]
+# Every bucket is opt-in by flag (tests/conftest.py): plain `pytest tests/torchcell` is
+# the hermetic CI contract, and a marked test skips with a reason naming its flag.
 markers = [
-    "gpu: requires a CUDA device; deselected on CPU-only CI via -m 'not gpu'",
-    "slow: builds a full dataset from $DATA_ROOT mirror files (skipped when absent); deselect via -m 'not slow'",
+    "gpu: needs a CUDA device; runs only with --gpu",
+    "slow: builds a full dataset from the $DATA_ROOT mirrors; runs only with --slow",
+    "data: reads the real $DATA_ROOT (genome, raw mirrors, built LMDBs); runs only with --data",
+    "neo4j: opens a Neo4j driver; runs only with --neo4j",
+    "network: reaches the network, gh, or ssh; runs only with --network",
+    "wandb: calls wandb.init; runs only with --wandb",
 ]
+# pytest-timeout: import-all and Lightning fast_dev_run tests can hang rather than fail.
+timeout = 300
+
+[tool.torchcell.test_exceptions]
+# The ONE exception table for the paired-test gate (scripts/check_paired_tests.py): a
+# module added under torchcell/ (with --strict, changed too) must ship
+# tests/torchcell/<same dir>/test_<name>.py unless it matches an entry here. A trailing
+# "/" is a directory prefix, "*" a glob, anything else an exact path. Seeded verbatim
+# from the mypy exclude/ignore_errors and ruff extend-exclude carve-outs above; after
+# the legacy move (plan.test-suite-buildout Phase 0d) this collapses to the three
+# directory prefixes torchcell/legacy/, torchcell/scratch/, torchcell/experiments/.
+paths = [
+    "torchcell/scratch/",
+    "torchcell/experiments/",
+    "torchcell/pypy_adapters/",
+    "*_DEPRECATED.py",
+    "*_scratch.py",
+    "torchcell/datasets/scerevisiae/costanzo2016_deprecated.py",
+    "torchcell/delete_subset.py",
+    "torchcell/models/graph_attention.py",
+    "torchcell/models/graph_convolution.py",
+    "torchcell/models/hetero_cell_nsa_retry.py",
+    "torchcell/trainers/graph_convolution_regression.py",
+    "torchcell/trainers/utils.py",
+]
+
+[tool.torchcell.test_exceptions.pairs]
+# Source module -> the test file that covers it when the mirrored basename would collide
+# under pytest's prepend import mode (tests/torchcell/{models,losses}/test_dcell.py).
+"torchcell/losses/dcell.py" = "tests/torchcell/losses/test_losses_dcell.py"
 
 [tool.coverage.run]
 source = ["torchcell"]

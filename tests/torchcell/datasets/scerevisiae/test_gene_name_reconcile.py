@@ -16,8 +16,12 @@ load_dotenv()
 
 DATA_ROOT = os.getenv("DATA_ROOT")
 
-if DATA_ROOT is None:
-    pytest.skip("requires DATA_ROOT data (absent in CI)", allow_module_level=True)
+# The genome fixture reads $DATA_ROOT/data/sgd/genome; skip when it is absent (CI, or
+# the sentinel DATA_ROOT tests/conftest.py sets). Data-gated: runs only with --data.
+if DATA_ROOT is None or not osp.isdir(osp.join(DATA_ROOT, "data/sgd/genome")):
+    pytest.skip("requires the SGD genome under $DATA_ROOT", allow_module_level=True)
+
+pytestmark = pytest.mark.data
 
 
 @pytest.fixture(scope="module")

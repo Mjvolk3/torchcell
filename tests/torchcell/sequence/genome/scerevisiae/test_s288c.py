@@ -12,12 +12,14 @@ load_dotenv()
 
 DATA_ROOT = os.getenv("DATA_ROOT")
 
-# Skip the whole module where DATA_ROOT is unset (CI): these tests build a real
-# SCerevisiaeGenome from the SGD genome data under DATA_ROOT. Without a module-level
-# guard, the genome fixture's assert would surface as an ERROR (not a skip) for every
-# test. Mirrors the guard idiom in tests/torchcell/data/test_cell_data.py.
-if DATA_ROOT is None:
-    pytest.skip("requires DATA_ROOT data (absent in CI)", allow_module_level=True)
+# Skip the whole module where the SGD genome is absent (CI, or the sentinel DATA_ROOT
+# tests/conftest.py sets): these tests build a real SCerevisiaeGenome from
+# $DATA_ROOT/data/sgd/genome. Without a module-level guard, the genome fixture would
+# surface as an ERROR (not a skip) for every test. Data-gated: runs only with --data.
+if DATA_ROOT is None or not osp.isdir(osp.join(DATA_ROOT, "data/sgd/genome")):
+    pytest.skip("requires the SGD genome under $DATA_ROOT", allow_module_level=True)
+
+pytestmark = pytest.mark.data
 
 
 @pytest.fixture

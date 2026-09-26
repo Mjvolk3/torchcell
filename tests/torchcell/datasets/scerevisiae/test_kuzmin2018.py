@@ -25,10 +25,13 @@ if DATA_ROOT is None:
 
 _RAW = osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018/raw/aao1729_data_s1.tsv")
 
-pytestmark = pytest.mark.skipif(
-    not osp.exists(_RAW),
-    reason=f"requires the Kuzmin 2018 raw Data S1 TSV at {_RAW} (absent in CI)",
-)
+pytestmark = [
+    pytest.mark.data,
+    pytest.mark.skipif(
+        not osp.exists(_RAW),
+        reason=f"requires the Kuzmin 2018 raw Data S1 TSV at {_RAW} (absent in CI)",
+    ),
+]
 
 # The digenic row used by the regression test, addressed by strain ids (stable under
 # any reordering). Values read off the raw table.

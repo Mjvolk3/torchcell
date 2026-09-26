@@ -22,6 +22,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        # Full history: the diff-cover and paired-test gates below diff against the
+        # origin/main merge base, which a depth-1 checkout does not have (the failure
+        # mypy.yaml documents at its git fetch step).
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -59,14 +64,35 @@ jobs:
       run: |
         pip install -e .
 
-    # Blocking (WS4): the WS3 test backlog is cleared. GPU tests are deselected
-    # (no CUDA on the runner); the DATA_ROOT / /scratch-dependent files self-skip
-    # via in-test guards when their data is absent, so they no longer need --ignore.
+    # Blocking (WS4, then plan.test-suite-buildout Phase 0a): plain pytest is the
+    # hermetic contract. tests/conftest.py sets a sentinel DATA_ROOT, skips every
+    # gpu/slow/data/neo4j/network/wandb-marked test unless its flag is given, and
+    # fails any unmarked test that reaches the network, a cluster, Neo4j, or wandb.
     - name: Run pytest with coverage (blocking)
       run: |
-        coverage run -m pytest tests/torchcell -m "not gpu"
+        coverage run -m pytest tests/torchcell
         coverage report
         coverage xml
+
+    # Anti-padding lint (Decision 19): a test with no assertion, a truthiness-only
+    # parametrized sweep, or a torchcell call nothing is asserted on fails the job.
+    - name: Test quality lint (blocking)
+      run: python scripts/test_quality_check.py tests
+
+    # Paired-test gate (Decision 22): every module added under torchcell/ ships its
+    # mirrored test or an entry in pyproject [tool.torchcell.test_exceptions].
+    # ADDED-only until the legacy move lands; then --strict (added or modified).
+    - name: Paired tests for new torchcell modules (blocking)
+      run: |
+        git fetch origin main || true
+        python scripts/check_paired_tests.py --base origin/main
+
+    # Diff coverage (Decision 21): the lines this PR adds or changes under torchcell/
+    # must be at least 80% covered by the run above. Empty on a push to main.
+    - name: Diff coverage of changed lines (blocking)
+      run: |
+        diff-cover coverage.xml --compare-branch=origin/main --fail-under=80 \
+          --exclude 'torchcell/legacy/*' 'torchcell/scratch/*' 'torchcell/experiments/*'
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4

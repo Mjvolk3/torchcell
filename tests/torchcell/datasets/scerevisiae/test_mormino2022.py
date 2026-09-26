@@ -130,7 +130,9 @@ def _mirror_paper_md() -> str | None:
     return path if osp.exists(path) else None
 
 
-def test_every_stored_table_1_row_is_verbatim_in_the_pinned_ocr() -> None:
+def test_every_stored_table_1_row_is_verbatim_in_the_pinned_ocr() -> (
+    None
+):  # test-quality: allow audit raises on violation
     path = _mirror_paper_md()
     if path is None:
         pytest.skip("torchcell-library mirror not mounted")

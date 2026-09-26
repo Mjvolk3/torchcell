@@ -36,6 +36,28 @@ repos:
         files: ^(torchcell|tests)/
         require_serial: true
 
+      # Anti-padding lint on the test suite (scripts/test_quality_check.py): a test with
+      # no assertion, a parametrized truthiness-only sweep, or a torchcell call nothing
+      # is asserted on fails the commit. Same script as `make test-quality` and CI.
+      - id: test-quality
+        name: test quality (anti-padding lint)
+        entry: bash scripts/run-in-env.sh python scripts/test_quality_check.py
+        language: system
+        files: ^tests/.*/test_.*\.py$
+        require_serial: true
+
+      # Paired-test gate (scripts/check_paired_tests.py): a module added under torchcell/
+      # ships tests/torchcell/<dir>/test_<name>.py, or an entry in pyproject
+      # [tool.torchcell.test_exceptions]. Runs against the index vs origin/main's merge
+      # base, so it sees the staged addition. Flips to --strict after the legacy move.
+      - id: paired-tests
+        name: paired tests (new torchcell modules ship a test)
+        entry: bash scripts/run-in-env.sh python scripts/check_paired_tests.py
+        language: system
+        pass_filenames: false
+        files: ^torchcell/.*\.py$
+        require_serial: true
+
       # Schema-dependency gate: when a schema-surface file changes, report which dataset
       # loaders the change forces to rebuild (closure + contract-fingerprint scoped) and
       # block on a breaking change unless TORCHCELL_SCHEMA_ACK=1. Fires only on the surface

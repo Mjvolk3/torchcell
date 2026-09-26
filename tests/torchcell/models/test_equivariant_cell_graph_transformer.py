@@ -2,9 +2,9 @@
 # [[tests.torchcell.models.test_equivariant_cell_graph_transformer]]
 """Tests for the multitask decoder heads of the Equivariant Cell Graph Transformer.
 
-Self-contained: builds a tiny SYNTHETIC HeteroData batch + cell_graph (a handful of
-genes, a couple of perturbed indices, a small gpr/rmr metabolic incidence) so no real
-dataset is required.
+Self-contained: the synthetic ``cell_graph`` / ``batch`` fixtures (a handful of genes,
+a couple of perturbed indices, a small gpr/rmr metabolic incidence) come from
+``tests/torchcell/conftest.py``, so no real dataset is required.
 """
 
 from typing import Any
@@ -18,50 +18,13 @@ from torchcell.models.equivariant_cell_graph_transformer import (
     MaskedMultitaskLoss,
 )
 
+# Synthetic graph sizes; a test names a dimension, never a literal (conftest CGTDims).
 GENE_NUM = 8
 HIDDEN = 16
 NUM_LAYERS = 2
 NUM_HEADS = 4
 BATCH_SIZE = 3
-NUM_REACTIONS = 4
 NUM_METABOLITES = 3
-
-
-def _make_cell_graph() -> HeteroData:
-    """Tiny cell_graph with gene-gene, gpr, and rmr edges."""
-    cg = HeteroData()
-    cg["gene"].num_nodes = GENE_NUM
-    cg["reaction"].num_nodes = NUM_REACTIONS
-    cg["metabolite"].num_nodes = NUM_METABOLITES
-
-    # A gene-gene edge type (unused when graph_reg_lambda == 0).
-    cg["gene", "physical", "gene"].edge_index = torch.tensor(
-        [[0, 1, 2, 3], [1, 2, 3, 4]], dtype=torch.long
-    )
-
-    # gene -> gpr -> reaction: genes {0,1}->r0, {2}->r1, {3,4}->r2, {5}->r3.
-    cg["gene", "gpr", "reaction"].edge_index = torch.tensor(
-        [[0, 1, 2, 3, 4, 5], [0, 0, 1, 2, 2, 3]], dtype=torch.long
-    )
-
-    # metabolite <- reaction (hyperedge): m0<-{r0,r1}, m1<-{r2}, m2<-{r3,r0}.
-    cg["metabolite", "reaction", "metabolite"].edge_index = torch.tensor(
-        [[0, 0, 1, 2, 2], [0, 1, 2, 3, 0]], dtype=torch.long
-    )
-    return cg
-
-
-def _make_batch() -> HeteroData:
-    """Tiny perturbation batch: 3 genotypes with varying perturbed gene counts."""
-    batch = HeteroData()
-    # sample 0 perturbs genes {1,2}; sample 1 perturbs {3}; sample 2 perturbs {0,4,5}
-    batch["gene"].perturbation_indices = torch.tensor(
-        [1, 2, 3, 0, 4, 5], dtype=torch.long
-    )
-    batch["gene"].perturbation_indices_batch = torch.tensor(
-        [0, 0, 1, 2, 2, 2], dtype=torch.long
-    )
-    return batch
 
 
 def _full_heads_config() -> dict[str, Any]:
@@ -73,7 +36,7 @@ def _full_heads_config() -> dict[str, Any]:
 
 
 def _make_model(
-    heads_config: dict[str, Any] | None, seed: int = 0
+    cell_graph: HeteroData, heads_config: dict[str, Any] | None, seed: int = 0
 ) -> CellGraphTransformer:
     torch.manual_seed(seed)
     return CellGraphTransformer(
@@ -81,19 +44,17 @@ def _make_model(
         hidden_channels=HIDDEN,
         num_transformer_layers=NUM_LAYERS,
         num_attention_heads=NUM_HEADS,
-        cell_graph=_make_cell_graph(),
+        cell_graph=cell_graph,
         heads_config=heads_config,
     )
 
 
-def test_multitask_forward_shapes() -> None:
+def test_multitask_forward_shapes(cell_graph: HeteroData, batch: HeteroData) -> None:
     """All configured heads return the expected shapes."""
-    model = _make_model(_full_heads_config())
+    model = _make_model(cell_graph, _full_heads_config())
     model.eval()
-    cg = _make_cell_graph()
-    batch = _make_batch()
     with torch.no_grad():
-        predictions, reps = model(cg, batch)
+        predictions, reps = model(cell_graph, batch)
 
     assert predictions.shape == (BATCH_SIZE, 1)
     heads = reps["head_outputs"]
@@ -102,7 +63,9 @@ def test_multitask_forward_shapes() -> None:
     assert heads["per_metabolite"].shape == (BATCH_SIZE, NUM_METABOLITES)
 
 
-def test_single_head_config_matches_prechange() -> None:
+def test_single_head_config_matches_prechange(
+    cell_graph: HeteroData, batch: HeteroData
+) -> None:
     """heads_config=None reproduces the pre-multitask single-head model exactly.
 
     No extra parameters/buffers are created and the gene-interaction prediction is
@@ -110,8 +73,8 @@ def test_single_head_config_matches_prechange() -> None:
     enabled (the heads are instantiated LAST in __init__, so the shared backbone
     init is untouched).
     """
-    baseline = _make_model(None, seed=42)
-    multitask = _make_model(_full_heads_config(), seed=42)
+    baseline = _make_model(cell_graph, None, seed=42)
+    multitask = _make_model(cell_graph, _full_heads_config(), seed=42)
 
     # No head parameters/buffers leak into the single-head model.
     assert baseline.global_head is None
@@ -128,11 +91,9 @@ def test_single_head_config_matches_prechange() -> None:
 
     baseline.eval()
     multitask.eval()
-    cg = _make_cell_graph()
-    batch = _make_batch()
     with torch.no_grad():
-        pred_base, reps_base = baseline(cg, batch)
-        pred_multi, _ = multitask(cg, batch)
+        pred_base, reps_base = baseline(cell_graph, batch)
+        pred_multi, _ = multitask(cell_graph, batch)
 
     # Single-head model exposes an empty head_outputs dict (backward compatible).
     assert reps_base["head_outputs"] == {}
@@ -140,14 +101,14 @@ def test_single_head_config_matches_prechange() -> None:
     assert torch.allclose(pred_base, pred_multi, atol=1e-6)
 
 
-def test_masked_loss_ignores_absent_modalities() -> None:
+def test_masked_loss_ignores_absent_modalities(
+    cell_graph: HeteroData, batch: HeteroData
+) -> None:
     """Masked multitask loss ignores rows/heads without supervision."""
-    model = _make_model(_full_heads_config())
+    model = _make_model(cell_graph, _full_heads_config())
     model.eval()
-    cg = _make_cell_graph()
-    batch = _make_batch()
     with torch.no_grad():
-        _, reps = model(cg, batch)
+        _, reps = model(cell_graph, batch)
     head_outputs = reps["head_outputs"]
 
     loss_fn = MaskedMultitaskLoss(loss_fn="mse")

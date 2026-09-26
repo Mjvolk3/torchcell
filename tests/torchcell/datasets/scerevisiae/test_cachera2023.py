@@ -32,10 +32,13 @@ _MIRROR_CSV = osp.join(
 _GENOME_DIR = osp.join(DATA_ROOT, "data/sgd/genome")
 _GO_DIR = osp.join(DATA_ROOT, "data/go")
 
-pytestmark = pytest.mark.skipif(
-    not (osp.exists(_MIRROR_CSV) and osp.isdir(_GENOME_DIR) and osp.isdir(_GO_DIR)),
-    reason="requires Cachera CSV mirror + SGD genome at $DATA_ROOT (absent in CI)",
-)
+pytestmark = [
+    pytest.mark.data,
+    pytest.mark.skipif(
+        not (osp.exists(_MIRROR_CSV) and osp.isdir(_GENOME_DIR) and osp.isdir(_GO_DIR)),
+        reason="requires Cachera CSV mirror + SGD genome at $DATA_ROOT (absent in CI)",
+    ),
+]
 
 
 @pytest.mark.slow

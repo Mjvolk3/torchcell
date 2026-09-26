@@ -2,28 +2,26 @@
 """Tests for the hetero cell NSA model."""
 
 import inspect
-import os
 
 import pytest
 import torch
 from dotenv import load_dotenv
 from torch_geometric.utils import to_dense_adj
 
-# load_sample_data_batch (below) transitively imports torchcell.graph.sgd, which
-# reads DATA_ROOT at import and raises if unset -- skip the module first when absent.
-load_dotenv()
-if os.getenv("DATA_ROOT") is None:
-    pytest.skip("requires DATA_ROOT data (absent in CI)", allow_module_level=True)
+from torchcell.nn.masked_attention_block import NodeSelfAttention
+from torchcell.nn.self_attention_block import SelfAttentionBlock
+from torchcell.scratch.load_batch import load_sample_data_batch
 
-from torchcell.nn.masked_attention_block import NodeSelfAttention  # noqa: E402
-from torchcell.nn.self_attention_block import SelfAttentionBlock  # noqa: E402
-from torchcell.scratch.load_batch import load_sample_data_batch  # noqa: E402
+# Every test here reads the real sample batch (LMDBs + SGD genome under $DATA_ROOT;
+# torchcell.graph.sgd resolves DATA_ROOT lazily and imports cleanly), so the module is
+# data-gated and runs only with --data.
+load_dotenv()
+pytestmark = pytest.mark.data
 
 
 @pytest.fixture
 def sample_data():
     """Load a sample batch with metabolism bipartite representation."""
-    os.environ["DATA_ROOT"] = os.environ.get("DATA_ROOT") or "/tmp"
     try:
         dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
             batch_size=2,

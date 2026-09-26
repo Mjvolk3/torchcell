@@ -13,13 +13,12 @@ import torch
 from dotenv import load_dotenv
 from torch_geometric.utils import sort_edge_index
 
-# load_sample_data_batch (below) transitively imports torchcell.graph.sgd, which
-# reads DATA_ROOT at import and raises if unset -- skip the module first when absent.
-load_dotenv()
-if os.getenv("DATA_ROOT") is None:
-    pytest.skip("requires DATA_ROOT data (absent in CI)", allow_module_level=True)
+from torchcell.scratch.load_batch_005 import load_sample_data_batch
 
-from torchcell.scratch.load_batch_005 import load_sample_data_batch  # noqa: E402
+# load_sample_data_batch opens the real 005 small-build LMDBs under $DATA_ROOT
+# (torchcell.graph.sgd resolves DATA_ROOT lazily and imports cleanly), so the module is
+# data-gated and runs only with --data; the skipif below names the exact dataset.
+load_dotenv()
 
 REFERENCE_DIR = (
     "/scratch/projects/torchcell/data/tests/torchcell/scratch/load_batch_005"
@@ -35,13 +34,16 @@ _DATASET_DIR = (
     if DATA_ROOT
     else None
 )
-pytestmark = pytest.mark.skipif(
-    not (_DATASET_DIR and osp.exists(_DATASET_DIR)),
-    reason=(
-        "requires 005-kuzmin2018-tmi/001-small-build Neo4jCellDataset under "
-        "$DATA_ROOT (absent in CI)"
+pytestmark = [
+    pytest.mark.data,
+    pytest.mark.skipif(
+        not (_DATASET_DIR and osp.exists(_DATASET_DIR)),
+        reason=(
+            "requires 005-kuzmin2018-tmi/001-small-build Neo4jCellDataset under "
+            "$DATA_ROOT (absent in CI)"
+        ),
     ),
-)
+]
 
 
 @pytest.fixture(scope="module")

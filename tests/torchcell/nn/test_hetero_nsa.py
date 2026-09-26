@@ -1,7 +1,6 @@
 # tests/torchcell/nn/test_hetero_nsa.py
 """Tests for the heterogeneous NSA (neighborhood self-attention) module."""
 
-import os
 from typing import cast
 
 import pytest
@@ -12,16 +11,15 @@ from torch_geometric.data import Data, HeteroData
 from torch_geometric.transforms import ToUndirected
 from torch_geometric.utils import to_dense_adj
 
-# load_sample_data_batch (below) transitively imports torchcell.graph.sgd, which
-# reads DATA_ROOT at import and raises if unset -- skip the module first when absent.
-load_dotenv()
-if os.getenv("DATA_ROOT") is None:
-    pytest.skip("requires DATA_ROOT data (absent in CI)", allow_module_level=True)
+from torchcell.nn.hetero_nsa import HeteroNSA, HeteroNSAEncoder
+from torchcell.nn.nsa_encoder import NSAEncoder
+from torchcell.nn.self_attention_block import SelfAttentionBlock
+from torchcell.scratch.load_batch import load_sample_data_batch
 
-from torchcell.nn.hetero_nsa import HeteroNSA, HeteroNSAEncoder  # noqa: E402
-from torchcell.nn.nsa_encoder import NSAEncoder  # noqa: E402
-from torchcell.nn.self_attention_block import SelfAttentionBlock  # noqa: E402
-from torchcell.scratch.load_batch import load_sample_data_batch  # noqa: E402
+# The synthetic tests below need no data. Only test_hetero_nsa_with_real_data reads the
+# sample batch under $DATA_ROOT (torchcell.graph.sgd resolves DATA_ROOT lazily and
+# imports cleanly), and it alone is data-gated.
+load_dotenv()
 
 
 @pytest.fixture
@@ -323,9 +321,6 @@ def test_hetero_nsa_with_dense_data(dense_sample_data, monkeypatch):
 def real_data_batch(monkeypatch):
     """Fixture to load a real data batch with metabolism edges and attributes."""
     try:
-        # Mock the environment variables to avoid issues in CI
-        monkeypatch.setenv("DATA_ROOT", os.environ.get("DATA_ROOT", "/tmp"))
-
         # Try to load real data batch, but handle gracefully if it fails
 
         try:
@@ -342,6 +337,7 @@ def real_data_batch(monkeypatch):
         pytest.skip("torchcell.scratch.load_batch not available")
 
 
+@pytest.mark.data
 def test_hetero_nsa_with_real_data(real_data_batch):
     """Test HeteroNSAEncoder with real biological network data."""
     # Skip if fixture returns None (data loading failed)

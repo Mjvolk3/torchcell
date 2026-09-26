@@ -24,6 +24,7 @@ torchcell/models/pretrained_LLM/*
 /torchcell-library/
 /torchcell-raw/
 wandb/
+lightning_logs/
 models/checkpoints/
 mechanistic_aware.csv
 data/yeast_gem

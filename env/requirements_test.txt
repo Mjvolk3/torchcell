@@ -1,3 +1,5 @@
 pytest>=9.0,<10
 pytest-cov
+pytest-timeout
 coverage>=7,<8
+diff-cover>=10.6,<11

@@ -8,7 +8,6 @@ CRITICAL: These tests ensure that masked message passing does NOT negate
 the 3.65x speedup from LazySubgraphRepresentation.
 """
 
-import os
 import time
 
 import pytest
@@ -78,7 +77,9 @@ def test_no_edge_filtering(synthetic_data, gin_mlp, device):
 
 
 @pytest.mark.gpu
-def test_masked_vs_filtered_speed(synthetic_data, gin_mlp, device):
+def test_masked_vs_filtered_speed(
+    synthetic_data, gin_mlp, device
+):  # test-quality: allow timing benchmark
     """Benchmark: Masked message passing vs edge filtering.
 
     Masked approach should be FASTER than filtering because:
@@ -133,9 +134,7 @@ def test_masked_vs_filtered_speed(synthetic_data, gin_mlp, device):
     )
 
 
-@pytest.mark.skipif(
-    os.getenv("DATA_ROOT") is None, reason="requires DATA_ROOT data (absent in CI)"
-)
+@pytest.mark.data
 def test_pyg_concatenated_batch(device):
     """Test with real PyG concatenated batch format from LazySubgraphRepresentation.
 
@@ -238,7 +237,9 @@ def test_equivalence_masked_vs_filtered(synthetic_data, gin_mlp, device):
 
 @pytest.mark.gpu
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
-def test_memory_efficiency(synthetic_data, gin_mlp, device):
+def test_memory_efficiency(
+    synthetic_data, gin_mlp, device
+):  # test-quality: allow memory benchmark
     """Verify that masked approach uses less memory than filtering.
 
     This is expected because we don't allocate new filtered tensors.

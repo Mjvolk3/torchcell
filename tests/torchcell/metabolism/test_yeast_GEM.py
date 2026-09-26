@@ -1,6 +1,13 @@
-"""Tests for the YeastGEM metabolic model wrapper."""
+"""Tests for the YeastGEM metabolic model wrapper.
 
-# Test file
+``YeastGEM()`` downloads the yeast-GEM release from GitHub when the checkout under
+``$DATA_ROOT/data/torchcell/yeast-GEM`` is absent, so the fixture reads the checkout
+when it exists, downloads into a tmp root only under ``--network``, and skips otherwise
+(a plain ``pytest`` never reaches the network and never writes under ``DATA_ROOT``).
+"""
+
+import os
+import os.path as osp
 
 import hypernetx as hnx
 import networkx as nx
@@ -8,11 +15,23 @@ import pytest
 
 from torchcell.metabolism.yeast_GEM import YeastGEM
 
+_CHECKOUT = osp.join(
+    os.environ.get("DATA_ROOT", "/nonexistent"), "data/torchcell/yeast-GEM"
+)
 
-@pytest.fixture
-def yeast_gem():
-    """Create a YeastGEM instance for testing."""
-    return YeastGEM()
+
+@pytest.fixture(scope="module")
+def yeast_gem(
+    request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
+) -> YeastGEM:
+    """The real yeast-GEM model: from the checkout, or downloaded under --network."""
+    if osp.isdir(_CHECKOUT):
+        return YeastGEM(root=_CHECKOUT)
+    if request.config.getoption("--network"):
+        return YeastGEM(root=str(tmp_path_factory.mktemp("yeast_gem")))
+    pytest.skip(
+        "yeast-GEM checkout absent under $DATA_ROOT; pass --network to download"
+    )
 
 
 def test_reaction_map_exists(yeast_gem):

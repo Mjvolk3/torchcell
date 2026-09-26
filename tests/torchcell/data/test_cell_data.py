@@ -9,14 +9,15 @@ import pytest
 import torch
 from dotenv import load_dotenv
 
-# load_sample_data_batch (below) transitively imports torchcell.graph.sgd, which
-# reads DATA_ROOT at import and raises if unset -- skip the module first when absent.
-load_dotenv()
-if os.getenv("DATA_ROOT") is None:
-    pytest.skip("requires DATA_ROOT data (absent in CI)", allow_module_level=True)
+from torchcell.metabolism.yeast_GEM import YeastGEM
+from torchcell.scratch.load_batch import load_sample_data_batch
 
-from torchcell.metabolism.yeast_GEM import YeastGEM  # noqa: E402
-from torchcell.scratch.load_batch import load_sample_data_batch  # noqa: E402
+# Every test here builds the 003-fit-int small-build Neo4jCellDataset through
+# load_sample_data_batch, which opens real LMDBs and the SGD genome under $DATA_ROOT
+# (torchcell.graph.sgd itself resolves DATA_ROOT lazily and imports cleanly), so the
+# module is data-gated: it runs only with --data.
+load_dotenv()
+pytestmark = pytest.mark.data
 
 
 def test_stoichiometric_matrix_equivalence():

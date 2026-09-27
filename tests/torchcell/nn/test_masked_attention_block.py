@@ -761,38 +761,9 @@ def test_compiled_mask_function():
     # Outputs should be positively correlated
     assert correlation(output_uncompiled, output_compiled) > 0.7
     assert correlation(output_uncompiled_with_edges, output_compiled_with_edges) > 0.7
-
-    # Optional: Benchmark performance (compiled should be faster)
-    # This is a simple benchmark - in practice you might want to use torch.utils.benchmark
-    import time
-
-    # Warm-up
-    for _ in range(5):
-        _ = nsa_uncompiled(x, adj_mask)
-        _ = nsa_compiled(x, adj_mask)
-
-    # Time uncompiled
-    start_time = time.time()
-    for _ in range(10):
-        _ = nsa_uncompiled(x, adj_mask)
-    uncompiled_time = time.time() - start_time
-
-    # Time compiled
-    start_time = time.time()
-    for _ in range(10):
-        _ = nsa_compiled(x, adj_mask)
-    compiled_time = time.time() - start_time
-
-    # Print timing information
-    print(f"Uncompiled time: {uncompiled_time:.4f}s")
-    print(f"Compiled time: {compiled_time:.4f}s")
-    print(f"Speedup: {uncompiled_time / compiled_time:.2f}x")
-
-    # No strict assertion for speedup since it can vary by hardware,
-    # but compiled should generally not be slower
-    assert compiled_time <= uncompiled_time * 1.2, (
-        "Compiled version shouldn't be significantly slower"
-    )
+    # A wall-clock comparison of the compiled and uncompiled forward (ten calls each)
+    # used to end this test; it failed on a shared CPU whenever the compiled call
+    # happened to be slower, which is a property of the machine, not of the code.
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")

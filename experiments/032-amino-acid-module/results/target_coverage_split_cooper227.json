@@ -1,0 +1,91 @@
+{
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_coverage_split.py",
+  "name": "cooper227",
+  "store": "YPD_bx_cooperpool",
+  "n_store_genes": 4313,
+  "statistic": "pinned-test Spearman on all pinned genes, on the genes the store covers and on the rest; the mean standardized target of each group; the mean fraction of covered genes predicted below an uncovered one; the Spearman of the coverage indicator itself against the target",
+  "arms": [
+    {
+      "stem": "w227_aadelcooperpool_h12l1p1_e200",
+      "seeds": [
+        {
+          "seed": 2700,
+          "n_pinned": 564,
+          "n_covered": 495,
+          "spearman_all": 0.032267849553233176,
+          "spearman_covered": 0.02833911573308604,
+          "spearman_uncovered": 0.053517116048022874,
+          "mean_target_covered": 4.501654527878814,
+          "mean_target_uncovered": 4.526726080094764,
+          "uncovered_prediction_percentile": 0.4931820108021481,
+          "coverage_indicator_spearman": 0.0054750213225621255
+        },
+        {
+          "seed": 2701,
+          "n_pinned": 564,
+          "n_covered": 495,
+          "spearman_all": 0.04153128625214745,
+          "spearman_covered": 0.036276232745813104,
+          "spearman_uncovered": 0.08185691167577248,
+          "mean_target_covered": 4.501654527878814,
+          "mean_target_uncovered": 4.526726080094764,
+          "uncovered_prediction_percentile": 0.5121836211081062,
+          "coverage_indicator_spearman": 0.0054750213225621255
+        },
+        {
+          "seed": 2702,
+          "n_pinned": 564,
+          "n_covered": 495,
+          "spearman_all": 0.033937038667337355,
+          "spearman_covered": 0.030228396591581257,
+          "spearman_uncovered": 0.04356956783067092,
+          "mean_target_covered": 4.501654527878814,
+          "mean_target_uncovered": 4.526726080094764,
+          "uncovered_prediction_percentile": 0.5005262387413417,
+          "coverage_indicator_spearman": 0.0054750213225621255
+        },
+        {
+          "seed": 2703,
+          "n_pinned": 564,
+          "n_covered": 495,
+          "spearman_all": 0.04825586904847106,
+          "spearman_covered": 0.04394420433269579,
+          "spearman_uncovered": 0.08718134440734839,
+          "mean_target_covered": 4.501654527878814,
+          "mean_target_uncovered": 4.526726080094764,
+          "uncovered_prediction_percentile": 0.5075114223855642,
+          "coverage_indicator_spearman": 0.0054750213225621255
+        },
+        {
+          "seed": 2704,
+          "n_pinned": 564,
+          "n_covered": 495,
+          "spearman_all": 0.04293747019618233,
+          "spearman_covered": 0.039927123660556334,
+          "spearman_uncovered": 0.032440182313482314,
+          "mean_target_covered": 4.501654527878814,
+          "mean_target_uncovered": 4.526726080094764,
+          "uncovered_prediction_percentile": 0.5063649461818799,
+          "coverage_indicator_spearman": 0.0054750213225621255
+        },
+        {
+          "seed": 2705,
+          "n_pinned": 564,
+          "n_covered": 495,
+          "spearman_all": 0.05268833314036394,
+          "spearman_covered": 0.047943199778677614,
+          "spearman_uncovered": 0.08665154284236415,
+          "mean_target_covered": 4.501654527878814,
+          "mean_target_uncovered": 4.526726080094764,
+          "uncovered_prediction_percentile": 0.5132176070391173,
+          "coverage_indicator_spearman": 0.0054750213225621255
+        }
+      ],
+      "mean_spearman_all": 0.04193630780962255,
+      "mean_spearman_covered": 0.037776378807068356,
+      "mean_spearman_uncovered": 0.06420277751961019,
+      "mean_uncovered_prediction_percentile": 0.5054976410430262
+    }
+  ],
+  "seconds": 0.29866504669189453
+}

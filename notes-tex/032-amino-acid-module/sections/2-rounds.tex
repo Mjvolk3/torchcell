@@ -362,6 +362,18 @@ comparison is the values alone. The transformer reads the peaks at half the fore
 0.093 over the same columns and under the annotation on every seed, where the
 perceptron read them at 0.049 and 0.052: on this target the second screen's columns
 reach the trained heads at the perceptron's level and the forest is the only model that
-reads them well. The linear control is round 207 (w227).
+reads them well.
+
+Round 207 is read (job 2893, 3 h 34 min): the same seventeen peaks in the linear
+affine, the control for round 206. It reads 0.042 (sd 0.008) against the hidden layer's
+0.046 ($+0.004$ for the layer, sd 0.008, four of six), against GO alone at 0.058
+($-0.016$, sd 0.008, zero of six) and against the affine-free control at 0.049
+($-0.007$, sd 0.010, one of six), ensembled 0.050; the seeds read 0.032 to 0.053 and
+select at epochs 78 to 181. On the 495 genes Cooper measured it reads 0.038. So the
+hidden layer buys 0.004 over the linear slot on these columns, inside the seed band,
+and both forms sit under the annotation and under the control: Cooper's peaks in the
+transformer's slot do not reach M\"ulleder's concentrations at all, where the forest
+over the same columns reads 0.093 and beats every input on this target. The two screens
+agree in a tree and not in a trained head.
 
 \input{tables/target_transfer}

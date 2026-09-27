@@ -4749,6 +4749,178 @@ CHECKS: list[Check] = [
         ),
         tolerance=0.0006,
     ),
+    # sec:rounds -- round 207, Cooper's peaks in the linear affine.
+    Check(
+        claim="round 207: arm",
+        stated=0.042,
+        recompute=transfer(
+            "amino acids: Cooper's peaks in the linear affine against GO alone",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: arm sd",
+        stated=0.008,
+        recompute=transfer(
+            "amino acids: Cooper's peaks in the linear affine against GO alone",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: hidden layer over linear",
+        stated=0.004,
+        recompute=transfer(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against the same columns linear",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: hidden layer over linear sd",
+        stated=0.008,
+        recompute=transfer(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against the same columns linear",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: hidden layer over linear seeds",
+        stated=4,
+        recompute=transfer(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against the same columns linear",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 207: vs GO paired",
+        stated=-0.016,
+        recompute=transfer(
+            "amino acids: Cooper's peaks in the linear affine against GO alone",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: vs GO paired sd",
+        stated=0.008,
+        recompute=transfer(
+            "amino acids: Cooper's peaks in the linear affine against GO alone",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: vs GO seeds above",
+        stated=0,
+        recompute=transfer(
+            "amino acids: Cooper's peaks in the linear affine against GO alone",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 207: control",
+        stated=0.049,
+        recompute=transfer(
+            "amino acids: Cooper's peaks in the linear affine against the control",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: vs control paired",
+        stated=-0.007,
+        recompute=transfer(
+            "amino acids: Cooper's peaks in the linear affine against the control",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: vs control paired sd",
+        stated=0.01,
+        recompute=transfer(
+            "amino acids: Cooper's peaks in the linear affine against the control",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: vs control seeds above",
+        stated=1,
+        recompute=transfer(
+            "amino acids: Cooper's peaks in the linear affine against the control",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 207: ensemble",
+        stated=0.05,
+        recompute=ensemble("w227_aadelcooperpool_h12l1p1_e200", "spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: seed min",
+        stated=0.032,
+        recompute=aa_pair_cells(
+            "amino acids: Cooper's peaks in the linear affine against GO alone",
+            "arm",
+            "spearman",
+            "min",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: seed max",
+        stated=0.053,
+        recompute=aa_pair_cells(
+            "amino acids: Cooper's peaks in the linear affine against GO alone",
+            "arm",
+            "spearman",
+            "max",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 207: select epoch min",
+        stated=78,
+        recompute=aa_pair_cells(
+            "amino acids: Cooper's peaks in the linear affine against GO alone",
+            "arm",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 207: select epoch max",
+        stated=181,
+        recompute=aa_pair_cells(
+            "amino acids: Cooper's peaks in the linear affine against GO alone",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 207: covered read",
+        stated=0.038,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "target_coverage_split_cooper227.json")))[
+                "arms"
+            ][0]["mean_spearman_covered"]
+        ),
+        tolerance=0.0006,
+    ),
 ]
 
 

@@ -133,3 +133,28 @@ layer of 256, is queued (rounds 206, 207).
 \input{tables/store_degeneracy}
 
 \input{tables/store_baselines}
+
+\subsection{What the graphs carry on their own: label propagation on the pin\secstatus{todo}}
+\label{sec:homophily}
+
+The read that finds betaxanthin smooth on STRING coexpression (0.244 by the mean over a
+pinned gene's labeled one-hop neighbors, \texttt{target\_graph\_homophily.py} in the
+betaxanthin study) is repeated on both amino-acid screens
+(Tables~\ref{tab:graph-homophily-amino-acids} and \ref{tab:graph-homophily-cooper}):
+every pinned gene predicted by the mean profile of its labeled training and validation
+neighbors in each graph, the Spearman per amino acid averaged over the columns, against
+a degree-matched null of as many labeled genes drawn at random. On M\"ulleder's
+nineteen the coexpression mean reads 0.063 (null $-0.001 \pm 0.015$, $z = 4.4$), the
+union of the nine 0.054 ($z = 3.7$) and STRING experimental 0.042 ($z = 3.0$); the
+physical graph reads 0.008 and the six others under 0.04. Leave-one-out on the 3,790
+labeled genes the coexpression mean reads 0.110. On Cooper's seventeen peaks the order
+and the level are the same: coexpression 0.062 ($z = 3.6$), the union 0.044, the
+database channel 0.027. So the amino-acid profile is a quarter as smooth on the graphs
+as betaxanthin is (0.06 against 0.24 on the one graph that carries either), close to the
+ratio of the two screens' reliabilities (0.20 against 0.84), and the graphs' own read of
+the profile sits at the level of the annotation (GO 0.058) and of the transformer's
+control (0.049), under the forest over Cooper's peaks (0.093).
+
+\input{tables/graph_homophily}
+
+\input{tables/graph_homophily_cooper}

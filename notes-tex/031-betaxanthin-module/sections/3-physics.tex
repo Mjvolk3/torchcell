@@ -346,6 +346,19 @@ three with the hard mask on the second and third) is the first read of the graph
 this study, and the release rule on the pool slot (round 210) asks whether a backbone
 that escapes first adds on every seed.
 
+The regularizer's weight is inherited from 019 ($6.5 \times 10^{-5}$) and it is weak at
+this model's scale: on the first live cell (w233, seed 2700) the penalty is 1.74 times
+the data term at epoch 0 and 0.77 times it at epoch 40 (loss 0.849 against a data term
+of 0.479). On the gene-interaction sweep of the same regularizer at width 180
+(\texttt{notes-tex/025-graph-reg-sweep}, three seeds, thirty epochs) a ratio near one
+is where $\lambda = 10^{-3}$ sits, the bottom of that ladder, where the prior's gain is
+within the seeds' noise; the gain there begins where the penalty is fifteen times the
+data term ($\lambda = 10^{-2}$) and grows to 0.02 at $\lambda = 1$ with no turnover
+inside the ladder, and the hard mask reads as no penalty. So the weight is swept here:
+the same cell at $6.5 \times 10^{-4}$ and $6.5 \times 10^{-3}$ (rounds 217 and 218,
+through a \texttt{--graph-reg-lambda} flag the trainer did not have) is queued behind
+the pattern ladder.
+
 \input{tables/head_decomposition}
 
 \subsection{What the pool's coverage carries, and the slot rebuilt on CPU\secstatus{todo}}
@@ -415,3 +428,47 @@ than the profile alone.
 \input{tables/store_degeneracy}
 
 \input{tables/store_baselines}
+
+\subsection{What the graphs carry on their own: label propagation on the pin\secstatus{todo}}
+\label{sec:homophily}
+
+Before a mask or a prior can be asked to help, the target has to be smooth on the graph
+it is given. Table~\ref{tab:graph-homophily} reads that with nothing fitted
+(\texttt{target\_graph\_homophily.py}): every pinned gene is predicted by the mean
+betaxanthin level of its labeled one-hop neighbors, the 3,764 training and validation
+genes with a measurement, in each of the nine graphs the trainer masks and regularizes
+and in their union, and the prediction is scored on the pinned genes with at least one
+labeled neighbor against a degree-matched null in which each gene's labeled neighbors
+are replaced by as many labeled genes drawn at random. STRING coexpression carries the
+target: the mean over 174 labeled neighbors on average reads 0.244 on all 629 pinned
+genes against a null of $-0.005 \pm 0.041$ ($z = 6.1$), with a top-50 of 4.59, and the
+union of the nine reads 0.221 with a top-50 of 5.19. STRING experimental reads 0.166
+($z = 3.1$) and STRING neighborhood 0.195 on the 458 pinned genes it covers ($z = 4.3$).
+The physical graph reads 0.104 over 14 neighbors, within two null deviations, and it is
+the one graph on which a top-decile producer's neighbors are enriched for top-decile
+producers (1.61-fold, Fisher $p = 2.7 \times 10^{-5}$; on the denser graphs every gene
+has a top-decile neighbor and the fold is 1.0). The regulatory, TFLink, fusion,
+co-occurrence and database graphs read between $-0.060$ and 0.060, at their nulls. Two
+hops wash the signal out: within two hops a pinned gene reaches three thousand labeled
+genes and the coexpression mean reads 0.007. The same predictor scored leave-one-out on
+the labeled genes gives the same order at six times the sample (coexpression 0.208 on
+3,721 genes, the union 0.169).
+
+That read is not the pool's coverage indicator (Section~\ref{sec:coverage}): on the 556
+pinned strains M\"ulleder measured, the coexpression mean reads 0.192 and the union
+0.189, against the pool through 256 at 0.212, the forest over the pool at 0.226 and the
+GO affine at 0.140. So the graphs' one-hop propagation of the target is worth 0.19 on
+the measured strains and 0.24 on all of them, from labels alone: under the amino-acid
+profile where the profile exists, and above every genotype-side store the ladder has
+read (the HiGHS vector by nearest neighbors, 0.195). The transformer's graph arms cannot
+read it as they are built: the regularizer and the mask shape attention over gene
+embeddings, and no neighbor's label enters the model, so rounds 213 to 216 ask a
+different question from this table. The direct one is a store
+(\texttt{target\_graph\_label\_store.py}): per graph the labeled-neighbor mean, shifted
+nonnegative so $\log(1 + v)$ stays monotone, and $\log(1 + n)$ of the neighbor count,
+twenty columns over every gene of the genome, a labeled gene's row leave-one-out and no
+pinned label read. It is queued alone through 256 on the pool's recipe (round 219) and
+appended to the pool (220), which pairs the profile against the graphs' own read of
+betaxanthin in one slot.
+
+\input{tables/graph_homophily}

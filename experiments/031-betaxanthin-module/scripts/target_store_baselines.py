@@ -186,6 +186,15 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
             "block": "v_deletion",
             "flux": True,
         },
+        # The graphs' one-hop label propagation of the target
+        # (target_graph_label_store.py, 2026-09-27): per graph the labeled-neighbor mean
+        # shifted nonnegative and log1p of the count, alone and appended to the pool.
+        "graph_label": {"store": "YPD_bx_graphlabel", "block": "v_deletion", "flux": True},
+        "aapool_graphlabel": {
+            "store": "YPD_bx_aapoolgraphlabel",
+            "block": "v_deletion",
+            "flux": True,
+        },
     },
     "amino_acids": {
         "pfba_highs": {"store": "SM_gem", "block": "v_deletion", "flux": True},

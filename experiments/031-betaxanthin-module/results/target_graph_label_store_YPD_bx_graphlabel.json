@@ -1,0 +1,64 @@
+{
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_graph_label_store.py",
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_graphlabel.npz",
+  "shape": [
+    6607,
+    20
+  ],
+  "columns": [
+    "physical_nbr_mean_betaxanthin",
+    "physical_log1p_labeled_neighbors",
+    "regulatory_nbr_mean_betaxanthin",
+    "regulatory_log1p_labeled_neighbors",
+    "tflink_nbr_mean_betaxanthin",
+    "tflink_log1p_labeled_neighbors",
+    "string12_0_neighborhood_nbr_mean_betaxanthin",
+    "string12_0_neighborhood_log1p_labeled_neighbors",
+    "string12_0_fusion_nbr_mean_betaxanthin",
+    "string12_0_fusion_log1p_labeled_neighbors",
+    "string12_0_cooccurence_nbr_mean_betaxanthin",
+    "string12_0_cooccurence_log1p_labeled_neighbors",
+    "string12_0_coexpression_nbr_mean_betaxanthin",
+    "string12_0_coexpression_log1p_labeled_neighbors",
+    "string12_0_experimental_nbr_mean_betaxanthin",
+    "string12_0_experimental_log1p_labeled_neighbors",
+    "string12_0_database_nbr_mean_betaxanthin",
+    "string12_0_database_log1p_labeled_neighbors",
+    "union_of_9_nbr_mean_betaxanthin",
+    "union_of_9_log1p_labeled_neighbors"
+  ],
+  "provenance": {
+    "method": "one-hop label propagation: the mean target over a gene's labeled neighbors in each graph and log1p of their count; written by target_graph_label_store.py",
+    "target": "betaxanthin",
+    "target_columns": [
+      "betaxanthin"
+    ],
+    "pinned_split_file": "020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+    "split_seed": 0,
+    "n_labeled_genes": 3764,
+    "n_pinned_genes_excluded": 639,
+    "graphs": [
+      "physical",
+      "regulatory",
+      "tflink",
+      "string12_0_neighborhood",
+      "string12_0_fusion",
+      "string12_0_cooccurence",
+      "string12_0_coexpression",
+      "string12_0_experimental",
+      "string12_0_database",
+      "union_of_9"
+    ],
+    "n_genes": 6607,
+    "n_columns": 20,
+    "column_layout": "per graph: <graph>_nbr_mean_<column> ..., <graph>_log1p_labeled_neighbors",
+    "leave_one_out": true,
+    "fill_for_no_labeled_neighbor": "the labeled mean of the column; count 0",
+    "mean_column_shift": {
+      "betaxanthin": -2.600495426201653
+    },
+    "python_hash_seed": "0",
+    "flux_sha256": "27d762a9226ad5fdb5a7d60295b0b3ebeb29620b73bf44d76a42908fb6ef3621"
+  },
+  "seconds": 20.809974670410156
+}

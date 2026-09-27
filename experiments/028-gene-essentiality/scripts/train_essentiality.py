@@ -692,6 +692,17 @@ class BxCell(BaseModel):
             "inert on every one-block cell (graph_reg_loss 0.0 at every epoch)."
         ),
     )
+    graph_reg_lambda: float = Field(
+        default=6.5e-5,
+        description=(
+            "Weight of 019's KL graph regularizer (GRAPH_REG_LAMBDA, 6.5e-5, is the 019 "
+            "value every earlier cell carried). At 6.5e-5 the penalty is 0.76 of the data "
+            "loss by epoch 40 on the first live cell (round 214, w233), which on the 025 "
+            "sweep's ladder is the bottom of the range where a prior gained anything "
+            "(ratio near 1 at lambda 1e-3; 15 to 1,500 from 1e-2 up, where the gain was). "
+            "Rounds 217 on read the ladder 6.5e-4 and 6.5e-3 (2026-09-27)."
+        ),
+    )
     learnable_embedding: bool = Field(
         default=False,
         description=(
@@ -1414,15 +1425,23 @@ ATTENTION_MASK_CONFIG: dict[str, Any] = {
 #: The 019 graph-structure prior, copied from gh_metabolism_000.yaml: one regularized
 #: attention head per graph at layer 1, lambda 6.5e-5, a quarter of the rows sampled.
 GRAPH_REG_LAMBDA = 6.5e-5
-GRAPH_REG_CONFIG: dict[str, Any] = {
-    "graph_reg_lambda": GRAPH_REG_LAMBDA,
-    "graph_reg_layer": [1],
-    "row_sampling_rate": 0.25,
-    "regularized_heads": {
-        name: {"layer": [1], "head": i, "lambda": GRAPH_REG_LAMBDA}
-        for i, name in enumerate(STRONG_GRAPHS)
-    },
-}
+assert BxCell.model_fields["graph_reg_lambda"].default == GRAPH_REG_LAMBDA
+
+
+def graph_reg_config(graph_reg_lambda: float) -> dict[str, Any]:
+    """019's regularizer config at one weight: nine relations onto nine heads of block 1."""
+    return {
+        "graph_reg_lambda": graph_reg_lambda,
+        "graph_reg_layer": [1],
+        "row_sampling_rate": 0.25,
+        "regularized_heads": {
+            name: {"layer": [1], "head": i, "lambda": graph_reg_lambda}
+            for i, name in enumerate(STRONG_GRAPHS)
+        },
+    }
+
+
+GRAPH_REG_CONFIG: dict[str, Any] = graph_reg_config(GRAPH_REG_LAMBDA)
 #: Collapse detector threshold: prediction spread over target spread on the validation
 #: split. The grid's cells sat at 8e-3 and below. The patience is NOT ten epochs: on the
 #: current code the mean plateau is the normal start and lasts 117 to 157 epochs before the
@@ -2347,6 +2366,7 @@ def build_cell(
     aux_mulleder: bool = False,
     attention_mask: bool = False,
     attention_mask_layers: list[int] | None = None,
+    graph_reg_lambda: float | None = None,
     pert_heads: int = 6,
     layers: int | None = None,
     hidden: int | None = None,
@@ -2543,6 +2563,9 @@ def build_cell(
         aux_mulleder=aux_mulleder,
         attention_mask=attention_mask,
         attention_mask_layers=list(attention_mask_layers or [1]),
+        graph_reg_lambda=(
+            GRAPH_REG_LAMBDA if graph_reg_lambda is None else graph_reg_lambda
+        ),
         pert_heads=pert_heads,
         learnable_embedding=learnable_embedding,
         kcat_tier=kcat_tier,
@@ -5294,8 +5317,8 @@ def build_model_for_cell(
 
     graph_reg_kwargs: dict[str, Any] = (
         {
-            "graph_regularization_config": GRAPH_REG_CONFIG,
-            "graph_reg_lambda": GRAPH_REG_LAMBDA,
+            "graph_regularization_config": graph_reg_config(cell.graph_reg_lambda),
+            "graph_reg_lambda": cell.graph_reg_lambda,
         }
         if cell.graph_reg
         else {}
@@ -7348,6 +7371,12 @@ def main() -> None:
         "--graph-reg", action="store_true", help="019's graph-structure regularizer."
     )
     parser.add_argument(
+        "--graph-reg-lambda",
+        type=float,
+        default=None,
+        help="Weight of the regularizer (default GRAPH_REG_LAMBDA, 6.5e-5).",
+    )
+    parser.add_argument(
         "--abort-on-collapse",
         action="store_true",
         help="Stop once the validation prediction spread stays under 1%% of the target's.",
@@ -7777,6 +7806,7 @@ def main() -> None:
         aux_mulleder=args.aux_mulleder,
         attention_mask=args.attention_mask,
         attention_mask_layers=args.attention_mask_layers,
+        graph_reg_lambda=args.graph_reg_lambda,
         pert_heads=args.pert_heads,
         layers=args.layers,
         hidden=args.hidden,

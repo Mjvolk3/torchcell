@@ -599,6 +599,43 @@ def pair_cells(pair: str, side: str, key: str, which: str):
     return run
 
 
+
+def homophily(target: str, graph: str, hops: int, key: str):
+    """A value of one graph at one reach from target_graph_homophily.py, or a run-level
+    count (``n_labeled``, ``n_pinned``)."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, f"target_graph_homophily_{target}.json")))
+        if key in ("n_labeled", "n_pinned"):
+            return float(d[key])
+        r = next(x for x in d["reads"] if x["graph"] == graph and x["hops"] == hops)
+        return float(r[key])
+
+    return run
+
+
+def pack_log(stem: str, seed: int, epoch: int, what: str):
+    """``loss``, ``data`` or their ``ratio`` (penalty over data) at one epoch of a
+    pack cell's slurm log, the trainer's ``[pooled sSEED] ep N loss L data D`` line."""
+
+    def run() -> float:
+        import glob
+
+        (path,) = glob.glob(
+            osp.join(osp.dirname(RESULTS), "slurm", "output", f"*_{stem}_s{seed}.out")
+        )
+        for line in open(path):
+            parts = line.split()
+            if len(parts) > 8 and parts[2] == "ep" and int(parts[3]) == epoch and parts[4] == "loss":
+                loss, data = float(parts[5]), float(parts[7])
+                return {"loss": loss, "data": data, "ratio": (loss - data) / data}[what]
+        raise AssertionError(f"epoch {epoch} not in {path}")
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:standing -- the comparators on the same split and the cross-target read.
     Check(
@@ -12769,6 +12806,198 @@ CHECKS: list[Check] = [
             )["history"]
         ),
         tolerance=1e-09,
+    ),
+    Check(
+        claim="homophily: labeled genes",
+        stated=3764,
+        recompute=homophily("betaxanthin", "physical", 1, "n_labeled"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="homophily: pinned genes",
+        stated=629,
+        recompute=homophily("betaxanthin", "physical", 1, "n_pinned"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="homophily: coexpression neighbors",
+        stated=174,
+        recompute=homophily("betaxanthin", "string12_0_coexpression", 1, "mean_labeled_neighbors"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="homophily: coexpression rho",
+        stated=0.244,
+        recompute=homophily("betaxanthin", "string12_0_coexpression", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: coexpression null mean",
+        stated=-0.005,
+        recompute=homophily("betaxanthin", "string12_0_coexpression", 1, "null_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: coexpression null sd",
+        stated=0.041,
+        recompute=homophily("betaxanthin", "string12_0_coexpression", 1, "null_sd"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: coexpression z",
+        stated=6.1,
+        recompute=homophily("betaxanthin", "string12_0_coexpression", 1, "z"),
+        tolerance=0.06,
+    ),
+    Check(
+        claim="homophily: coexpression top-50",
+        stated=4.59,
+        recompute=homophily("betaxanthin", "string12_0_coexpression", 1, "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="homophily: coexpression on pool-covered",
+        stated=0.192,
+        recompute=homophily("betaxanthin", "string12_0_coexpression", 1, "spearman_store_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: coexpression LOO",
+        stated=0.208,
+        recompute=homophily("betaxanthin", "string12_0_coexpression", 1, "labeled_loo_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: coexpression LOO n",
+        stated=3721,
+        recompute=homophily("betaxanthin", "string12_0_coexpression", 1, "n_labeled_covered"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="homophily: coexpression two hops",
+        stated=0.007,
+        recompute=homophily("betaxanthin", "string12_0_coexpression", 2, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: union rho",
+        stated=0.221,
+        recompute=homophily("betaxanthin", "union_of_9", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: union top-50",
+        stated=5.19,
+        recompute=homophily("betaxanthin", "union_of_9", 1, "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="homophily: union on pool-covered",
+        stated=0.189,
+        recompute=homophily("betaxanthin", "union_of_9", 1, "spearman_store_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: union LOO",
+        stated=0.169,
+        recompute=homophily("betaxanthin", "union_of_9", 1, "labeled_loo_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: experimental rho",
+        stated=0.166,
+        recompute=homophily("betaxanthin", "string12_0_experimental", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: experimental z",
+        stated=3.1,
+        recompute=homophily("betaxanthin", "string12_0_experimental", 1, "z"),
+        tolerance=0.06,
+    ),
+    Check(
+        claim="homophily: neighborhood rho",
+        stated=0.195,
+        recompute=homophily("betaxanthin", "string12_0_neighborhood", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: neighborhood covered",
+        stated=458,
+        recompute=homophily("betaxanthin", "string12_0_neighborhood", 1, "n_pinned_covered"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="homophily: neighborhood z",
+        stated=4.3,
+        recompute=homophily("betaxanthin", "string12_0_neighborhood", 1, "z"),
+        tolerance=0.06,
+    ),
+    Check(
+        claim="homophily: physical rho",
+        stated=0.104,
+        recompute=homophily("betaxanthin", "physical", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: physical neighbors",
+        stated=14,
+        recompute=homophily("betaxanthin", "physical", 1, "mean_labeled_neighbors"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="homophily: physical decile fold",
+        stated=1.61,
+        recompute=homophily("betaxanthin", "physical", 1, "top_decile_fold"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="homophily: physical decile p",
+        stated=2.7e-05,
+        recompute=homophily("betaxanthin", "physical", 1, "top_decile_fisher_p"),
+        tolerance=6e-07,
+    ),
+    Check(
+        claim="homophily: fusion rho",
+        stated=-0.06,
+        recompute=homophily("betaxanthin", "string12_0_fusion", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: tflink rho",
+        stated=0.06,
+        recompute=homophily("betaxanthin", "tflink", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: pool-covered pinned genes",
+        stated=556,
+        recompute=homophily("betaxanthin", "physical", 1, "n_store_covered"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="graph reg: w233 penalty over data at epoch 0",
+        stated=1.74,
+        recompute=pack_log("w233_bxdelaapoolmlp256skl_h36l2p1_e200", 2700, 0, "ratio"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="graph reg: w233 penalty over data at epoch 40",
+        stated=0.77,
+        recompute=pack_log("w233_bxdelaapoolmlp256skl_h36l2p1_e200", 2700, 40, "ratio"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="graph reg: w233 loss at epoch 40",
+        stated=0.849,
+        recompute=pack_log("w233_bxdelaapoolmlp256skl_h36l2p1_e200", 2700, 40, "loss"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="graph reg: w233 data term at epoch 40",
+        stated=0.479,
+        recompute=pack_log("w233_bxdelaapoolmlp256skl_h36l2p1_e200", 2700, 40, "data"),
+        tolerance=0.0006,
     ),
 ]
 

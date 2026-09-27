@@ -347,6 +347,23 @@ def aa_seed_level(stem: str, which: str):
     return run
 
 
+
+def homophily(target: str, graph: str, hops: int, key: str):
+    """A value of one graph at one reach from target_graph_homophily.py (the betaxanthin
+    study's script, run on this study's targets), or a run-level count."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, f"target_graph_homophily_{target}.json")))
+        if key in ("n_labeled", "n_pinned"):
+            return float(d[key])
+        r = next(x for x in d["reads"] if x["graph"] == graph and x["hops"] == hops)
+        return float(r[key])
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:cross-target -- the betaxanthin score against the amino-acid pool.
     Check(
@@ -4919,6 +4936,114 @@ CHECKS: list[Check] = [
                 "arms"
             ][0]["mean_spearman_covered"]
         ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: Mulleder labeled genes",
+        stated=3836,
+        recompute=homophily("amino_acids", "physical", 1, "n_labeled"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="homophily: Mulleder pinned genes",
+        stated=564,
+        recompute=homophily("amino_acids", "physical", 1, "n_pinned"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="homophily: Mulleder coexpression rho",
+        stated=0.063,
+        recompute=homophily("amino_acids", "string12_0_coexpression", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: Mulleder coexpression null mean",
+        stated=-0.001,
+        recompute=homophily("amino_acids", "string12_0_coexpression", 1, "null_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: Mulleder coexpression null sd",
+        stated=0.015,
+        recompute=homophily("amino_acids", "string12_0_coexpression", 1, "null_sd"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: Mulleder coexpression z",
+        stated=4.4,
+        recompute=homophily("amino_acids", "string12_0_coexpression", 1, "z"),
+        tolerance=0.06,
+    ),
+    Check(
+        claim="homophily: Mulleder coexpression LOO",
+        stated=0.11,
+        recompute=homophily("amino_acids", "string12_0_coexpression", 1, "labeled_loo_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: Mulleder coexpression LOO n",
+        stated=3790,
+        recompute=homophily("amino_acids", "string12_0_coexpression", 1, "n_labeled_covered"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="homophily: Mulleder union rho",
+        stated=0.054,
+        recompute=homophily("amino_acids", "union_of_9", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: Mulleder union z",
+        stated=3.7,
+        recompute=homophily("amino_acids", "union_of_9", 1, "z"),
+        tolerance=0.06,
+    ),
+    Check(
+        claim="homophily: Mulleder experimental rho",
+        stated=0.042,
+        recompute=homophily("amino_acids", "string12_0_experimental", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: Mulleder experimental z",
+        stated=3.0,
+        recompute=homophily("amino_acids", "string12_0_experimental", 1, "z"),
+        tolerance=0.06,
+    ),
+    Check(
+        claim="homophily: Mulleder physical rho",
+        stated=0.008,
+        recompute=homophily("amino_acids", "physical", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: Cooper pinned genes",
+        stated=561,
+        recompute=homophily("cooper", "physical", 1, "n_pinned"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="homophily: Cooper coexpression rho",
+        stated=0.062,
+        recompute=homophily("cooper", "string12_0_coexpression", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: Cooper coexpression z",
+        stated=3.6,
+        recompute=homophily("cooper", "string12_0_coexpression", 1, "z"),
+        tolerance=0.06,
+    ),
+    Check(
+        claim="homophily: Cooper union rho",
+        stated=0.044,
+        recompute=homophily("cooper", "union_of_9", 1, "spearman_covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="homophily: Cooper database rho",
+        stated=0.027,
+        recompute=homophily("cooper", "string12_0_database", 1, "spearman_covered"),
         tolerance=0.0006,
     ),
 ]

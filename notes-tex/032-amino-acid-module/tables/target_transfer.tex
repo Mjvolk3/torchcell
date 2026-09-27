@@ -55,12 +55,12 @@
     measured betaxanthin score with GO against the control & 6 & 0.0533 (0.0097) & 0.0492 (0.0070) & $+0.0041$ (0.0129) & 5/6 & -- \\
     the betaxanthin score through a hidden layer of 256 against the score in the linear affine & 6 & 0.0778 (0.0065) & 0.0595 (0.0151) & $+0.0183$ (0.0153) & 5/6 & -- \\
     the betaxanthin score through a hidden layer of 256 against GO alone & 6 & 0.0778 (0.0065) & 0.0578 (0.0010) & $+0.0200$ (0.0072) & 6/6 & -- \\
+    Cooper's peaks through a hidden layer of 256 against the same columns linear & 6 & 0.0455 (0.0057) & 0.0419 (0.0079) & $+0.0035$ (0.0077) & 4/6 & -- \\
+    Cooper's peaks through a hidden layer of 256 against GO alone & 6 & 0.0455 (0.0057) & 0.0578 (0.0010) & $-0.0124$ (0.0062) & 0/6 & -- \\
+    Cooper's peaks in the linear affine against GO alone & 6 & 0.0419 (0.0079) & 0.0578 (0.0010) & $-0.0159$ (0.0080) & 0/6 & -- \\
+    Cooper's peaks in the linear affine against the control & 6 & 0.0419 (0.0079) & 0.0492 (0.0070) & $-0.0073$ (0.0103) & 1/6 & -- \\
     measured betaxanthin score alone in the affine against GO alone, twelve seeds & 12 & 0.0561 (0.0115) & 0.0572 (0.0019) & $-0.0011$ (0.0113) & 4/12 & -- \\
     measured betaxanthin score alone in the affine against the control, twelve seeds & 12 & 0.0561 (0.0115) & 0.0482 (0.0097) & $+0.0078$ (0.0170) & 7/12 & -- \\
-    GO alone standardized against GO alone under log1p & 6 & 0.0527 (0.0124) & 0.0578 (0.0010) & $-0.0052$ (0.0131) & 2/6 & -- \\
-    measured betaxanthin score with GO against GO alone under the same standardized encoding & 6 & 0.0533 (0.0097) & 0.0527 (0.0124) & $+0.0007$ (0.0132) & 2/6 & -- \\
-    measured betaxanthin score alone in the affine against the score with GO & 6 & 0.0595 (0.0151) & 0.0533 (0.0097) & $+0.0062$ (0.0204) & 4/6 & -- \\
-    measured betaxanthin score alone in the affine against GO alone & 6 & 0.0595 (0.0151) & 0.0578 (0.0010) & $+0.0017$ (0.0155) & 3/6 & -- \\
     \hline
   \end{tabular}
 \end{table}
@@ -75,6 +75,10 @@
     \hline
     arm against control & seeds & arm (sd) & control (sd) & difference (sd) & higher & top-50 \\
     \hline
+    GO alone standardized against GO alone under log1p & 6 & 0.0527 (0.0124) & 0.0578 (0.0010) & $-0.0052$ (0.0131) & 2/6 & -- \\
+    measured betaxanthin score with GO against GO alone under the same standardized encoding & 6 & 0.0533 (0.0097) & 0.0527 (0.0124) & $+0.0007$ (0.0132) & 2/6 & -- \\
+    measured betaxanthin score alone in the affine against the score with GO & 6 & 0.0595 (0.0151) & 0.0533 (0.0097) & $+0.0062$ (0.0204) & 4/6 & -- \\
+    measured betaxanthin score alone in the affine against GO alone & 6 & 0.0595 (0.0151) & 0.0578 (0.0010) & $+0.0017$ (0.0155) & 3/6 & -- \\
     measured betaxanthin score alone in the affine against the control & 6 & 0.0595 (0.0151) & 0.0492 (0.0070) & $+0.0103$ (0.0180) & 4/6 & -- \\
     GO multi-hot in the affine slot against the control, twelve seeds & 12 & 0.0572 (0.0019) & 0.0482 (0.0097) & $+0.0089$ (0.0097) & 10/12 & -- \\
     GO affine at dropout 0.3 against 0.1 & 6 & 0.0581 (0.0008) & 0.0578 (0.0010) & $+0.0003$ (0.0007) & 4/6 & -- \\

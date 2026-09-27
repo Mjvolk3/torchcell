@@ -1198,6 +1198,107 @@ def endpoint_matrix() -> str | None:
     )
 
 
+HOMOPHILY_GRAPH_LABELS = [
+    ("physical", "physical"),
+    ("regulatory", "regulatory"),
+    ("tflink", "TFLink"),
+    ("string12_0_neighborhood", "STRING neighborhood"),
+    ("string12_0_fusion", "STRING fusion"),
+    ("string12_0_cooccurence", "STRING co-occurrence"),
+    ("string12_0_coexpression", "STRING coexpression"),
+    ("string12_0_experimental", "STRING experimental"),
+    ("string12_0_database", "STRING database"),
+    ("union_of_9", "union of nine"),
+]
+
+
+def graph_homophily(target: str) -> str | None:
+    """The labeled-neighbor mean of the target on the pin, per graph and reach."""
+    src = results(target, f"target_graph_homophily_{target}.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    by = {(r["graph"], r["hops"]): r for r in d["reads"]}
+    bx = target == "betaxanthin"
+    store = d["coverage_store"] is not None
+    rows = []
+    for graph, label in HOMOPHILY_GRAPH_LABELS:
+        for hops in (1, 2):
+            r = by[(graph, hops)]
+            cells = [
+                label,
+                str(hops),
+                str(r["n_pinned_covered"]),
+                f"{r['mean_labeled_neighbors']:.0f}",
+                f"{r['spearman_covered']:+.3f}",
+                f"{r['null_mean']:+.3f} $\\pm$ {r['null_sd']:.3f}",
+                f"{r['z']:+.1f}",
+            ]
+            if bx:
+                cells.append(f"{r['top50_enrichment']:.2f}")
+            if store:
+                cells.append(f"{r['spearman_store_covered']:+.3f}")
+            cells += [f"{r['labeled_loo_spearman']:+.3f}", str(r["n_labeled_covered"])]
+            rows.append("    " + " & ".join(cells) + " \\\\")
+    label_text = STUDY[target]["label"]
+    name = "graph_homophily" if target != "cooper" else "graph_homophily_cooper"
+    tab_label = {
+        "betaxanthin": "tab:graph-homophily",
+        "amino_acids": "tab:graph-homophily-amino-acids",
+        "cooper": "tab:graph-homophily-cooper",
+    }[target]
+    head = "graph & hops & covered & neighbors & $\\rho$ & null & $z$"
+    spec = "@{}lrrrrrr"
+    if bx:
+        head += " & top-50"
+        spec += "r"
+    if store:
+        head += " & covered by pool"
+        spec += "r"
+    head += " & LOO $\\rho$ & $n$ \\\\"
+    spec += "rr@{}"
+    columns = (
+        "the single column"
+        if len(d["columns"]) == 1
+        else f"the mean over the {len(d['columns'])} columns"
+    )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        f"  \\caption[Label propagation of {label_text} on the graphs]{{The {label_text} "
+        f"target read on the pin by the mean over a pinned gene's labeled neighbors, "
+        f"per graph and reach, with nothing fitted. Labeled genes are the "
+        f"{d['n_labeled']:,} training and validation genes with a measurement; "
+        f"``covered'' is how many of the {d['n_pinned']} pinned genes have at least one "
+        "labeled gene within the reach and ``neighbors'' their mean number; "
+        f"$\\rho$ is the pinned-test Spearman on the covered genes ({columns}); "
+        "``null'' is the mean and standard deviation of the same read over "
+        f"{d['permutations']} draws in which each gene's labeled neighbors are replaced "
+        "by as many labeled genes drawn at random, and $z$ the read's distance from it"
+        + ("; ``top-50'' the trainer's enrichment of the true top decile among the 50 "
+           "highest predictions, the uncovered genes filled with the labeled mean" if bx else "")
+        + (f"; ``covered by pool'' the same read on the pinned genes the {d['coverage_store'].replace('_', chr(92) + '_')} "
+           "store covers" if store else "")
+        + "; ``LOO $\\rho$'' the predictor scored leave-one-out on the $n$ labeled genes "
+        "with a labeled neighbor (within two hops nearly every labeled gene reaches "
+        "nearly every other, and a mean that excludes only the gene itself is then "
+        "anti-correlated with it, so the two-hop LOO column is not a read). The "
+        "regulatory and TFLink graphs are made undirected. Written by "
+        "\\texttt{target\\_notes\\_tex\\_tables.py} from "
+        f"\\texttt{{results/target\\_graph\\_homophily\\_{target.replace('_', '\\_')}.json}} "
+        "(\\texttt{target\\_graph\\_homophily.py}).}\n"
+        f"  \\label{{{tab_label}}}\n"
+        f"  \\begin{{tabular}}{{{spec}}}\n    \\hline\n"
+        f"    {head}\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        target, name, body, f"results/target_graph_homophily_{target}.json"
+    )
+
+
+
 def main() -> None:
     paths = [
         pool_mlp_sweep(),
@@ -1205,6 +1306,9 @@ def main() -> None:
         cooper_mlp("amino_acids"),
         head_decomposition(),
         coverage_split(),
+        graph_homophily("betaxanthin"),
+        graph_homophily("amino_acids"),
+        graph_homophily("cooper"),
         pool_fit_variants(),
         covered_perceptrons(),
         endpoint_matrix(),

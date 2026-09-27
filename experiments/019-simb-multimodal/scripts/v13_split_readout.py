@@ -190,6 +190,13 @@ def main() -> None:
     api = wandb.Api()
     rows: list[dict[str, Any]] = []
     hist: dict[str, pd.DataFrame] = {}
+    # First pass: every run's arm and history. A run continued from a checkpoint (the v16
+    # wave 2, launcher stage resume_many) is a NEW W&B run whose config names its source in
+    # `wandb.resumed_from`; its history is appended to the source's and it is not a row of
+    # its own. State and the test score come from the latest segment, since only that one
+    # ran to the budget. A continuation whose source is not in the project is an error.
+    seen: dict[str, dict[str, Any]] = {}
+    continued: dict[str, str] = {}
     for r in api.runs(PROJECT):
         arm = r.config.get("arm") or next(
             t for t in r.tags if t.startswith(ROUND["prefix"])
@@ -203,15 +210,36 @@ def main() -> None:
         h = h.dropna(subset=[KEY]).sort_values("epoch").reset_index(drop=True)
         if h.empty:
             continue
+        seen[r.id] = {"run": r, "arm": arm, "m": m, "h": h}
+        src = r.config.get("wandb", {}).get("resumed_from")
+        if src:
+            continued[r.id] = str(src)
+    for cid, src in continued.items():
+        if src not in seen:
+            raise ValueError(f"{cid}: continued from {src}, which is not in {PROJECT}")
+        seg, base = seen.pop(cid), seen[src]
+        h0, h1 = base["h"], seg["h"]
+        h1 = h1[h1["epoch"] > int(h0["epoch"].max())]
+        base["h"] = pd.concat([h0, h1], ignore_index=True)
+        base["run"] = seg["run"]
+        base["segments"] = base.get("segments", [src]) + [cid]
+        print(
+            f"stitched {cid} onto {src} ({base['arm']}): epochs to {int(base['h']['epoch'].max())}"
+        )
+    for rid, e in seen.items():
+        r, arm, m, h = e["run"], e["arm"], e["m"], e["h"]
         if int(h["epoch"].max()) < MIN_EPOCH:
-            print(f"excluded below --min-epoch {MIN_EPOCH}: {r.id} {arm} at epoch {int(h['epoch'].max())}")
+            print(
+                f"excluded below --min-epoch {MIN_EPOCH}: {rid} {arm} at epoch {int(h['epoch'].max())}"
+            )
             continue
         roll = h[KEY].rolling(WINDOW, center=True).mean()
-        hist[r.id] = h
+        hist[rid] = h
         peak_i = int(roll.idxmax())
         rows.append(
             {
-                "id": r.id,
+                "id": rid,
+                "segments": e.get("segments", [rid]),
                 "arm": arm,
                 "readout": m.group(1),
                 "split": m.group(2),

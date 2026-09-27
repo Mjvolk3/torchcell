@@ -3202,6 +3202,49 @@ def graph_label_propagation() -> str | None:
 
 
 
+def pattern_ladder() -> str | None:
+    """The layer-pattern ladder and the propagated-label stores, arm against control."""
+    src = osp.join(RESULTS, "pattern_ladder_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    rows = []
+    for p in d["pairs"]:
+        a, c = p["arm"], p["control"]
+        rows.append(
+            f"    {p['name']} & {a['pack']} & {a['n_parameters']:,} & "
+            f"{a['mean_auroc']:.3f} $\\pm$ {a['sd_auroc']:.3f} & "
+            f"{c['mean_auroc']:.3f} $\\pm$ {c['sd_auroc']:.3f} & "
+            f"{p['mean_difference']:+.3f} $\\pm$ {p['sd_difference']:.3f} & "
+            f"{p['n_positive']}/{p['n']} & {a['min_select_epoch']}--{a['max_select_epoch']} & "
+            f"{a['max_graph_reg_loss']:.3g} \\\\"
+        )
+    for name in d["pending"]:
+        rows.append(f"    {name} & pending & & & & & & & \\\\")
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The layer-pattern ladder and the propagated label]{The layer-pattern "
+        "ladder on the round-33 incumbent recipe at width 36 with nine heads (w134 to w138) "
+        "and the graphs' one-hop label propagation of essentiality as the affine store on the "
+        "width-12 recipe (w139, w140), each arm against its control on the same six seeds: "
+        "held-out AUROC at the validation-selected epoch (mean $\\pm$ sd), the paired "
+        "difference, the seeds on which the arm is above, the range of selected epochs, and "
+        "the largest value the regularizer's loss took in any epoch of any seed (0 where no "
+        "block is regularized). Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/pattern\\_ladder\\_readout.json} "
+        "(\\texttt{pattern\\_ladder\\_readout.py}).}\n"
+        "  \\label{tab:pattern-ladder}\n"
+        "  \\begin{tabular}{@{}p{58mm}lrrrrrrr@{}}\n    \\hline\n"
+        "    pair & arm & parameters & arm & control & paired & above & epochs & reg loss \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("pattern_ladder", body, "results/pattern_ladder_readout.json")
+
+
+
 def main() -> None:
     paths = [
         wl_test(),
@@ -3225,6 +3268,7 @@ def main() -> None:
         store_ladder(),
         graph_baselines(),
         graph_label_propagation(),
+        pattern_ladder(),
         graph_baselines_relational(),
         graph_baselines_split(),
         graph_baselines_go(),

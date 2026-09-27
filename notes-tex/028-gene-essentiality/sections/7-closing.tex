@@ -459,6 +459,30 @@ of the pool program does not depend on which enzyme carries which number. The tu
 table is not the limiting ingredient; the hypothesis of Section~\ref{sec:round114} is
 retracted.
 
+\subsection{The graphs read at last: the layer-pattern ladder and the propagated label\secstatus{todo}}
+\label{sec:pattern-ladder}
+
+No essentiality cell had read the nine gene graphs: the 019 regularizer and the 020
+hard mask both index the second transformer block, every cell of the study ran one, and
+the regularizer's loss is 0.0 at every epoch of every one-block cell. The ladder
+(Table~\ref{tab:pattern-ladder}, \texttt{pattern\_ladder\_readout.py}) reads them on
+the round-33 incumbent recipe at width 36 with nine heads, one relation per head: one
+unmasked block as the width control (w134), two unmasked blocks as the depth control
+(w135), two blocks with the regularizer on the second (w136), two with the hard mask on
+the second (w137), and three with the mask on the second and third (w138). Beside it
+the one-hop propagation of Section~\ref{sec:mp-architectures}'s neighbor read enters
+the affine as a store, per graph the essential fraction among the gene's labeled
+neighbors and the log count, alone (w139) and appended to the pFBA vector (w140).
+
+The width control is read (job 2906, 27 min): one block of width 36 with nine heads,
+83,373 parameters against the incumbent's 22,773, reads 0.913 (sd 0.006) against the
+incumbent's 0.908 (sd 0.008), $+0.004$ paired (sd 0.006, five of six), the seeds 0.906
+to 0.922 selecting at epochs 33 to 41. The wider backbone is level with the width-12
+one on this split, and it is the graph-free control the four patterns are read
+against.
+
+\input{tables/pattern_ladder}
+
 \subsection{The module carried to betaxanthin and the amino acids\secstatus{todo}}
 \label{sec:target-transfer}
 

@@ -508,6 +508,18 @@ def label_propagation(graph: str, hops: int, key: str) -> Callable[[], float]:
     return run
 
 
+
+def ladder_pair(name: str, key: str, side: str | None = None) -> Callable[[], float]:
+    """One statistic of one pair (or of its arm/control) of the pattern-ladder readout."""
+
+    def run() -> float:
+        pairs = json.load(open(osp.join(RESULTS, "pattern_ladder_readout.json")))["pairs"]
+        p = next(q for q in pairs if q["name"] == name)
+        return float(p[side][key] if side else p[key])
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:store-discriminability -- the stores and the two cuts.
     Check(
@@ -3367,6 +3379,82 @@ CHECKS: list[Check] = [
         stated=1,
         recompute=label_propagation("regulatory", 1, "n_test_covered"),
         tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w134 arm",
+        stated=0.913,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "mean_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w134 arm sd",
+        stated=0.006,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "sd_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w134 control",
+        stated=0.908,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "mean_auroc", "control"),
+    ),
+    Check(
+        claim="pattern ladder: w134 control sd",
+        stated=0.008,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "sd_auroc", "control"),
+    ),
+    Check(
+        claim="pattern ladder: w134 paired",
+        stated=0.004,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "mean_difference"),
+    ),
+    Check(
+        claim="pattern ladder: w134 paired sd",
+        stated=0.006,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "sd_difference"),
+    ),
+    Check(
+        claim="pattern ladder: w134 seeds above",
+        stated=5,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w134 parameters",
+        stated=83373,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "n_parameters", "arm"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: incumbent parameters",
+        stated=22773,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "n_parameters", "control"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w134 seed min",
+        stated=0.906,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "min_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w134 seed max",
+        stated=0.922,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "max_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w134 select epoch min",
+        stated=33,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "min_select_epoch", "arm"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w134 select epoch max",
+        stated=41,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "max_select_epoch", "arm"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w134 graph_reg_loss zero",
+        stated=0.0,
+        recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "max_graph_reg_loss", "arm"),
+        tolerance=1e-09,
     ),
 ]
 

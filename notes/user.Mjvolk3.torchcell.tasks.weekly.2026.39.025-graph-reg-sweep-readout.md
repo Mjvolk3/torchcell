@@ -24,6 +24,6 @@ created: 1790475578843
 - [x] Readout classifies the round-1b/2/3 arms from the run config and pairs each against its own no-penalty control
 - [x] Real-size CPU smoke: first runs (GH 2894, Delta 22462380) failed in the smoke script (no `base` graph); GH 2903 passed all twelve variants and its zero-row diagnostic caught a design defect: the k-hop and symmetric KL targets dropped the self-loops that every one-hop target carries (every gene has one); fixed in 961b4660d with a new test, the nine affected KL jobs cancelled and resubmitted from worktree `025-graph-reg-round2b` (22463412, 22463414 to 22463421) [[experiments.025-solid-growth.scripts.graph_reg_round2_plan]]
 - [x] GilaHyper smoke 2904 at the fixed commit: all twelve variants pass, every k-hop and symmetric target has zero empty rows (was 6,147 regulatory rows at two hops)
-- [ ] Delta smoke 22463411 at the fixed commit, in the runs' own environment
+- [x] Delta smoke 22463411 at the fixed commit, in the runs' own environment (cn068, worktree 025-graph-reg-round2b): all twelve variants pass, losses identical to GilaHyper's, 25 to 60 s per variant, peak RSS 55.7 GB, about 80 min wall on the Delta CPU node
 - [ ] After round 1b lands: `make refresh` in `notes-tex/025-graph-reg-sweep`; pull best checkpoints for the discovery and overruling panels
 - [x] mmli 2409708 (025 S3 composite + fitness, seed 1) synced from the IGB login node: epoch 33, val GI Pearson 0.4815 max at epoch 28, partial

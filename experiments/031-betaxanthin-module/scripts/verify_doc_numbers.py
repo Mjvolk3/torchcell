@@ -12334,6 +12334,219 @@ CHECKS: list[Check] = [
         ),
         tolerance=0.0006,
     ),
+    # sec:rounds -- round 211, Cooper's peaks substituted for the pool.
+    Check(
+        claim="round 211: arm",
+        stated=0.111,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: arm sd",
+        stated=0.025,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: pool",
+        stated=0.279,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs pool paired",
+        stated=-0.168,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs pool paired sd",
+        stated=0.022,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs pool seeds above",
+        stated=0,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: control",
+        stated=0.058,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the control",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs control paired",
+        stated=0.052,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the control",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs control paired sd",
+        stated=0.061,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the control",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs control seeds above",
+        stated=6,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the control",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: arm top-50",
+        stated=2.73,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 211: control top-50",
+        stated=3.39,
+        recompute=transfer(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the control",
+            "mean_top50_enrichment",
+            "control",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 211: ensemble",
+        stated=0.139,
+        recompute=ensemble("w230_bxdelcooperpoolmlp256_h12l1p1_e200", "spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: seed min",
+        stated=0.088,
+        recompute=pair_cells(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "arm",
+            "spearman",
+            "min",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: seed max",
+        stated=0.155,
+        recompute=pair_cells(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "arm",
+            "spearman",
+            "max",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: select epoch min",
+        stated=44,
+        recompute=pair_cells(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "arm",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: select epoch max",
+        stated=137,
+        recompute=pair_cells(
+            "betaxanthin: Cooper's seventeen peaks through a hidden layer of 256 against the Mulleder pool through 256",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: Cooper covers the pin",
+        stated=554,
+        recompute=coverage(
+            "w230", "w230_bxdelcooperpoolmlp256_h12l1p1_e200", "n_covered"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: Cooper indicator here",
+        stated=-0.051,
+        recompute=coverage(
+            "w230",
+            "w230_bxdelcooperpoolmlp256_h12l1p1_e200",
+            "coverage_indicator_spearman",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: covered",
+        stated=0.111,
+        recompute=coverage(
+            "w230", "w230_bxdelcooperpoolmlp256_h12l1p1_e200", "mean_spearman_covered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: pool on the same genes",
+        stated=0.287,
+        recompute=coverage(
+            "w230", "w206_bxdelaapoolmlp256_h12l1p1_e200", "mean_spearman_covered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: forest over Cooper (ladder)",
+        stated=0.113,
+        recompute=store_baseline(
+            "betaxanthin", "cooper_pool", "forest", "mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: forest over the pool (ladder)",
+        stated=0.28,
+        recompute=store_baseline("betaxanthin", "aa_pool", "forest", "mean_spearman"),
+        tolerance=0.0006,
+    ),
 ]
 
 

@@ -441,7 +441,10 @@ def t13_per_dataset_baselines() -> None:
         ridge = d[d["model"] == "ridge"]
         knn = d[d["model"].str.startswith("knn")]
         null = d[d["model"] == "random_neighbor"]
-        best = ridge.loc[ridge["spearman_median"].idxmax()]
+        # the ceiling fraction follows the BEST model of either class, not ridge alone:
+        # neighbor transfer wins on three of the five datasets
+        feat = d[d["features"] != "none"]
+        best = feat.loc[feat["spearman_median"].idxmax()]
         cap = float(best["ceiling_median"])
         rows.append(
             {
@@ -453,11 +456,15 @@ def t13_per_dataset_baselines() -> None:
                 "null": f"{null['spearman_median'].median():.3f}"
                 if not null.empty
                 else "",
+                "best ridge": f"{ridge['spearman_median'].max():.3f}"
+                if not ridge.empty
+                else "",
                 "best kNN": f"{knn['spearman_median'].max():.3f}"
                 if not knn.empty
                 else "",
-                "best ridge": f"{best['spearman_median']:.3f}",
-                "encoder": str(best["features"]).replace("_", " "),
+                "best overall": f"{best['spearman_median']:.3f}",
+                "model, encoder": f"{best['model']}, "
+                f"{str(best['features']).replace('_', ' ')}",
                 "ceiling": f"{cap:.2f}" if np.isfinite(cap) else "none served",
                 "of ceiling": f"{best['spearman_median'] / cap:.2f}"
                 if np.isfinite(cap)
@@ -466,7 +473,7 @@ def t13_per_dataset_baselines() -> None:
         )
     write(
         "t13-per-dataset-baselines",
-        tex_table(pd.DataFrame(rows), align="llrrrrlrr"),
+        tex_table(pd.DataFrame(rows), align="llrrrrrlrr"),
         "per_dataset_baselines_summary.csv from per_dataset_baselines.py",
     )
 

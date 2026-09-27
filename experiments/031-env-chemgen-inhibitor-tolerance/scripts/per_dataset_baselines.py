@@ -349,7 +349,8 @@ def make_figure(summary: pd.DataFrame) -> None:
     rows = []
     for name in present:
         d = summary[(summary["dataset"] == name) & (summary["target"] == "centered")]
-        best = d[d["model"] == "ridge"]["spearman_median"].max()
+        feat = d[d["features"] != "none"]
+        best = feat["spearman_median"].max()
         null = d[d["model"] == "random_neighbor"]["spearman_median"].median()
         rows.append((name, null, best))
     y = np.arange(len(rows))
@@ -369,7 +370,7 @@ def make_figure(summary: pd.DataFrame) -> None:
         color=[COLOR[r[0]] for r in rows],
         edgecolor="black",
         lw=0.3,
-        label="best ridge",
+        label="best molecule feature",
     )
     ax.set_yticks(y)
     ax.set_yticklabels([LABEL[r[0]] for r in rows])
@@ -408,13 +409,13 @@ def make_figure(summary: pd.DataFrame) -> None:
     ax.set_xlabel(f"{knn_col} Spearman")
     ax.set_ylabel("ridge Spearman")
     ax.legend(frameon=False, fontsize=4.5, loc="upper left")
-    ax.set_title("c  a linear map beats neighbor transfer", loc="left", fontsize=6)
+    ax.set_title("c  ridge against neighbor transfer", loc="left", fontsize=6)
 
     # (d) fraction of the ceiling reached, where a ceiling exists
     ax = axes[1, 1]
     have = summary[
         (summary["target"] == "centered")
-        & (summary["model"] == "ridge")
+        & (summary["features"] != "none")
         & summary["ceiling_median"].notna()
     ]
     rows = []
@@ -469,7 +470,18 @@ def make_figure(summary: pd.DataFrame) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--datasets", nargs="+", default=NAMES, choices=NAMES)
+    ap.add_argument(
+        "--figure-only",
+        action="store_true",
+        help="redraw the figure from results/per_dataset_baselines_summary.csv",
+    )
     args = ap.parse_args()
+
+    if args.figure_only:
+        make_figure(
+            pd.read_csv(osp.join(RESULTS_DIR, "per_dataset_baselines_summary.csv"))
+        )
+        return
 
     all_rows = pd.concat([run_dataset(n) for n in args.datasets], ignore_index=True)
     all_rows.to_csv(osp.join(RESULTS_DIR, "per_dataset_baselines.csv"), index=False)

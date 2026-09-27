@@ -33,3 +33,40 @@ Figure: `notes/assets/images/031-env-chemgen-inhibitor-tolerance/encoder_compari
 Result files: `results/per_dataset_baselines.csv`,
 `results/per_dataset_baselines_summary.csv`. Rendered as table t13 and Figure 5 of
 `notes-tex/031-unified-representation`.
+
+### 2026.09.27 - Results across all five datasets
+
+| dataset | scheme | null | best ridge | best kNN | best overall | ceiling | of ceiling |
+|---|---|---|---|---|---|---|---|
+| Vanacloig | LOCO, 41 folds | 0.028 | **0.311** | 0.284 | 0.311 ridge fcfp4 | 0.84 | 0.37 |
+| Hillenmeyer HOM | 10-fold | 0.030 | 0.105 | **0.141** | 0.141 knn5 fcfp4 | 0.94 | 0.15 |
+| Hillenmeyer HET | 10-fold | 0.003 | 0.113 | **0.126** | 0.126 knn1 maccs | 0.79 | 0.16 |
+| Hoepfner | 10-fold | 0.023 | **0.189** | 0.169 | 0.189 ridge fcfp4 | none served | |
+| Wildenhain | 10-fold | 0.168 | 0.249 | **0.394** | 0.394 knn5 ecfp4 | 0.87 | 0.45 |
+
+**Three findings.**
+
+1. Molecule features carry compound-specific signal in EVERY dataset, not only Vanacloig. Each
+   beats its own no-feature null on the centered target.
+2. **Which simple model wins is not constant, and this corrects an earlier claim.** The earlier
+   Vanacloig-only run concluded "ridge beats kNN on both targets and every encoder". That holds
+   on Vanacloig and Hoepfner and is FALSE on the other three: similarity-weighted nearest
+   neighbors wins on Wildenhain (0.394 against 0.249), Hillenmeyer HOM and Hillenmeyer HET. The
+   margin is largest on the densest compound panel. I am not offering a mechanism for that; it
+   is a measured split, not an explained one.
+3. Wildenhain's null is 0.168 against 0.003 to 0.030 everywhere else, so its headline 0.394
+   should be read against that null rather than against the other datasets' scores.
+
+**Two limits on the ceilings.** Hoepfner serves no uncertainty on any record, so it has no
+ceiling at all. The Hillenmeyer and Wildenhain ceilings rest on the 33, 17 and 1 percent of
+cells carrying a served standard error, which is the subset measured more than once and
+therefore not a random sample. Only the Vanacloig ceiling, at 97 percent of cells, comes from
+substantially the whole matrix.
+
+**Encoder count.** Twelve encoders are scored on Vanacloig and eleven on the other four,
+because Uni-Mol cannot build a conformer for every compound in them (isolated ions, metal
+salts) and the script drops an encoder that cannot represent the whole panel rather than
+scoring it on a subset.
+
+**Cost.** The full run is about 25 CPU-hours, dominated by Wildenhain's 5,170-compound panel.
+`--figure-only` redraws the figure from the saved summary without repeating it.

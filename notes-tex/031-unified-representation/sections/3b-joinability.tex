@@ -128,3 +128,54 @@ size. \textbf{(f)} The molar range each dataset spans, 1st to 99th percentile, w
 of records stating a convertible dose. \textbf{(g)} Distinct compounds against distinct genes,
 point area by measured cells. \textbf{(h)} Perturbation class by dataset.}{fig:overlap}
 
+\notesec{Per-dataset baselines, because a pooled claim needs a per-dataset reference}
+Table~\ref{tab:perdataset} runs the compound cold-start baselines of
+Section~\ref{sec:established} on every dataset separately, so that any later pooled result has
+something to be compared against. Leave-one-compound-out is used where the panel allows it and
+ten folds grouped by compound where it does not, and the scheme is recorded per row rather than
+left implicit; the two are not interchangeable and a row scored under one should not be read
+against a row scored under the other as though they were.
+
+Three results matter for the plan. Molecule features carry compound-specific signal in every
+dataset, not only in the one measured before: each beats its own no-feature null on the
+centered target. The best score is 0.394 for Wildenhain, 0.311 for Vanacloig, 0.189 for
+Hoepfner and 0.13 to 0.14 for the two Hillenmeyer arms, though Wildenhain and Vanacloig are
+not scored under the same scheme and its null is also by far the highest, 0.168 against 0.003
+to 0.030 elsewhere, which is what a panel of 5{,}170 compounds does to a random neighbor. And
+which simple model wins is not constant:
+ridge is better on Vanacloig and Hoepfner, while similarity-weighted nearest neighbors is
+better on Wildenhain and both Hillenmeyer arms, by the largest margin on Wildenhain where it
+reaches 0.394 against ridge at 0.249. The earlier finding that ridge beat every
+nearest-neighbor variant was measured on Vanacloig alone and does not generalize.
+
+Two limits on the ceilings in that table. Hoepfner serves no uncertainty on any record, so it
+has no ceiling and its score is reported alone. And the Hillenmeyer and Wildenhain ceilings
+rest on the minority of cells that carry a served standard error, 33, 17 and 1 percent
+respectively, which is the subset measured more than once and therefore not a random sample of
+the dataset. Only the Vanacloig ceiling, at 97 percent of cells, is estimated from
+substantially the whole matrix.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/per_dataset_baselines.py ->
+%% results/per_dataset_baselines_summary.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Compound cold-start baselines per dataset on the centered target, medians over folds.
+The null is the similarity-weighted mean of randomly chosen training compounds. LOCO is
+leave-one-compound-out; the alternative is ten folds grouped by compound, and the two are not
+directly comparable. A dataset with no served uncertainty has no ceiling and its score is
+reported alone. Eleven of the twelve encoders are scored on the four partner datasets, because
+the three-dimensional encoder cannot embed every compound in them.}
+\label{tab:perdataset}
+\input{tables/t13-per-dataset-baselines}
+\end{table}
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/per_dataset_baselines.py ->
+%% encoder_comparison.svg, converted by `make plots`.
+\tcfig{figures/encoder_comparison.pdf}{Molecule encoders compared on the compound cold-start,
+centered target. \textbf{(a)} Every encoder and dataset under ridge. \textbf{(b)} The best
+molecule feature against the no-feature null per dataset. \textbf{(c)} Ridge against
+nearest-neighbor transfer, one point per dataset and encoder; points below the diagonal are
+datasets where neighbor transfer wins, which is every Wildenhain point. \textbf{(d)} The best
+score against the reliability ceiling where the source serves an uncertainty on enough
+cells.}{fig:encoders}

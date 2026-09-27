@@ -113,6 +113,7 @@ class CellAdapter:
         # RenderedChunk per chunk; the build's FastCsvSink dedups and appends. None
         # keeps the BioCypherNode/Edge objects flowing to bc.write_nodes/write_edges.
         self.row_specs: RowSpecs | None = None
+        self.chunks_per_worker = CHUNKS_PER_WORKER
         self.event = 0
         wandb.init()
         self.log_method_table()
@@ -405,7 +406,12 @@ class CellAdapter:
         # OOM kills, and 316 GB of anon memory. Recycling caps that at roughly one
         # group's working set. The group is a multiple of the pool size, so a 414-chunk
         # method rebuilds the pool ~7 times rather than paying a fork storm.
-        group_size = self.process_workers * CHUNKS_PER_WORKER
+        # r6: the group size is the knob. Job 2889's telemetry (Costanzo, 30 workers,
+        # 6,250-record chunks) shows a 47 s cycle: the pool fills memory to the cgroup
+        # cap, is torn down, and the container sits at 3 to 10 cores for about 15 s
+        # while the next pool forks. With the byte-budgeted chunks the groups would be
+        # 2.7x shorter still, so chunks_per_worker (default CHUNKS_PER_WORKER) sets it.
+        group_size = self.process_workers * self.chunks_per_worker
         for group_start in range(0, len(data_chunks), group_size):
             # Move everything currently reachable into the GC's permanent generation
             # before forking this group's pool. Workers inherit the parent's heap

@@ -40,6 +40,17 @@ CHUNKS_PER_WORKER = 2
 
 SINGLE_PASS_NODES = "all node types (chunked)"
 SINGLE_PASS_EDGES = "all edge types (chunked)"
+SINGLE_PASS_CHUNK_BUDGET_BYTES = 48 * 2**20
+"""Resolved-record bytes a single-pass chunk may carry.
+
+A folded pass emits every node (or edge) type per record, so a chunk's output scales
+with the record's resolved size, not its count. Bloom2019 (segregant genotypes, no
+memory reduction factor in its adapter config) got 12,500-record chunks on job 2889;
+30 workers plus their loader children took anonymous memory from 36 GB to 104 GB in
+20 s and the container was OOM-killed at 128 GB. The budget divides by the sampled
+resolved record size so a chunk of big records is proportionally shorter.
+"""
+SINGLE_PASS_MIN_CHUNK = 256
 """Phase names of the r3 single-pass traversals (one per adapter per kind)."""
 """Chunks a pool worker may handle before the pool is rebuilt with fresh workers.
 
@@ -348,6 +359,19 @@ class CellAdapter:
         """
         memory_reduction_factor = self.get_memory_reduction_factor(method_name, is_edge)
         chunk_size = int(self.chunk_size * memory_reduction_factor)
+        if method_name in (SINGLE_PASS_NODES, SINGLE_PASS_EDGES):
+            record_bytes = self._estimate_record_bytes()
+            budget_chunk = max(
+                SINGLE_PASS_MIN_CHUNK, SINGLE_PASS_CHUNK_BUDGET_BYTES // record_bytes
+            )
+            if budget_chunk < chunk_size:
+                log.info(
+                    "single-pass chunk %d -> %d records (%d resolved bytes per record)",
+                    chunk_size,
+                    budget_chunk,
+                    record_bytes,
+                )
+                chunk_size = budget_chunk
 
         # Small datasets: one chunk, this process, no forks. The whole dataset is
         # the chunk, and data_chunker's in-process branch iterates it directly.
@@ -473,6 +497,15 @@ class CellAdapter:
             return self._pack_chunk(datas)
 
         return decorator
+
+    def _estimate_record_bytes(self, samples: int = 64) -> int:
+        """Median JSON size of a resolved record, from evenly spaced samples."""
+        n = len(self.dataset)
+        step = max(1, n // samples)
+        sizes = sorted(
+            len(json.dumps(self.dataset[i], default=str)) for i in range(0, n, step)
+        )
+        return max(1, sizes[len(sizes) // 2])
 
     def _pack_chunk(self, datas: list[Any]) -> list[Any]:
         """Return a chunk's output as objects, or as one RenderedChunk when rendering."""

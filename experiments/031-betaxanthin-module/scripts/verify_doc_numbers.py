@@ -13536,13 +13536,13 @@ CHECKS: list[Check] = [
     ),
     Check(
         claim="round 215: control seed-pair agreement min",
-        stated=0.88,
+        stated=0.90,
         recompute=agreement("w233_vs_w232", "min_control_seed_pair_spearman"),
         tolerance=0.006,
     ),
     Check(
         claim="round 215: control seed-pair agreement max",
-        stated=0.99,
+        stated=0.97,
         recompute=agreement("w233_vs_w232", "max_control_seed_pair_spearman"),
         tolerance=0.006,
     ),

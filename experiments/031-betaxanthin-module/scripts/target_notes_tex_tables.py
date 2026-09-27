@@ -995,6 +995,91 @@ def pool_fit_variants() -> str | None:
     )
 
 
+#: The perceptron arms read on the pool's covered genes (2026-09-27): result file, arm,
+#: label. The wild-type-row files are the sweep's settings at width 1,024; the replica
+#: files the trainer's encoding, zero row, ratio column and fit at width 256.
+COVERED_PERCEPTRONS = (
+    (
+        "go_models_betaxanthin_gopool_cov_h1024.json",
+        "go_mlp",
+        "GO alone (1,024, wild-type row)",
+    ),
+    (
+        "go_models_betaxanthin_gopool_cov_h1024.json",
+        "store_mlp",
+        "pool alone (1,024, wild-type row)",
+    ),
+    (
+        "go_models_betaxanthin_gopool_cov_h1024.json",
+        "go_store_mlp",
+        "GO with the pool in one layer (1,024, wild-type row)",
+    ),
+    (
+        "go_models_betaxanthin_gopool_cov_h1024.json",
+        "go_linear_store_mlp",
+        "GO linear beside the pool (1,024, wild-type row)",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_replica.json",
+        "store_mlp",
+        "pool alone, the transformer's slot rebuilt (256, zero row)",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_replica_twoslot.json",
+        "go_linear_store_mlp",
+        "GO linear beside the rebuilt slot (256, zero row, MSE)",
+    ),
+    (
+        "go_models_betaxanthin_cooper_fit_replica.json",
+        "store_mlp",
+        "Cooper's peaks in the rebuilt slot, substituting for the pool (256, zero row)",
+    ),
+)
+
+
+def covered_perceptrons() -> str | None:
+    """The perceptron arms on all pinned genes and on the genes the pool covers."""
+    rows = []
+    for name, arm, label in COVERED_PERCEPTRONS:
+        src = results("betaxanthin", name)
+        if not osp.isfile(src):
+            return None
+        with open(src) as fh:
+            d = json.load(fh)
+        a = next(x for x in d["arms"] if x["arm"] == arm)
+        cov = [r["test_pinned_spearman_covered"] for r in a["seeds"]]
+        assert all(c is not None for c in cov), (name, arm)
+        rows.append(
+            f"    {label} & {a['single_mean_spearman']:+.3f} ({a['single_sd_spearman']:.3f}) & "
+            f"{sum(cov) / len(cov):+.3f} & {a['single_mean_top50']:.2f} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The perceptron arms on the genes the pool covers]{The CPU perceptron "
+        "arms (\\texttt{target\\_go\\_models.py}, six seeds) read on all 629 pinned genes "
+        'and on the 556 the M\\"ulleder pool covers. The wild-type-row rows are the '
+        "sweep's settings (standardized columns, full batch, masked MSE, ReLU) at width "
+        "1,024; the rebuilt-slot rows are the transformer's slot on CPU (the $\\log(1+v)$ "
+        "columns, zeros for an uncovered gene, the YPD growth ratio prepended, minibatches "
+        "of 32, AdamW, GELU; the CRPS for the single slot, the masked MSE where GO's linear "
+        "slot sits beside it). Columns: the single-seed pinned Spearman with the standard "
+        "deviation over seeds, the same on the covered genes, the top-50 enrichment. "
+        "Written by \\texttt{target\\_notes\\_tex\\_tables.py} from the named "
+        "\\texttt{results/go\\_models\\_betaxanthin\\_*.json}.}\n"
+        "  \\label{tab:covered-perceptrons}\n"
+        "  \\begin{tabular}{@{}p{92mm}rrr@{}}\n    \\hline\n"
+        "    arm & all (sd) & covered & top-50 \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "betaxanthin",
+        "covered_perceptrons",
+        body,
+        "results/go_models_betaxanthin_{gopool_cov_h1024,pool_fit_replica,pool_fit_replica_twoslot,cooper_fit_replica}.json",
+    )
+
+
 SCORE_MLP_WIDTHS = (16, 256, 1024)
 SCORE_MLP_LABELS = {
     "store_mlp": "perceptron over the measured betaxanthin score",
@@ -1121,6 +1206,7 @@ def main() -> None:
         head_decomposition(),
         coverage_split(),
         pool_fit_variants(),
+        covered_perceptrons(),
         endpoint_matrix(),
         score_mlp_sweep(),
         target_transfer("betaxanthin"),

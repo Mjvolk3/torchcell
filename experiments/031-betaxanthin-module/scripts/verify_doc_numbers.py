@@ -349,6 +349,25 @@ def store_baseline_covered(
     return run
 
 
+def covered_read(name: str, arm: str, key: str):
+    """A value of an arm of a go_models file, or ``covered`` for the mean over seeds of
+    the read on the pinned genes the pool covers.
+    """
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, f"go_models_betaxanthin_{name}.json")))
+        a = next(x for x in d["arms"] if x["arm"] == arm)
+        if key == "covered":
+            v = [r["test_pinned_spearman_covered"] for r in a["seeds"]]
+            assert all(x is not None for x in v), (name, arm)
+            return float(sum(v) / len(v))
+        return float(a[key])
+
+    return run
+
+
 def pool_mlp(hidden: int, arm: str, key: str, name: str | None = None):
     """A value of one arm of the CPU perceptron sweep over the measured pool
     (target_go_models.py --store YPD_bx_aapool --mlp-hidden <hidden>); ``name`` picks a
@@ -11286,6 +11305,117 @@ CHECKS: list[Check] = [
             )["representations"]["aa_pool"]["n_pinned_covered"]
         ),
         tolerance=0.5,
+    ),
+    # sec:coverage -- the perceptron arms on the covered genes.
+    Check(
+        claim="covered perceptrons: GO alone covered",
+        stated=0.148,
+        recompute=covered_read("gopool_cov_h1024", "go_mlp", "covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: GO alone all",
+        stated=0.2,
+        recompute=covered_read("gopool_cov_h1024", "go_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: pool alone covered",
+        stated=0.207,
+        recompute=covered_read("gopool_cov_h1024", "store_mlp", "covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: pool alone all",
+        stated=0.236,
+        recompute=covered_read("gopool_cov_h1024", "store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: GO with pool one layer covered",
+        stated=0.195,
+        recompute=covered_read("gopool_cov_h1024", "go_store_mlp", "covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: GO with pool one layer all",
+        stated=0.24,
+        recompute=covered_read(
+            "gopool_cov_h1024", "go_store_mlp", "single_mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: GO linear beside pool covered",
+        stated=0.214,
+        recompute=covered_read("gopool_cov_h1024", "go_linear_store_mlp", "covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: GO linear beside pool all",
+        stated=0.265,
+        recompute=covered_read(
+            "gopool_cov_h1024", "go_linear_store_mlp", "single_mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: two-slot gain on covered genes",
+        stated=0.007,
+        recompute=lambda: (
+            covered_read("gopool_cov_h1024", "go_linear_store_mlp", "covered")()
+            - covered_read("gopool_cov_h1024", "store_mlp", "covered")()
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: two-slot gain on all genes",
+        stated=0.03,
+        recompute=lambda: (
+            covered_read(
+                "gopool_cov_h1024", "go_linear_store_mlp", "single_mean_spearman"
+            )()
+            - covered_read("gopool_cov_h1024", "store_mlp", "single_mean_spearman")()
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="covered perceptrons: GO affine uncovered percentile",
+        stated=0.32,
+        recompute=coverage(
+            "aapool",
+            "w167_bxdelgo_h12l1p1_e200",
+            "mean_uncovered_prediction_percentile",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="covered perceptrons: GO linear beside rebuilt slot covered",
+        stated=0.185,
+        recompute=covered_read(
+            "pool_fit_replica_twoslot", "go_linear_store_mlp", "covered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: Cooper substitute covered",
+        stated=0.103,
+        recompute=covered_read("cooper_fit_replica", "store_mlp", "covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: Cooper substitute all",
+        stated=0.093,
+        recompute=covered_read(
+            "cooper_fit_replica", "store_mlp", "single_mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="covered perceptrons: Cooper substitute sd",
+        stated=0.016,
+        recompute=covered_read("cooper_fit_replica", "store_mlp", "single_sd_spearman"),
+        tolerance=0.0006,
     ),
 ]
 

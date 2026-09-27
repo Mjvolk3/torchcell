@@ -389,9 +389,26 @@ isolate a row, 0.165 against 0.149. On the measured strains the forest over the 
 (0.226) is the highest read of any model, above the transformer's slot (0.212) and its
 CPU replica (0.216).
 
+The perceptron arms read on the covered genes (Table~\ref{tab:covered-perceptrons})
+put the annotation's place beside the pool on the measured strains. At width 1,024 with
+the wild-type row, GO alone reads 0.148 there (0.200 on all), the pool alone 0.207
+(0.236), GO with the pool in one layer 0.195 (0.240) and GO linear beside the pool
+0.214 (0.265): on the measured strains the annotation adds 0.007 to the pool in the
+two-slot head, and the 0.03 it added on all genes was the ranking of the strains the
+pool never measured, which the annotation reads on its own (the GO affine ranks them
+at the 32nd percentile). Beside the rebuilt slot the linear GO slot reads 0.185 on the
+covered genes against the slot alone's 0.216, and Cooper's peaks substituted for the
+pool in the rebuilt slot read 0.103 (0.093 on all, sd 0.016), half the pool and under
+the annotation. So on the strains that have an amino-acid profile, the profile through
+a hidden layer is worth 0.21 to 0.23 (the forest 0.226, the slot 0.212, its replica
+0.216, the perceptron 0.207), the annotation 0.14 to 0.15, and the two together no more
+than the profile alone.
+
 \input{tables/coverage_split}
 
 \input{tables/pool_fit_variants}
+
+\input{tables/covered_perceptrons}
 
 \input{tables/go_models}
 

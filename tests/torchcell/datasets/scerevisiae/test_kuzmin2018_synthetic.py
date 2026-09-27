@@ -210,8 +210,10 @@ def raw_record(ds: Any, idx: int) -> dict[str, Any]:
         str(Path(ds.root) / "processed" / "lmdb"), readonly=True, lock=False
     )
     with env.begin() as txn:
-        record: dict[str, Any] = pickle.loads(txn.get(str(idx).encode()))
+        raw = txn.get(str(idx).encode())
     env.close()
+    assert raw is not None, f"no record at index {idx}"
+    record: dict[str, Any] = pickle.loads(raw)
     return record
 
 

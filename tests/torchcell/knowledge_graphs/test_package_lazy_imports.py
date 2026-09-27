@@ -74,18 +74,25 @@ def test_package_import_is_light_and_attribute_access_imports_the_submodule() ->
     )
 
 
-def test_attribute_is_the_submodule_in_this_process_too() -> None:
+def test_attribute_is_the_submodule_in_this_process_too(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """After a direct submodule import the package attribute is that module, not a dict;
-    an unlisted name raises with the package name (covered here as well as in the probe,
-    since create_kg.py, the other changed file, cannot be imported under the test contract).
+    with the bound attribute removed, access goes through the lazy hook and resolves to
+    the same module object (``import_module`` returns the cached module); an unlisted name
+    raises with the package name. Both hook branches are covered here as well as in the
+    probe, since create_kg.py, the other changed file, cannot be imported under the test
+    contract.
     """
     with pytest.raises(
         AttributeError,
         match=r"^module 'torchcell.knowledge_graphs' has no attribute 'nope'$",
     ):
         kg.nope
+    monkeypatch.delattr(kg, "dataset_adapter_map")
+    assert "dataset_adapter_map" not in vars(kg)
+    assert kg.dataset_adapter_map is mapping_module  # through __getattr__
     assert isinstance(kg.dataset_adapter_map, types.ModuleType)
-    assert kg.dataset_adapter_map is mapping_module
     assert isinstance(mapping_module.dataset_adapter_map, dict)
     assert sorted(kg.__all__) == ["create_scerevisiae_kg_small", "dataset_adapter_map"]
     assert kg.maps == ["dataset_adapter_map"]

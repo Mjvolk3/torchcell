@@ -227,7 +227,62 @@
       "n_parameters": 99393,
       "max_graph_reg_loss": 0.0
     },
-    "w138": null,
+    "w138": {
+      "pack": "w138",
+      "stem": "w138_pathlogsmm_h36l3p1_e200",
+      "cells": [
+        {
+          "seed": 2700,
+          "auroc": 0.9004720692368214,
+          "select_epoch": 83,
+          "n_parameters": 115413,
+          "max_graph_reg_loss": 0.0
+        },
+        {
+          "seed": 2701,
+          "auroc": 0.8819826907946499,
+          "select_epoch": 50,
+          "n_parameters": 115413,
+          "max_graph_reg_loss": 0.0
+        },
+        {
+          "seed": 2702,
+          "auroc": 0.8823760818253343,
+          "select_epoch": 103,
+          "n_parameters": 115413,
+          "max_graph_reg_loss": 0.0
+        },
+        {
+          "seed": 2703,
+          "auroc": 0.8629032258064516,
+          "select_epoch": 132,
+          "n_parameters": 115413,
+          "max_graph_reg_loss": 0.0
+        },
+        {
+          "seed": 2704,
+          "auroc": 0.8900472069236821,
+          "select_epoch": 62,
+          "n_parameters": 115413,
+          "max_graph_reg_loss": 0.0
+        },
+        {
+          "seed": 2705,
+          "auroc": 0.9059795436664044,
+          "select_epoch": 43,
+          "n_parameters": 115413,
+          "max_graph_reg_loss": 0.0
+        }
+      ],
+      "mean_auroc": 0.8872934697088907,
+      "sd_auroc": 0.015347292842746794,
+      "min_auroc": 0.8629032258064516,
+      "max_auroc": 0.9059795436664044,
+      "min_select_epoch": 43,
+      "max_select_epoch": 132,
+      "n_parameters": 115413,
+      "max_graph_reg_loss": 0.0
+    },
     "w139": null,
     "w140": null
   },
@@ -588,15 +643,251 @@
       "mean_difference": -0.010097036454235523,
       "sd_difference": 0.0036261748726247834,
       "n_positive": 0
+    },
+    {
+      "name": "hard mask on the second and third blocks against on the second",
+      "arm": {
+        "pack": "w138",
+        "stem": "w138_pathlogsmm_h36l3p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "auroc": 0.9004720692368214,
+            "select_epoch": 83,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2701,
+            "auroc": 0.8819826907946499,
+            "select_epoch": 50,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2702,
+            "auroc": 0.8823760818253343,
+            "select_epoch": 103,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2703,
+            "auroc": 0.8629032258064516,
+            "select_epoch": 132,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2704,
+            "auroc": 0.8900472069236821,
+            "select_epoch": 62,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2705,
+            "auroc": 0.9059795436664044,
+            "select_epoch": 43,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          }
+        ],
+        "mean_auroc": 0.8872934697088907,
+        "sd_auroc": 0.015347292842746794,
+        "min_auroc": 0.8629032258064516,
+        "max_auroc": 0.9059795436664044,
+        "min_select_epoch": 43,
+        "max_select_epoch": 132,
+        "n_parameters": 115413,
+        "max_graph_reg_loss": 0.0
+      },
+      "control": {
+        "pack": "w137",
+        "stem": "w137_pathlogsmask_h36l2p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "auroc": 0.8998819826907947,
+            "select_epoch": 57,
+            "n_parameters": 99393,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2701,
+            "auroc": 0.9022423288749016,
+            "select_epoch": 36,
+            "n_parameters": 99393,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2702,
+            "auroc": 0.9103068450039339,
+            "select_epoch": 73,
+            "n_parameters": 99393,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2703,
+            "auroc": 0.8987018095987411,
+            "select_epoch": 40,
+            "n_parameters": 99393,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2704,
+            "auroc": 0.9047993705743509,
+            "select_epoch": 45,
+            "n_parameters": 99393,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2705,
+            "auroc": 0.9032258064516129,
+            "select_epoch": 38,
+            "n_parameters": 99393,
+            "max_graph_reg_loss": 0.0
+          }
+        ],
+        "mean_auroc": 0.9031930238657225,
+        "sd_auroc": 0.0041285759252385895,
+        "min_auroc": 0.8987018095987411,
+        "max_auroc": 0.9103068450039339,
+        "min_select_epoch": 36,
+        "max_select_epoch": 73,
+        "n_parameters": 99393,
+        "max_graph_reg_loss": 0.0
+      },
+      "n": 6,
+      "mean_difference": -0.01589955415683188,
+      "sd_difference": 0.015368160184324188,
+      "n_positive": 2
+    },
+    {
+      "name": "hard mask on the second and third blocks against one unmasked block",
+      "arm": {
+        "pack": "w138",
+        "stem": "w138_pathlogsmm_h36l3p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "auroc": 0.9004720692368214,
+            "select_epoch": 83,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2701,
+            "auroc": 0.8819826907946499,
+            "select_epoch": 50,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2702,
+            "auroc": 0.8823760818253343,
+            "select_epoch": 103,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2703,
+            "auroc": 0.8629032258064516,
+            "select_epoch": 132,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2704,
+            "auroc": 0.8900472069236821,
+            "select_epoch": 62,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2705,
+            "auroc": 0.9059795436664044,
+            "select_epoch": 43,
+            "n_parameters": 115413,
+            "max_graph_reg_loss": 0.0
+          }
+        ],
+        "mean_auroc": 0.8872934697088907,
+        "sd_auroc": 0.015347292842746794,
+        "min_auroc": 0.8629032258064516,
+        "max_auroc": 0.9059795436664044,
+        "min_select_epoch": 43,
+        "max_select_epoch": 132,
+        "n_parameters": 115413,
+        "max_graph_reg_loss": 0.0
+      },
+      "control": {
+        "pack": "w134",
+        "stem": "w134_pathlogw36_h36l1p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "auroc": 0.9150275373721479,
+            "select_epoch": 41,
+            "n_parameters": 83373,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2701,
+            "auroc": 0.9150275373721479,
+            "select_epoch": 41,
+            "n_parameters": 83373,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2702,
+            "auroc": 0.9219118804091266,
+            "select_epoch": 39,
+            "n_parameters": 83373,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2703,
+            "auroc": 0.9063729346970889,
+            "select_epoch": 38,
+            "n_parameters": 83373,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2704,
+            "auroc": 0.9073564122738002,
+            "select_epoch": 33,
+            "n_parameters": 83373,
+            "max_graph_reg_loss": 0.0
+          },
+          {
+            "seed": 2705,
+            "auroc": 0.9099134539732494,
+            "select_epoch": 40,
+            "n_parameters": 83373,
+            "max_graph_reg_loss": 0.0
+          }
+        ],
+        "mean_auroc": 0.9126016260162602,
+        "sd_auroc": 0.005864913645733845,
+        "min_auroc": 0.9063729346970889,
+        "max_auroc": 0.9219118804091266,
+        "min_select_epoch": 33,
+        "max_select_epoch": 41,
+        "n_parameters": 83373,
+        "max_graph_reg_loss": 0.0
+      },
+      "n": 6,
+      "mean_difference": -0.025308156307369527,
+      "sd_difference": 0.015675369754804526,
+      "n_positive": 0
     }
   ],
   "pending": [
     "KL regularizer on the second block against two unmasked blocks",
-    "hard mask on the second and third blocks against on the second",
-    "hard mask on the second and third blocks against one unmasked block",
     "the graphs' label-propagation store against the pFBA vector",
     "pFBA with the label-propagation store appended against pFBA alone",
     "pFBA with the label-propagation store appended against the store alone"
   ],
-  "seconds": 0.06795668601989746
+  "seconds": 0.09827852249145508
 }

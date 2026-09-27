@@ -493,6 +493,11 @@ that forces the second block to attend along the graphs is under the free block 
 every seed, on the target whose labels propagate along those graphs at 0.902
 (Section~\ref{sec:mp-architectures}): attention restricted to a gene's cataloged
 neighbors is not how this model reads them.
+A second masked block (w138, job 2910, 49 min; three blocks, the mask on the second
+and third, 115,413 parameters) reads 0.887 (sd 0.015) against the one masked block's
+0.903 ($-0.016$ paired, sd 0.015, two of six) and the width control's 0.913 ($-0.025$,
+sd 0.016, none of six), the seeds 0.863 to 0.906 selecting at epochs 43 to 132: each
+masked block costs about as much as the last, and the seed spread triples.
 
 \input{tables/pattern_ladder}
 

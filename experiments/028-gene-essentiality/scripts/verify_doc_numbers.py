@@ -3568,6 +3568,76 @@ CHECKS: list[Check] = [
         recompute=ladder_pair("hard mask on the second block against two unmasked blocks", "max_select_epoch", "arm"),
         tolerance=0.5,
     ),
+    Check(
+        claim="pattern ladder: w138 arm",
+        stated=0.887,
+        recompute=ladder_pair("hard mask on the second and third blocks against on the second", "mean_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w138 arm sd",
+        stated=0.015,
+        recompute=ladder_pair("hard mask on the second and third blocks against on the second", "sd_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w138 against one mask",
+        stated=-0.016,
+        recompute=ladder_pair("hard mask on the second and third blocks against on the second", "mean_difference"),
+    ),
+    Check(
+        claim="pattern ladder: w138 against one mask sd",
+        stated=0.015,
+        recompute=ladder_pair("hard mask on the second and third blocks against on the second", "sd_difference"),
+    ),
+    Check(
+        claim="pattern ladder: w138 seeds above one mask",
+        stated=2,
+        recompute=ladder_pair("hard mask on the second and third blocks against on the second", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w138 against width control",
+        stated=-0.025,
+        recompute=ladder_pair("hard mask on the second and third blocks against one unmasked block", "mean_difference"),
+    ),
+    Check(
+        claim="pattern ladder: w138 against width control sd",
+        stated=0.016,
+        recompute=ladder_pair("hard mask on the second and third blocks against one unmasked block", "sd_difference"),
+    ),
+    Check(
+        claim="pattern ladder: w138 seeds above width control",
+        stated=0,
+        recompute=ladder_pair("hard mask on the second and third blocks against one unmasked block", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w138 parameters",
+        stated=115413,
+        recompute=ladder_pair("hard mask on the second and third blocks against on the second", "n_parameters", "arm"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w138 seed min",
+        stated=0.863,
+        recompute=ladder_pair("hard mask on the second and third blocks against on the second", "min_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w138 seed max",
+        stated=0.906,
+        recompute=ladder_pair("hard mask on the second and third blocks against on the second", "max_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w138 select epoch min",
+        stated=43,
+        recompute=ladder_pair("hard mask on the second and third blocks against on the second", "min_select_epoch", "arm"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w138 select epoch max",
+        stated=132,
+        recompute=ladder_pair("hard mask on the second and third blocks against on the second", "max_select_epoch", "arm"),
+        tolerance=0.5,
+    ),
 ]
 
 

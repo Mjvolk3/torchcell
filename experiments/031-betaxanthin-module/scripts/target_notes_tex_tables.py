@@ -777,6 +777,224 @@ def head_decomposition() -> str | None:
     )
 
 
+#: The arms of the coverage split (target_coverage_split.py --name aapool), in table order.
+COVERAGE_SPLIT_LABELS = (
+    ("w137_bxdel_h12l1p1_e200", "control, no store (round 128)"),
+    ("w167_bxdelgo_h12l1p1_e200", "GO affine (150)"),
+    ("w156_bxdelpfba_h12l1p1_e200", "HiGHS flux affine (139)"),
+    ("w198_bxdelaapool_h12l1p1_e200", "pool, linear slot (181)"),
+    ("w199_bxdelaapoolmlp_h12l1p1_e200", "pool through 64 (182)"),
+    ("w206_bxdelaapoolmlp256_h12l1p1_e200", "pool through 256 (187)"),
+    ("w220_bxdelaapoolmlp256drop_h12l1p1_e200", "pool through 256, dropout 0.3 (203)"),
+    ("w221_bxdelaapoolmlp256std_h12l1p1_e200", "pool through 256, standardized (204)"),
+    (
+        "w217_bxdelgolinaapoolmlp256_h12l1p1_e200",
+        "GO linear beside the pool through 256 (198)",
+    ),
+    (
+        "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200",
+        "three families linear beside the pool through 256 (199)",
+    ),
+)
+
+
+def coverage_split() -> str | None:
+    """Each arm's pinned read on the genes the pool covers and on the rest."""
+    src = results("betaxanthin", "target_coverage_split_aapool.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    by_stem = {a["stem"]: a for a in d["arms"]}
+    rows = []
+    for stem, label in COVERAGE_SPLIT_LABELS:
+        a = by_stem[stem]
+        rows.append(
+            f"    {label} & {a['mean_spearman_all']:+.3f} & {a['mean_spearman_covered']:+.3f} & "
+            f"{a['mean_spearman_uncovered']:+.3f} & {a['mean_uncovered_prediction_percentile']:.2f} \\\\"
+        )
+    s0 = d["arms"][0]["seeds"][0]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The pinned read split by the pool's coverage]{Each arm's pinned-test "
+        f"Spearman (six seeds) on all {s0['n_pinned']} pinned genes with a target, on the "
+        f'{s0["n_covered"]} the M\\"ulleder pool covers and on the '
+        f"{s0['n_pinned'] - s0['n_covered']} it does not, and the mean over the uncovered "
+        "genes of the fraction of covered genes predicted below them (0.5 is no separation, "
+        "0 puts every uncovered gene under every covered one). The trainer reads zeros in "
+        "every store column for a gene the store does not cover, so a measured store hands "
+        "the slot a coverage indicator beside its values. The mean standardized target is "
+        f"{s0['mean_target_covered']:+.2f} on the covered genes and "
+        f"{s0['mean_target_uncovered']:+.2f} on the uncovered, and the indicator alone reads "
+        f"the target at {s0['coverage_indicator_spearman']:+.3f}. Written by "
+        "\\texttt{target\\_notes\\_tex\\_tables.py} from "
+        "\\texttt{results/target\\_coverage\\_split\\_aapool.json} "
+        "(\\texttt{target\\_coverage\\_split.py}).}\n"
+        "  \\label{tab:coverage-split}\n"
+        "  \\begin{tabular}{@{}p{72mm}rrrr@{}}\n    \\hline\n"
+        "    arm & all & covered & uncovered & uncovered percentile \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "betaxanthin",
+        "coverage_split",
+        body,
+        "results/target_coverage_split_aapool.json",
+    )
+
+
+#: The pool perceptron's fit variants (2026-09-27, target_go_models.py): the file stem
+#: after ``go_models_betaxanthin_pool_fit_`` (or a sweep file), the encoding, the row an
+#: uncovered gene reads, whether the FBA growth ratio is prepended, and the fit.
+POOL_FIT_VARIANTS = (
+    (
+        "go_models_betaxanthin_pool_h256.json",
+        "standardized",
+        "wild type",
+        "no",
+        "full batch, MSE, ReLU",
+    ),
+    (
+        "go_models_betaxanthin_pool_raw_h256.json",
+        "$\\log(1+v)$",
+        "wild type",
+        "no",
+        "full batch, MSE, ReLU",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_batch32.json",
+        "standardized",
+        "wild type",
+        "no",
+        "batch 32, MSE, ReLU",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_crps.json",
+        "standardized",
+        "wild type",
+        "no",
+        "full batch, CRPS, ReLU",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_gelu.json",
+        "standardized",
+        "wild type",
+        "no",
+        "full batch, MSE, GELU",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_wd.json",
+        "standardized",
+        "wild type",
+        "no",
+        "full batch, MSE, ReLU, decay $10^{-4}$",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_trainer.json",
+        "standardized",
+        "wild type",
+        "no",
+        "the trainer's fit",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_trainer_raw.json",
+        "$\\log(1+v)$",
+        "wild type",
+        "no",
+        "the trainer's fit",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_ratio_trainer_raw.json",
+        "$\\log(1+v)$",
+        "wild type",
+        "yes",
+        "the trainer's fit",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_zero_std.json",
+        "standardized",
+        "zeros",
+        "no",
+        "full batch, MSE, ReLU",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_zero_raw.json",
+        "$\\log(1+v)$",
+        "zeros",
+        "no",
+        "full batch, MSE, ReLU",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_zero_raw_trainer.json",
+        "$\\log(1+v)$",
+        "zeros",
+        "no",
+        "the trainer's fit",
+    ),
+    (
+        "go_models_betaxanthin_pool_fit_replica.json",
+        "$\\log(1+v)$",
+        "zeros",
+        "yes",
+        "the trainer's fit",
+    ),
+)
+
+
+def pool_fit_variants() -> str | None:
+    """The pool through 256 on CPU under the trainer's encoding, missing row and fit."""
+    rows = []
+    for name, enc, missing, ratio, fit in POOL_FIT_VARIANTS:
+        src = results("betaxanthin", name)
+        if not osp.isfile(src):
+            return None
+        with open(src) as fh:
+            d = json.load(fh)
+        a = next(x for x in d["arms"] if x["arm"] == "store_mlp")
+        assert d["mlp_hidden"] == 256, src
+        cov = [r.get("test_pinned_spearman_covered") for r in a["seeds"]]
+        cov_s = (
+            f"{sum(c for c in cov if c is not None) / len(cov):+.3f}"
+            if all(c is not None for c in cov)
+            else "--"
+        )
+        epochs = f"{min(r['select_epoch'] for r in a['seeds'])} to {max(r['select_epoch'] for r in a['seeds'])}"
+        rows.append(
+            f"    {enc} & {missing} & {ratio} & {fit} & {a['single_mean_spearman']:+.3f} "
+            f"({a['single_sd_spearman']:.3f}) & {cov_s} & {a['ensemble_spearman']:+.3f} & {epochs} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The pool perceptron under the trainer's encoding, missing row and fit]{"
+        "The measured pool through one hidden layer of 256 on CPU (\\texttt{target\\_go\\_models.py}), "
+        "six seeds, 200 epochs, the epoch selected by a five-epoch moving average of the "
+        "validation per-feature Pearson, varying what the transformer's slot has and this "
+        "harness did not: the encoding of the nineteen columns, the row a gene the pool does "
+        "not cover reads (its wild-type row, or zeros as the trainer's solve table reads it), "
+        "whether the deleted gene's FBA growth ratio on YPD is prepended (the affine's first "
+        "column), and the fit (full batch with the masked MSE and ReLU, or the trainer's: "
+        "minibatches of 32, the Gaussian CRPS on a (mean, log sigma) pair, AdamW at "
+        "$10^{-3}$ with decay $10^{-4}$, GELU). Columns: the single-seed pinned-test Spearman "
+        "with the standard deviation over seeds, the same read on the 556 pinned genes the "
+        "pool covers, the six-seed ensemble, the range of selected epochs. The last row is "
+        "the transformer's slot rebuilt on CPU. Written by "
+        "\\texttt{target\\_notes\\_tex\\_tables.py} from "
+        "\\texttt{results/go\\_models\\_betaxanthin\\_pool\\_*.json}.}\n"
+        "  \\label{tab:pool-fit-variants}\n"
+        "  \\begin{tabular}{@{}llllrrrp{16mm}@{}}\n    \\hline\n"
+        "    encoding & missing row & ratio & fit & single seed (sd) & covered & ensemble & epochs \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "betaxanthin",
+        "pool_fit_variants",
+        body,
+        "results/go_models_betaxanthin_pool_fit_<variant>.json",
+    )
+
+
 SCORE_MLP_WIDTHS = (16, 256, 1024)
 SCORE_MLP_LABELS = {
     "store_mlp": "perceptron over the measured betaxanthin score",
@@ -901,6 +1119,8 @@ def main() -> None:
         cooper_mlp("betaxanthin"),
         cooper_mlp("amino_acids"),
         head_decomposition(),
+        coverage_split(),
+        pool_fit_variants(),
         endpoint_matrix(),
         score_mlp_sweep(),
         target_transfer("betaxanthin"),

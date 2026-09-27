@@ -262,6 +262,60 @@ def graph_reg_loss_over_cells(layers: int, what: str, max_wave: int = 219):
     return run
 
 
+def coverage(name: str, stem: str, key: str):
+    """An arm's mean over seeds from a target_coverage_split run (``key`` an ArmSplit
+    mean), or a first-seed count/target statistic (``n_pinned``, ``n_covered``,
+    ``mean_target_covered``, ``mean_target_uncovered``, ``coverage_indicator_spearman``).
+    """
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, f"target_coverage_split_{name}.json")))
+        a = next(x for x in d["arms"] if x["stem"] == stem)
+        if key in a:
+            return float(a[key])
+        return float(a["seeds"][0][key])
+
+    return run
+
+
+def fit_variant(name: str, key: str):
+    """A value of the pool perceptron's fit variant ``name`` (store_mlp arm); ``covered``
+    is the mean over seeds of the read on the pinned genes the pool covers.
+    """
+
+    def run() -> float:
+        import json
+
+        d = json.load(
+            open(osp.join(RESULTS, f"go_models_betaxanthin_pool_fit_{name}.json"))
+        )
+        a = next(x for x in d["arms"] if x["arm"] == "store_mlp")
+        if key == "covered":
+            v = [r["test_pinned_spearman_covered"] for r in a["seeds"]]
+            assert all(x is not None for x in v)
+            return float(sum(v) / len(v))
+        return float(a[key])
+
+    return run
+
+
+def pool_mlp_covered(name: str):
+    """The mean covered-genes read of a pool sweep file that recorded it."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, name)))
+        a = next(x for x in d["arms"] if x["arm"] == "store_mlp")
+        v = [r["test_pinned_spearman_covered"] for r in a["seeds"]]
+        assert all(x is not None for x in v), name
+        return float(sum(v) / len(v))
+
+    return run
+
+
 def pool_mlp(hidden: int, arm: str, key: str, name: str | None = None):
     """A value of one arm of the CPU perceptron sweep over the measured pool
     (target_go_models.py --store YPD_bx_aapool --mlp-hidden <hidden>); ``name`` picks a
@@ -10891,6 +10945,267 @@ CHECKS: list[Check] = [
             "max",
         ),
         tolerance=0.006,
+    ),
+    # sec:coverage -- the pool's coverage indicator and the slot rebuilt on CPU.
+    Check(
+        claim="coverage: pinned genes with a target",
+        stated=629,
+        recompute=coverage("aapool", "w206_bxdelaapoolmlp256_h12l1p1_e200", "n_pinned"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="coverage: covered genes",
+        stated=556,
+        recompute=coverage(
+            "aapool", "w206_bxdelaapoolmlp256_h12l1p1_e200", "n_covered"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="coverage: uncovered genes",
+        stated=73,
+        recompute=lambda: (
+            coverage("aapool", "w206_bxdelaapoolmlp256_h12l1p1_e200", "n_pinned")()
+            - coverage("aapool", "w206_bxdelaapoolmlp256_h12l1p1_e200", "n_covered")()
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="coverage: mean target covered",
+        stated=0.1,
+        recompute=coverage(
+            "aapool", "w206_bxdelaapoolmlp256_h12l1p1_e200", "mean_target_covered"
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="coverage: mean target uncovered",
+        stated=-0.26,
+        recompute=coverage(
+            "aapool", "w206_bxdelaapoolmlp256_h12l1p1_e200", "mean_target_uncovered"
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="coverage: indicator alone",
+        stated=0.196,
+        recompute=coverage(
+            "aapool",
+            "w206_bxdelaapoolmlp256_h12l1p1_e200",
+            "coverage_indicator_spearman",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: pool 256 all",
+        stated=0.279,
+        recompute=coverage(
+            "aapool", "w206_bxdelaapoolmlp256_h12l1p1_e200", "mean_spearman_all"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: pool 256 covered",
+        stated=0.212,
+        recompute=coverage(
+            "aapool", "w206_bxdelaapoolmlp256_h12l1p1_e200", "mean_spearman_covered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: pool 256 uncovered percentile",
+        stated=0.05,
+        recompute=coverage(
+            "aapool",
+            "w206_bxdelaapoolmlp256_h12l1p1_e200",
+            "mean_uncovered_prediction_percentile",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="coverage: pool linear covered",
+        stated=0.111,
+        recompute=coverage(
+            "aapool", "w198_bxdelaapool_h12l1p1_e200", "mean_spearman_covered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: pool linear all",
+        stated=0.195,
+        recompute=coverage(
+            "aapool", "w198_bxdelaapool_h12l1p1_e200", "mean_spearman_all"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: pool 64 covered",
+        stated=0.156,
+        recompute=coverage(
+            "aapool", "w199_bxdelaapoolmlp_h12l1p1_e200", "mean_spearman_covered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: pool 64 all",
+        stated=0.24,
+        recompute=coverage(
+            "aapool", "w199_bxdelaapoolmlp_h12l1p1_e200", "mean_spearman_all"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: control all",
+        stated=0.058,
+        recompute=coverage("aapool", "w137_bxdel_h12l1p1_e200", "mean_spearman_all"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: control covered",
+        stated=-0.013,
+        recompute=coverage(
+            "aapool", "w137_bxdel_h12l1p1_e200", "mean_spearman_covered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: GO affine all",
+        stated=0.202,
+        recompute=coverage("aapool", "w167_bxdelgo_h12l1p1_e200", "mean_spearman_all"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: GO affine covered",
+        stated=0.14,
+        recompute=coverage(
+            "aapool", "w167_bxdelgo_h12l1p1_e200", "mean_spearman_covered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: pool 256 over GO on covered genes",
+        stated=0.07,
+        recompute=lambda: (
+            coverage(
+                "aapool", "w206_bxdelaapoolmlp256_h12l1p1_e200", "mean_spearman_covered"
+            )()
+            - coverage("aapool", "w167_bxdelgo_h12l1p1_e200", "mean_spearman_covered")()
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="coverage: standardized covered",
+        stated=0.189,
+        recompute=coverage(
+            "aapool", "w221_bxdelaapoolmlp256std_h12l1p1_e200", "mean_spearman_covered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: standardized all",
+        stated=0.182,
+        recompute=coverage(
+            "aapool", "w221_bxdelaapoolmlp256std_h12l1p1_e200", "mean_spearman_all"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage: standardized uncovered percentile",
+        stated=0.44,
+        recompute=coverage(
+            "aapool",
+            "w221_bxdelaapoolmlp256std_h12l1p1_e200",
+            "mean_uncovered_prediction_percentile",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="fit: trainer fit on standardized",
+        stated=0.164,
+        recompute=fit_variant("trainer", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: harness own on standardized (reference)",
+        stated=0.219,
+        recompute=pool_mlp(256, "store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: minibatches alone",
+        stated=0.216,
+        recompute=fit_variant("batch32", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: CRPS alone",
+        stated=0.214,
+        recompute=fit_variant("crps", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: GELU alone",
+        stated=0.169,
+        recompute=fit_variant("gelu", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: weight decay alone",
+        stated=0.219,
+        recompute=fit_variant("wd", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: trainer fit on log1p, wild-type row",
+        stated=0.179,
+        recompute=fit_variant("trainer_raw", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: trainer fit on log1p, zero row",
+        stated=0.268,
+        recompute=fit_variant("zero_raw_trainer", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: replica all",
+        stated=0.274,
+        recompute=fit_variant("replica", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: replica sd",
+        stated=0.006,
+        recompute=fit_variant("replica", "single_sd_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: replica ensemble",
+        stated=0.275,
+        recompute=fit_variant("replica", "ensemble_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: replica covered",
+        stated=0.216,
+        recompute=fit_variant("replica", "covered"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="fit: replica parameters",
+        stated=5890,
+        recompute=lambda: float(
+            __import__("json").load(
+                open(osp.join(RESULTS, "go_models_betaxanthin_pool_fit_replica.json"))
+            )["arms"][0]["seeds"][0]["n_parameters"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="fit: ladder forest over the pool (reference)",
+        stated=0.28,
+        recompute=store_baseline("betaxanthin", "aa_pool", "forest", "mean_spearman"),
+        tolerance=0.0006,
     ),
 ]
 

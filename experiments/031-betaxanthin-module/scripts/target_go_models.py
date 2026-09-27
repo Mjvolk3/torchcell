@@ -96,6 +96,7 @@ from target_store_baselines import (  # noqa: E402
 
 from torchcell.datamodules import CellDataModule  # noqa: E402
 from torchcell.graph import SCerevisiaeGraph  # noqa: E402
+from torchcell.losses.distributional import gaussian_crps  # noqa: E402
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 
 ARMS = (
@@ -155,6 +156,9 @@ class SeedRead(BaseModel):
     test_pinned_spearman: float
     test_pinned_top50_enrichment: float | None
     test_all_spearman: float
+    #: The pinned read on the pinned genes the store covers (2026-09-27), the read the
+    #: coverage indicator cannot carry; None when the store covers every pinned gene.
+    test_pinned_spearman_covered: float | None = None
     n_parameters: int
     seconds: float
     pinned_pred: list[list[float]]
@@ -190,6 +194,12 @@ class Report(BaseModel):
     store: str = ""  # the study's flux store (STORE_SPEC) when empty
     mlp_hidden: int = HIDDEN_MLP
     mlp_depth: int = 1
+    batch_size: int = 0
+    loss: str = "mse"
+    weight_decay: float = 0.0
+    activation: str = "relu"
+    fba_ratio_csv: str = ""
+    store_missing: str = "wild_type"
     store_linear_columns: int = 0
     store_raw: bool = False
 
@@ -236,12 +246,15 @@ class TargetDCell(DCellStyle):
         return aux, self.out_head(state[:, -1, :])
 
 
-def perceptron(n_in: int, hidden: int, depth: int, n_out: int) -> nn.Sequential:
-    """``depth`` ReLU hidden layers of ``hidden`` units and a linear output."""
+def perceptron(
+    n_in: int, hidden: int, depth: int, n_out: int, activation: str = "relu"
+) -> nn.Sequential:
+    """``depth`` hidden layers of ``hidden`` units (ReLU or GELU) and a linear output."""
     layers: list[nn.Module] = []
     width = n_in
+    act = {"relu": nn.ReLU, "gelu": nn.GELU}[activation]
     for _ in range(depth):
-        layers += [nn.Linear(width, hidden), nn.ReLU()]
+        layers += [nn.Linear(width, hidden), act()]
         width = hidden
     layers.append(nn.Linear(width, n_out))
     return nn.Sequential(*layers)
@@ -275,6 +288,15 @@ class Task(BaseModel):
     hidden: int = HIDDEN_MLP
     depth: int = 1
     linear_columns: int = 0
+    #: The trainer's fit (2026-09-27): minibatches of ``batch_size`` rows (0 is full batch),
+    #: the Gaussian CRPS on a (mu, log sigma) pair per output instead of the masked MSE,
+    #: AdamW's weight decay, and GELU hidden units. Rebuilt from the checkpoints, the
+    #: transformer's pool slot alone reads 0.257 where this harness reads 0.236 at best;
+    #: these switches ask how much of that is the fit.
+    batch_size: int = 0
+    loss: str = "mse"
+    weight_decay: float = 0.0
+    activation: str = "relu"
 
 
 # worker state, inherited by fork
@@ -284,11 +306,24 @@ _ROWS: dict[str, np.ndarray] | None = None
 _PINNED: np.ndarray | None = None
 _HIER: Hierarchy | None = None
 _BLOCKS: dict[str, np.ndarray] | None = None
+_COVERED: np.ndarray | None = None  # the store covers the row (2026-09-27)
 
 
 def masked_mse(pred: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     obs = torch.isfinite(y)
     return ((pred - torch.nan_to_num(y)) ** 2)[obs].mean()
+
+
+def fit_loss(out: torch.Tensor, y: torch.Tensor, loss: str, n_out: int) -> torch.Tensor:
+    """The masked MSE, or the trainer's Gaussian CRPS on (mu, log sigma) columns with
+    log sigma clamped to [-6, 3] as the trainer clamps it.
+    """
+    if loss == "mse":
+        return masked_mse(out, y)
+    mu, log_sigma = out[:, :n_out], out[:, n_out:]
+    sigma = torch.exp(log_sigma.clamp(-6.0, 3.0))
+    obs = torch.isfinite(y)
+    return gaussian_crps(mu, sigma, torch.nan_to_num(y))[obs].mean()
 
 
 def run_task(task: Task) -> SeedRead:
@@ -338,9 +373,21 @@ def run_task(task: Task) -> SeedRead:
                 n_out,
             )
         else:
-            net = perceptron(x.shape[1], task.hidden, task.depth, n_out)
+            net = perceptron(
+                x.shape[1],
+                task.hidden,
+                task.depth,
+                n_out * (2 if task.loss == "crps" else 1),
+                task.activation,
+            )
+    assert task.loss == "mse" or task.arm not in DCELL_ARMS + TWO_SLOT_ARMS + SPLIT_ARMS
     params = list(net.parameters())
-    opt = torch.optim.Adam(params, lr=1e-3)
+    opt: torch.optim.Optimizer = (
+        torch.optim.AdamW(params, lr=1e-3, weight_decay=task.weight_decay)
+        if task.weight_decay > 0
+        else torch.optim.Adam(params, lr=1e-3)
+    )
+    gen = torch.Generator().manual_seed(task.seed)
     obs_val = np.isfinite(_Y[_ROWS["val"]])
     val_curve: list[float] = []
     test_preds: list[np.ndarray] = []
@@ -352,6 +399,8 @@ def run_task(task: Task) -> SeedRead:
             aux, out = cast(TargetDCell, net).forward_target(rows["train"])
         else:
             aux, out = None, net(x)
+            if task.loss == "crps":
+                out = out[:, :n_out]
         pred = (out.detach() * sd + mu).numpy()
         val_curve.append(
             float(per_feature_pearson(pred[_ROWS["val"]], _Y[_ROWS["val"]], obs_val))
@@ -359,8 +408,23 @@ def run_task(task: Task) -> SeedRead:
         test_preds.append(pred[_ROWS["test"]].copy())
         if epoch == task.epochs:
             break
+        if task.batch_size > 0:
+            # THE TRAINER'S FIT: one pass over the training rows in shuffled minibatches,
+            # a forward per batch, so the read at the top of the loop is the epoch's end.
+            order = rows["train"][torch.randperm(len(rows["train"]), generator=gen)]
+            for start in range(0, len(order), task.batch_size):
+                idx = order[start : start + task.batch_size]
+                opt.zero_grad()
+                fit_loss(net(x[idx]), y_std[idx], task.loss, n_out).backward()
+                opt.step()
+            continue
         opt.zero_grad()
-        loss = masked_mse(out[rows["train"]], y_std[rows["train"]])
+        if task.loss == "crps":
+            loss = fit_loss(
+                net(x)[rows["train"]], y_std[rows["train"]], task.loss, n_out
+            )
+        else:
+            loss = masked_mse(out[rows["train"]], y_std[rows["train"]])
         if aux is not None:
             tgt = aux_target[rows["train"]]
             fin = torch.isfinite(tgt)
@@ -390,6 +454,17 @@ def run_task(task: Task) -> SeedRead:
             float(spearmanr(test_preds[e][fin, j], truth_all[fin, j]).correlation)
         )
     top50 = top50_enrichment(pinned[:, 0], truth[:, 0])[0] if n_out == 1 else None
+    covered_read: float | None = None
+    if _COVERED is not None:
+        cov = _COVERED[_ROWS["test"]][_PINNED]
+        if 0 < cov.sum() < len(cov):
+            cov_rhos = []
+            for j in range(n_out):
+                fin = np.isfinite(truth[:, j]) & cov
+                cov_rhos.append(
+                    float(spearmanr(pinned[fin, j], truth[fin, j]).correlation)
+                )
+            covered_read = float(np.mean(cov_rhos))
     read = SeedRead(
         arm=task.arm,
         seed=task.seed,
@@ -398,6 +473,7 @@ def run_task(task: Task) -> SeedRead:
         test_pinned_spearman=float(np.mean(rhos)),
         test_pinned_top50_enrichment=top50,
         test_all_spearman=float(np.mean(all_rhos)),
+        test_pinned_spearman_covered=covered_read,
         n_parameters=sum(p.numel() for p in params),
         seconds=time.time() - t0,
         pinned_pred=pinned.tolist(),
@@ -413,7 +489,7 @@ def run_task(task: Task) -> SeedRead:
 
 
 def main() -> None:
-    global _X, _Y, _ROWS, _PINNED, _HIER, _BLOCKS
+    global _X, _Y, _ROWS, _PINNED, _HIER, _BLOCKS, _COVERED
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--target", required=True, choices=sorted(STUDY))
     ap.add_argument("--arms", nargs="+", default=list(ARMS), choices=ARMS)
@@ -431,6 +507,16 @@ def main() -> None:
     # the log1p columns as the transformer's affine reads them (2026-09-27), so a split
     # arm over a concatenated store matches the transformer's two-slot head's input.
     ap.add_argument("--store-raw", action="store_true")
+    # The trainer's fit (2026-09-27): --batch-size 32 --loss crps --weight-decay 1e-4
+    # --activation gelu is how the transformer's slot is fitted.
+    ap.add_argument("--batch-size", type=int, default=0)
+    ap.add_argument("--loss", default="mse", choices=("mse", "crps"))
+    ap.add_argument("--weight-decay", type=float, default=0.0)
+    ap.add_argument("--activation", default="relu", choices=("relu", "gelu"))
+    ap.add_argument("--fba-ratio-csv", default=None)
+    ap.add_argument(
+        "--store-missing", default="wild_type", choices=("wild_type", "zero")
+    )
     # MEASURED 2026-09-24: a forked pool of two workers sat idle for 77 min with no cell
     # finished (the parent had initialized torch's thread pool before forking, the
     # deadlock the fork warning names); in-process with 16 threads a DCell cell takes
@@ -554,12 +640,41 @@ def main() -> None:
             "flux": True,
         }
     )
+    # A gene the store does not cover reads its wild-type row, or, as the trainer's
+    # solve table reads it (2026-09-27), zeros in every column: the zero row is a
+    # coverage indicator the wild-type row is not, and on the pool it is worth 0.07.
+    missing_row = (
+        np.zeros_like(store_wild) if args.store_missing == "zero" else store_wild
+    )
+    store_covered = np.array(
+        [any(g in store_rows for g in gs) for gs in kept_genes], dtype=bool
+    )
     store = np.stack(
         [
-            next((store_rows[g] for g in gs if g in store_rows), store_wild)
+            next((store_rows[g] for g in gs if g in store_rows), missing_row)
             for gs in kept_genes
         ]
     ).astype(np.float32)
+    if args.fba_ratio_csv:
+        # THE TRAINER'S SLOT INPUT (2026-09-27): the affine and the hidden slot read the
+        # deleted gene's FBA growth ratio on the medium IN FRONT of the solve columns
+        # (FbaAffine, `--ess-fba-media`), 1.0 for a gene the ratio table does not cover,
+        # so the transformer's pool slot has twenty inputs where this harness had
+        # nineteen. The column is prepended here, read as the trainer reads it.
+        import csv
+
+        with open(args.fba_ratio_csv) as fh:
+            ratio = {r["gene"]: float(r[list(r)[1]]) for r in csv.DictReader(fh)}
+        col = np.array(
+            [[next((ratio[g] for g in gs if g in ratio), 1.0)] for gs in kept_genes],
+            dtype=np.float32,
+        )
+        store = np.concatenate([col, store], axis=1)
+        print(
+            f"  fba ratio column prepended from {args.fba_ratio_csv}: "
+            f"{int((col != 1.0).sum())} of {len(col)} rows covered",
+            flush=True,
+        )
     emb = embedding_matrix(("prot_T5_all",), DATA_ROOT, genome, graph)
     dim_emb = len(next(iter(emb.values())))
     prot = np.stack(
@@ -577,6 +692,7 @@ def main() -> None:
         sd[sd == 0] = 1.0
         return ((block - m) / sd).astype(np.float32)
 
+    _COVERED = store_covered
     _BLOCKS = {
         "go": x,
         "store": store if args.store_raw else standardized(store),
@@ -595,6 +711,10 @@ def main() -> None:
             hidden=args.mlp_hidden,
             depth=args.mlp_depth,
             linear_columns=args.store_linear_columns,
+            batch_size=args.batch_size,
+            loss=args.loss,
+            weight_decay=args.weight_decay,
+            activation=args.activation,
         )
         for a in args.arms
         for s in args.seeds
@@ -669,7 +789,13 @@ def main() -> None:
         mlp_hidden=args.mlp_hidden,
         mlp_depth=args.mlp_depth,
         store_linear_columns=args.store_linear_columns,
+        batch_size=args.batch_size,
+        loss=args.loss,
+        weight_decay=args.weight_decay,
+        activation=args.activation,
         store_raw=args.store_raw,
+        fba_ratio_csv=args.fba_ratio_csv or "",
+        store_missing=args.store_missing,
     )
     out = args.out or osp.join(
         EXPERIMENT_ROOT, STUDY[args.target], "results", f"go_models_{args.target}.json"

@@ -911,8 +911,10 @@ at epochs 2 to 8 on validation Pearson 0.22 to 0.27, where the $\log(1+v)$ cells
 select at 29 to 138 on 0.36 to 0.40. So the encoding that lifted the perceptron over
 the same columns (0.236 standardized against 0.173 raw, Section~\ref{sec:physics})
 costs the transformer's slot 0.10, and every seed selects within eight epochs, the
-schedule of the annotation's affine: in this trainer the pool is read best as the
-flux stores are read, unscaled.
+schedule of the annotation's affine. Section~\ref{sec:coverage} reads why: a gene the
+pool does not cover reads zeros, standardizing moves that row to the column means, and
+on the covered genes the standardized arm reads 0.189 against 0.212, so most of the
+0.10 is the coverage indicator and 0.02 of it the values.
 
 Round 203 is read (job 2885, 3 h 58 min): the pool through 256 with dropout 0.3 inside
 the transformer, against 0.1. It reads 0.279 (sd 0.018) against 0.279 (sd 0.023), a

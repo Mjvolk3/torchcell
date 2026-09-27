@@ -322,9 +322,10 @@ prediction; on the other four the head is live, reads 0.05 to 0.15 on its own, a
 with the slot at 0.04 to 0.14, and adds $+0.055$, $+0.046$, $+0.047$ and $-0.020$ to
 the slot's read. Over the six seeds the slot alone reads 0.257 and the backbone adds
 0.021. So the arm's 0.279 is the pool through the hidden layer, fitted by this trainer,
-plus a backbone that adds 0.05 when it survives and nothing when it does not; the
-0.043 between the transformer and the perceptron over the same columns (0.236) is
-0.02 of fit and 0.02 of a live backbone, and not the graph. With the annotation in
+plus a backbone that adds 0.05 when it survives and nothing when it does not, and the
+0.043 between the transformer and the perceptron over the same columns (0.236) is not
+the graph; Section~\ref{sec:coverage} rebuilds the slot on CPU and finds what it is.
+With the annotation in
 the slot the head is a constant on every seed: the GO affine (round 150), the two-slot
 head (198) and the three families with two slots (199) select at epochs 7 to 15, before
 the blocks have moved, and their reads are the slot's within two ten-thousandths. The flux
@@ -346,6 +347,47 @@ this study, and the release rule on the pool slot (round 210) asks whether a bac
 that escapes first adds on every seed.
 
 \input{tables/head_decomposition}
+
+\subsection{What the pool's coverage carries, and the slot rebuilt on CPU\secstatus{todo}}
+\label{sec:coverage}
+
+The slot rebuilt from the checkpoint reproduces the dump to a Spearman of 1.0000 only
+when a gene the pool does not cover reads zeros in every column, as the trainer's solve
+table reads it, and not the wild-type row the perceptron harness and the ladder gave
+it. That row is an indicator: 73 of the 629 pinned genes with a target are strains
+M\"ulleder did not measure, their mean standardized betaxanthin is $-0.26$ against
+$+0.10$ for the 556 she did, and the indicator alone reads the target at 0.196, the
+level of the GO affine. Table~\ref{tab:coverage-split}
+(\texttt{target\_coverage\_split.py}) reads every arm on the two groups. The pool
+through 256 ranks the uncovered genes at the fifth percentile of the covered ones and
+reads 0.212 on the covered genes against 0.279 on all; the pool linear 0.111 against
+0.195, the pool through 64 0.156 against 0.240. The subset is harder for every model,
+the control falling from 0.058 to $-0.013$ and the GO affine from 0.202 to 0.140, so
+the comparison that holds is within the covered genes: there the pool through 256 reads
+0.212 against the annotation's 0.140 and the control's $-0.013$, and the amino-acid
+values themselves add 0.07 over the annotation on the strains that have them. The
+standardized pool (round 204) is the exception that shows the mechanism: standardizing
+puts the zero row near the column means, the uncovered genes land at the 44th
+percentile, and the arm reads 0.189 on the covered genes against 0.182 on all, so the
+0.10 that standardization cost is the indicator and 0.02 of it the values.
+
+With the indicator, the trainer's fit and the affine's first column in hand, the
+transformer's slot is rebuilt on CPU (Table~\ref{tab:pool-fit-variants}). The trainer's
+fit alone on the standardized columns reads 0.164, under the harness's own 0.219, and
+every one of its parts alone reads at or under it (minibatches 0.216, the CRPS 0.214,
+GELU 0.169, weight decay 0.219). The zero row is what moves the read: under the
+$\log(1+v)$ encoding it takes the trainer's fit from 0.179 to 0.268, and with the
+growth ratio prepended the harness reads 0.274 (sd 0.006, ensemble 0.275) on all pinned
+genes and 0.216 on the covered ones, against the transformer's 0.279 and 0.212. A
+perceptron of 5,890 parameters over twenty columns, trained in seconds a seed, is the
+transformer's best arm to within its seed spread, on both groups of genes. The ladder's
+forest at 0.280 (Table~\ref{tab:store-baselines}) read the wild-type row for the
+uncovered genes and carries no indicator; its read on the covered genes alone is not
+yet taken.
+
+\input{tables/coverage_split}
+
+\input{tables/pool_fit_variants}
 
 \input{tables/go_models}
 

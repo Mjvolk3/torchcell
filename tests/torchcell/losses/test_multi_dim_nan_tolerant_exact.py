@@ -83,7 +83,7 @@ LOG2 = math.log(2.0)
 
 
 def _naive_supcr(emb: torch.Tensor, labels: torch.Tensor, temp: float) -> float:
-    """SupCR by the per-anchor formula, with the code's tie rule (k = i when d_ij = 0)."""
+    """SupCR by the per-anchor formula: the denominator sums over k != i with d_ik >= d_ij."""
     valid = ~torch.isnan(labels)
     emb, labels = emb[valid].double(), labels[valid].double()
     m = len(labels)
@@ -100,7 +100,7 @@ def _naive_supcr(emb: torch.Tensor, labels: torch.Tensor, temp: float) -> float:
             denominator = sum(
                 math.exp(sims[i, k].item())
                 for k in range(m)
-                if dist[i, k] >= dist[i, j]
+                if k != i and dist[i, k] >= dist[i, j]
             )
             total += -math.log(math.exp(sims[i, j].item()) / denominator)
     return total / (m * (m - 1))
@@ -142,22 +142,25 @@ def test_fewer_than_two_valid_labels_returns_zero() -> None:
     assert loss.item() == 0.0
 
 
-def test_tied_labels_include_the_anchor_in_the_denominator() -> None:
-    """Finding: for d_ij = 0 the suffix sum also covers k = i, the anchor's own exp(1/T).
+def test_tied_labels_exclude_the_anchor_from_the_denominator() -> None:
+    """For d_ij = 0 the suffix sum covers the tied k but not k = i itself.
 
     Labels (0, 0, 1): anchors 0 and 1 each have a positive at distance 0, and the
-    denominator is 1 + e + e^c (self term e included), giving log(1 + e + e^c) for that
-    pair and 0 for the far pair; anchor 2 contributes log 2 twice. Loss =
-    (2 log(1 + e + e^c) + 2 log 2) / 6 = 0.8139067324. The SupCR paper sums over k != i,
-    which would give (2 log(1 + e^c) + 2 log 2) / 6 = 0.6003624961; the code does not.
+    denominator is 1 + e^c (the tied positive plus the far sample; the anchor's own
+    exp(1/T) = e is excluded), giving log(1 + e^c) for that pair and 0 for the far
+    pair; anchor 2 contributes log 2 twice. Loss = (2 log(1 + e^c) + 2 log 2) / 6 =
+    0.6003624961. Before the fix the anchor's own term entered the tied denominators
+    and the value was (2 log(1 + e + e^c) + 2 log 2) / 6 = 0.8139067324.
     """
     loss = SupCR(temperature=1.0).compute_dimension_loss(
         EMB, torch.tensor([0.0, 0.0, 1.0])
     )
-    expected = (2 * math.log(1 + math.e + EXP_C) + 2 * LOG2) / 6
+    expected = (2 * math.log(1 + EXP_C) + 2 * LOG2) / 6
     assert loss.item() == pytest.approx(expected, abs=1e-6)
-    assert loss.item() == pytest.approx(0.8139067324, abs=1e-6)
-    assert loss.item() != pytest.approx(0.6003624961, abs=1e-3)
+    assert loss.item() == pytest.approx(0.6003624961, abs=1e-6)
+    assert loss.item() == pytest.approx(
+        _naive_supcr(EMB, torch.tensor([0.0, 0.0, 1.0]), 1.0), abs=1e-6
+    )
 
 
 def test_forward_stacks_one_loss_per_label_column() -> None:
@@ -396,39 +399,34 @@ def _central_difference(values: torch.Tensor, grad_out: torch.Tensor) -> torch.T
     return out
 
 
-def test_fast_soft_sort_backward_is_the_negated_block_average() -> None:
-    """Finding: ``FastSoftSort.backward`` returns minus the true Jacobian-vector product.
+def test_fast_soft_sort_backward_is_the_block_average() -> None:
+    """``FastSoftSort.backward`` is the Jacobian-vector product of the soft sort.
 
     soft = w - v with v = PAV(w - s), so d soft / d s = +P (block averaging of the
-    upstream gradient, unsorted); the code emits -P. For values (1, 1.5, 3) and
-    grad_output (1, 2, 3): blocks {0, 1} average to 1.5 and {2} keeps 3; unsorting by
-    the permutation (2, 1, 0) gives +(3, 1.5, 1.5), and the code returns
-    (-3, -1.5, -1.5). The central difference confirms the positive value, and
-    ``torch.autograd.gradcheck`` fails on this function with a Jacobian mismatch.
+    upstream gradient, unsorted). For values (1, 1.5, 3) and grad_output (1, 2, 3):
+    blocks {0, 1} average to 1.5 and {2} keeps 3; unsorting by the permutation
+    (2, 1, 0) gives (3, 1.5, 1.5). The central difference agrees and
+    ``torch.autograd.gradcheck`` passes. Before the fix the code returned the negation.
     """
     values = torch.tensor([1.0, 1.5, 3.0], dtype=torch.float64, requires_grad=True)
     grad_out = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
     fast_soft_sort(values, 1.0).backward(grad_out)
     assert values.grad is not None
     torch.testing.assert_close(
-        values.grad, torch.tensor([-3.0, -1.5, -1.5], dtype=torch.float64)
+        values.grad, torch.tensor([3.0, 1.5, 1.5], dtype=torch.float64)
     )
     numeric = _central_difference(values.detach(), grad_out)
-    torch.testing.assert_close(
-        numeric, torch.tensor([3.0, 1.5, 1.5], dtype=torch.float64), atol=1e-8, rtol=0
-    )
-    torch.testing.assert_close(values.grad, -numeric, atol=1e-8, rtol=0)
+    torch.testing.assert_close(values.grad, numeric, atol=1e-8, rtol=0)
     fresh = torch.tensor([1.0, 1.5, 3.0], dtype=torch.float64, requires_grad=True)
-    with pytest.raises(RuntimeError, match="Jacobian mismatch for output 0"):
-        torch.autograd.gradcheck(lambda v: fast_soft_sort(v, 1.0), (fresh,))
+    assert torch.autograd.gradcheck(lambda v: fast_soft_sort(v, 1.0), (fresh,))
 
 
-def test_fast_soft_sort_backward_single_block_sums_to_minus_one_each() -> None:
-    """Finding (same sign flip): d sum(soft) / d values is +1 per element; the code gives -1."""
+def test_fast_soft_sort_backward_single_block_sums_to_one_each() -> None:
+    """D sum(soft) / d values is +1 per element (one block, mean of ones); before the fix -1."""
     values = torch.tensor([0.5, 1.0, 4.0], dtype=torch.float64, requires_grad=True)
     fast_soft_sort(values, 1.0).sum().backward()
     assert values.grad is not None
-    torch.testing.assert_close(values.grad, torch.full((3,), -1.0, dtype=torch.float64))
+    torch.testing.assert_close(values.grad, torch.full((3,), 1.0, dtype=torch.float64))
 
 
 # ---------------------------------------------------------------- WeightedDistLoss
@@ -522,43 +520,43 @@ def test_theoretical_labels_repeat_each_grid_value_by_its_count() -> None:
     )
 
 
-def test_dist_loss_forward_pairs_descending_predictions_with_ascending_labels() -> None:
-    """Finding: predictions are soft-sorted DESCENDING while the theoretical labels ascend.
+def test_dist_loss_forward_pairs_ascending_predictions_with_ascending_labels() -> None:
+    """The soft-sorted predictions are paired with the theoretical labels smallest first.
 
     Targets (0, 0, 2, 2) give the KDE density (0.4089717, 0.1820566, 0.4089717) on
     x = (0, 1, 2); x 4 = (1.636, 0.728, 1.636) -> counts (2, 1, 2), residual -1 taken
     from bin 0 -> (1, 1, 2) -> labels (0, 1, 2, 2). Predictions equal to the targets
-    soft-sort (strength 0.1, gaps <= 10) to exactly (2, 2, 0, 0), so the MSE against
-    (0, 1, 2, 2) is (4 + 1 + 4 + 4) / 4 = 3.25 instead of the 0.25 an ascending sort
-    would give. L1 on the same pairing is (2 + 1 + 2 + 2) / 4 = 1.75.
+    soft-sort (strength 0.1, gaps <= 10) to exactly (0, 0, 2, 2) after the flip, so
+    the MSE against (0, 1, 2, 2) is (0 + 1 + 0 + 0) / 4 = 0.25, and L1 is 1 / 4 = 0.25.
+    Before the fix the descending sort (2, 2, 0, 0) gave 3.25 and 1.75.
     """
     y = torch.tensor([[0.0], [0.0], [2.0], [2.0]])
     total, dims = WeightedDistLoss(bandwidth=0.5)(y, y)
     assert dims.shape == (1,)
-    assert dims[0].item() == pytest.approx(3.25, abs=1e-6)
-    assert total.item() == pytest.approx(3.25, abs=1e-6)
+    assert dims[0].item() == pytest.approx(0.25, abs=1e-6)
+    assert total.item() == pytest.approx(0.25, abs=1e-6)
     total_l1, _ = WeightedDistLoss(bandwidth=0.5, loss_fn="L1")(y, y)
-    assert total_l1.item() == pytest.approx(1.75, abs=1e-6)
+    assert total_l1.item() == pytest.approx(0.25, abs=1e-6)
 
 
-def test_dist_loss_default_weight_broadcasts_to_a_plain_sum() -> None:
-    """Finding: the default ones(1) weight repeats to (1, 1), so two dimensions SUM.
+def test_dist_loss_default_weight_is_uniform_and_sums_to_one() -> None:
+    """The default ones(1) weight repeats to (0.5, 0.5), so two dimensions average.
 
-    Explicit weights are normalized to sum to 1 at construction; the repeated default
-    is not, giving 3.25 + 3.25 = 6.5 for two identical columns. An all-NaN column
-    contributes 0.
+    Two identical columns give (0.25 + 0.25) / 2 = 0.25. An all-NaN column contributes
+    0 and keeps its weight (the weights are not renormalized over valid dimensions, as
+    they are in ``WeightedSupCRCell``), so the total is 0.5 * 0.25 = 0.125.
     """
     y = torch.tensor([[0.0], [0.0], [2.0], [2.0]])
     loss = WeightedDistLoss(bandwidth=0.5)
     total, dims = loss(torch.cat([y, y], 1), torch.cat([y, y], 1))
-    torch.testing.assert_close(loss.weights, torch.tensor([1.0, 1.0]))
-    torch.testing.assert_close(dims, torch.tensor([3.25, 3.25]), atol=1e-6, rtol=0)
-    assert total.item() == pytest.approx(6.5, abs=1e-6)
+    torch.testing.assert_close(loss.weights, torch.tensor([0.5, 0.5]))
+    torch.testing.assert_close(dims, torch.tensor([0.25, 0.25]), atol=1e-6, rtol=0)
+    assert total.item() == pytest.approx(0.25, abs=1e-6)
     total_nan, dims_nan = WeightedDistLoss(bandwidth=0.5)(
         torch.cat([y, y], 1), torch.cat([y, torch.full((4, 1), NAN)], 1)
     )
-    torch.testing.assert_close(dims_nan, torch.tensor([3.25, 0.0]), atol=1e-6, rtol=0)
-    assert total_nan.item() == pytest.approx(3.25, abs=1e-6)
+    torch.testing.assert_close(dims_nan, torch.tensor([0.25, 0.0]), atol=1e-6, rtol=0)
+    assert total_nan.item() == pytest.approx(0.125, abs=1e-6)
 
 
 def test_dist_loss_rejects_a_weight_vector_of_the_wrong_length() -> None:
@@ -582,32 +580,30 @@ def test_dist_loss_rejects_a_weight_vector_of_the_wrong_length() -> None:
         ("logcosh", [(LOG_COSH_1 + LOG_COSH_2) / 2, (LOG_COSH_1 + LOG_COSH_3) / 2]),
     ],
 )
-def test_combined_regression_total_is_the_unweighted_sum(
+def test_combined_regression_total_is_the_weighted_mean(
     loss_type: str, per_dim: list[float]
 ) -> None:
-    """Finding: the per-dimension weights never reach the total.
+    """Weights [1, 3] -> [0.25, 0.75]; the total is 0.25 * dim0 + 0.75 * dim1.
 
-    ``stacked_losses`` has shape [D, 1] and ``weights`` shape [D]; their product
-    broadcasts to [D, D], so the sum is (sum of dim losses) * (sum of weights) and the
-    division by the weight sum leaves the plain sum. With weights [1, 3] -> [0.25, 0.75]
-    the documented weighted mean of [2.5, 5.0] would be 4.375; the code returns 7.5.
+    For MSE that is 0.25 * 2.5 + 0.75 * 5.0 = 4.375. Before the fix the [D, 1] loss
+    stack broadcast against the [D] weights to [D, D] and the weights canceled, so the
+    total was the plain sum 7.5.
     """
     loss = CombinedRegressionLoss(loss_type=loss_type, weights=torch.tensor([1.0, 3.0]))
     total, dims = loss(Y_PRED, Y_TRUE)
     expected = torch.tensor(per_dim)
     torch.testing.assert_close(dims, expected, atol=1e-6, rtol=0)
-    assert total.item() == pytest.approx(float(expected.sum()), abs=1e-6)
-    assert total.item() != pytest.approx(
-        float(0.25 * expected[0] + 0.75 * expected[1]), abs=1e-3
+    assert total.item() == pytest.approx(
+        float(0.25 * expected[0] + 0.75 * expected[1]), abs=1e-6
     )
 
 
-def test_combined_regression_quantile_builds_the_grid_and_sums_per_dimension() -> None:
+def test_combined_regression_quantile_builds_the_grid_and_averages_dimensions() -> None:
     """Spacing 0.25 -> quantiles (0.25, 0.5, 0.75); default weights [0.5, 0.5].
 
     Dimension 0 residuals (-1, -2): q=0.25 mean 1.125, q=0.5 mean 0.75, q=0.75 mean
     0.375, sum 2.25. Dimension 1 residuals (1, -3): 1.25 + 1.0 + 0.75 = 3.0. The total
-    is the unweighted sum 5.25 (the same broadcast as the other loss types).
+    is the weighted mean (2.25 + 3.0) / 2 = 2.625; before the fix the plain sum 5.25.
     """
     loss = CombinedRegressionLoss(loss_type="quantile", quantile_spacing=0.25)
     assert isinstance(loss.loss_fn, NaNTolerantQuantileLoss)
@@ -615,7 +611,7 @@ def test_combined_regression_quantile_builds_the_grid_and_sums_per_dimension() -
     torch.testing.assert_close(loss.weights, torch.tensor([0.5, 0.5]))
     total, dims = loss(Y_PRED, Y_TRUE)
     torch.testing.assert_close(dims, torch.tensor([2.25, 3.0]), atol=1e-6, rtol=0)
-    assert total.item() == pytest.approx(5.25, abs=1e-6)
+    assert total.item() == pytest.approx(2.625, abs=1e-6)
 
 
 def test_combined_regression_all_nan_dimension_is_zero() -> None:

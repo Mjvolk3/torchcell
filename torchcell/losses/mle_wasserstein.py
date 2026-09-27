@@ -672,6 +672,11 @@ class MleWassSupCR(nn.Module):
                     temperature,
                 )
             else:
+                if temperature is not None:
+                    # The unbuffered cell has no temperature argument; apply the
+                    # scheduled value the same way the buffered cell does.
+                    assert isinstance(self.supcr_loss, WeightedSupCRCell)
+                    self.supcr_loss.supcr.temperature = temperature
                 supcr_val, supcr_dims = self.supcr_loss(z_P, targets)
 
             weighted_supcr = self.lambda_supcr * supcr_val

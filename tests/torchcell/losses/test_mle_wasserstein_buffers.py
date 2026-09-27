@@ -37,7 +37,7 @@ LABELS = torch.tensor([[0.0], [1.0], [3.0]])
 
 
 def _naive_supcr(emb: torch.Tensor, labels: torch.Tensor, temp: float) -> float:
-    """SupCR by the per-anchor formula, with the code's tie rule (k = i when d_ij = 0)."""
+    """SupCR by the per-anchor formula: the denominator sums over k != i with d_ik >= d_ij."""
     valid = ~torch.isnan(labels)
     emb, labels = emb[valid].double(), labels[valid].double()
     m = len(labels)
@@ -54,7 +54,7 @@ def _naive_supcr(emb: torch.Tensor, labels: torch.Tensor, temp: float) -> float:
             denominator = sum(
                 math.exp(sims[i, k].item())
                 for k in range(m)
-                if dist[i, k] >= dist[i, j]
+                if k != i and dist[i, k] >= dist[i, j]
             )
             total += -math.log(math.exp(sims[i, j].item()) / denominator)
     return total / (m * (m - 1))
@@ -204,10 +204,11 @@ def test_supcr_forward_halves_the_loss_at_full_buffer_weight() -> None:
     """Finding: the scale is 1 - w + 0.5 w, so the default buffer_weight 1.0 halves the loss.
 
     The batch is concatenated with the buffer that now holds the same 3 rows, so the
-    SupCR is evaluated on 6 rows with duplicated labels: 1.2417051 by the naive formula
-    (ties include the anchor's self term). Returned: 0.5 * 1.2417051 = 0.6208526; the
-    per-dimension value is the unscaled 1.2417051. The default weights buffer is
-    ones(2) / 2 and broadcasts over the single label column.
+    SupCR is evaluated on 6 rows with duplicated labels: 1.1907942 by the naive formula
+    (a tied positive's denominator excludes the anchor's own term; 1.2417051 before the
+    tie fix). Returned: 0.5 * 1.1907942 = 0.5953971; the per-dimension value is the
+    unscaled 1.1907942. The default weights buffer is ones(2) / 2 and broadcasts over
+    the single label column.
     """
     loss = BufferedWeightedSupCRCell(
         buffer_size=4, embedding_dim=2, temperature=1.0, min_samples=2
@@ -217,7 +218,7 @@ def test_supcr_forward_halves_the_loss_at_full_buffer_weight() -> None:
     reference = _naive_supcr(
         torch.cat([EMB, EMB]), torch.cat([LABELS, LABELS])[:, 0], 1.0
     )
-    assert reference == pytest.approx(1.2417051, abs=1e-6)
+    assert reference == pytest.approx(1.1907942, abs=1e-6)
     assert dims.shape == (1,)
     assert dims[0].item() == pytest.approx(reference, abs=1e-6)
     assert total.item() == pytest.approx(0.5 * reference, abs=1e-6)
@@ -226,7 +227,10 @@ def test_supcr_forward_halves_the_loss_at_full_buffer_weight() -> None:
 def test_supcr_forward_applies_the_temperature_override_and_zero_buffer_weight() -> (
     None
 ):
-    """Temperature 0.5 is written into the inner SupCR; buffer_weight 0 leaves the scale 1."""
+    """Temperature 0.5 is written into the inner SupCR; buffer_weight 0 leaves the scale 1.
+
+    The reference on the 6 tied rows is 1.2760278 (1.3407291 before the tie fix).
+    """
     loss = BufferedWeightedSupCRCell(
         buffer_size=4, embedding_dim=2, temperature=1.0, min_samples=2
     )
@@ -235,7 +239,7 @@ def test_supcr_forward_applies_the_temperature_override_and_zero_buffer_weight()
     reference = _naive_supcr(
         torch.cat([EMB, EMB]), torch.cat([LABELS, LABELS])[:, 0], 0.5
     )
-    assert reference == pytest.approx(1.3407291, abs=1e-6)
+    assert reference == pytest.approx(1.2760278, abs=1e-6)
     assert total.item() == pytest.approx(reference, abs=1e-6)
     assert dims[0].item() == pytest.approx(reference, abs=1e-6)
 
@@ -265,13 +269,14 @@ def test_gather_is_the_identity_without_a_process_group() -> None:
 
 
 def test_composite_without_buffer_combines_the_three_terms() -> None:
-    """Finding: the scheduled temperature is logged but not applied without a buffer.
+    """The scheduled temperature is applied without a buffer, the same as with one.
 
     mse 1.0 (shift 1 in both dimensions), Wasserstein 0.5 per dimension (mean 0.5),
-    SupCR S = mean over the two label columns of the naive value at the CONSTRUCTOR
-    temperature 0.1 (5.9496104), not at the scheduled 1.0 (1.9593947) that the dict
-    reports. total = 1.0 + 0.05 + 0.001 * S = 1.0559496; the normalized entries are
-    each weighted term over the total, and the unweighted ones over 1 + 0.5 + S.
+    SupCR S = mean over the two label columns of the naive value at the SCHEDULED
+    temperature 1.0 (1.9593947) that the dict reports, not at the constructor
+    temperature 0.1 (5.9496104, the value before the fix). total = 1.0 + 0.05 +
+    0.001 * S = 1.0519594; the normalized entries are each weighted term over the
+    total, and the unweighted ones over 1 + 0.5 + S.
     """
     predictions, targets = _clouds(16, 1.0)
     torch.manual_seed(1)
@@ -300,11 +305,11 @@ def test_composite_without_buffer_combines_the_three_terms() -> None:
         "weighted_supcr",
         "weighted_wasserstein",
     ]
-    s0 = _naive_supcr(z, targets[:, 0], 0.1)
-    s1 = _naive_supcr(z, targets[:, 1], 0.1)
+    s0 = _naive_supcr(z, targets[:, 0], 1.0)
+    s1 = _naive_supcr(z, targets[:, 1], 1.0)
     s_mean = 0.5 * (s0 + s1)
-    s_scheduled = 0.5 * (
-        _naive_supcr(z, targets[:, 0], 1.0) + _naive_supcr(z, targets[:, 1], 1.0)
+    s_constructor = 0.5 * (
+        _naive_supcr(z, targets[:, 0], 0.1) + _naive_supcr(z, targets[:, 1], 0.1)
     )
     assert parts["temperature"] == 1.0
     assert parts["mse_loss"] == 1.0 and parts["weighted_mse"] == 1.0
@@ -318,7 +323,7 @@ def test_composite_without_buffer_combines_the_three_terms() -> None:
         parts["supcr_dim_losses"], torch.tensor([s0, s1]), atol=0, rtol=1e-5
     )
     assert parts["supcr_loss"] == pytest.approx(s_mean, rel=1e-5)
-    assert parts["supcr_loss"] != pytest.approx(s_scheduled, rel=1e-2)
+    assert parts["supcr_loss"] != pytest.approx(s_constructor, rel=1e-2)
     assert parts["weighted_supcr"] == pytest.approx(0.001 * s_mean, rel=1e-5)
     expected_total = 1.0 + 0.05 + 0.001 * s_mean
     assert total.item() == pytest.approx(expected_total, rel=1e-6)

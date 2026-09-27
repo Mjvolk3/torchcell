@@ -7,6 +7,7 @@
 from typing import Any, cast
 
 import numpy as np
+import numpy.typing as npt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -61,6 +62,10 @@ class SupCR(nn.Module):
 
         # Skip diagonal elements
         eye_mask = ~torch.eye(M, dtype=torch.bool, device=device)
+        # The SupCR denominator sums over k != i. The anchor's own term has distance 0,
+        # so without this mask it would enter the suffix sum of every positive whose
+        # label ties the anchor's (d_ij = 0), inflating that denominator by exp(1 / T).
+        exp_sims_no_self = exp_sims.masked_fill(~eye_mask, 0.0)
 
         accum_loss = torch.tensor(0.0, device=device)
         accum_count = 0
@@ -69,7 +74,7 @@ class SupCR(nn.Module):
         for i in range(M):
             row_dists = dists[i]
             sorted_dists_i, idx_i = row_dists.sort()
-            sorted_sims_i = exp_sims[i][idx_i]
+            sorted_sims_i = exp_sims_no_self[i][idx_i]
             suffix_sums_i = self._reversed_cumsum(sorted_sims_i)
 
             insertion_positions = torch.searchsorted(
@@ -772,8 +777,10 @@ class FastSoftSort(torch.autograd.Function):
             if mask.any():
                 grad_v[mask] = grad_output[mask].mean()
 
-        # Since soft_sorted = w - v, gradient w.r.t sorted values is -grad_v
-        grad_sorted = -grad_v
+        # soft_sorted = w - v with v = PAV(w - s), and the PAV Jacobian is the block
+        # averaging P, so d soft_sorted / d s = -(dv / ds) = -(-P) = +P: the gradient
+        # with respect to the sorted values is the block-averaged upstream gradient.
+        grad_sorted = grad_v
 
         # Unsort the gradient
         inverse_permutation = torch.argsort(permutation)
@@ -848,7 +855,7 @@ class WeightedDistLoss(nn.Module):
         min_label: float,
         max_label: float,
         step: float = 1.0,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[npt.NDArray[Any], npt.NDArray[Any]]:
         """Get the label distribution using kernel density estimation.
 
         Follows the original implementation from utils.py.
@@ -877,8 +884,8 @@ class WeightedDistLoss(nn.Module):
         return density, x
 
     def _get_batch_label_distribution(
-        self, density: np.ndarray, batch_size: int, region_adjustment: float = 0.5
-    ) -> np.ndarray:
+        self, density: npt.NDArray[Any], batch_size: int, region_adjustment: float = 0.5
+    ) -> npt.NDArray[Any]:
         """Get batch label distribution per the original DistLoss algorithm."""
         num_density = density * batch_size
         range_res = int(region_adjustment * len(density))
@@ -918,8 +925,12 @@ class WeightedDistLoss(nn.Module):
         return batch_label_distribution
 
     def _get_batch_theoretical_labels(
-        self, density: np.ndarray, batch_size: int, min_label: float, step: float = 1.0
-    ) -> np.ndarray:
+        self,
+        density: npt.NDArray[Any],
+        batch_size: int,
+        min_label: float,
+        step: float = 1.0,
+    ) -> npt.NDArray[Any]:
         """Generate theoretical labels for a batch based on the distribution.
 
         Follows the exact algorithm from the original implementation.
@@ -960,9 +971,10 @@ class WeightedDistLoss(nn.Module):
 
         # Ensure weights match dimensions
         if self.weights.shape[0] != num_dims:
-            # Resize weights if needed
+            # Resize weights if needed; the default single weight becomes a uniform
+            # weight vector that sums to 1, like an explicit weight vector does.
             if self.weights.shape[0] == 1:
-                self.weights = self.weights.repeat(num_dims)
+                self.weights = self.weights.repeat(num_dims) / num_dims
             else:
                 raise ValueError(
                     f"Weight dimensions {self.weights.shape[0]} don't match output dimensions {num_dims}"
@@ -1002,10 +1014,13 @@ class WeightedDistLoss(nn.Module):
                 theoretical_labels_np, dtype=torch.float32, device=device
             )
 
-            # Sort predictions using fast differentiable sorting (following original paper)
+            # Sort predictions using fast differentiable sorting (following original
+            # paper). ``fast_soft_sort`` returns the DESCENDING soft sort; the
+            # theoretical labels ascend, so flip to pair the smallest prediction with
+            # the smallest label.
             sorted_pred = fast_soft_sort(
                 pred_dim, regularization_strength=self.regularization_strength
-            )
+            ).flip(0)
 
             # Compute distribution loss only (no plain loss here)
             dist_loss = self.loss_fn(sorted_pred, theoretical_labels).mean()
@@ -1109,8 +1124,10 @@ class CombinedRegressionLoss(nn.Module):
 
             dim_losses.append(dim_loss)
 
-        # Stack dimension losses - now all tensors should have shape [1]
-        stacked_losses = torch.stack(dim_losses)
+        # Concatenate the [1]-shaped dimension losses into a [D] vector so that the
+        # product with the [D] weights is elementwise (a [D, 1] stack would broadcast
+        # against [D] to [D, D] and the weights would cancel out of the total).
+        stacked_losses = torch.cat(dim_losses)
 
         # Compute weighted average loss
         weighted_loss = (stacked_losses * weights).sum() / weight_sum

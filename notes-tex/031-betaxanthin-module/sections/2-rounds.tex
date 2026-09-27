@@ -926,4 +926,18 @@ transformer that leaves a seed's prediction untouched did not reach the predicti
 and Section~\ref{sec:decomposition} measures why: on those two seeds the backbone's
 head is a constant on the pinned genes and the prediction is the slot alone.
 
+Round 200 is read (job 2880, 4 h 0 min): the two-slot head at a hidden width of 128,
+GO linear beside the pool through 128. It reads 0.225 (sd 0.005) against the pool
+alone through 128 at 0.262 ($-0.037$ paired, sd 0.026, one of six), against the two
+slots at 64 at 0.224 ($+0.001$, sd 0.005, three of six) and against the two slots at
+256 at 0.225 ($+0.000$, sd 0.004, four of six), top-50 5.49 against 4.53, 5.66 and
+4.99, ensembled 0.225 with a top-50 of 5.79; the seeds read 0.216 to 0.231 and select
+at epochs 7 to 10 on validation Pearson 0.27 to 0.29. So the width of the pool's slot
+does not enter the two-slot read at all, 0.224, 0.225 and 0.225 at 64, 128 and 256,
+where the pool alone moves from 0.240 to 0.262 to 0.279 over the same widths: with the
+annotation in the linear slot the cell selects on the annotation's schedule, before
+the pool's slot and the backbone have trained (Section~\ref{sec:decomposition}), and
+the hidden slot's width is never read. The linear slot at a lower rate (201, 202) is
+the arm that can change this.
+
 \input{tables/target_transfer}

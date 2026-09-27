@@ -236,17 +236,22 @@ def agreement_max_below(name: str, ceiling: float):
     return run
 
 
-def graph_reg_loss_over_cells(layers: int, what: str):
-    """Over every result file of the study with ``layers`` transformer blocks: the count
-    of cells, or the maximum graph regularization loss logged at any epoch.
+def graph_reg_loss_over_cells(layers: int, what: str, max_wave: int = 219):
+    """Over every result file of the study with ``layers`` transformer blocks up to wave
+    ``max_wave`` (the cells landed when the decomposition was read): the count of cells,
+    or the maximum graph regularization loss logged at any epoch.
     """
 
     def run() -> float:
         import glob
         import json
+        import re
 
         mx, n = 0.0, 0
         for path in glob.glob(osp.join(RESULTS, "w*_s27*.json")):
+            wave = re.match(r"w(\d+)_", osp.basename(path))
+            if wave is None or int(wave.group(1)) > max_wave:
+                continue
             d = json.load(open(path))
             if "history" not in d or d["cell"]["layers"] != layers:
                 continue
@@ -10619,7 +10624,7 @@ CHECKS: list[Check] = [
     ),
     Check(
         claim="graphs: one-block cells",
-        stated=378,
+        stated=384,
         recompute=graph_reg_loss_over_cells(1, "n"),
         tolerance=0.5,
     ),
@@ -10634,6 +10639,258 @@ CHECKS: list[Check] = [
         stated=24,
         recompute=graph_reg_loss_over_cells(2, "n"),
         tolerance=0.5,
+    ),
+    # sec:rounds -- round 200, the two-slot head at 128.
+    Check(
+        claim="round 200: arm",
+        stated=0.225,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: arm sd",
+        stated=0.005,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: pool alone 128",
+        stated=0.262,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: vs pool 128 paired",
+        stated=-0.037,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: vs pool 128 paired sd",
+        stated=0.026,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: vs pool 128 seeds above",
+        stated=1,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 200: two slots at 64",
+        stated=0.224,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 64",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: vs 64 paired",
+        stated=0.001,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 64",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: vs 64 paired sd",
+        stated=0.005,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 64",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: vs 64 seeds above",
+        stated=3,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 64",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 200: two slots at 256",
+        stated=0.225,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 256",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: vs 256 paired",
+        stated=0.0,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 256",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: vs 256 paired sd",
+        stated=0.004,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 256",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: vs 256 seeds above",
+        stated=4,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 256",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 200: arm top-50",
+        stated=5.49,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 200: pool 128 top-50",
+        stated=4.53,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "mean_top50_enrichment",
+            "control",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 200: 64 top-50",
+        stated=5.66,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 64",
+            "mean_top50_enrichment",
+            "control",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 200: 256 top-50",
+        stated=4.99,
+        recompute=transfer(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 256",
+            "mean_top50_enrichment",
+            "control",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 200: ensemble",
+        stated=0.225,
+        recompute=ensemble("w219_bxdelgolinaapoolmlp128_h12l1p1_e200", "spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: ensemble top-50",
+        stated=5.79,
+        recompute=ensemble(
+            "w219_bxdelgolinaapoolmlp128_h12l1p1_e200", "top50_enrichment"
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 200: seed min",
+        stated=0.216,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "arm",
+            "spearman",
+            "min",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: seed max",
+        stated=0.231,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "arm",
+            "spearman",
+            "max",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 200: select epoch min",
+        stated=7,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "arm",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 200: select epoch max",
+        stated=10,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 200: select val pearson min",
+        stated=0.27,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "arm",
+            "select_val_pearson",
+            "min",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 200: select val pearson max",
+        stated=0.29,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+            "arm",
+            "select_val_pearson",
+            "max",
+        ),
+        tolerance=0.006,
     ),
 ]
 

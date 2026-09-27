@@ -4,6 +4,7 @@
 # Test file: tests/torchcell/losses/test_multi_dim_nan_tolerant.py
 """NaN-tolerant multi-dimensional loss functions for cell-state regression."""
 
+from collections.abc import Callable
 from typing import Any, cast
 
 import numpy as np
@@ -801,10 +802,10 @@ def fast_soft_sort(
     Returns:
         Soft-sorted tensor
     """
-    sorted_values = FastSoftSort.apply(  # type: ignore[no-untyped-call]  # autograd Function.apply is untyped in typeshed
-        values, regularization_strength
-    )
-    return cast("torch.Tensor", sorted_values)
+    # ``Function.apply`` is typed in some torch stubs and untyped in others, so the
+    # cast on the callable keeps this call typed under both without a type: ignore.
+    apply = cast("Callable[..., torch.Tensor]", FastSoftSort.apply)
+    return apply(values, regularization_strength)
 
 
 class WeightedDistLoss(nn.Module):

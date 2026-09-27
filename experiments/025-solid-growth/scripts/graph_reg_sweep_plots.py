@@ -141,9 +141,9 @@ CURVE_ARMS = [
 # Shades of one color did not separate the readings on review (2026-09-27), so the
 # reading is the marker shape and the arm is the color.
 READINGS = {
-    "fixed": ("o", -0.27, "val_pearson_fixed", 0.4665),
-    "max": ("^", 0.0, "val_pearson_max", 0.4635),
-    "min_loss": ("s", 0.27, "val_pearson_at_min_loss", 0.4605),
+    "fixed": ("o", -0.27, "val_pearson_fixed", 0.4745),
+    "max": ("^", 0.0, "val_pearson_max", 0.4705),
+    "min_loss": ("s", 0.27, "val_pearson_at_min_loss", 0.4665),
 }
 PROBE_EPOCHS = [0, 1, 2, 5, 10, 20]
 X_LABEL = "log10 λ (graph prior weight)"
@@ -289,7 +289,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
                 a.text(
                     XPOS[arm] + dx, star_y, star, ha="center", va="center", fontsize=5.5
                 )
-    a.set_ylim(0.372, 0.4685)
+    a.set_ylim(0.372, 0.478)
     a.set_ylabel("Held-out Pearson, gene interaction")
     a.set_title("Prior gains at epoch 29, little at the peak")
     _pearson_grid(a)
@@ -310,7 +310,9 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             label=label,
         )
     a.plot([], [], color="black", lw=0.7, label="arm mean")
-    a.scatter([], [], s=0, label="* vs no penalty, paired t")
+    a.scatter(
+        [], [], s=0, label="paired t vs none: * p < 0.05, ** < 0.01, *** < 0.001"
+    )
     a.legend(
         loc="lower left",
         frameon=False,
@@ -334,6 +336,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             sub.val_point_loss_fixed.to_numpy(),
             ARM_COLOR[arm],
             jitter=0.05,
+            size=6,
         )
         _points(
             b,
@@ -342,6 +345,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             ARM_COLOR[arm],
             marker="s",
             jitter=0.05,
+            size=6,
         )
     b.set_ylabel("Held-out point loss (z-scored MSE)")
     b.set_title("Held-out loss falls with λ from 0.001 up")
@@ -360,7 +364,16 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
         linewidth=0.4,
         label="at min validation loss",
     )
-    b.legend(loc="upper right", frameon=False, handletextpad=0.3, borderpad=0.2)
+    b.legend(
+        loc="upper right",
+        frameon=False,
+        fontsize=5,
+        handletextpad=0.2,
+        borderpad=0.1,
+        labelspacing=0.15,
+        handlelength=1.2,
+        markerscale=0.8,
+    )
 
     # c: edge recall at degree against each arm's own target
     c = ax[2]
@@ -481,7 +494,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
     _plain_log_ticks(e, [0.001, 0.01, 0.1, 1, 10, 100, 1000])
     e.set_xticks(xs)
     e.set_xticklabels([str(p) for p in PROBE_EPOCHS])
-    e.set_xlim(-0.4, len(PROBE_EPOCHS) - 0.2)
+    e.set_xlim(-0.4, len(PROBE_EPOCHS) + 0.7)
     e.set_xlabel("Probe epoch")
     e.set_ylabel("Gradient norm ratio, penalty over point loss")
     e.set_title("Penalty dominates the gradient from λ = 0.01")

@@ -1,0 +1,189 @@
+{
+ "protocol": "cgt_s0_r_kl_ctrl_013, Delta gpuA40x4, 4 x A40 per run",
+ "min_per_epoch": 27.0,
+ "arms": [
+  {
+   "group": "biology vs conditioning",
+   "name": "random graphs, KL 1",
+   "change": "rand_031, graph_reg_lambda=1",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F1 a-c, F1 f",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "biology vs conditioning",
+   "name": "random graphs, KL 0.1",
+   "change": "rand_031, graph_reg_lambda=0.1",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F1 a-c",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "ladder top",
+   "name": "KL 10",
+   "change": "graph_reg_lambda=10",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F1 a-e",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "ladder top",
+   "name": "KL 100",
+   "change": "graph_reg_lambda=100",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F1 a-e",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "direction",
+   "name": "KL 1, symmetric targets",
+   "change": "graph_regularization symmetrize=true",
+   "needs_code": "symmetrize A for the directed graphs before row normalization",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-c",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "direction",
+   "name": "mask, directed",
+   "change": "attention_mask symmetric=false",
+   "needs_code": "drop the transpose write in the mask builder",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-c",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "reach",
+   "name": "mask, two-hop",
+   "change": "attention_mask hops=2",
+   "needs_code": "support A or A squared, self-loops kept",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-c",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "placement",
+   "name": "mask, layers 1-2",
+   "change": "attention_mask layers=[1,2]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "placement",
+   "name": "mask, layers 1-4",
+   "change": "attention_mask layers=[1,2,3,4]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "placement",
+   "name": "mask, all 8 layers",
+   "change": "attention_mask layers=[0..7]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "placement",
+   "name": "KL 1, layers 1-2",
+   "change": "graph_reg_lambda=1, graph_reg_layer=[1,2]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "placement",
+   "name": "KL 1, layers 1-4",
+   "change": "graph_reg_lambda=1, graph_reg_layer=[1,2,3,4]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "group": "budget",
+   "name": "no penalty, 60 epochs",
+   "change": "graph_reg_lambda=0, max_epochs=60",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 60,
+   "figure": "F3 a-b",
+   "wall_h": 27.0,
+   "gpu_h": 324
+  },
+  {
+   "group": "budget",
+   "name": "mask, 60 epochs",
+   "change": "mask_028, max_epochs=60",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 60,
+   "figure": "F3 a-b",
+   "wall_h": 27.0,
+   "gpu_h": 324
+  },
+  {
+   "group": "budget",
+   "name": "KL 1, 60 epochs",
+   "change": "graph_reg_lambda=1, max_epochs=60",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 60,
+   "figure": "F3 a-b",
+   "wall_h": 27.0,
+   "gpu_h": 324
+  },
+  {
+   "group": "completion",
+   "name": "KL 1e-5, seed 2",
+   "change": "graph_reg_lambda=1e-5, seed=2",
+   "needs_code": "",
+   "seeds": 1,
+   "epochs": 30,
+   "figure": "F1 a-e",
+   "wall_h": 13.5,
+   "gpu_h": 54
+  }
+ ],
+ "total_runs": 46,
+ "total_gpu_h": 2970,
+ "code_changes": [
+  "drop the transpose write in the mask builder",
+  "support A or A squared, self-loops kept",
+  "symmetrize A for the directed graphs before row normalization"
+ ]
+}

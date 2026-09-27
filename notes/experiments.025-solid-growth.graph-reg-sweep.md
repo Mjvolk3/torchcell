@@ -60,3 +60,7 @@ W&B group pages (runs regrouped by arm with `graph_reg_sweep_readout.py --regrou
 - random graphs: <https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/groups/s0_random_30ep>
 
 Open: random-graph arm at lambda 1 (three seeds); lambda 10 and 100; the reason job 22055161 left no run; panels d and e of the mock-up from the Delta checkpoints; a per-parameter-group gradient probe.
+
+## 2026.09.27 - Figure locked for review; round 2 planned
+
+Figure revised three more times on review (shapes for readings, one color per arm, stars per reading, all text at or above 5 pt after the mathtext superscripts were found at 4.2 pt). Round 2 designed in [[experiments.025-solid-growth.scripts.graph_reg_round2_plan]] and Section 6 of the document: random graphs at lambda 1 and 0.1, lambda 10 and 100, symmetric-target KL and directed mask (direction), two-hop mask (reach), mask on 2 / 4 / 8 layers and KL on 2 / 4 layers (placement), 60-epoch none / mask / KL 1 (budget), the missing 1e-5 seed; 46 runs, about 2,970 GPU-h on Delta. Awaiting approval before any submission.

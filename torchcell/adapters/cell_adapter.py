@@ -30,6 +30,7 @@ from torchcell.datamodels.identity import (
     media_identity,
     temperature_identity,
 )
+from torchcell.fast_csv import RenderedChunk, RowSpecs
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 
 logging.basicConfig(level=logging.INFO)
@@ -97,6 +98,10 @@ class CellAdapter:
         # the pydantic rehydrations change. Set by the build script from the config.
         self.single_pass = False
         self._single_pass_methods: list[tuple[str, Callable[..., Any]]] = []
+        # r5: when set, chunk workers render neo4j-admin rows themselves and return one
+        # RenderedChunk per chunk; the build's FastCsvSink dedups and appends. None
+        # keeps the BioCypherNode/Edge objects flowing to bc.write_nodes/write_edges.
+        self.row_specs: RowSpecs | None = None
         self.event = 0
         wandb.init()
         self.log_method_table()
@@ -441,7 +446,7 @@ class CellAdapter:
                     else:
                         datas_inproc.append(out)
                 data_chunk.close_lmdb()
-                return datas_inproc
+                return self._pack_chunk(datas_inproc)
             memory_reduction_factor = self.get_memory_reduction_factor(method_name)
             loader_batch_size = int(self.loader_batch_size * memory_reduction_factor)
             # loader_batch_size = self.loader_batch_size
@@ -465,9 +470,15 @@ class CellAdapter:
                             datas.append(data)
             finally:
                 data_loader.close()
-            return datas
+            return self._pack_chunk(datas)
 
         return decorator
+
+    def _pack_chunk(self, datas: list[Any]) -> list[Any]:
+        """Return a chunk's output as objects, or as one RenderedChunk when rendering."""
+        if self.row_specs is None:
+            return datas
+        return [RenderedChunk.from_rows(datas, self.row_specs)]
 
     def get_memory_reduction_factor(
         self, method_name: str, is_edge: bool = False

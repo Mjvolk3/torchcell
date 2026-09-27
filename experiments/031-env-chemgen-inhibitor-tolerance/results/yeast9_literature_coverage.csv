@@ -1,0 +1,5 @@
+model,scope,percent,source,quote
+Yeast9,whole metabolome,7.0,wuSystematicallyExploringYeast2026,This effort increased the yeast metabolome coverage from 7% to 92% (non-lipid from 54% to 75%).
+Yeast9,non-lipid,54.0,wuSystematicallyExploringYeast2026,This effort increased the yeast metabolome coverage from 7% to 92% (non-lipid from 54% to 75%).
+Yeast-MetaTwin,whole metabolome,92.0,wuSystematicallyExploringYeast2026,This effort increased the yeast metabolome coverage from 7% to 92% (non-lipid from 54% to 75%).
+Yeast-MetaTwin,non-lipid,75.0,wuSystematicallyExploringYeast2026,This effort increased the yeast metabolome coverage from 7% to 92% (non-lipid from 54% to 75%).

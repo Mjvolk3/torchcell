@@ -1,0 +1,8 @@
+organism,component,percent_low,percent_high,source,quote
+S. cerevisiae,protein,40.0,50.0,miloCellBiologyNumbers2016,"Similar efforts in budding yeast revealed that proteins constitute in the range of 40-50% of the cell dry mass, RNA ~10%, and lipid ~10%"
+S. cerevisiae,RNA,10.0,10.0,miloCellBiologyNumbers2016,"proteins constitute in the range of 40-50% of the cell dry mass, RNA ~10%, and lipid ~10%"
+S. cerevisiae,lipid,10.0,10.0,miloCellBiologyNumbers2016,"proteins constitute in the range of 40-50% of the cell dry mass, RNA ~10%, and lipid ~10%"
+S. cerevisiae,cell wall,25.0,25.0,feldmannYeastMolecularCell2012,The outer shell is a rigid structure about 100-200 nm thick and constituting about 25% of the total dry mass of the cell
+S. cerevisiae,small-molecule pool,,,,NOT STATED FOR YEAST anywhere in the mirror.
+S. cerevisiae,DNA,,,,NOT STATED FOR YEAST anywhere in the mirror.
+E. coli,small-molecule pool,3.0,3.9,"miloCellBiologyNumbers2016, stephanopoulosMetabolicEngineeringPrinciples1998",metabolites and cofactors pool 3 [percent of dry weight]; Soluble pool 3.9

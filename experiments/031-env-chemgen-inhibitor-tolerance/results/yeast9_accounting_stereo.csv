@@ -1,0 +1,895 @@
+species,n_atoms,n_stereocenters,n_unassigned,fully_specified
+(1->3)-beta-D-glucan,12,5,5,False
+(1->6)-beta-D-glucan,12,5,5,False
+"(2-amino-4-hydroxy-7,8-dihydropteridin-6-yl)methyl trihydrogen diphosphate",22,1,1,False
+(2E)-3-(methoxycarbonyl)pent-2-enedioic acid,13,0,0,True
+"(2R,3R)-2,3-dihydroxy-3-methylpentanoate",10,2,2,False
+"(2R,3S)-3-isopropylmalate",12,2,2,False
+"(2R,3S)-3-methylmalate",10,2,2,False
+(2S)-2-isopropyl-3-oxosuccinate,12,1,1,False
+"(2S,3R)-3-hydroxybutane-1,2,3-tricarboxylic acid",14,2,2,False
+(4-hydroxyphenyl)acetaldehyde,10,0,0,True
+"(5S,6S)-di-HETE",24,2,2,False
+"(9Z,12Z)-octadecadienoate",20,0,0,True
+(Indol-3-yl)acetamide,13,0,0,True
+(N(omega)-L-arginino)succinic acid,20,2,2,False
+"(R)-2,3-dihydroxy-3-methylbutanoate",9,1,1,False
+(R)-3-hydroxybutanoyl-CoA,54,8,8,False
+(R)-3-hydroxydecanoyl-CoA,60,8,8,False
+(R)-3-hydroxydocosanoyl-CoA,72,8,8,False
+(R)-3-hydroxyhexanoyl-CoA,56,8,8,False
+(R)-3-hydroxyicosanoyl-CoA,70,8,8,False
+(R)-3-hydroxylauroyl-CoA,62,8,8,False
+(R)-3-hydroxyoctanoyl-CoA,58,8,8,False
+(R)-3-hydroxytetracosanoyl-CoA,74,8,8,False
+(R)-4'-phosphopantothenic acid,19,1,1,False
+(R)-5-diphosphomevalonic acid,18,2,2,False
+(R)-5-phosphomevalonic acid,14,1,1,False
+(R)-Lipoate,12,1,1,False
+(R)-S-lactoylglutathione,25,3,3,False
+(R)-acetoin,6,1,1,False
+(R)-carnitine,11,1,1,False
+(R)-lactate,6,1,1,False
+(R)-mevalonate,10,1,1,False
+(R)-pantoate,10,1,1,False
+(R)-pantothenate,15,1,1,False
+"(R,R)-2,3-butanediol",6,2,2,False
+"(S)-2,3-epoxysqualene",31,1,1,False
+(S)-2-acetyl-2-hydroxybutanoate,10,1,1,False
+(S)-3-hydroxyhexacosanoyl-CoA,76,8,8,False
+(S)-3-hydroxypalmitoyl-CoA,66,8,8,False
+(S)-3-hydroxytetradecanoyl-CoA,64,8,8,False
+(S)-3-methyl-2-oxopentanoate,9,1,1,False
+(S)-Methylmalonate semialdehyde,7,1,1,False
+(S)-benzoin,16,1,1,False
+(S)-dihydroorotate,11,1,1,False
+(S)-lactaldehyde,5,1,1,False
+(S)-lactate,6,1,1,False
+(S)-malate,9,1,1,False
+"1,2-diacyl-sn-glycerol 3-phosphate",46,1,1,False
+"1,3-bisphospho-D-glycerate",15,1,1,False
+"1,4-benzosemiquinone",8,0,0,True
+1-(2-carboxyphenylamino)-1-deoxy-D-ribulose 5-phosphate,23,2,2,False
+1-(sn-glycero-3-phospho)-1D-myo-inositol,21,8,8,False
+1-C-(indol-3-yl)glycerol 3-phosphate,19,2,2,False
+1-methylnicotinamide,10,0,0,True
+1-oleoyl-sn-glycerol,25,1,1,False
+1-pyrroline-3-hydroxy-5-carboxylic acid,9,2,2,False
+1-pyrroline-5-carboxylate,8,1,1,False
+10-formyl-THF,34,2,2,False
+14-demethyllanosterol,30,7,7,False
+"1D-myo-inositol 1,3,4,5-tetrakisphosphate",28,6,6,False
+"1D-myo-inositol 1,4,5,6-tetrakisphosphate",28,6,6,False
+"1D-myo-inositol 1,4,5-trisphosphate",24,6,6,False
+1D-myo-inositol 1-phosphate,16,6,6,False
+1D-myo-inositol 3-phosphate,16,6,6,False
+"2',3'-cyclic AMP",22,5,5,False
+"2',3'-cyclic CMP",20,5,5,False
+"2',3'-cyclic GMP",23,5,5,False
+"2',3'-cyclic UMP",20,5,5,False
+2'-deoxyadenosine,18,3,3,False
+2'-deoxyguanosine,19,3,3,False
+2'-deoxyinosine,18,3,3,False
+2'-deoxyuridine,16,3,3,False
+"2,3-bisphospho-D-glyceric acid",15,1,1,False
+"2,5-diamino-4-hydroxy-6-(5-phosphoribosylamino)pyrimidine",23,4,4,False
+"2,5-diamino-6-(5-phosphono)ribitylamino-4(3H)-pyrimidinone",23,3,3,False
+2-(2-carboxy-4-methylthiazol-5-yl)ethyl phosphate,16,0,0,True
+2-(3-amino-3-carboxypropyl)-L-histidine,18,2,2,False
+2-O-(6-phospho-alpha-D-mannosyl)-D-glycerate,22,6,6,False
+2-Oxoglutaramate,10,0,0,True
+2-Phenylacetamide,10,0,0,True
+2-Propynal,4,0,0,True
+2-[3-carboxy-3-(methylammonio)propyl]-L-histidine,19,2,2,False
+2-acetamido-5-oxopentanoate,12,1,1,False
+2-acetyllactic acid,9,1,1,False
+2-amino-3-carboxymuconate-6-semialdehyde,13,0,0,True
+"2-amino-6-(hydroxymethyl)-7,8-dihydropteridin-4-ol",14,0,0,True
+2-aminobutanoate,7,1,1,False
+2-dehydropantoate,10,0,0,True
+2-deoxy-D-glucose,11,3,3,False
+2-deoxy-D-glucose 6-phosphate,15,4,4,False
+2-deoxy-D-ribose,9,2,2,False
+2-deoxy-D-ribose 1-phosphate,13,3,3,False
+"2-hexaprenyl-5-hydroxy-6-methoxy-3-methyl-1,4-benzoquinone",42,0,0,True
+"2-hexaprenyl-6-methoxy-1,4-benzoquinone",40,0,0,True
+"2-hexaprenyl-6-methoxy-3-methyl-1,4-benzoquinone",41,0,0,True
+2-hexaprenyl-6-methoxyphenol,39,0,0,True
+2-hydroxy-3-oxobutyl phosphate,11,1,1,False
+2-hydroxyethane-1-sulfonate,7,0,0,True
+2-hydroxyglutarate,10,1,1,False
+2-hydroxyhexadecanal,18,1,1,False
+2-isopropylmalate,12,1,1,False
+2-isopropylmaleic acid,11,0,0,True
+2-methylbutanal,6,1,1,False
+2-methylbutanol,6,1,1,False
+2-methylbutyl acetate,9,1,1,False
+2-methylbutyrate,7,1,1,False
+2-methylcitrate,14,2,2,False
+2-oxoadipic acid,11,0,0,True
+2-oxobutanoate,7,0,0,True
+2-oxoglutarate,10,0,0,True
+2-phenylethanol,9,0,0,True
+2-phospho-D-glyceric acid,11,1,1,False
+2-phosphoglycolate,9,0,0,True
+"2-trans,6-trans-Farnesal",16,0,0,True
+"3',5'-cyclic AMP",22,5,5,False
+"3',5'-cyclic CMP",20,5,5,False
+"3',5'-cyclic GMP",23,5,5,False
+"3',5'-cyclic IMP",22,5,5,False
+"3',5'-cyclic dAMP",21,4,4,False
+3'-AMP,23,4,4,False
+3'-GMP,24,4,4,False
+3'-UMP,21,4,4,False
+3'-dephospho-CoA,44,7,7,False
+3'-phospho-5'-adenylyl sulfate,31,5,5,False
+3-(4-hydroxyphenyl)pyruvate,13,0,0,True
+3-(imidazol-4-yl)-2-oxopropyl dihydrogen phosphate,14,0,0,True
+3-aminopropanal,5,0,0,True
+3-chlorobenzaldehyde,9,0,0,True
+3-chlorobenzyl alcohol,9,0,0,True
+3-dehydro-4-methylzymosterol,29,7,7,False
+3-dehydroquinate,13,3,3,False
+3-dehydroshikimate,12,2,2,False
+"3-hexaprenyl-4,5-dihydroxybenzoic acid",41,0,0,True
+3-hexaprenyl-4-hydroxy-5-methoxybenzoic acid,42,0,0,True
+3-hexaprenyl-4-hydroxybenzoic acid,40,0,0,True
+3-hydroxy-2-isopropyl-4-methoxy-4-oxobutanoate,13,2,2,False
+3-hydroxy-2-methylpropanoate,7,1,1,False
+3-hydroxy-2-methylpropanoyl-CoA,54,8,8,False
+3-hydroxy-3-methylglutaryl-CoA,58,8,8,False
+3-hydroxy-L-kynurenine,16,1,1,False
+3-hydroxyanthranilate,11,0,0,True
+3-hydroxybenzaldehyde,9,0,0,True
+3-hydroxybenzyl alcohol,9,0,0,True
+3-hydroxydocosanoyl-CoA,72,8,8,False
+3-hydroxyicosanoyl-CoA,70,8,8,False
+3-hydroxyisobutyrate,7,1,1,False
+3-hydroxyisobutyryl-CoA,54,8,8,False
+3-hydroxyoctadecanoyl-CoA,68,8,8,False
+3-hydroxytetracosanoyl-CoA,74,8,8,False
+3-ketosphinganine,21,1,1,False
+3-mercaptopyruvate,7,0,0,True
+3-methyl-2-oxobutanoate,8,0,0,True
+3-methylbenzaldehyde,9,0,0,True
+3-methylbenzyl alcohol,9,0,0,True
+3-methylbutanal,6,0,0,True
+3-oxalomalate(3-),14,2,2,False
+3-oxodecanoyl-CoA,60,7,7,False
+3-oxodocosanoyl-CoA,72,7,7,False
+3-oxohexacosanoyl-CoA,76,7,7,False
+3-oxohexanoyl-CoA,56,7,7,False
+3-oxoicosanoyl-CoA,70,7,7,False
+3-oxolauroyl-CoA,62,7,7,False
+3-oxooctadecanoyl-CoA,68,7,7,False
+3-oxooctanoyl-CoA,58,7,7,False
+3-oxopalmitoyl-CoA,66,7,7,False
+3-oxopropanoate,6,0,0,True
+3-oxotetracosanoyl-CoA,74,7,7,False
+3-oxotetradecanoyl-CoA,64,7,7,False
+3-phospho-hydroxypyruvate,11,0,0,True
+3-phospho-serine,11,1,1,False
+3-phosphonato-D-glycerate(3-),11,1,1,False
+3-phosphoshikimic acid,16,3,3,False
+3-sulfino-L-alanine,9,2,2,False
+"3alpha,7alpha-Dihydroxy-5beta-cholestan-26-al",30,11,11,False
+"3alpha,7alpha-Dihydroxy-5beta-cholestanate",31,11,11,False
+"4,4-dimethyl-5alpha-cholesta-8,14,24-trien-3beta-ol",30,6,6,False
+"4,5-bis(diphospho)-1D-myo-inositol tetrakisphosphate",44,8,8,False
+"4-(2-aminophenyl)-2,4-dioxobutanoate",15,0,0,True
+4-(phosphonooxy)-L-threonine,13,2,2,False
+4-Acetamidobutanoate,10,0,0,True
+4-Trimethylammoniobutanal,9,0,0,True
+4-Trimethylammoniobutanoate,10,0,0,True
+4-amino-2-methyl-5-diphosphomethylpyrimidine,18,1,1,False
+4-amino-2-methyl-5-phosphomethylpyrimidine,14,0,0,True
+4-amino-4-deoxychorismate,16,2,2,False
+4-amino-5-hydroxymethyl-2-methylpyrimidine,10,0,0,True
+4-aminobenzoate,10,0,0,True
+4-aminobutanal,6,0,0,True
+4-diphospho-1D-myo-inositol pentakisphosphate,40,7,7,False
+4-fumarylacetoacetate,14,0,0,True
+4-guanidinobutanamide,10,0,0,True
+4-guanidinobutanoic acid,10,0,0,True
+4-hydroxy-2-oxoglutarate,11,1,1,False
+4-hydroxy-4-methyl-2-oxoglutarate,12,1,1,False
+4-hydroxy-L-threonine,9,2,2,False
+4-hydroxybenzoate,10,0,0,True
+4-hydroxybenzoyl-CoA,57,7,7,False
+4-hydroxyphenyl acetate,11,0,0,True
+4-isopropylbenzyl alcohol,11,0,0,True
+4-maleylacetoacetate,14,0,0,True
+4-methyl-2-oxopentanoate,9,0,0,True
+4-methyl-5-(2-phosphonooxyethyl)thiazole,13,0,0,True
+4-methylbenzaldehyde,9,0,0,True
+4-methylbenzyl alcohol,9,0,0,True
+4-methylthio-2-oxobutanoate,9,0,0,True
+4-nitrophenol,10,0,0,True
+4-nitrophenyl phosphate,14,0,0,True
+4-phospho-L-aspartate,13,1,1,False
+4a-Hydroxytetrahydrobiopterin,18,4,4,False
+4alpha-methylzymosterol,29,8,8,False
+4beta-methylzymosterol-4alpha-carboxylic acid,32,8,8,False
+5'-Deoxyadenosine,18,4,4,False
+5'-S-methyl-5'-thioadenosine,20,4,4,False
+5'-adenylyl sulfate,27,5,5,False
+5'-phosphoribosyl-4-(N-succinocarboxamide)-5-aminoimidazole,30,5,5,False
+5'-phosphoribosyl-5-aminoimidazole,19,4,4,False
+5'-phosphoribosyl-N-formylglycineamide,20,4,4,False
+"5,10-methenyl-THF",33,2,2,False
+"5,10-methylenetetrahydrofolate",33,2,2,False
+"5,6,7,8-tetrahydrofolyl-L-glutamic acid",41,3,3,False
+"5,6-bis(diphospho)-1D-myo-inositol tetrakisphosphate",44,8,8,False
+5-(2-hydroxyethyl)-4-methylthiazole,9,0,0,True
+"5-(methylsulfanyl)-2,3-dioxopentyl phosphate",14,0,0,True
+5-Hydroxyindoleacetaldehyde,13,0,0,True
+5-Hydroxyindoleacetate,14,0,0,True
+5-O-(1-carboxyvinyl)-3-phosphoshikimic acid,21,3,3,False
+5-amino-6-(5-phosphoribitylamino)uracil,23,3,3,False
+5-amino-6-(D-ribitylamino)uracil,19,3,3,False
+5-aminolevulinate,9,0,0,True
+5-dehydro-D-gluconate,13,3,3,False
+5-diphospho-1D-myo-inositol pentakisphosphate,40,7,7,False
+5-formyltetrahydrofolic acid,34,2,2,False
+5-methylcytosine,9,0,0,True
+5-methyltetrahydrofolate,33,2,2,False
+5-methyltetrahydropteroyltri-L-glutamic acid,51,4,4,False
+5-oxo-L-proline,9,1,1,False
+5-phosphoribosyl-ATP,44,10,10,False
+5-phosphoribosylamine,14,4,4,False
+"6,7-dimethyl-8-(1-D-ribityl)lumazine",23,3,3,False
+6-(N-acetyl-alpha-D-glucosaminyl)-1-phosphatidyl-1D-myo-inositol,41,13,13,False
+6-(alpha-D-glucosaminyl)-1-phosphatidyl-1D-myo-inositol,36,13,13,False
+6-O-alpha-D-glucopyranosyl-D-fructofuranose,23,9,9,False
+"6-O-phosphono-D-glucono-1,5-lactone",16,4,4,False
+6-diphospho-1D-myo-inositol pentakisphosphate,40,7,7,False
+6-phospho-D-gluconate,17,4,4,False
+"7,8-diaminononanoate",13,2,2,False
+"7,8-dihydroneopterin",18,2,2,False
+"7,8-dihydroneopterin 3'-phosphate",22,2,2,False
+"7,8-dihydroneopterin 3'-triphosphate",30,4,4,False
+"7,8-dihydropteroate",23,0,0,True
+7-phospho-2-dehydro-3-deoxy-D-arabino-heptonic acid,18,3,3,False
+8-amino-7-oxononanoate,13,1,1,False
+8-oxo-dGMP,24,3,3,False
+8-oxo-dGTP,32,5,5,False
+9H-xanthine,11,0,0,True
+ADP,27,5,5,False
+ADP-5-ethyl-4-methylthiazole-2-carboxylate,38,6,6,False
+ADP-D-ribose 1''-phosphate,40,10,10,False
+ADP-ribose,36,10,10,False
+AICAR,18,4,4,False
+AMP,23,4,4,False
+ATP,31,6,6,False
+Acrylamide,5,0,0,True
+Acrylic acid,5,0,0,True
+Ala-Asp,14,2,2,False
+Ala-Gln,15,2,2,False
+Ala-Glu,15,2,2,False
+Ala-Gly,10,1,1,False
+Ala-His,16,2,2,False
+Ala-Leu,14,2,2,False
+Ala-Thr,13,3,3,False
+Benzamide,9,0,0,True
+Benzoate,9,0,0,True
+CDP,25,5,5,False
+CDP-choline,31,6,6,False
+CDP-ethanolamine,28,6,6,False
+CMP,21,4,4,False
+CTP,29,6,6,False
+Ca(2+),1,0,0,True
+Chloroacetaldehyde,4,0,0,True
+Chloroacetic acid,5,0,0,True
+Cyanamide,3,0,0,True
+D-Glucarate,14,4,4,False
+D-Glucosamine,12,5,5,False
+D-Glycerate,7,1,1,False
+D-Serine,7,1,1,False
+D-arabinitol,10,3,3,False
+"D-arabinono-1,4-lactone",10,3,3,False
+D-erythro-1-(imidazol-4-yl)glycerol 3-phosphate,15,2,2,False
+D-erythrose 4-phosphate,12,2,2,False
+D-fructose,12,4,4,False
+D-fructose 1-phosphate,16,3,3,False
+D-fructose 6-phosphate,16,3,3,False
+D-galactose,12,5,5,False
+D-galacturonate,13,5,5,False
+D-glucitol,12,4,4,False
+D-gluconate,13,4,4,False
+D-glucose,12,5,5,False
+D-glucose 1-phosphate,16,5,5,False
+D-glucose 6-phosphate,16,4,4,False
+D-glyceraldehyde,6,1,1,False
+D-mannose,12,5,5,False
+D-mannose 1-phosphate,16,5,5,False
+D-mannose 6-phosphate,16,5,5,False
+D-phenylalanine,12,1,1,False
+D-ribofuranose 5-phosphate,14,4,4,False
+D-ribose,10,4,4,False
+D-ribulose,10,2,2,False
+D-ribulose 5-phosphate,14,2,2,False
+D-tagatofuranose 6-phosphate,16,4,4,False
+D-tagatose,12,4,4,False
+D-tyrosine,13,1,1,False
+D-xylose,10,4,4,False
+D-xylulose,10,2,2,False
+D-xylulose 5-phosphate,14,2,2,False
+"Delta(6)-trans,Delta(8)-cis-leukotriene B4",24,2,2,False
+Dextrin,34,15,15,False
+Dihydrobiopterin,17,2,2,False
+Dolichyl beta-D-glucosyl phosphate,41,7,7,False
+Dolichyl diphosphate,34,2,2,False
+Ethylnitronate,5,0,0,True
+FAD,53,9,9,False
+FADH2,53,9,9,False
+FMN,31,3,3,False
+FMNH2,31,3,3,False
+Farnesoic acid,17,0,0,True
+GDP,28,5,5,False
+GDP-alpha-D-mannose,39,11,11,False
+GMP,24,4,4,False
+GTP,32,6,6,False
+Gly-Asn,13,1,1,False
+Gly-Gln,14,1,1,False
+Gly-Glu,14,1,1,False
+Gly-Met,13,1,1,False
+H+,0,0,0,True
+H2O,1,0,0,True
+HX,10,0,0,True
+Hydroquinone,8,0,0,True
+IDP,27,5,5,False
+IMP,23,4,4,False
+ITP,31,6,6,False
+Imidazole-4-acetaldehyde,8,0,0,True
+Imidazole-4-acetate,9,0,0,True
+Isomaltose,23,10,10,False
+L-2-amino-3-oxobutanoate,8,1,1,False
+L-2-aminoadipate,11,1,1,False
+L-4-hydroxyglutamic semialdehyde,10,2,2,False
+L-Methionine S-oxide,10,2,2,False
+L-Threonylcarbamoyladenylate,33,7,7,False
+L-alanine,6,1,1,False
+L-allothreonine,8,2,2,False
+L-allysine,10,1,1,False
+L-alpha-formylglycine,7,1,1,False
+L-arabinitol,10,3,3,False
+L-arabinose,10,4,4,False
+L-arginine,12,1,1,False
+L-asparagine,9,1,1,False
+L-aspartate,9,1,1,False
+L-aspartate 4-semialdehyde,8,1,1,False
+L-citrulline,12,1,1,False
+L-cystathionine,14,2,2,False
+L-cysteate,10,1,1,False
+L-cysteine,7,1,1,False
+L-cysteinylglycine,11,1,1,False
+L-cystine,14,2,2,False
+L-gamma-glutamyl phosphate,14,1,1,False
+L-gamma-glutamyl-L-alanine,15,2,2,False
+L-gamma-glutamyl-L-cysteine,16,2,2,False
+L-glucitol,12,4,4,False
+L-glutamate,10,1,1,False
+L-glutamic 5-semialdehyde,9,1,1,False
+L-glutamine,10,1,1,False
+L-glycine,5,0,0,True
+L-histidine,11,1,1,False
+L-histidinol,10,1,1,False
+L-histidinol phosphate,14,1,1,False
+L-homocysteine,8,1,1,False
+L-homoserine,8,1,1,False
+L-iditol,12,4,4,False
+L-isoleucine,9,2,2,False
+L-kynurenine,15,1,1,False
+L-leucine,9,1,1,False
+L-lysine,10,1,1,False
+L-methionine,9,1,1,False
+L-methionine (S)-S-oxide,10,2,2,False
+L-phenylalanine,12,1,1,False
+L-proline,8,1,1,False
+L-saccharopine,19,2,2,False
+L-serine,7,1,1,False
+L-sorbose,12,4,4,False
+L-threonine,8,2,2,False
+L-tryptophan,15,1,1,False
+L-tyrosine,13,1,1,False
+L-valine,8,1,1,False
+L-xylulose,10,2,2,False
+Lipoyl-AMP,34,6,6,False
+Mannitol,12,4,4,False
+Met-Ala,14,2,2,False
+Methylmalonate,8,0,0,True
+Mg(2+),1,0,0,True
+Mn(2+),1,0,0,True
+N(1)-acetylspermidine,13,0,0,True
+N(1)-acetylspermine,17,0,0,True
+N(2)-acetyl-L-ornithine,12,1,1,False
+N(alpha)-acetyl-L-methionine,12,1,1,False
+N(omega)-phospho-L-arginine,16,1,1,False
+N(pros)-methyl-L-histidine,12,1,1,False
+"N,N'-diacetylchitobiosyldiphosphodolichol",62,13,13,False
+"N,N'-diformyldityrosine",30,2,2,False
+N-(5-phospho-beta-D-ribosyl)anthranilate,23,4,4,False
+N-Acetyl-D-glucosamine,15,5,5,False
+N-Acetyl-D-glucosaminyldiphosphodolichol,48,8,8,False
+N-acetyl-D-glucosamine 6-phosphate,19,5,5,False
+N-acetyl-D-phenylalanine,15,1,1,False
+N-acetyl-L-cysteine,10,1,1,False
+N-acetyl-L-gamma-glutamyl phosphate,17,1,1,False
+N-acetyl-L-glutamate,13,1,1,False
+N-acetyl-alpha-D-glucosamine 1-phosphate,19,5,5,False
+N-acetylputrescine,9,0,0,True
+N-carbamoyl-L-aspartate,12,1,1,False
+N-formyl-L-kynurenine,17,1,1,False
+N-formyl-L-tyrosine,15,1,1,False
+N-phosphocreatine,13,0,0,True
+N4-Acetylaminobutanal,9,0,0,True
+NAD,44,10,10,False
+NADH,44,10,10,False
+NADP(+),48,10,10,False
+NADPH,48,10,10,False
+NMN,22,5,5,False
+Nitrite,3,0,0,True
+O(4)-phospho-L-tyrosine,17,1,1,False
+O-acetyl-L-homoserine,11,1,1,False
+O-acetyl-L-serine,10,1,1,False
+O-acetylcarnitine,14,1,1,False
+O-phospho-L-homoserine,12,1,1,False
+O-phospho-L-threonine,12,2,2,False
+O-phosphoethanolamine,8,0,0,True
+O-phosphonatooxy-D-serine(2-),11,1,1,False
+O-succinyl-L-homoserine,15,1,1,False
+Oxalate,6,0,0,True
+Oxalyl-CoA,53,7,7,False
+"P(1),P(3)-bis(5'-adenosyl) triphosphate",49,11,11,False
+"P(1),P(4)-bis(5'-adenosyl) tetraphosphate",53,12,12,False
+"P(1),P(4)-bis(5'-guanosyl) tetraphosphate",55,12,12,False
+PRPP,22,5,5,False
+Perillic acid,12,1,1,False
+Perillyl aldehyde,11,1,1,False
+Propynoate,5,0,0,True
+S(8)-aminomethyldihydrolipoamide,14,1,1,False
+S(8)-succinyldihydrolipoamide,19,1,1,False
+S-adenosyl-4-methylthio-2-oxobutanoate,27,5,5,False
+S-adenosyl-L-homocysteine,26,5,5,False
+S-adenosyl-L-methionine,27,6,6,False
+S-adenosylmethioninamine,24,5,5,False
+S-formylglutathione,22,2,2,False
+S-methyl-5-thio-D-ribulose 1-phosphate,15,2,2,False
+S-methyl-5-thio-alpha-D-ribose 1-phosphate,15,4,4,False
+S-methyl-L-methionine,10,1,1,False
+THF,5,0,0,True
+Threo-3-hydroxy-L-aspartate,10,2,2,False
+UDP,25,5,5,False
+UDP-D-galactose,36,11,11,False
+UDP-D-glucose,36,11,11,False
+UDP-N-acetyl-alpha-D-glucosamine,39,11,11,False
+UMP,21,4,4,False
+UTP,29,6,6,False
+Zn(2+),1,0,0,True
+acetaldehyde,3,0,0,True
+acetate,4,0,0,True
+acetoacetate,7,0,0,True
+acetoacetyl-CoA,54,7,7,False
+acetoin,6,1,1,False
+acetyl-CoA,51,7,7,False
+adenine,10,0,0,True
+adenosine,19,4,4,False
+adenosine 2'-phosphate,23,4,4,False
+"adenosine 3',5'-bismonophosphate",27,4,4,False
+adenylo-succinate,31,5,5,False
+aldehydo-D-ribose 5-phosphate,14,3,3,False
+allantoate,12,0,0,True
+allantoin,11,1,1,False
+"alpha,alpha-trehalose 6-phosphate",27,10,10,False
+alpha-D-Galactose,12,5,5,False
+alpha-D-Glucose,12,5,5,False
+alpha-D-Glucose 6-phosphate,16,5,5,False
+alpha-D-galactose 1-phosphate,16,5,5,False
+alpha-D-glucosamine 1-phosphate,16,5,5,False
+alpha-D-glucosamine 6-phosphate,16,5,5,False
+alpha-D-mannopyranose,12,5,5,False
+alpha-D-mannoside,12,5,5,False
+alpha-D-mannosyl-beta-D-mannosyldiacetylchitobiosyldiphosphodolichol,84,23,23,False
+alpha-D-ribose 1-phosphate(2-),14,4,4,False
+alpha-maltotriose,34,15,15,False
+aminoacetaldehyde,4,0,0,True
+aminoacetone,5,0,0,True
+aminopropylcadaverine,11,0,0,True
+ammonium,1,0,0,True
+anserine,17,1,1,False
+anthranilate,10,0,0,True
+arachidate,22,0,0,True
+ascorbate,12,2,2,False
+behenate,24,0,0,True
+benzaldehyde,8,0,0,True
+benzil,16,0,0,True
+benzyl acetate,11,0,0,True
+benzyl alcohol,8,0,0,True
+beta-D-Fructose,12,4,4,False
+beta-D-Fructose 6-phosphate,16,4,4,False
+beta-D-Glucose,12,5,5,False
+beta-D-Glucose 6-phosphate,16,5,5,False
+"beta-D-fructose 2,6-bisphosphate",20,4,4,False
+beta-D-mannosyldiacetylchitobiosyldiphosphodolichol,73,18,18,False
+beta-alanine,6,0,0,True
+bicarbonate,4,0,0,True
+biotin,16,3,3,False
+biotinyl-5'-AMP,38,8,8,False
+"but-1-ene-1,2,4-tricarboxylic acid",13,0,0,True
+but-2-enoyl-CoA,53,7,7,False
+butanoyl-CoA,53,7,7,False
+butyrate,6,0,0,True
+cadaverine,7,0,0,True
+cadmium(2+),1,0,0,True
+carbamoyl phosphate,8,0,0,True
+carbon dioxide,3,0,0,True
+carnosine,16,1,1,False
+ceramide-1 (C26),48,2,2,False
+ceramide-2 (C24),47,3,3,False
+ceramide-2 (C26),49,3,3,False
+ceramide-2' (C24),47,3,3,False
+ceramide-3 (C24),48,4,4,False
+ceramide-3 (C26),50,4,4,False
+ceramide-4 (C24),49,5,5,False
+ceramide-4 (C26),51,5,5,False
+cerotic acid,28,0,0,True
+chitosan,104,45,45,False
+chloride,1,0,0,True
+cholesterol,28,8,8,False
+choline,7,0,0,True
+choline phosphate,12,0,0,True
+chorismate,16,2,2,False
+cis-3-Chloroacrylic acid,6,0,0,True
+cis-3-Chloroallyl aldehyde,5,0,0,True
+cis-aconitate,12,0,0,True
+cis-dodec-3-enoyl-CoA,61,7,7,False
+cis-hexadec-7-enoyl-CoA,65,7,7,False
+cis-tetradec-5-enoyl-CoA,63,7,7,False
+citrate,13,0,0,True
+coenzyme A,48,7,7,False
+cofactor,34,2,2,False
+coproporphyrinogen III,48,0,0,True
+creatinine,8,0,0,True
+cysteamine,4,0,0,True
+cysteamine S-phosphate,8,0,0,True
+cytidine,17,4,4,False
+cytidine 2'-phosphate,21,4,4,False
+cytosine,8,0,0,True
+dADP,26,4,4,False
+dAMP,22,3,3,False
+dATP,30,5,5,False
+dCDP,24,4,4,False
+dCMP,20,3,3,False
+dCTP,28,5,5,False
+dGDP,27,4,4,False
+dGMP,23,3,3,False
+dGTP,31,5,5,False
+dITP,30,5,5,False
+dTDP,25,4,4,False
+dTMP,21,3,3,False
+dTTP,29,5,5,False
+dUDP,24,4,4,False
+dUMP,20,3,3,False
+dUTP,28,5,5,False
+deamido-NAD(+),44,10,10,False
+decanoate,12,0,0,True
+decanoyl-CoA,59,7,7,False
+decaprenyl diphosphate,59,1,1,False
+"dehydro-D-arabinono-1,4-lactone",10,1,1,False
+dehydroascorbate,12,2,2,False
+deoxycytidine,16,3,3,False
+dethiobiotin,15,2,2,False
+diacetyl,6,0,0,True
+diethyl succinate,12,0,0,True
+dihydrofolic acid,32,1,1,False
+dihydrolipoamide,12,1,1,False
+dihydroxyacetone phosphate,10,0,0,True
+dimethylallyl phosphate,10,0,0,True
+diphosphate,9,0,0,True
+docosanoyl-CoA,71,7,7,False
+docosaprenyl diphosphate,119,1,1,False
+dodecaprenyl diphosphate,69,1,1,False
+dolichyl D-mannosyl phosphate,41,7,7,False
+dolichyl phosphate,30,1,1,False
+episterol,29,8,8,False
+episteryl oleate,48,8,8,False
+episteryl palmitoleate,46,8,8,False
+"ergosta-5,7,22,24(28)-tetraen-3beta-ol",29,7,7,False
+"ergosta-5,7,24(28)-trien-3beta-ol",29,7,7,False
+ergosterol,29,8,8,False
+ergosteryl oleate,48,8,8,False
+ergosteryl palmitoleate,46,8,8,False
+erythro-4-hydroxy-L-glutamic acid,11,2,2,False
+ethanol,3,0,0,True
+ethanolamine,4,0,0,True
+ethyl (2R)-lactate,8,1,1,False
+ethyl (2S)-lactate,8,1,1,False
+ethyl 2-methylbutyrate,9,1,1,False
+ethyl acetate,6,0,0,True
+ethyl benzoate,11,0,0,True
+ethyl butanoate,8,0,0,True
+ethyl decanoate,14,0,0,True
+ethyl hexanoate,10,0,0,True
+ethyl isobutyrate,8,0,0,True
+ethyl octanoate,12,0,0,True
+ethyl propionate,7,0,0,True
+ethyl pyruvate,8,0,0,True
+farnesol,16,0,0,True
+farnesyl diphosphate,24,1,1,False
+fecosterol,29,7,7,False
+fecosteryl oleate,48,7,7,False
+fecosteryl palmitoleate,46,7,7,False
+ferricytochrome c,59,4,4,False
+ferrocytochrome c,59,4,4,False
+ferroheme b,43,0,0,True
+folate,32,1,1,False
+formaldehyde,2,0,0,True
+formate,3,0,0,True
+fumarate,8,0,0,True
+gamma-aminobutyrate,7,0,0,True
+geranyl diphosphate,19,1,1,False
+geranylgeranyl diphosphate,29,1,1,False
+glutathione,20,2,2,False
+glutathione disulfide,40,4,4,False
+glyceraldehyde 3-phosphate,10,1,1,False
+glycerol,6,0,0,True
+glycerol 1-phosphate,10,1,1,False
+glycerol 2-phosphate(2-),10,0,0,True
+glycerol 3-phosphate,10,1,1,False
+glycerone,6,0,0,True
+glycogen,45,20,20,False
+glycolaldehyde,4,0,0,True
+glycolate,5,0,0,True
+glyoxylate,5,0,0,True
+guanine,11,0,0,True
+guanosine,20,4,4,False
+guanosine 2'-monophosphate,24,4,4,False
+heme a,60,1,1,False
+heme o,59,1,1,False
+henicosaprenyl diphosphate,114,1,1,False
+heptadecaprenyl diphosphate,94,1,1,False
+heptaprenyl diphosphate,44,1,1,False
+hexacosanoyl-CoA,75,7,7,False
+hexadec-2-enoyl-CoA,65,7,7,False
+hexadecanal,17,0,0,True
+hexadecaprenyl diphosphate,89,1,1,False
+hexanoate,8,0,0,True
+hexanol,7,0,0,True
+hexanoyl-CoA,55,7,7,False
+hexaprenyl diphosphate,39,1,1,False
+hexyl acetate,10,0,0,True
+homocitrate,14,1,1,False
+homogentisate,12,0,0,True
+homoisocitrate,14,2,2,False
+hydrogen cyanide,2,0,0,True
+hydrogen peroxide,2,0,0,True
+hydrogen sulfide,1,0,0,True
+hypotaurine,6,1,1,False
+hypoxanthine,10,0,0,True
+icosanoyl-CoA,69,7,7,False
+icosaprenyl diphosphate,109,1,1,False
+indol-3-ylacetaldehyde,12,0,0,True
+indole-3-acetate,13,0,0,True
+indole-3-pyruvate,15,0,0,True
+inosine,19,4,4,False
+inositol phosphomannosylinositol phosphoceramide A (C24),87,21,21,False
+inositol phosphomannosylinositol phosphoceramide A (C26),91,21,21,False
+inositol phosphomannosylinositol phosphoceramide B (C24),88,22,22,False
+inositol phosphomannosylinositol phosphoceramide B (C26),92,22,22,False
+inositol phosphomannosylinositol phosphoceramide B' (C24),88,22,22,False
+inositol phosphomannosylinositol phosphoceramide B' (C26),92,22,22,False
+inositol phosphomannosylinositol phosphoceramide C (C24),89,23,23,False
+inositol phosphomannosylinositol phosphoceramide C (C26),91,23,23,False
+inositol phosphomannosylinositol phosphoceramide D (C24),90,24,24,False
+inositol phosphomannosylinositol phosphoceramide D (C26),94,24,24,False
+inositol-P-ceramide A (C24),61,9,9,False
+inositol-P-ceramide A (C26),63,9,9,False
+inositol-P-ceramide B (C24),62,10,10,False
+inositol-P-ceramide B (C26),64,10,10,False
+inositol-P-ceramide B' (C24),62,10,10,False
+inositol-P-ceramide B' (C26),64,10,10,False
+inositol-P-ceramide C (C24),63,11,11,False
+inositol-P-ceramide C (C26),65,11,11,False
+inositol-P-ceramide D (C24),64,12,12,False
+inositol-P-ceramide D (C26),66,12,12,False
+iron(2+),1,0,0,True
+iron(3+),1,0,0,True
+isoamyl acetate,9,0,0,True
+isoamylol,6,0,0,True
+isobutanol,5,0,0,True
+isobutyl acetate,8,0,0,True
+isobutyraldehyde,5,0,0,True
+isobutyrate,6,0,0,True
+isocitrate,13,2,2,False
+isopentenyl diphosphate,14,1,1,False
+itaconate,9,0,0,True
+itaconyl-CoA,56,7,7,False
+keto-phenylpyruvate,12,0,0,True
+kynurenic acid,14,0,0,True
+lanosterol,31,7,7,False
+lanosteryl oleate,50,7,7,False
+lanosteryl palmitoleate,48,7,7,False
+laurate,14,0,0,True
+lauroyl-CoA,61,7,7,False
+leukotriene A4,23,2,2,False
+leukotriene B4,24,2,2,False
+lignoceric acid,26,0,0,True
+lipoamide,12,1,1,False
+malonyl-CoA,54,7,7,False
+maltose,23,10,10,False
+mannan,45,20,20,False
+mannose-(1D-myo-inositol 1-phosphate)2,42,18,18,False
+mannose-1D-myo-inositol 1-phosphate,27,11,11,False
+mannosylinositol phosphorylceramide A (C24),72,14,14,False
+mannosylinositol phosphorylceramide A (C26),76,14,14,False
+mannosylinositol phosphorylceramide B (C24),73,15,15,False
+mannosylinositol phosphorylceramide B (C26),77,15,15,False
+mannosylinositol phosphorylceramide B' (C24),73,15,15,False
+mannosylinositol phosphorylceramide B' (C26),77,15,15,False
+mannosylinositol phosphorylceramide C (C24),74,16,16,False
+mannosylinositol phosphorylceramide C (C26),78,16,16,False
+mannosylinositol phosphorylceramide D (C24),75,17,17,False
+mannosylinositol phosphorylceramide D (C26),79,17,17,False
+melibiose,23,10,10,False
+"meso-2,3-butanediol",6,2,2,False
+methanethiol,2,0,0,True
+methanol,2,0,0,True
+methional,6,0,0,True
+methionol,6,0,0,True
+methionyl acetate,12,1,1,False
+methyl alpha-D-glucopyranoside,13,5,5,False
+methylglyoxal,5,0,0,True
+monoethyl succinate,10,0,0,True
+myo-inositol,12,6,6,False
+"myo-inositol 1,3,4,5,6-pentakisphosphate",32,6,6,False
+myo-inositol hexakisphosphate,36,6,6,False
+myristate,16,0,0,True
+myristoyl-CoA,63,7,7,False
+nicotinamide,9,0,0,True
+nicotinamide riboside,18,4,4,False
+nicotinate,9,0,0,True
+nicotinic acid D-ribonucleotide,22,4,4,False
+nitrate,4,0,0,True
+nitric oxide,2,0,0,True
+nonadecaprenyl diphosphate,104,1,1,False
+nonaprenyl 4-hydroxybenzoate,55,0,0,True
+nonaprenyl diphosphate,54,1,1,False
+octadecaprenyl diphosphate,99,1,1,False
+octanoate,10,0,0,True
+octanoyl-CoA,57,7,7,False
+octaprenyl diphosphate,49,1,1,False
+oleate,20,0,0,True
+oleoyl-CoA,67,7,7,False
+ornithine,9,1,1,False
+orotate,11,0,0,True
+orotidine 5'-(dihydrogen phosphate),24,4,4,False
+oxaloacetate,9,0,0,True
+oxygen,2,0,0,True
+p-cumic aldehyde,11,0,0,True
+palmitate,18,0,0,True
+palmitoleate,18,0,0,True
+palmitoleoyl-CoA(4-),65,7,7,False
+palmitoyl-CoA,65,7,7,False
+pantetheine 4'-phosphate,22,1,1,False
+pectin,13,5,5,False
+pentadecaprenyl diphosphate,84,1,1,False
+pentaprenyl diphosphate,34,1,1,False
+phenethyl acetate,12,0,0,True
+phenylacetaldehyde,9,0,0,True
+phenylacetic acid,10,0,0,True
+phosphate,5,0,0,True
+phosphoenolpyruvate,10,0,0,True
+phosphoribosyl-carboxy-aminoimidazole,22,4,4,False
+phytosphingosine,22,3,3,False
+phytosphingosine 1-phosphate,26,3,3,False
+pimeloyl-CoA,58,7,7,False
+porphobilinogen,16,0,0,True
+porphyrin,24,0,0,True
+potassium,1,0,0,True
+precorrin-2,62,4,4,False
+prenyl diphosphate(3-),14,1,1,False
+prephenate,16,2,2,False
+preuroporphyrinogen,61,0,0,True
+propanal,4,0,0,True
+propanol,4,0,0,True
+propionate,5,0,0,True
+propionyl-CoA,52,7,7,False
+propyl acetate,7,0,0,True
+protoporphyrin,42,0,0,True
+protoporphyrinogen,42,0,0,True
+pseudouridine 5'-phosphate,21,4,4,False
+putrescine,6,0,0,True
+pyridoxal,12,0,0,True
+pyridoxal 5'-phosphate,16,0,0,True
+pyridoxamine,12,0,0,True
+pyridoxamine 5'-phosphate,16,0,0,True
+pyridoxine,12,0,0,True
+pyridoxine 5'-phosphate,16,0,0,True
+pyruvate,6,0,0,True
+quinaldic acid,13,0,0,True
+quinolinate,12,0,0,True
+quinone,8,0,0,True
+raffinose,34,14,14,False
+riboflavin,27,3,3,False
+ribose-5-phosphate,14,3,3,False
+"sedoheptulose 1,7-bisphosphate",22,4,4,False
+sedoheptulose 7-phosphate,18,4,4,False
+shikimate,12,3,3,False
+siroheme,63,4,4,False
+sirohydrochlorin,62,4,4,False
+sn-glycero-3-phosphocholine,16,2,2,False
+sn-glycero-3-phosphoethanolamine,13,2,2,False
+sn-glycero-3-phosphoserine,16,3,3,False
+sodium,1,0,0,True
+spermidine,10,0,0,True
+spermine,14,0,0,True
+sphinganine,21,2,2,False
+sphinganine 1-phosphate,25,2,2,False
+squalene,30,0,0,True
+stachyose,45,19,19,False
+stearate,20,0,0,True
+stearoyl-CoA,67,7,7,False
+succinate,8,0,0,True
+succinic semialdehyde,7,0,0,True
+succinyl-CoA,55,7,7,False
+sucrose,23,9,9,False
+sulphate,5,0,0,True
+sulphite,4,0,0,True
+superoxide,2,0,0,True
+taurine,7,0,0,True
+taurocholate,35,11,11,False
+taurocholic acid,35,11,11,False
+tetracosanoyl-CoA,73,7,7,False
+tetradecaprenyl diphosphate,79,1,1,False
+tetrahydropteroyltri-L-glutamic acid,50,4,4,False
+tetrathionate,10,0,0,True
+thiamine,18,0,0,True
+thiamine(1+) triphosphate(4-),30,2,2,False
+thiocyanate,3,0,0,True
+thiosulfate,5,0,0,True
+thymidine,17,3,3,False
+thymidine 3'-monophosphate,21,3,3,False
+thymidine 5'-monophosphate,21,3,3,False
+thymine,9,0,0,True
+trans-3-Chloroacrylic acid,6,0,0,True
+trans-3-Chloroallyl aldehyde,5,0,0,True
+trans-4-hydroxy-L-proline,9,2,2,False
+trans-aconitate,12,0,0,True
+trans-dec-2-enoyl-CoA,59,7,7,False
+trans-docos-2-enoyl-CoA,71,7,7,False
+trans-dodec-2-enoyl-CoA,61,7,7,False
+trans-hex-2-enoyl-CoA,55,7,7,False
+trans-hexacos-2-enoyl-CoA,75,7,7,False
+trans-hexadec-2-enoyl-CoA,65,7,7,False
+trans-oct-2-enoyl-CoA,57,7,7,False
+trans-octadec-2-enoyl-CoA,67,7,7,False
+trans-tetradec-2-enoyl-CoA,63,7,7,False
+trehalose,23,10,10,False
+tridecaprenyl diphosphate,74,1,1,False
+trimethylenediamine,5,0,0,True
+triphosphate,13,0,0,True
+trithionate,9,0,0,True
+tryptophol,12,0,0,True
+turanose,23,8,8,False
+tyrosol,10,0,0,True
+ubiquinol-6,43,0,0,True
+ubiquinone-6,43,0,0,True
+undecaprenyl diphosphate,64,1,1,False
+uracil,8,0,0,True
+urea,4,0,0,True
+urea-1-carboxylic acid,7,0,0,True
+ureidoglycolic acid,9,1,1,False
+uridine,17,4,4,False
+uridine 2'-phosphate,21,4,4,False
+uroporphyrinogen III,60,0,0,True
+xanthosine,20,4,4,False
+xanthosine-5-phosphate,24,4,4,False
+xanthurenate,15,0,0,True
+xylitol,10,3,3,False
+zymosterol,28,7,7,False
+zymosterol intermediate 1a,30,8,8,False
+zymosterol intermediate 1b,30,8,8,False
+zymosterol intermediate 1c,31,8,8,False
+zymosterol intermediate 2,28,6,6,False
+zymosteryl oleate,47,7,7,False
+zymosteryl palmitoleate,45,7,7,False

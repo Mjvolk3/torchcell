@@ -1,0 +1,54 @@
+%% notes-tex/031-yeast-chemical-space/sections/2-inventory.tex
+
+\section{What the reconstruction actually names\secstatus{todo}}
+\label{sec:inventory}
+
+Figure~\ref{fig:accounting} measures yeast-GEM 9.0.2 as an inventory of chemical species
+rather than as a flux model.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/yeast9_chemical_accounting.py ->
+%% yeast9_accounting.svg, from results/yeast9_accounting_*.csv, converted by `make plots`.
+\tcfig{figures/yeast9_accounting.pdf}{Yeast9 as a chemical inventory. \textbf{(a)} Distinct
+species by structure class, with the share carrying a SMILES. \textbf{(b)} Published
+metabolome counts, which this script does not measure. \textbf{(c)} How precisely a species is
+named: no structure, a structure with an unassigned stereocenter that names a set of
+stereoisomers, or a structure that names one molecule. \textbf{(d)} Share of each reaction's
+participants carrying a structure. \textbf{(e)} Species reachable from the model's own
+boundary metabolites when a reaction fires as soon as any one substrate is present, an
+upper bound that ignores stoichiometry and thermodynamics. \textbf{(f)} The species without a
+structure, split into those a lookup could recover and those that can never have one.}
+{fig:accounting}
+
+Four measurements matter.
+
+\notesec{The inventory is smaller than the model's own headline number}
+The release reports 2{,}805 metabolites, but those are compartment-specific entries. Collapsed
+to distinct chemical species the model names \textbf{1{,}378}, spread over 14 compartments as
+2{,}806 entries in the file we read. Of those species 894 carry a SMILES and 484 do not.
+
+\notesec{Only a fifth of the model is pinned to a single molecule}
+Of the 894 structures, \textbf{621 carry at least one unassigned stereocenter}, so the string
+names a set of stereoisomers rather than a compound. Only \textbf{273 of 1{,}378 species}, a
+fifth of the model, are specified precisely enough for a physical accounting to treat them as
+one species. This is the measurement that bears most directly on whether an atom-mapped
+treatment is possible, and it is not reported anywhere in the literature we mirror.
+
+\notesec{Half the reactions are structurally complete}
+Every participant carries a structure in \textbf{2{,}156 of 4{,}131} reactions, 52 percent.
+That is the share a structure-aware or rule-based method could read without first resolving
+something, and it is the practical ceiling on applying reaction rules to this model as
+released.
+
+\notesec{Connectivity gives no useful bound}
+Starting from the model's 267 boundary metabolites and firing a reaction whenever any one of
+its substrates is present, \textbf{1{,}374 of 1{,}378 species are reached within four rounds}.
+The rule is deliberately generous, and the result is that graph connectivity says only that
+the network is dense. It follows that bounding the space of intermediates needs real reaction
+rules with atom mapping rather than reachability on a species graph, which is an argument for
+the retrobiosynthetic framing rather than against it.
+
+One number to treat carefully. Counting metabolite entries that participate in a single
+non-boundary reaction or that can only be produced or only consumed gives \textbf{747 of
+2{,}806} on 9.0.2. The published counterpart for Yeast8 is 464 of 2{,}742 \external{Chen, Li and
+Nielsen 2022}. The two are not directly comparable because the definitions of a dead end may
+differ; ours is stated in the script and is the more inclusive reading.

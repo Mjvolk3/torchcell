@@ -1,0 +1,64 @@
+%% notes-tex/031-yeast-chemical-space/sections/4-open.tex
+
+\section{What is left, and the question for a collaborator\secstatus{todo}}
+\label{sec:open}
+
+Three openings survive the published work, and they are narrower and more specific than the
+original framing.
+
+\notesec{Stereochemical resolution, which nobody reports}
+A rule-based expansion operates on SMILES, and 621 of the 894 Yeast9 structures name a set of
+stereoisomers rather than a molecule. A species that is stereochemically ambiguous cannot
+carry an atom mapping that means anything, cannot be assigned a unique thermodynamic value,
+and collapses L and D forms onto one key. Resolving the 1{,}378 species to single molecules is
+a prerequisite for a physical accounting, it is measured here as a gap, and no paper in the
+mirror reports it for any yeast reconstruction. This is the cleanest opening.
+
+\notesec{Lipids, where both the model and the expansion are weakest}
+Lipids dominate every count. Of Yeast9's 1{,}378 species, \textbf{281 are acyl-resolved or
+pooled lipid classes and not one carries a structure}. Of the 14{,}882 metabolites the
+published comparison found missing, 14{,}310 are lipids. And the published expansion reaches
+92 percent of the whole metabolome but only 75 percent of the non-lipid subset, which means
+the whole-metabolome figure is carried by lipids enumerated combinatorially from acyl chains
+rather than by resolved chemistry. Whether that enumeration is a physical accounting or a
+parameterization is a fair question to put to a specialist.
+
+\notesec{The mass fraction, which is simply missing}
+Nothing in the mirrored literature states what share of yeast dry mass is small molecules.
+Until that number exists the exercise has no denominator: an accounting of every chemical
+species is a different undertaking if the pool is 3 percent of the cell than if it is 15.
+
+\notesec{Does retrobiosynthesis beat constraint-based gap filling here}
+Worth stating precisely, because the two do different jobs. Constraint-based gap filling adds
+reactions from a universal database until a model carries flux to a required biomass
+component, so it is driven by a phenotype and answers with the smallest set of reactions that
+restores it. It never proposes a molecule that is not already in its database. A
+retrobiosynthetic expansion applies reaction rules to structures and generates species that
+were in no database, so it can propose the intermediate itself. For enumerating the space of
+chemical intermediates, which is the stated goal, only the second can work. The measurement in
+Section~\ref{sec:inventory} supports that from the other direction: reachability on the
+species graph saturates at 99.7 percent in four rounds and therefore bounds nothing, so the
+bound has to come from chemistry.
+
+\textit{Hypothesis (untested):} the residual the published expansion reports, 267 non-lipid
+metabolites that could not be connected with enzyme-annotated reactions, would shrink if
+uncatalyzed chemistry were admitted on the same footing as enzymatic rules, since spontaneous
+and metal-catalyzed steps are exactly what an enzyme-annotated rule set excludes. The
+published work carries 213 spontaneous rules against 21{,}921 enzymatic ones, which is a small
+allowance for a cell held at 30 degrees for many hours.
+
+\notesec{The concrete ask}
+Put to a retrobiosynthesis specialist, the question is not whether yeast metabolism can be
+expanded, because it has been. It is three narrower things. Can a rule set operate on
+stereochemically resolved species, and what does it cost to resolve 1{,}378 of them first.
+Does admitting uncatalyzed and metal-catalyzed chemistry close the 267-metabolite residual, or
+does it inflate the space without bound. And is there a representation of acyl-resolved lipids
+that is a physical accounting rather than a combinatorial enumeration.
+
+The deliverable that would make the conversation concrete is a conversion of Yeast9 into a
+reaction format a retrobiosynthesis tool consumes, which means per-reaction substrate and
+product structures with an atom mapping where one can be derived. Section~\ref{sec:inventory}
+measures the ceiling on that conversion as released: \textbf{2{,}156 of 4{,}131 reactions},
+52 percent, have a structure for every participant today. That conversion is a small piece of
+work and it is the natural first step, but it is a side quest and it does not block the
+modeling phase of experiment 031.

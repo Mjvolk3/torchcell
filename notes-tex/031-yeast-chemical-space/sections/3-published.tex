@@ -1,0 +1,46 @@
+%% notes-tex/031-yeast-chemical-space/sections/3-published.tex
+
+\section{The expansion has already been done\secstatus{todo}}
+\label{sec:published}
+
+The scoping question has a published answer, and it arrived in 2026. Yeast-MetaTwin
+\external{Wu et al.\ 2026, ``Systematically exploring yeast metabolism through
+retrobiosynthesis and deep learning''; Nielsen and Kerkhoven are authors} applies exactly the
+method under consideration here, at a scale that would be hard to improve on casually.
+
+The numbers, quoted through \file{yeast9\_literature\_counts.py} and plotted hatched in
+Figure~\ref{fig:scope}. The Yeast Metabolome Database holds \textbf{16{,}042} entries carrying
+a SMILES, of which \textbf{14{,}882 are absent from Yeast9}, and those missing entries are
+\textbf{14{,}310 lipids against 572 non-lipids}. The authors extracted \textbf{21{,}921
+enzyme-associated reaction rules and 213 spontaneous rules} from MetaNetX and MetaCyc, report
+that 95 percent of the rules regenerate their original reactions, and trimmed the resulting
+pool to a connected network of \textbf{1{,}092{,}946 reactions}. The outcome they state is
+that coverage of the yeast metabolome rose \textbf{from 7 percent to 92 percent}, and for the
+non-lipid metabolome from 54 to 75 percent.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/yeast9_chemical_accounting.py
+%% and yeast9_literature_counts.py -> yeast9_scope.svg, converted by `make plots`.
+\tcfig{figures/yeast9_scope.pdf}{Published scope against what is open. Hatched bars are
+published and were not measured here; solid bars are measured from the release.
+\textbf{(a)} Metabolome coverage before and after the retrobiosynthetic expansion, for the
+whole metabolome and for the non-lipid subset. \textbf{(b)} Yeast dry-mass composition as
+published. The small-molecule pool and DNA have no published yeast value in the mirrored
+literature; the dashed line is the \org{E. coli} soluble pool, shown only as a contrast and
+not as a yeast figure. \textbf{(c)} What remains: Yeast9 species whose structure names a set
+rather than a molecule, Yeast9 lipid species with no structure at all, and the non-lipid
+metabolites the published expansion could not connect.}{fig:scope}
+
+Two consequences follow immediately. First, proposing a retrobiosynthetic enumeration of yeast
+metabolism as new work would duplicate a published result from the same group that maintains
+the reconstruction. Second, the residual they report is specific and small: \textbf{267
+non-lipid metabolites}, 1.7 percent of the metabolome, could not be connected without
+introducing metabolites outside the yeast metabolome.
+
+The one thing the published work does not settle is the mass question. Yeast dry mass is
+reported as 40 to 50 percent protein, about 10 percent RNA, about 10 percent lipid and about
+25 percent cell wall \external{Milo and Phillips 2016; Feldmann 2012}. The \textbf{fraction
+that is small molecules is never stated for yeast} in the mirrored literature. Only the
+\org{E. coli} figure exists, a soluble or metabolite-and-cofactor pool of 3 to 3.9 percent of
+dry weight, and it should not be quoted as a yeast number. If a physical accounting is the
+goal, that gap is worth closing first, because it sets how much of the cell the exercise is
+about.

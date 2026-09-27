@@ -1,0 +1,7 @@
+quantity,value,source,quote
+"YMDB, entries with a SMILES",16042,wuSystematicallyExploringYeast2026,"We first compared the 16,042 metabolites in YMDB with the metabolites in Yeast9 and identified 14,882 metabolites missing from Yeast9."
+"of those, missing from Yeast9",14882,wuSystematicallyExploringYeast2026,"14,882 metabolites with SMILES ... reports in the Yeast Metabolome Database (YMDB) are still missing from the widely used yeast GEM-Yeast9 model."
+"missing, lipids",14310,wuSystematicallyExploringYeast2026,"these missing metabolites comprise 14,310 lipids and 572 non-lipids"
+"missing, non-lipids",572,wuSystematicallyExploringYeast2026,"these missing metabolites comprise 14,310 lipids and 572 non-lipids"
+Yeast-MetaTwin metabolites,16244,wuSystematicallyExploringYeast2026,"we reconstruct a yeast metabolic twin model, Yeast-MetaTwin, comprising 16,244 metabolites, 1,976 metabolic genes and 59,865 reactions."
+Yeast9 metabolite entries,2805,zhangYeast9ConsensusGenomescale2024,"Through the above improvements, Yeast9 contains 2805 metabolites, 1162 genes, and 4130 reactions."

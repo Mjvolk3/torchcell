@@ -94,7 +94,10 @@ class Arm(BaseModel):
 
 
 ARMS: list[Arm] = [
-    # Round 1b: what the current figure still needs. The random arm at 1e-3 ran the same
+    # Round 1b: what the current figure still needs. The random arms carry five seeds: each
+    # seed is a different rewiring as well as a different initialization, so their spread
+    # is the widest in the study (0.011 at n = 2) and the effect they must resolve is 0.02.
+    # The random arm at 1e-3 ran the same
     # 30-epoch protocol as every other arm (30 logged epochs on both complete seeds); its
     # third seed finishes on its own and needs no submission.
     Arm(

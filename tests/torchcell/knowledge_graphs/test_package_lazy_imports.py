@@ -22,6 +22,8 @@ import subprocess
 import sys
 import types
 
+import pytest
+
 import torchcell.knowledge_graphs as kg
 from torchcell.knowledge_graphs import dataset_adapter_map as mapping_module
 
@@ -73,7 +75,15 @@ def test_package_import_is_light_and_attribute_access_imports_the_submodule() ->
 
 
 def test_attribute_is_the_submodule_in_this_process_too() -> None:
-    """After a direct submodule import the package attribute is that module, not a dict."""
+    """After a direct submodule import the package attribute is that module, not a dict;
+    an unlisted name raises with the package name (covered here as well as in the probe,
+    since create_kg.py, the other changed file, cannot be imported under the test contract).
+    """
+    with pytest.raises(
+        AttributeError,
+        match=r"^module 'torchcell.knowledge_graphs' has no attribute 'nope'$",
+    ):
+        kg.nope
     assert isinstance(kg.dataset_adapter_map, types.ModuleType)
     assert kg.dataset_adapter_map is mapping_module
     assert isinstance(mapping_module.dataset_adapter_map, dict)

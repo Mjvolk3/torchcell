@@ -211,7 +211,8 @@ def _ladder_axis(ax: Axes, xlabel: str = X_LABEL) -> None:
 
 def _plain_log_ticks(ax: Axes, ticks: list[float]) -> None:
     """Log axis with decimal tick labels at full font size: the default 10^k mathtext puts
-    the exponent at 0.7 of the font, under the 5 pt floor."""
+    the exponent at 0.7 of the font, under the 5 pt floor.
+    """
     ax.yaxis.set_major_locator(FixedLocator(ticks))
     ax.yaxis.set_minor_locator(NullLocator())
     ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
@@ -310,9 +311,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             label=label,
         )
     a.plot([], [], color="black", lw=0.7, label="arm mean")
-    a.scatter(
-        [], [], s=0, label="paired t vs none: * p < 0.05, ** < 0.01, *** < 0.001"
-    )
+    a.scatter([], [], s=0, label="paired t vs none: * p < 0.05, ** < 0.01, *** < 0.001")
     a.legend(
         loc="lower left",
         frameon=False,
@@ -507,9 +506,16 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
         (RANDOM, "random,\ndegree-matched", PURPLE),
         ("kl_0", "none\n(λ = 0)", GRAY),
     ]
+    # The seed count is printed only while an arm is short of the three-seed design;
+    # once every arm has three, the stars (paired t against no penalty, epoch-29 reading,
+    # the convention of panel a) are the annotation.
+    all_three = all(len(done[done.arm == arm]) == 3 for arm, _, _ in arms)
     for i, (arm, _, color) in enumerate(arms):
         sub = done[done.arm == arm]
         part = runs[(runs.arm == arm) & ~runs.complete]
+        star = _stars(pvals.get((arm, "fixed")))
+        if star:
+            f.text(i, 0.4565, star, ha="center", va="center", fontsize=5.5)
         if len(sub):
             f.bar(
                 i,
@@ -529,15 +535,16 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
                 linewidth=0.4,
                 zorder=4,
             )
-            f.text(
-                i,
-                0.4015,
-                f"n = {len(sub)}",
-                ha="center",
-                va="bottom",
-                fontsize=5,
-                color="white",
-            )
+            if not all_three:
+                f.text(
+                    i,
+                    0.4015,
+                    f"n = {len(sub)}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=5,
+                    color="white",
+                )
         for r in part.to_dict("records"):
             f.scatter(
                 [i + 0.42],

@@ -19,15 +19,15 @@ graphs help'': how far along the graph should a head reach, two hops and three, 
 mechanisms on identical targets, with direction beside it. Round 3 holds what is
 optional or orthogonal: where the graph block sits, the training budget, the
 representation, the width. The random-graph arm of
-round 1 ran the full 30-epoch protocol on both complete seeds (30 logged epochs each),
-so its comparison in Figure~\ref{fig:sweep}f is at matched budget; its third seed was
-at epoch 22 at the last pull and needs no submission.
+round 1 ran the full 30-epoch protocol on all three seeds (30 logged epochs each), so
+its comparison in Figure~\ref{fig:sweep}f is at matched budget.
 
 \notesec{What round 1 left open, and the arm that closes each}
 \begin{enumerate}
 \item \emph{Biology or conditioning.} The random-graph control ran at $\lambda =
-  10^{-3}$, where the biological prior adds 0.005 to 0.013 and two seeds cannot resolve
-  it. At $\lambda = 1$ the biological prior adds 0.021 to 0.023 on every seed. Three
+  10^{-3}$, where the biological prior adds 0.005 to 0.013 and three seeds do not
+  resolve it (random against no penalty $-0.005 \pm 0.012$, $p = 0.56$). At $\lambda =
+  1$ the biological prior adds 0.021 to 0.023 on every seed. Three
   seeds of the rewired graphs at $\lambda = 1$ decide whether that is the graphs or the
   penalty; three more at $10^{-1}$ cover the loss-selected optimum.
 \item \emph{The top of the ladder.} Accuracy at epoch 29 rises to $\lambda = 1$ with no
@@ -140,7 +140,10 @@ support off the diagonal. Every arm's config and overrides in Table~\ref{tab:rou
 compose under Hydra to the intended keys (checked for all 26 distinct combinations),
 and the plan script writes the Delta submitter,
 \file{experiments/025-solid-growth/scripts/delta_submit_round2.sh}, one \texttt{sbatch}
-per run in six dependency chains with round 1b first in every chain.
+per run in six chains with round 1b first in every chain. A chain is a stagger, not a
+queue: Slurm's \texttt{after:<id>+30} releases a job 30 minutes after the previous one
+starts, so that six 554 GB stage-ins never begin on one Lustre path at once, and a
+later round waits on the scheduler like any other job once its predecessor is running.
 
 \notesec{The figures the rounds fill}
 Figure~\ref{fig:round2} is the wireframe. The first row revises Figure~\ref{fig:sweep}:

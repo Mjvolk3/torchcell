@@ -64,7 +64,7 @@ TABLES_DIR = osp.join(
     osp.dirname(EXPERIMENT_ROOT), "notes-tex", "025-graph-reg-sweep", "tables"
 )
 PROJECT = "zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer"
-SELECT_TAGS = ["graph_reg_sweep", "cgt_s0_r_kl_ctrl_013"]
+SELECT_TAGS = ["graph_reg_sweep", "cgt_s0_r_kl_ctrl_013", "graph_reg_round3"]
 BUDGET = 30
 FIXED_EPOCH = BUDGET - 1
 WINDOW = (10, 29)
@@ -102,8 +102,14 @@ EDGE_KEYS = tuple(f"val_edge_recovery/{g}/recall_at_deg" for g in GRAPHS) + tupl
     f"val_edge_recovery/{g}/precision_k32" for g in GRAPHS
 )
 
-# Display order of the arms: the ladder from no penalty up, then the two controls.
-ARM_ORDER = [
+# Display order of the arms: the ladder from no penalty up, then the two controls
+# (round 1), then the round-1b, 2 and 3 arms of graph_reg_round2_plan.py. An arm's name
+# is its mechanism (`kl_<lambda>`, `mask`, `random_<lambda>`) followed by every
+# departure from the round-1 setting: `2hop`/`3hop` reach, `sym` (KL target made
+# undirected) or `dir` (mask kept directed), `L<a>-<b>` for the regularized layers,
+# `emb` for the composite sequence embedding, `w360` for hidden width 360, `60ep` for
+# the 60-epoch budget. Round-1 arms carry none, so their names are unchanged.
+ROUND1_ARMS = [
     "kl_0",
     "kl_1e-05",
     "kl_0.0001",
@@ -114,6 +120,39 @@ ARM_ORDER = [
     "mask",
     "random_0.001",
 ]
+ROUND2_ARMS = [
+    # 1b: the ladder extended and the random control at the separating lambda
+    "kl_10",
+    "kl_100",
+    "random_0.1",
+    "random_1",
+    # 2: reach and direction, on the same targets for both mechanisms
+    "mask_dir",
+    "mask_2hop_dir",
+    "mask_3hop_dir",
+    "kl_1_2hop",
+    "kl_1_3hop",
+    "kl_1_sym",
+    # 3: placement
+    "mask_L1-2",
+    "mask_L3-4",
+    "mask_L1-4",
+    "kl_1_L1-2",
+    "kl_1_L3-4",
+    "kl_1_L1-4",
+    # 3: budget
+    "kl_0_60ep",
+    "mask_60ep",
+    "kl_1_60ep",
+    # 3: representation and width
+    "kl_0_emb",
+    "kl_1_emb",
+    "kl_0_w360",
+    "kl_1_w360",
+    "kl_0_emb_w360",
+    "kl_1_emb_w360",
+]
+ARM_ORDER = ROUND1_ARMS + ROUND2_ARMS
 ARM_LABEL = {
     "kl_0": "no penalty ($\\lambda = 0$)",
     "kl_1e-05": "KL $\\lambda = 10^{-5}$",
@@ -124,7 +163,33 @@ ARM_LABEL = {
     "kl_1": "KL $\\lambda = 1$",
     "mask": "hard mask, layer 1",
     "random_0.001": "KL $\\lambda = 10^{-3}$, random graphs",
+    "kl_10": "KL $\\lambda = 10$",
+    "kl_100": "KL $\\lambda = 100$",
+    "random_0.1": "KL $\\lambda = 10^{-1}$, random graphs",
+    "random_1": "KL $\\lambda = 1$, random graphs",
+    "mask_dir": "hard mask, directed",
+    "mask_2hop_dir": "hard mask, 2 hops, directed",
+    "mask_3hop_dir": "hard mask, 3 hops, directed",
+    "kl_1_2hop": "KL $\\lambda = 1$, 2-hop target",
+    "kl_1_3hop": "KL $\\lambda = 1$, 3-hop target",
+    "kl_1_sym": "KL $\\lambda = 1$, symmetric target",
+    "mask_L1-2": "hard mask, layers 1--2",
+    "mask_L3-4": "hard mask, layers 3--4",
+    "mask_L1-4": "hard mask, layers 1--4",
+    "kl_1_L1-2": "KL $\\lambda = 1$, layers 1--2",
+    "kl_1_L3-4": "KL $\\lambda = 1$, layers 3--4",
+    "kl_1_L1-4": "KL $\\lambda = 1$, layers 1--4",
+    "kl_0_60ep": "no penalty, 60 epochs",
+    "mask_60ep": "hard mask, 60 epochs",
+    "kl_1_60ep": "KL $\\lambda = 1$, 60 epochs",
+    "kl_0_emb": "no penalty, composite embedding",
+    "kl_1_emb": "KL $\\lambda = 1$, composite embedding",
+    "kl_0_w360": "no penalty, width 360",
+    "kl_1_w360": "KL $\\lambda = 1$, width 360",
+    "kl_0_emb_w360": "no penalty, composite, width 360",
+    "kl_1_emb_w360": "KL $\\lambda = 1$, composite, width 360",
 }
+assert set(ARM_LABEL) == set(ARM_ORDER)
 
 
 class RunRow(BaseModel):
@@ -163,18 +228,71 @@ class RunRow(BaseModel):
     cuda_peak_gb_max: float | None
 
 
+def _layer_tag(layers: list[int]) -> str:
+    """`L1-2` for a contiguous block, `L1+3` otherwise; empty for the round-1 layer 1."""
+    if layers == [1]:
+        return ""
+    if layers == list(range(layers[0], layers[-1] + 1)):
+        return f"L{layers[0]}-{layers[-1]}"
+    return "L" + "+".join(str(x) for x in layers)
+
+
 def classify(cfg: dict[str, Any]) -> tuple[str, float, bool, bool]:
-    """Arm name from the run's own config."""
+    """Arm name from the run's own config (see ROUND2_ARMS for the naming)."""
     model = cfg.get("model", {})
-    lam = float(model.get("graph_regularization", {}).get("graph_reg_lambda", 0.0))
-    mask = bool((model.get("attention_mask") or {}).get("enabled", False))
+    reg = model.get("graph_regularization") or {}
+    lam = float(reg.get("graph_reg_lambda", 0.0))
+    mask_cfg = model.get("attention_mask") or {}
+    mask = bool(mask_cfg.get("enabled", False))
     rand = bool((model.get("random_graph") or {}).get("enabled", False))
+    parts: list[str] = []
     if mask:
         assert lam == 0.0, "a mask arm with a KL lambda is not in the design"
-        return "mask", lam, mask, rand
-    if rand:
-        return f"random_{lam:g}", lam, mask, rand
-    return f"kl_{lam:g}", lam, mask, rand
+        base = "mask"
+        hops = int(mask_cfg.get("hops", 1))
+        if hops > 1:
+            parts.append(f"{hops}hop")
+        if not bool(mask_cfg.get("symmetric", True)):
+            parts.append("dir")
+        tag = _layer_tag(sorted(int(x) for x in mask_cfg.get("layers", [1])))
+        if tag:
+            parts.append(tag)
+    elif rand:
+        base = f"random_{lam:g}"
+    else:
+        base = f"kl_{lam:g}"
+        if lam > 0:
+            hops = int(reg.get("hops", 1))
+            if hops > 1:
+                parts.append(f"{hops}hop")
+            if bool(reg.get("symmetrize", False)):
+                parts.append("sym")
+            specs = {
+                json.dumps(h["layer"])
+                for h in (reg.get("regularized_heads") or {}).values()
+            }
+            assert len(specs) <= 1, f"heads regularized on different layers: {specs}"
+            spec = json.loads(specs.pop()) if specs else 1
+            tag = _layer_tag(sorted([spec] if isinstance(spec, int) else spec))
+            if tag:
+                parts.append(tag)
+    if not bool((model.get("learnable_embedding") or {}).get("enabled", True)):
+        parts.append("emb")
+    hidden = int(model.get("hidden_channels", 180))
+    if hidden != 180:
+        parts.append(f"w{hidden}")
+    epochs = int((cfg.get("trainer") or {}).get("max_epochs", BUDGET))
+    if epochs != BUDGET:
+        parts.append(f"{epochs}ep")
+    return "_".join([base, *parts]), lam, mask, rand
+
+
+def reference_arm(arm: str) -> str:
+    """The no-penalty arm an arm pairs against: the one sharing its representation,
+    width and budget, so a composite or width-360 arm reads against its own control.
+    """
+    shared = [p for p in arm.split("_") if p in ("emb", "w360", "60ep")]
+    return "_".join(["kl_0", *shared])
 
 
 def pull_history(
@@ -341,6 +459,11 @@ ARM_GROUP = {
     "mask": "s0_hardmask_30ep",
     "random_0.001": "s0_random_30ep",
 }
+# Round-1b, 2 and 3 arms are grouped by their arm name, as W&B accepts it.
+ARM_GROUP.update(
+    {arm: "s0_" + arm.replace(".", "p").replace("-", "to") for arm in ROUND2_ARMS}
+)
+assert set(ARM_GROUP) == set(ARM_ORDER)
 
 
 def pull(
@@ -455,7 +578,9 @@ def summarize(runs: pd.DataFrame) -> dict[str, Any]:
     return arms
 
 
-REFERENCE = "kl_0"
+REFERENCE = (
+    "kl_0"  # round 1; reference_arm() picks the matching control for later rounds
+)
 
 
 def derived_from_history(runs: pd.DataFrame, hist: pd.DataFrame) -> pd.DataFrame:
@@ -527,10 +652,11 @@ def paired(runs: pd.DataFrame) -> list[PairedRow]:
         ("max", "val_pearson_max", runs),
         ("min_loss", "val_pearson_at_min_loss", runs[runs.complete]),
     ):
-        ref = pool[pool.arm == REFERENCE].set_index("seed")[col]
         for arm in ARM_ORDER:
-            if arm == REFERENCE:
+            reference = reference_arm(arm)
+            if arm == reference:
                 continue
+            ref = pool[pool.arm == reference].set_index("seed")[col]
             sub = pool[pool.arm == arm].set_index("seed")[col]
             seeds = sorted(set(sub.index) & set(ref.index))
             if not seeds:
@@ -618,9 +744,10 @@ def write_tables(
     for arm in ARM_ORDER:
         a = arms[arm]
         if not a.get("n"):
-            lines.append(
-                f"{ARM_LABEL[arm]} & 0 & \\multicolumn{{3}}{{l}}{{not run}} \\\\"
-            )
+            if arm in ROUND1_ARMS:
+                lines.append(
+                    f"{ARM_LABEL[arm]} & 0 & \\multicolumn{{3}}{{l}}{{not run}} \\\\"
+                )
             continue
         n_txt = str(a["n_complete"]) + (
             f" (+{a['n'] - a['n_complete']} partial)"
@@ -772,7 +899,8 @@ def main() -> None:
     for arm in ARM_ORDER:
         a = arms[arm]
         if not a.get("n"):
-            print(f"{arm:14s} {'0':>6s}  not run")
+            if arm in ROUND1_ARMS:
+                print(f"{arm:14s} {'0':>6s}  not run")
             continue
         f, mx = a["val_pearson_fixed"], a["val_pearson_max"]
         print(

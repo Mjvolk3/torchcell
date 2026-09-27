@@ -22,7 +22,7 @@ from omegaconf import DictConfig, OmegaConf
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.datasets import dataset_registry
 from torchcell.graph import SCerevisiaeGraph
-from torchcell.knowledge_graphs import dataset_adapter_map
+from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)

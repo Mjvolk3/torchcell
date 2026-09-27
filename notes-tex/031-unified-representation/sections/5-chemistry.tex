@@ -1,0 +1,41 @@
+%% notes-tex/031-unified-representation/sections/5-chemistry.tex
+
+\section{What pooling buys chemically\secstatus{todo}}
+\label{sec:chemistry}
+
+Pooling is worth the trouble only if the partner panels put chemistry near the application
+panel. Table~\ref{tab:chemspace} measures that for every Vanacloig compound: its most similar
+compound in each partner, under Tanimoto on count ECFP4. The fingerprint metric is the one
+reported because cosine between dense embeddings is high for any two molecules and says
+nothing about closeness.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/environment_axis_coverage.py ->
+%% results/chemical_space_thresholds.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Coverage of the 41-compound Vanacloig panel by each partner. Exact counts identical
+InChIKeys; the median nearest neighbor and the threshold counts use non-exact neighbors only,
+so an exact match cannot inflate them.}
+\label{tab:chemspace}
+\input{tables/t2-chemical-space}
+\end{table}
+
+Wildenhain supplies essentially all of the gain. Exact overlap with the panel rises from two
+compounds against either Hillenmeyer arm to ten against Wildenhain and twelve against the
+union, and the median nearest neighbor rises from 0.33 and 0.32 to 0.60. Hoepfner contributes
+nothing chemically: two exact matches, a median nearest neighbor of 0.29, and no non-exact
+neighbor above 0.5.
+
+\notesec{The gain is uneven, and it fails where the application needs it}
+Sorting the hydrolysate panel by its nearest neighbor in the union of the other four, ferulic
+acid becomes an exact match, vanillin reaches 0.62 against it, syringaldehyde 0.60 against
+syringic acid, and coumaric acid 0.55 against caffeic acid. The phenolics are genuinely
+covered. Isobutanol improves from 0.14 against sorbitol, which was its best neighbor when only
+Hillenmeyer was available, to 0.47, but its neighbor is an amino alcohol rather than an
+alcohol. Furfural sits at 0.30 against benzaldehyde and ethanol at 0.31. At two and five heavy
+atoms the small alcohols are nearly empty under a substructure fingerprint, so this is a limit
+of the representation as much as of the panel.
+
+Pooling therefore buys phenolic coverage and does not buy alcohol coverage, and isobutanol is
+the application target.

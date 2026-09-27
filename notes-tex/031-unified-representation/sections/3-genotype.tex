@@ -1,0 +1,57 @@
+%% notes-tex/031-unified-representation/sections/3-genotype.tex
+
+\section{The genotype axis resolves\secstatus{todo}}
+\label{sec:genotype}
+
+A homozygous diploid deletion can be written as the haploid genotype plus a statement of
+ploidy, because both copies are gone. A heterozygous deletion cannot, because one copy
+survives and the gene sits at half dose. The question is whether the schema can express that
+and whether the modeling stack can consume it. The two answers differ.
+
+\notesec{The schema already carries it}
+Heterozygosity is stored in two parts. A genome-wide baseline sits on the reference genome's
+ploidy field, which is the copy number of every unperturbed gene, and a per-locus deviation
+sits on an engineered copy-number perturbation carrying the copies present and the copies in
+the reference. That extension was made for exactly this case. Read from the built stores,
+all five datasets round-trip: Vanacloig and Wildenhain are haploid with deletion leaves,
+the Hillenmeyer homozygous arm and the Hoepfner homozygous arm are diploid with deletion
+leaves, and the Hillenmeyer heterozygous arm and the Hoepfner heterozygous arm are diploid
+with a one-of-two copy-number leaf marked present. Heterozygous and homozygous records are
+distinguishable from the stored record alone on three redundant signals: the perturbation
+class, the state field, and whether the copy-number fields exist.
+
+\notesec{The tensor layer discards it, and that is a correctness problem}
+The processor that turns a genotype into model input reads exactly one field off every
+perturbation, the systematic gene name. Neither copy number nor ploidy appears anywhere in
+the dataset-to-tensor layer. A heterozygous record and a homozygous record for the same gene
+therefore produce byte-identical input, one index and one boolean each.
+
+That matters quantitatively because Hoepfner measures both. Its two arms share 4{,}885 genes
+and 147 compounds, and \textbf{648{,}977 gene-by-compound cells are measured both
+heterozygous and homozygous}. Under the current representation those 648{,}977 pairs are
+identical inputs carrying two different measured responses, which is label noise rather than
+a missed feature.
+
+\notesec{One channel closes it}
+A per-gene functional dose, copies present over copies in the reference, is lossless for
+these five datasets on the dosage axis, because every perturbation in all five is either a
+full deletion or a one-of-two engineered variant. It needs no separate ploidy feature,
+because the vector's background level is the ploidy: a haploid deletion sits at zero against
+a background of one and a homozygous diploid deletion sits at zero against a background of
+two, so the two remain distinguishable. It is a strict generalization of the present
+boolean, since every current dataset emits zero for a deletion and reproduces current
+behavior exactly.
+
+Four things the channel does not carry, all measured rather than supposed. Cassette identity
+is lost, and this is not a detail: a KanMX replacement inserts a heterologous gene that is
+not in the S288C universe, so no vector over yeast genes can hold it. Barcode and collection
+are lost, and they are the readout identity in a pooled assay. Allele classes off the dosage
+axis are lost, which is the hard limit for joining this work to the trigenic datasets, since
+a temperature-sensitive or DAmP allele sits at full copy number and is functionally
+compromised. And perturbation cardinality becomes a strain property rather than a constant,
+since Vanacloig contributes four indices per record against one for the others.
+
+\notesec{A flagged risk for the metabolic module}
+The flux layer hard-zeros a deleted gene's slot in the genome-scale model. A heterozygous
+deletion is not a zero there, so admitting heterozygous data without changing that step
+asserts a full knockout of a gene that still has a working copy.

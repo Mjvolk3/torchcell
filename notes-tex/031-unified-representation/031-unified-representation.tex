@@ -1,0 +1,79 @@
+%% notes-tex/031-unified-representation/031-unified-representation.tex
+%% [[experiments.031-env-chemgen-inhibitor-tolerance]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/031-unified-representation/031-unified-representation.tex
+%%
+%% Data exploration across the five served chemogenomic datasets, and the input
+%% representation that spans them: what a shared genotype channel can carry, what the
+%% dose axis cannot, how far the compound panels reach chemically, and whether the
+%% Yeast9 metabolites can share the molecule embedding space.
+%%
+%% Build:  make            -> 031-unified-representation.pdf
+%%         make check      -> the formatting / provenance / style gate
+%%         make tables     -> regenerate tables/*.tex from the result CSVs
+%%         make diagrams   -> re-render the representation figure
+%%
+%% Every figure, table and number is written by a committed script under
+%% experiments/031-env-chemgen-inhibitor-tolerance/scripts/.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}One Input Representation for Five Chemogenomic Datasets\\
+  {\large What a shared genotype channel carries, why the dose axis does not pool,
+   how far the compound panels reach, and whether the metabolites can join}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Five served datasets hold 7.48 million chemogenomic records, and training one model across
+them requires a single input representation. They disagree on three axes. Ploidy runs from
+haploid through homozygous diploid to heterozygous diploid. Compound panels run from 41 to
+5{,}170. Dose runs from an unquantified target inhibition through a nine-order-of-magnitude
+molar range to a single fixed concentration. Every number here is measured from the served
+records through their loaders.
+
+The genotype axis resolves cleanly. The schema already carries heterozygosity in two parts,
+a genome-wide ploidy baseline and a per-locus copy-number deviation, and all five datasets
+round-trip through it. A per-gene functional dose, copies present over copies in the
+reference, is lossless for these five because every perturbation is either a full deletion
+or a one-of-two variant, and it needs no separate ploidy feature because the vector's
+background level is the ploidy. It is also learnable rather than merely expressible:
+Hoepfner supplies 648{,}977 gene-by-compound cells measured both heterozygous and
+homozygous. The gap is entirely in the tensor layer, which reads only a gene name and
+therefore makes those 648{,}977 pairs byte-identical inputs carrying different responses.
+
+The dose axis does not resolve. Forty of Vanacloig's 41 compounds carry no concentration at
+all, only a target-inhibition basis; every Wildenhain compound sits at one fixed
+concentration, so its dose column is constant; and for the 214 compounds dosed in more than
+one dataset the median ratio between the highest and lowest dose is 12.5. Dose therefore
+enters as a basis token rather than a number.
+
+Chemically, pooling buys coverage of the phenolic inhibitors and not of the small alcohols,
+and Wildenhain supplies essentially all of the gain. Yeast9 can share the molecule space
+for the two thirds of its species that have a structure, and 103 of those are dosed
+somewhere in the five datasets.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-question}
+\input{sections/2-datasets}
+\input{sections/3-genotype}
+\input{sections/4-dose}
+\input{sections/5-chemistry}
+\input{sections/6-metabolites}
+\input{sections/7-representation}
+
+\end{document}

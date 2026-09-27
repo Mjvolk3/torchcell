@@ -1,0 +1,33 @@
+%% notes-tex/031-unified-representation/sections/2-datasets.tex
+
+\section{The five datasets\secstatus{todo}}
+\label{sec:datasets}
+
+Table~\ref{tab:datasets} puts the five on the axes that matter for a shared input. Record
+counts and gene counts are read from the flattened served records; compound counts are
+distinct InChIKeys with a dosed record; the dose columns are the stored basis and the share
+of records whose unit converts to molar without a molecular weight.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/flatten_records.py and
+%% environment_axis_coverage.py -> results/dose_axis_summary.csv, rendered by
+%% notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The five served chemogenomic datasets. Records and genes come from the flattened
+served records, compounds are distinct InChIKeys with a dosed record, and the last column is
+the share of records whose dose unit converts to molar.}
+\label{tab:datasets}
+\input{tables/t1-datasets}
+\end{table}
+
+Three observations set up the rest of the document. Hoepfner is the largest store and the
+only one holding both ploidy arms, 1{,}759{,}255 heterozygous records and 1{,}365{,}064
+homozygous, over a shared gene universe. Wildenhain has eighteen times the compound panel of
+the next largest and a fifth of the gene panel. Vanacloig is the smallest and is the
+application target, and it is the only dataset whose dose is not a number.
+
+One correction worth recording, because it was wrong in an earlier reading of the raw files.
+The Hoepfner score matrices are genes by screens, not screens by genes: the roughly 5{,}900
+columns per file are 2{,}956 experiments run in duplicate, and the 6{,}681 rows are the
+genes.

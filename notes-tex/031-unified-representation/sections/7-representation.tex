@@ -1,0 +1,49 @@
+%% notes-tex/031-unified-representation/sections/7-representation.tex
+
+\section{The representation\secstatus{todo}}
+\label{sec:representation}
+
+Figure~\ref{fig:unified} is the input representation the preceding sections argue for. It has
+three channels and one shared encoder, and it carries its own limits.
+
+%% SOURCE: notes/experiments.031-env-chemgen-inhibitor-tolerance.mermaid.unified-input.md,
+%% rendered by notes/assets/publish/scripts/mermaid_pdf.sh through `make diagrams`.
+\tcfig{figures/unified_input.pdf}{One input representation across the five datasets. Gray is a
+served dataset, purple a per-record input channel, yellow a fixed table, orange a computation,
+blue the optional metabolism branch, red a measured limit the representation does not carry.
+The genotype channel is a per-gene functional dose whose background level is the ploidy. The
+environment channel is a compound set through the shared molecule encoder plus a dose basis
+token rather than a concentration. The metabolism branch reuses the same
+encoder.}{fig:unified}
+
+\notesec{Genotype}
+A per-gene functional dose over the gene universe, copies present over copies in the
+reference. Zero for a deletion, one half for a heterozygous deletion in a diploid, one for an
+unperturbed gene. Ploidy needs no separate feature because it is the background level. This is
+lossless for these five datasets and is validated by Hoepfner's 648{,}977 paired cells.
+
+\notesec{Environment}
+The set of dosed compounds as InChIKeys through the shared molecule encoder, the medium
+components through the same encoder, and a dose basis token rather than a concentration. The
+token is the honest encoding given Section~\ref{sec:dose}: a target-inhibition dose, a fixed
+molar dose and an unstated dose are three different statements, and a single number would
+assert a comparability that does not exist.
+
+\notesec{Physical}
+Temperature, aerobicity and duration as scalars.
+
+\notesec{What it does not carry, and why that is stated rather than hidden}
+The dose vector drops cassette identity, barcode and collection, and every allele class off
+the dosage axis. Dose does not pool. And 167 Yeast9 species have no structure and need a
+non-molecular slot. Each of those is a measured limit rather than an anticipated one, and each
+bounds a specific later step: the allele classes bound any join to the trigenic datasets, the
+dose limit bounds any cross-dataset dose-response claim, and the structureless species bound
+the metabolic branch.
+
+\notesec{Two decisions this leaves open}
+Whether to keep the Hillenmeyer homozygous arm, which contributes 1.09 million records and one
+non-exact chemical neighbor above 0.5, is a judgment about whether record count without
+chemistry is worth the pooling cost. And whether the functional dose should scale the existing
+cross-attention perturbation operator or enter as a separate feature is an architecture
+question this document does not settle; the operator is already a soft mechanism rather than a
+mask, so scaling it is the smaller change.

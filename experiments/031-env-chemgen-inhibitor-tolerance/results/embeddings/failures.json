@@ -14,13 +14,20 @@
     "FAPWRFPIFSIZLT-UHFFFAOYSA-M": "ValueError: unimol_v1: no conformer (all-zero coordinates) for '[Cl-].[Na+]'",
     "GLFNIEUTAYBVOC-UHFFFAOYSA-L": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[Cl][Mn][Cl]'",
     "GVPFVAHMJGGAJG-UHFFFAOYSA-L": "ValueError: unimol_v1: no conformer (all-zero coordinates) for '[Cl-].[Cl-].[Co+2]'",
+    "HNQFNLMQFOIGFO-ZKJJDFFYSA-N": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for 'CCC1OC(OC(c2cnc[nH]2)C(NC(=O)c2nc(C(CC(N)=O)NCC(N)C(N)=O)nc(N)c2C)C(=O)NC(C)C(O)C(C)C(=O)NC(C(=O)NCCc2nc(-c3nc(C(=O)NCCCCN=C(N)N)cs3)cs2)C(C)O)C(OC2OC(CO)C(O)C(OC(N)=O)C2O)C(C)C1C'",
     "JIAARYAFYJHUJI-UHFFFAOYSA-L": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[Cl][Zn][Cl]'",
+    "JSGFVCUPSBFAGS-FYJBIRSBSA-F": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for 'O.O.O.O.O.O.O.O.O.O.O.O.O.O.O.O.O=S(=O)([O][Al])OCC1OC(OC2(COS(=O)(=O)[O][Al])OC(COS(=O)(=O)[O][Al])C(OS(=O)(=O)[O][Al])C2OS(=O)(=O)[O][Al])C(OS(=O)(=O)[O][Al])C(OS(=O)(=O)[O][Al])C1OS(=O)(=O)[O][Al]'",
     "KWGKDLIKAYFUFQ-UHFFFAOYSA-M": "ValueError: unimol_v1: no conformer (all-zero coordinates) for '[Cl-].[Li+]'",
+    "LNSKUBQTAKEJOP-UHFFFAOYSA-L": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for 'CCCCCCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCC)OC(=O)CCCCCCCCCCC)OC(=O)CCCCCCCCCCC'",
+    "LRBQNJMCXXYXIU-NRMVVENXSA-N": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for 'O=C(OCC1OC(OC(=O)c2cc(O)c(O)c(OC(=O)c3cc(O)c(O)c(O)c3)c2)C(OC(=O)c2cc(O)c(O)c(OC(=O)c3cc(O)c(O)c(O)c3)c2)C(OC(=O)c2cc(O)c(O)c(OC(=O)c3cc(O)c(O)c(O)c3)c2)C1OC(=O)c1cc(O)c(O)c(OC(=O)c2cc(O)c(O)c(O)c2)c1)c1cc(O)c(O)c(OC(=O)c2cc(O)c(O)c(O)c2)c1'",
     "LWJROJCJINYWOX-UHFFFAOYSA-L": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[Cl][Hg][Cl]'",
     "MWUXSHHQAYIFBG-UHFFFAOYSA-N": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[N]=O'",
     "OYVAGSVQBOHSSS-WXFSZRTFSA-O": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for 'Cc1c(N)nc(C(CC(N)=O)NCC(N)C(N)=O)nc1C(=O)NC(C(=O)NC(C)C(O)C(C)C(=O)NC(C(=O)NCCc1nc(-c2nc(C(=O)NCCC[S+](C)C)cs2)cs1)C(C)O)C(OC1OC(CO)C(O)C(O)C1OC1OC(CO)C(O)C(OC(N)=O)C1O)c1cnc[nH]1'",
+    "PAORBFBZBNPTCL-UHFFFAOYSA-N": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[C-]#N.[C-]#N.[C-]#N.[C-]#N.[C-]#N.[Fe+4].[N-]=O'",
     "PTLRDCMBXHILCL-UHFFFAOYSA-M": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for 'O=[As][O-].[Na+]'",
     "PUZPDOWCWNUUKD-UHFFFAOYSA-M": "ValueError: unimol_v1: no conformer (all-zero coordinates) for '[F-].[Na+]'",
+    "VEXZGXHMUGYJMC-UHFFFAOYSA-N": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for 'Cl'",
+    "XFXPMWWXUTWYJX-UHFFFAOYSA-N": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[C-]#N'",
     "YKYOUMDCQGMQQO-UHFFFAOYSA-L": "ValueError: unimol_v1: ETKDG failed, only 2D coordinates for '[Cl][Cd][Cl]'"
   }
 }

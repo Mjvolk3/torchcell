@@ -1,0 +1,26 @@
+%% notes-tex/031-unified-representation/sections/1-question.tex
+
+\section{The question\secstatus{todo}}
+\label{sec:question}
+
+Five chemogenomic datasets are served and together hold 7.48 million records. Training one
+model on all of them is attractive for an obvious reason and blocked by a less obvious one.
+The attraction is scale and chemical breadth: no single dataset has both a genome-wide gene
+panel and a large compound panel. The block is that a model takes one input format, and the
+five datasets disagree about what a strain is and about what a dose is.
+
+Three axes carry the disagreement. Ploidy runs from haploid single deletions through
+homozygous diploids to heterozygous diploids where one wild-type copy survives. Compound
+panels run from 41 to 5{,}170. Dose runs from an unquantified target inhibition, through a
+molar range spanning nine orders of magnitude, to a single fixed concentration applied to
+every compound.
+
+The application target is Vanacloig-Pedros 2022 (\texttt{10.1128/spectrum.02017-22}), the
+only served screen that doses the industrial hydrolysate panel at a matched target
+inhibition and the only one in which isobutanol appears as a stress. The others enter as
+partners: Hillenmeyer 2008 (\texttt{10.1126/science.1150021}) and Hoepfner 2014
+(\texttt{10.1016/j.micres.2013.11.004}) for record count and gene coverage, Wildenhain 2015
+(\texttt{10.1016/j.cels.2015.12.003}) for compound diversity.
+
+This document measures what a shared representation can absorb and what it cannot, and ends
+with the representation itself in Section~\ref{sec:representation}.

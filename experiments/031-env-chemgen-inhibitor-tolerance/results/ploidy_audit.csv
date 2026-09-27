@@ -1,0 +1,17 @@
+dataset,record_index,ploidy,strain,systematic_gene_name,perturbed_gene_name,perturbation_type,state,copy_number,reference_copy_number,marker,provenance,mechanism_so_name
+"Vanacloig2022 (haploid MATalpha, 3DeltaAlpha host)",0,haploid,S288C,YAL004W,YAL004W,barcoded_kanmx_deletion,absent,,,,engineered,deletion
+"Vanacloig2022 (haploid MATalpha, 3DeltaAlpha host)",0,haploid,S288C,YBL005W,PDR3,marker_deletion,absent,,,KlURA3,engineered,deletion
+"Vanacloig2022 (haploid MATalpha, 3DeltaAlpha host)",0,haploid,S288C,YDR011W,SNQ2,marker_deletion,absent,,,KlLEU2,engineered,deletion
+"Vanacloig2022 (haploid MATalpha, 3DeltaAlpha host)",0,haploid,S288C,YGL013C,PDR1,natmx_deletion,absent,,,,engineered,deletion
+"Vanacloig2022 (haploid MATalpha, 3DeltaAlpha host)",1,haploid,S288C,YAL005C,SSA1,barcoded_kanmx_deletion,absent,,,,engineered,deletion
+"Vanacloig2022 (haploid MATalpha, 3DeltaAlpha host)",1,haploid,S288C,YBL005W,PDR3,marker_deletion,absent,,,KlURA3,engineered,deletion
+"Vanacloig2022 (haploid MATalpha, 3DeltaAlpha host)",1,haploid,S288C,YDR011W,SNQ2,marker_deletion,absent,,,KlLEU2,engineered,deletion
+"Vanacloig2022 (haploid MATalpha, 3DeltaAlpha host)",1,haploid,S288C,YGL013C,PDR1,natmx_deletion,absent,,,,engineered,deletion
+Hillenmeyer2008 HET (heterozygous diploid),0,diploid,heterozygous diploid deletion collection (Giaever 2002),YAL001C,YAL001C,engineered_copy_number,present,1.0,2.0,KanMX,engineered,copy_number_variation
+Hillenmeyer2008 HET (heterozygous diploid),1,diploid,heterozygous diploid deletion collection (Giaever 2002),YAL001C,YAL001C,engineered_copy_number,present,1.0,2.0,KanMX,engineered,copy_number_variation
+Hillenmeyer2008 HOM (homozygous diploid),0,diploid,homozygous diploid deletion collection (Giaever 2002),YAL002W,YAL002W,kanmx_deletion,absent,,,,engineered,deletion
+Hillenmeyer2008 HOM (homozygous diploid),1,diploid,homozygous diploid deletion collection (Giaever 2002),YAL002W,YAL002W,kanmx_deletion,absent,,,,engineered,deletion
+Hoepfner2014 (HIP heterozygous + HOP homozygous diploid),0,diploid,BY4743,YAL001C,YAL001C,engineered_copy_number,present,1.0,2.0,KanMX,engineered,copy_number_variation
+Hoepfner2014 (HIP heterozygous + HOP homozygous diploid),1806246,diploid,BY4743,YBR001C,YBR001C,kanmx_deletion,absent,,,,engineered,deletion
+Wildenhain2015 (haploid BY4741),0,haploid,BY4741,YAL013W,DEP1,barcoded_kanmx_deletion,absent,,,,engineered,deletion
+Wildenhain2015 (haploid BY4741),1,haploid,BY4741,YAL013W,DEP1,barcoded_kanmx_deletion,absent,,,,engineered,deletion

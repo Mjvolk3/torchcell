@@ -178,16 +178,24 @@ def reach_from_medium(model: cobra.Model, seeds: set[str]) -> pd.DataFrame:
 
 
 def panel_letter(ax: plt.Axes, letter: str) -> None:
-    """Bold lowercase panel letter at the OUTER top-left, per the repo figure standard."""
+    """Bold Arial panel letter in the white margin at the axes' top left.
+
+    Two properties the repo standard asks for. It sits OUTSIDE the axes on white space, so a
+    square crop of the plot area drops the letter cleanly and the figure can be reused without
+    it. And it carries an opaque white patch, so it can never be read against a mark even if a
+    neighbouring panel's decoration reaches into the margin.
+    """
     ax.text(
-        -0.16,
-        1.06,
+        -0.18,
+        1.08,
         letter,
         transform=ax.transAxes,
         fontsize=8,
         fontweight="bold",
+        fontfamily="Arial",
         va="bottom",
         ha="left",
+        bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.0},
     )
 
 
@@ -259,14 +267,7 @@ def figure_inventory(
     lit = literature_table()
     if len(lit):
         yy = np.arange(len(lit))
-        ax.barh(
-            yy,
-            lit["value"],
-            color=PLOT_PALETTE[3],
-            edgecolor="black",
-            lw=0.4,
-            hatch="///",
-        )
+        ax.barh(yy, lit["value"], color=PLOT_PALETTE[3], edgecolor="black", lw=0.4)
         ax.set_yticks(yy)
         ax.set_yticklabels(lit["quantity"], fontsize=4.5)
         ax.invert_yaxis()
@@ -427,7 +428,6 @@ def dead_ends(model: cobra.Model) -> pd.DataFrame:
 def figure_scope() -> None:
     """Three panels: published coverage, cell composition, and what is left open."""
     lit_cov = pd.read_csv(osp.join(RESULTS_DIR, "yeast9_literature_coverage.csv"))
-    mass = pd.read_csv(osp.join(RESULTS_DIR, "yeast_mass_composition.csv"))
     rules = pd.read_csv(osp.join(RESULTS_DIR, "yeast9_literature_rules.csv")).set_index(
         "quantity"
     )
@@ -465,7 +465,6 @@ def figure_scope() -> None:
         color=PLOT_PALETTE[3],
         edgecolor="black",
         lw=0.4,
-        hatch="///",
         label="whole metabolome",
     )
     ax.bar(
@@ -475,7 +474,6 @@ def figure_scope() -> None:
         color=PLOT_PALETTE[4],
         edgecolor="black",
         lw=0.4,
-        hatch="///",
         label="non-lipid only",
     )
     for xi, v in zip(x - 0.2, whole, strict=True):
@@ -487,48 +485,49 @@ def figure_scope() -> None:
     ax.set_ylim(0, 110)
     ax.set_ylabel("percent of the YMDB yeast metabolome")
     ax.legend(frameon=False, fontsize=4.5, loc="upper left")
-    ax.set_title("coverage, as published (hatched)", loc="left", fontsize=6)
+    ax.set_title("metabolome coverage, as published", loc="left", fontsize=6)
     panel_letter(ax, "a")
 
-    # (b) dry mass. The yeast small-molecule pool is the bar that does not exist.
+    # (b) dry mass from the model's own biomass equation, which closes to 96 percent and
+    # carries DNA and the cofactor and ion pools that the rounded literature figures omit
     ax = axes[1]
-    y = mass[mass["organism"] == "S. cerevisiae"].reset_index(drop=True)
-    yy = np.arange(len(y))
-    for i, r in y.iterrows():
-        lo, hi = r["percent_low"], r["percent_high"]
-        if not np.isfinite(lo):
-            ax.text(
-                1, i, "not stated for yeast", fontsize=5, va="center", color="#A24A46"
+    bm = pd.read_csv(osp.join(RESULTS_DIR, "yeast_biomass_composition.csv"))
+    bm = bm.sort_values("percent", ascending=False).reset_index(drop=True)
+    yy = np.arange(len(bm))
+    colors = [
+        "#F5F5F5" if r["pool"] == "unaccounted" else PLOT_PALETTE[0]
+        for _, r in bm.iterrows()
+    ]
+    ax.barh(yy, bm["percent"], color=colors, edgecolor="black", lw=0.4)
+    for i, r in bm.iterrows():
+        lo, hi = r["literature_low"], r["literature_high"]
+        # the value label clears the published whisker when the two would overlap
+        label_x = max(r["percent"], hi if np.isfinite(hi) else 0) + 1.4
+        ax.text(label_x, i, f"{r['percent']:.1f}%", va="center", fontsize=4.5)
+        if np.isfinite(lo):
+            # the published range as a whisker over the measured bar, so agreement or
+            # disagreement with the literature is visible without a second panel
+            ax.plot([lo, hi], [i, i], color=PLOT_PALETTE[1], lw=1.2, zorder=4)
+            ax.plot(
+                [lo, hi],
+                [i, i],
+                marker="|",
+                ms=3.5,
+                color=PLOT_PALETTE[1],
+                lw=0,
+                zorder=5,
             )
-            continue
-        ax.barh(i, hi, color=PLOT_PALETTE[0], edgecolor="black", lw=0.4, hatch="///")
-        if hi > lo:
-            ax.plot([lo, hi], [i, i], color="black", lw=0.8)
-        ax.text(
-            hi + 1,
-            i,
-            f"{lo:.0f}-{hi:.0f}%" if hi > lo else f"{hi:.0f}%",
-            fontsize=4.5,
-            va="center",
-        )
-    ecoli = mass[(mass["organism"] == "E. coli")].iloc[0]
-    ax.axvline(float(ecoli["percent_high"]), color=PLOT_PALETTE[1], lw=0.8, ls="--")
-    ax.annotate(
-        "E. coli soluble pool\n3 to 3.9%",
-        (float(ecoli["percent_high"]) + 1, len(y) - 0.6),
-        fontsize=4.5,
-        color=PLOT_PALETTE[1],
-    )
     ax.set_yticks(yy)
-    ax.set_yticklabels(y["component"])
+    ax.set_yticklabels(bm["pool"])
     ax.invert_yaxis()
-    ax.set_xlim(0, 62)
-    ax.set_ylim(len(y) - 0.3, -0.7)
-    ax.set_xlabel("percent of cell dry mass, as published")
-    ax.set_title("the small-molecule pool is unmeasured", loc="left", fontsize=6)
+    ax.set_xlim(0, 58)
+    ax.set_xlabel("percent of cell dry mass")
+    ax.plot([], [], color=PLOT_PALETTE[1], lw=1.2, label="published range")
+    ax.legend(frameon=False, fontsize=4.5, loc="lower right")
+    ax.set_title("DNA is 0.4%, cofactor and ion 0.7%", loc="left", fontsize=6)
     panel_letter(ax, "b")
 
-    # (c) what is left open: ours solid, theirs hatched
+    # (c) what is left open, measured against published, split by color
     ax = axes[2]
     n_lipid = int(
         cls[cls["structure_class"].isin(["acyl_resolved_lipid", "pooled_lipid_class"])][
@@ -552,18 +551,20 @@ def figure_scope() -> None:
     ax.barh(
         yy,
         [i[1] for i in items],
-        color=[PLOT_PALETTE[2] if not i[2] else PLOT_PALETTE[3] for i in items],
+        color=[PLOT_PALETTE[3] if i[2] else PLOT_PALETTE[2] for i in items],
         edgecolor="black",
         lw=0.4,
-        hatch=["" if not i[2] else "///" for i in items],
     )
     for i, (lab, v, rep) in enumerate(items):
         ax.text(v + 10, i, f"{v:,}", va="center", fontsize=5)
     ax.set_yticks(yy)
     ax.set_yticklabels([i[0] for i in items], fontsize=4.5)
     ax.invert_yaxis()
-    ax.set_xlim(0, 820)
-    ax.set_xlabel("species; solid = measured, hatched = published")
+    ax.set_xlim(0, 900)
+    ax.set_xlabel("species")
+    ax.plot([], [], color=PLOT_PALETTE[2], lw=3, label="measured here")
+    ax.plot([], [], color=PLOT_PALETTE[3], lw=3, label="published")
+    ax.legend(frameon=False, fontsize=4.5, loc="lower right")
     ax.set_title("what is left open", loc="left", fontsize=6)
     panel_letter(ax, "c")
 

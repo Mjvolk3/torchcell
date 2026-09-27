@@ -13,13 +13,17 @@ carry the color, so the caption can refer to them by letter instead of by hue:
 
 | layer | color | what it holds |
 |---|---|---|
-| **A** | purple | the STRAIN and the CONDITION, which is what the record is |
-| **B** | yellow | what the SOURCE REPORTS, its own readout in its own units and sign |
-| **C** | orange | the TRANSFORM applied to reach the shared target, and the shared form itself |
-| **D** | red | what is given up, and what the shared form does not buy |
+| **a** | purple | the STRAIN and the CONDITION, which is what the record is |
+| **b** | yellow | what the SOURCE REPORTS, its own readout in its own units and sign |
+| **c** | orange | the TRANSFORM applied to reach the shared target, and the shared form itself |
+| **d** | red | what is given up, and what the shared form does not buy |
 
-The flow is A to B to C: a record is a strain in a condition, the source reports it on its own
-scale, and two per-source scalars map that onto a common target. D hangs off C and is
+The layer letters are bold lowercase in plain HTML rather than KaTeX, because KaTeX renders
+`\textbf` in its own math font and the repo standard asks for bold Arial, matching the
+matplotlib panel letters.
+
+The flow is a to b to c: a record is a strain in a condition, the source reports it on its own
+scale, and two per-source scalars map that onto a common target. d hangs off c and is
 commentary, not a step.
 
 **The orientation factor `o_k` is a sign flip on a continuous number.** It is NOT a threshold
@@ -55,10 +59,10 @@ flowchart LR
   classDef lost fill:#F8CECC,stroke:#A24A46,color:#1F1D1A
   classDef hdr fill:#FFFFFF,stroke:#FFFFFF,color:#1F1D1A
 
-  HA["$$\textbf{A}\ \ \text{strain and condition}$$"]:::hdr
-  HB["$$\textbf{B}\ \ \text{what the source reports}$$"]:::hdr
-  HC["$$\textbf{C}\ \ \text{transform and shared form}$$"]:::hdr
-  HD["$$\textbf{D}\ \ \text{what is given up}$$"]:::hdr
+  HA["<b>a</b>&nbsp;&nbsp;strain and condition"]:::hdr
+  HB["<b>b</b>&nbsp;&nbsp;what the source reports"]:::hdr
+  HC["<b>c</b>&nbsp;&nbsp;transform and shared form"]:::hdr
+  HD["<b>d</b>&nbsp;&nbsp;what is given up"]:::hdr
   HA ~~~ HB ~~~ HC ~~~ HD
 
   VI["$$\begin{gathered}\textbf{Vanacloig 2022}\\\ \text{haploid, sensitized host}\\\ \text{4 deletions: query + PDR1, PDR3, SNQ2}\\\ 3{,}598\ \text{genes} \times 41\ \text{compounds, IC30}\end{gathered}$$"]:::rec

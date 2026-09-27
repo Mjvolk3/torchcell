@@ -656,6 +656,14 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   must stay `<= MAX_HEIGHT_MM` (170 mm). Convert with `mm_to_in(...)` for `figsize`.
 - **Box the plot:** full black border — all four spines visible, ~0.5 pt (not the
   top/right-despined look).
+- **Panel letters sit in the WHITE MARGIN, never on the plot.** Bold Arial, lowercase, at
+  the axes' outer top-left (`ax.text(-0.18, 1.08, ..., transform=ax.transAxes,
+  fontweight="bold", fontfamily="Arial", fontsize=8)`), with an opaque white `bbox` so a
+  neighbouring panel's decoration can never be read behind it. Two reasons this is the rule
+  rather than a preference: a letter inside the axes eventually lands on a mark as the data
+  changes, and a letter in the margin means the plot area can be **square-cropped and reused
+  without the label**. Do NOT fold the letter into the panel title (`"a  my title"`) -- the
+  title is prose and the letter is a coordinate.
 - **Type:** Arial, 6 pt everywhere; set `svg.fonttype: "none"` so text stays
   real/editable in the SVG. Nature's band is **5 pt minimum, 7 pt maximum** for figure
   text, plus **8 pt bold lowercase for panel letters only** — a maximum as well as a

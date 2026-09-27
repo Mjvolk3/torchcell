@@ -167,6 +167,15 @@ better on Wildenhain and both Hillenmeyer arms, by the largest margin on Wildenh
 reaches 0.394 against ridge at 0.249. The earlier finding that ridge beat every
 nearest-neighbor variant was measured on Vanacloig alone and does not generalize.
 
+\textit{Hypothesis (untested):} nearest neighbors wins on Wildenhain because its panel is
+5{,}170 compounds against 41 to 290 elsewhere, so a held-out compound almost always has a
+close analog to copy from, while a linear map has to fit one set of weights across a far more
+heterogeneous library. Two measurements are consistent with that and neither tests it. Its
+no-feature null is 0.168 against 0.003 to 0.030 elsewhere, which is what a dense panel does to
+a randomly chosen neighbor. And its per-fold training set is roughly 4{,}650 compounds against
+40 for Vanacloig. The test would be to subsample the Wildenhain panel down to a few hundred
+compounds and see whether the ordering flips, which is cheap and has not been run.
+
 One limit on the ceilings in that table. The Hillenmeyer and Wildenhain ceilings rest on the
 minority of cells that carry a served standard error, 33, 17 and 1 percent respectively, which
 is the subset measured more than once and therefore not a random sample of the dataset. Only

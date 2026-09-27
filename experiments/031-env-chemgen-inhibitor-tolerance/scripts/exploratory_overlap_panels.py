@@ -153,20 +153,24 @@ def nearest_neighbor_to_panel(panel: list[str], partners: list[str]) -> pd.DataF
 
 
 def panel_letter(ax: plt.Axes, letter: str) -> None:
-    """Bold lowercase panel letter at the OUTER top-left, per the repo figure standard.
+    """Bold Arial panel letter in the white margin at the axes' top left.
 
-    The letter sits outside the axes so it can never land on a mark, and it is the only text
-    in the figure above 7 pt.
+    Two properties the repo standard asks for. It sits OUTSIDE the axes on white space, so a
+    square crop of the plot area drops the letter cleanly and the figure can be reused without
+    it. And it carries an opaque white patch, so it can never be read against a mark even if a
+    neighbouring panel's decoration reaches into the margin.
     """
     ax.text(
-        -0.16,
-        1.06,
+        -0.18,
+        1.08,
         letter,
         transform=ax.transAxes,
         fontsize=8,
         fontweight="bold",
+        fontfamily="Arial",
         va="bottom",
         ha="left",
+        bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.0},
     )
 
 
@@ -259,7 +263,7 @@ def panel_chemical_space(
     ax.set_xlim(0, 700)
     ax.set_xlabel("molecular weight")
     ax.set_ylabel("calculated logP")
-    ax.legend(frameon=False, fontsize=4.5, loc="lower right", scatterpoints=1)
+    ax.legend(frameon=False, fontsize=4.5, loc="upper left", scatterpoints=1)
     ax.set_title("the panel is small and polar", loc="left", fontsize=6)
     panel_letter(ax, "c")
 
@@ -328,12 +332,12 @@ def panel_dose(ax: plt.Axes, axes_by_ds: dict[str, pd.DataFrame]) -> None:
         lo, hi = np.log10(m.quantile(0.01)), np.log10(m.quantile(0.99))
         ax.plot([lo, hi], [i, i], color=COLOR[name], lw=2.5, solid_capstyle="round")
         ax.scatter([np.log10(m.median())], [i], s=12, color="black", zorder=4)
-        ax.text(hi + 0.2, i, f"{100 * frac:.0f}% stated", fontsize=4.5, va="center")
+        ax.text(hi + 0.25, i, f"{100 * frac:.0f}%", fontsize=4.5, va="center")
     ax.set_yticks(y)
     ax.set_yticklabels([LABEL[n] for n in NAMES])
     ax.invert_yaxis()
-    ax.set_xlim(-10.5, 3)
-    ax.set_xlabel("log10 molar, 1st to 99th percentile")
+    ax.set_xlim(-10.5, 4.6)
+    ax.set_xlabel("log10 molar, 1st to 99th pct")
     ax.set_title("dose does not pool", loc="left", fontsize=6)
     panel_letter(ax, "f")
 
@@ -342,12 +346,14 @@ def panel_cells(ax: plt.Axes, axes_by_ds: dict[str, pd.DataFrame]) -> None:
     """Genes against compounds, point area the measured cells: shape of each dataset."""
     # Hoepfner and Hillenmeyer HET sit almost on top of each other (5,839 against 5,810
     # genes), so their labels are pushed to opposite sides rather than both to the right
+    # Hoepfner and Hillenmeyer HET differ by 29 genes out of 5,800, so they overlap at any
+    # scale. Their labels are pushed far apart vertically and joined by leader lines.
     offsets = {
-        "vanacloig2022": (8, 0),
-        "hillenmeyer2008_hom": (8, 0),
-        "hillenmeyer2008_het": (8, 6),
-        "hoepfner2014": (8, -8),
-        "wildenhain2015": (-8, 6),
+        "vanacloig2022": (10, -6),
+        "hillenmeyer2008_hom": (10, 0),
+        "hillenmeyer2008_het": (14, 26),
+        "hoepfner2014": (-12, -22),
+        "wildenhain2015": (-10, 14),
     }
     for name in NAMES:
         df = axes_by_ds[name]
@@ -363,6 +369,17 @@ def panel_cells(ax: plt.Axes, axes_by_ds: dict[str, pd.DataFrame]) -> None:
             fontsize=4.5,
             va="center",
             ha="right" if dx < 0 else "left",
+            arrowprops=(
+                {
+                    "arrowstyle": "-",
+                    "lw": 0.4,
+                    "color": "#666666",
+                    "shrinkA": 0,
+                    "shrinkB": 3,
+                }
+                if abs(dy) > 10
+                else None
+            ),
         )
     ax.set_xscale("log")
     ax.set_xlim(20, 60000)

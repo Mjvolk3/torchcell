@@ -208,20 +208,24 @@ def overlap_rows(cells: dict[str, pd.Series]) -> pd.DataFrame:
 
 
 def panel_letter(ax: plt.Axes, letter: str) -> None:
-    """Bold lowercase panel letter at the OUTER top-left, per the repo figure standard.
+    """Bold Arial panel letter in the white margin at the axes' top left.
 
-    The letter sits outside the axes so it can never land on a mark, and it is the only text
-    in the figure above 7 pt.
+    Two properties the repo standard asks for. It sits OUTSIDE the axes on white space, so a
+    square crop of the plot area drops the letter cleanly and the figure can be reused without
+    it. And it carries an opaque white patch, so it can never be read against a mark even if a
+    neighbouring panel's decoration reaches into the margin.
     """
     ax.text(
-        -0.16,
-        1.06,
+        -0.18,
+        1.08,
         letter,
         transform=ax.transAxes,
         fontsize=8,
         fontweight="bold",
+        fontfamily="Arial",
         va="bottom",
         ha="left",
+        bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.0},
     )
 
 

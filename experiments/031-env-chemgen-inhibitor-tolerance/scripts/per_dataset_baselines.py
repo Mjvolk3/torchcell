@@ -300,20 +300,24 @@ def run_dataset(name: str) -> pd.DataFrame:
 
 
 def panel_letter(ax: plt.Axes, letter: str) -> None:
-    """Bold lowercase panel letter at the OUTER top-left, per the repo figure standard.
+    """Bold Arial panel letter in the white margin at the axes' top left.
 
-    The letter sits outside the axes so it can never land on a mark, and it is the only
-    text in the figure above 7 pt.
+    Two properties the repo standard asks for. It sits OUTSIDE the axes on white space, so a
+    square crop of the plot area drops the letter cleanly and the figure can be reused without
+    it. And it carries an opaque white patch, so it can never be read against a mark even if a
+    neighbouring panel's decoration reaches into the margin.
     """
     ax.text(
-        -0.16,
-        1.06,
+        -0.18,
+        1.08,
         letter,
         transform=ax.transAxes,
         fontsize=8,
         fontweight="bold",
+        fontfamily="Arial",
         va="bottom",
         ha="left",
+        bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.0},
     )
 
 
@@ -375,7 +379,19 @@ def make_figure(summary: pd.DataFrame) -> None:
     ax.set_xticklabels(short, rotation=45, ha="right")
     ax.set_ylabel("Spearman (ridge)")
     ax.axhline(0, color="black", lw=0.5)
-    ax.legend(frameon=False, fontsize=4.5, ncol=2, loc="upper left")
+    # headroom first, then the legend into it: at the default limit the legend sat on the
+    # Vanacloig and Wildenhain bars, which are the tallest in most encoder groups
+    top = float(np.nanmax(ridge["spearman_median"]))
+    ax.set_ylim(0, top * 1.42)
+    ax.legend(
+        frameon=False,
+        fontsize=4.5,
+        ncol=3,
+        loc="upper left",
+        handlelength=1.2,
+        columnspacing=0.8,
+        handletextpad=0.4,
+    )
     ax.set_title("ridge by encoder and dataset", loc="left", fontsize=6)
     panel_letter(ax, "a")
 
@@ -559,7 +575,7 @@ def make_figure(summary: pd.DataFrame) -> None:
     ax.set_yticks(yy)
     ax.set_yticklabels([e.replace("_", " ") for e in order])
     ax.invert_yaxis()
-    ax.set_xlabel("rank among encoders (1 = best), per dataset")
+    ax.set_xlabel("rank among the twelve encoders, per dataset")
     ax.set_title("the ranking does not transfer", loc="left", fontsize=6)
     panel_letter(ax, "f")
 

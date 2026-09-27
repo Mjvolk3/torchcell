@@ -24,10 +24,11 @@ non-lipid metabolome from 54 to 75 percent.
 expansion is published, and what is left open is stereochemistry, lipids and a missing mass
 fraction.} Hatched bars are published and were not measured here; solid bars are measured from
 the release. \textbf{a}, Metabolome coverage before and after the published expansion, for the
-whole metabolome and for the non-lipid subset. \textbf{b}, Yeast dry-mass composition as
-published; the small-molecule pool and DNA have no published yeast value in the mirrored
-literature, and the dashed line is the \org{E. coli} soluble pool, shown only as a contrast and
-not as a yeast figure. \textbf{c}, What remains: Yeast9 species whose structure names a set
+whole metabolome and for the non-lipid subset. \textbf{b}, Yeast dry-mass composition computed from the
+model's own biomass pseudo-reactions, which closes to 96.1 percent; red whiskers are the
+published range for the four pools the literature covers. DNA is 0.39 percent and the cofactor
+and ion pools together 0.73 percent, so the remainder after the four large pools is not a
+five-to-ten percent small-molecule fraction. \textbf{c}, What remains: Yeast9 species whose structure names a set
 rather than a molecule, Yeast9 lipid species with no structure at all, and the non-lipid
 metabolites the published expansion could not connect.}{fig:scope}
 
@@ -37,11 +38,34 @@ the reconstruction. Second, the residual they report is specific and small: \tex
 non-lipid metabolites}, 1.7 percent of the metabolome, could not be connected without
 introducing metabolites outside the yeast metabolome.
 
-The one thing the published work does not settle is the mass question. Yeast dry mass is
-reported as 40 to 50 percent protein, about 10 percent RNA, about 10 percent lipid and about
-25 percent cell wall \external{Milo and Phillips 2016; Feldmann 2012}. The \textbf{fraction
-that is small molecules is never stated for yeast} in the mirrored literature. Only the
-\org{E. coli} figure exists, a soluble or metabolite-and-cofactor pool of 3 to 3.9 percent of
-dry weight, and it should not be quoted as a yeast number. If a physical accounting is the
-goal, that gap is worth closing first, because it sets how much of the cell the exercise is
-about.
+\notesec{The mass question, answered from the model's own biomass equation}
+The rounded figures in the literature do not add up and say nothing about DNA or the
+small-molecule pool: yeast is reported as 40 to 50 percent protein, about 10 percent RNA,
+about 10 percent lipid and about 25 percent cell wall \external{Milo and Phillips 2016;
+Feldmann 2012}. The reconstruction carries a complete answer that needs no lookup. Its biomass
+pseudo-reaction draws one unit each from a protein, carbohydrate, RNA, DNA, lipid, cofactor and
+ion pool, and every pool lists its constituents with coefficients in millimoles per gram dry
+weight, so multiplying by formula mass gives grams per gram directly
+(Figure~\ref{fig:scope}b).
+
+Measured that way the pools are \textbf{46.8 percent protein, 38.3 percent carbohydrate, 6.4
+percent RNA and 3.5 percent lipid}, with \textbf{0.48 percent cofactor, 0.39 percent DNA and
+0.25 percent ion}. They sum to 96.1 percent, and the 3.9 percent shortfall is the few
+constituents carrying no formula, so the accounting nearly closes and the residual is named
+rather than left implicit.
+
+That settles the question the rounded figures leave open, and the answer is not what the
+arithmetic suggests. \textbf{The remainder after protein, carbohydrate, RNA and lipid is not
+five to ten percent of small molecules.} DNA is 0.39 percent and the cofactor and ion pools
+together are 0.73 percent. Two caveats on reading those numbers. The model's carbohydrate pool
+runs above the 25 percent cell-wall figure because it also carries storage glycogen and
+trehalose, and its lipid pool runs below the published 10 percent. And the cofactor and ion
+pools are a \textbf{lower bound} on the small-molecule pool, because they hold the cofactors
+and ions the biomass equation requires rather than the cell's whole metabolite pool; a soluble
+pool measured by extraction would be larger, and the \org{E. coli} figure for that quantity is
+3 to 3.9 percent of dry weight.
+
+The practical consequence for a chemical accounting is that the pool it is about is small. If
+the target is every distinct chemical species, the species are numerous and they are under one
+percent of the cell by mass, so the exercise is about identity and connectivity rather than
+about mass balance.

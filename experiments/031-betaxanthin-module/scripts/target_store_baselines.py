@@ -158,6 +158,7 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         # and never log(1 + |v|); alone and appended to GO.
         "bx_score": {"store": "SM_gem_bxscore", "block": "v_deletion", "flux": False},
         "go_bxscore": {"store": "SM_gem_gobxscore", "block": "v_deletion", "flux": False},
+        "cooper_pool": {"store": "YPD_bx_cooperpool", "block": "v_deletion", "flux": True},
     },
 }
 REPRESENTATIONS["cooper"] = REPRESENTATIONS["amino_acids"]

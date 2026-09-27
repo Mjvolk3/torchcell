@@ -861,4 +861,40 @@ seeds: a maximum at 256, which twelve seeds hold at 0.278, and the ensembles 0.2
 0.279, 0.288 and 0.278 within 0.015 of one another at every width, so the width sets
 the single-seed level and its spread more than what six seeds averaged read.
 
+Rounds 197 and 198 are read (jobs 2877 and 2878, 3 h 36 min each): the two-slot head
+in the transformer's affine, GO's 2,362 columns through a linear map beside the pool's
+nineteen through a GELU hidden layer of 64 (197) or 256 (198), the two summed. At 64
+it reads 0.224 (sd 0.003) against the same columns through one shared layer at 0.206
+($+0.018$ paired, sd 0.007, six of six), against the same columns in the linear affine
+at 0.208 ($+0.016$, sd 0.003, six of six), against GO alone at 0.202 ($+0.022$, sd
+0.003, six of six) and against the pool alone through 64 at 0.240 ($-0.016$, sd 0.049,
+two of six), with a top-50 of 5.66, the best single-seed call of any transformer arm,
+ensembled 0.225 with a top-50 of 5.79. At 256 it reads 0.225 (sd 0.005), $+0.001$
+against the two slots at 64 and $-0.054$ against the pool alone through 256 (0.279,
+sd 0.020, zero of six), ensembled 0.226. Both select at epochs 5 to 15 on validation
+Pearson 0.27 to 0.29, the annotation affine's schedule (8 to 12 on 0.25), where the
+pool alone through the layer selects at 29 to 141 on 0.36 to 0.40. So in the
+transformer the two slots do not do what they did in the perceptron: the head is the
+best arm with the annotation in it, above every GO cell on every seed with the tightest
+band and the best call, and it does not reach the pool alone, because the linear slot
+sets the selection before the pool's slot has trained. The perceptron trained full
+batch and selected at epochs 64 to 165; here the annotation's map at the backbone's
+rate peaks and turns within fifteen epochs. The linear slot at a tenth and a hundredth
+of the rate, in its own parameter group, is queued (rounds 201, 202).
+
+Round 199 is read (job 2879, 3 h 34 min): the three families with two slots, GO and
+both flux programs (10,716 columns) through the linear map beside the pool's nineteen
+through a hidden layer of 256. It reads 0.239 (sd 0.003) against the same columns in
+the linear affine at 0.218 ($+0.021$ paired, sd 0.004, six of six), against the same
+columns through one shared layer of 64 at 0.217 ($+0.023$, sd 0.010, six of six),
+against GO alone in the linear slot beside the pool through 256 at 0.225 ($+0.014$, sd
+0.004, six of six) and against the pool alone through 256 at 0.279 ($-0.040$, sd
+0.022, zero of six), top-50 5.32, ensembled 0.241 with a top-50 of 5.19; the seeds
+read 0.235 to 0.243 and select at epochs 7 to 12 on validation Pearson 0.27 to 0.28.
+So the flux programs in the linear slot add 0.014 to the annotation's slot on every
+seed, as they added 0.012 to the annotation alone (round 172), and the two-slot head
+over the three families is the best arm of the study with the annotation in it, at
+0.239 with the tightest band of any store arm; it selects on the same early schedule as
+the other two-slot heads and stays 0.04 under the pool alone.
+
 \input{tables/target_transfer}

@@ -128,5 +128,15 @@ transformer is the arm in flight. The width curve of the pool's hidden read is 0
 0.262, 0.279 and 0.243 at 64, 128, 256 and 512 on the same seeds (192, 194): a
 maximum at 256, which twelve seeds hold at 0.278 with a standard error of 0.007,
 $+0.075$ over GO alone on twelve of twelve, with a twelve-seed ensemble of 0.296 (193).
-Cells queued: 256 with a 400-epoch budget (196), the two-slot head at 64, 256 and 128
-(197, 198, 200), the three families with two slots (199).
+In the transformer the two-slot head reads 0.224 at 64 and 0.225 at 256 (197, 198),
+above every cell with the annotation in it on every seed with the tightest band and
+the best single-seed call (top-50 5.66), and 0.054 under the pool alone through 256:
+it selects at epochs 5 to 15 on the annotation's early peak, before the pool's slot
+has trained, where the perceptron's two slots selected at 64 to 165. The linear slot at
+a tenth and a hundredth of the rate is the fix in flight (201, 202). With the three
+families in the two slots, GO and both flux programs linear beside the pool through
+256, the head reads 0.239 with a band of 0.003 (199): the flux programs add 0.014 to
+the annotation's slot on every seed, and this is the best arm of the study with the
+annotation in it, 0.04 under the pool alone. Cells queued: 256 with a 400-epoch budget
+(196), two slots at 128 (200), dropout 0.3 and the standardized encoding on the pool
+through 256 (203, 204).

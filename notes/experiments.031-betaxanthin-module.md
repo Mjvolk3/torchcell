@@ -554,8 +554,8 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
-| B60 | 197 | w216 | del + two slots: GO linear, pool through 64 | job 2877, pending |
-| B61 | 198 | w217 | del + two slots: GO linear, pool through 256 | job 2878, pending |
+| B60 | 197 | w216 | del + two slots: GO linear, pool through 64 | 0.224 (sd 0.003); vs shared +0.018 (6/6); vs GO +0.022 (6/6); vs pool mlp64 -0.016 (2/6); top-50 5.66; ens 0.225 |
+| B61 | 198 | w217 | del + two slots: GO linear, pool through 256 | 0.225 (sd 0.005); vs pool mlp256 -0.054 (0/6); vs GO +0.023 (6/6); ens 0.226 |
 
 ## 2026.09.26 - B55 to B57 read: the width curve peaks at 256; B62, B63 queued
 
@@ -566,5 +566,19 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
-| B62 | 199 | w218 | del + two slots: GO and both flux programs linear, pool through 256 | job 2879, running |
+| B62 | 199 | w218 | del + two slots: GO and both flux programs linear, pool through 256 | 0.239 (sd 0.003); vs linear +0.021 (6/6); vs GO two-slot +0.014 (6/6); vs pool mlp256 -0.040 (0/6); top-50 5.32; ens 0.241 |
 | B63 | 200 | w219 | del + two slots: GO linear, pool through 128 | job 2880, pending |
+
+## 2026.09.27 - B60 to B62 read: the two-slot head in the transformer selects on the annotation's schedule
+
+- B60 (w216, GO linear beside the pool through 64, job 2877, 3 h 36 min): 0.224 (sd 0.003) vs the shared layer (w204) 0.206 (+0.018, 6/6), vs the same columns linear (w194) 0.208 (+0.016, 6/6), vs GO alone +0.022 (6/6), vs the pool alone through 64 (w199) 0.240 (-0.016, 2/6); top-50 5.66 (the best single-seed call of any transformer arm); ensemble 0.225 / 5.79. Seeds select at epochs 5 to 11 on validation Pearson 0.27 to 0.29. Round 197.
+- B61 (w217, two slots at 256, job 2878, 3 h 36 min): 0.225 (sd 0.005) vs w216 +0.001 (4/6), vs the pool alone through 256 (w206) 0.279 (-0.054, 0/6), vs GO alone +0.023 (6/6); ensemble 0.226; epochs 9 to 15. Round 198. The transformer's two slots do NOT reproduce the perceptron's (0.265 > pool alone 0.236): the head is the best arm with the annotation in it and 0.054 under the pool alone, because the linear GO slot sets the selection at epochs 5 to 15 (the pool's slot selects at 29 to 141 alone). Plausible mechanism, unverified: at the backbone's rate with batch 32 the annotation's map peaks and overfits within fifteen epochs; the perceptron trained full batch and selected at 64 to 165.
+- B62 (w218, GO + both flux programs linear beside the pool through 256, job 2879, 3 h 34 min): 0.239 (sd 0.003) vs the three families linear (w197) 0.218 (+0.021, 6/6), vs the shared layer (w207) +0.023 (6/6), vs the GO two-slot (w217) +0.014 (6/6), vs the pool alone -0.040 (0/6); top-50 5.32; ensemble 0.241 / 5.19; epochs 7 to 12. The flux programs add 0.014 in the linear slot: the best arm with the annotation in it. Round 199.
+- Fix in flight: `train_essentiality.py` gains `--ess-solve-head-linear-lr-mult` (cell field `ess_solve_head_linear_lr_mult`; the two-slot head's linear slot, `fba_readout.linear.linear.*`, in its own AdamW group at `lr x mult`). B66 = w222 (x0.1, job 2887) and B67 = w223 (x0.01, job 2888), both two slots at 256 over YPD_bx_goaapool, vs w217 and w206. Also queued: B64 = w220 (the pool through 256 with `--dropout 0.3`, job 2885) and B65 = w221 (the pool through 256 standardized, job 2886), both vs w206.
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B64 | 203 | w220 | del + the pool through 256, dropout 0.3 | job 2885, running |
+| B65 | 204 | w221 | del + the pool through 256, standardized | job 2886, running |
+| B66 | 201 | w222 | del + two slots at 256, linear slot at lr x0.1 | job 2887, pending |
+| B67 | 202 | w223 | del + two slots at 256, linear slot at lr x0.01 | job 2888, pending |

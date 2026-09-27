@@ -1204,6 +1204,16 @@ class BxCell(BaseModel):
             "leaves them in the cell's single group at `weight_decay`."
         ),
     )
+    ess_solve_head_linear_lr_mult: float = Field(
+        default=1.0,
+        description=(
+            "With a two-slot solve head, the learning-rate multiplier of the LINEAR slot's "
+            "own parameter group (the annotation's map), so the annotation can fit slower "
+            "than the pool's hidden layer: with both at the backbone's rate the head selects "
+            "at epochs 5 to 15 on the annotation's early peak, before the pool's slot has "
+            "trained (rounds 197, 198). 1.0 is no separate group."
+        ),
+    )
     ess_affine_lr_mult: float = Field(
         default=1.0,
         description="Round 119: learning-rate multiplier for the store affine's parameters.",
@@ -2380,6 +2390,7 @@ def build_cell(
     ess_solve_columns: str = "",
     ess_affine_weight_decay: float | None = None,
     ess_affine_lr_mult: float = 1.0,
+    ess_solve_head_linear_lr_mult: float = 1.0,
     ess_affine_start_epoch: int = 0,
     ess_affine_start_val_pearson: float = 0.0,
     dropout: float = 0.1,
@@ -2496,6 +2507,7 @@ def build_cell(
         ess_solve_columns=ess_solve_columns,
         ess_affine_weight_decay=ess_affine_weight_decay,
         ess_affine_lr_mult=ess_affine_lr_mult,
+        ess_solve_head_linear_lr_mult=ess_solve_head_linear_lr_mult,
         ess_affine_start_epoch=ess_affine_start_epoch,
         ess_affine_start_val_pearson=ess_affine_start_val_pearson,
         dropout=dropout,
@@ -5772,8 +5784,19 @@ def run_cell(
     # THE STORE AFFINE'S OWN GROUP (round 119): its weight decay and rate can differ from
     # the backbone's, because thousands of columns at the backbone's rate fit train noise
     # on a target the vector does not carry (round 117, betaxanthin).
+    # THE TWO-SLOT HEAD'S LINEAR SLOT (2026-09-26): its own group at its own rate, so the
+    # annotation's map can fit slower than the pool's hidden layer beside it.
+    slot_params = [
+        p
+        for n, p in model.named_parameters()
+        if n.startswith("fba_readout.linear.linear.")
+    ]
+    slot_ids = {id(p) for p in slot_params}
+    slot_own_group = bool(slot_params) and cell.ess_solve_head_linear_lr_mult != 1.0
     affine_params = [
-        p for n, p in model.named_parameters() if n.split(".")[0] == "fba_readout"
+        p
+        for n, p in model.named_parameters()
+        if n.split(".")[0] == "fba_readout" and (not slot_own_group or id(p) not in slot_ids)
     ]
     affine_ids = {id(p) for p in affine_params}
     affine_own_group = bool(affine_params) and (
@@ -5782,10 +5805,20 @@ def run_cell(
     other_params = [
         p
         for p in model.parameters()
-        if id(p) not in flux_ids and (not affine_own_group or id(p) not in affine_ids)
+        if id(p) not in flux_ids
+        and (not affine_own_group or id(p) not in affine_ids)
+        and (not slot_own_group or id(p) not in slot_ids)
     ]
-    if (cell.flux_lr_mult != 1.0 and flux_params) or affine_own_group:
+    if (cell.flux_lr_mult != 1.0 and flux_params) or affine_own_group or slot_own_group:
         groups: list[dict[str, Any]] = [{"params": other_params}]
+        if slot_own_group:
+            groups.append(
+                {"params": slot_params, "lr": cell.lr * cell.ess_solve_head_linear_lr_mult}
+            )
+            print(
+                f"[slot-group] {sum(p.numel() for p in slot_params)} linear-slot parameters "
+                f"at lr x{cell.ess_solve_head_linear_lr_mult}"
+            )
         if cell.flux_lr_mult != 1.0 and flux_params:
             groups.append({"params": flux_params, "lr": cell.lr * cell.flux_lr_mult})
         elif flux_params:
@@ -7191,6 +7224,15 @@ def main() -> None:
         help="Learning-rate multiplier on the store affine's parameters.",
     )
     parser.add_argument(
+        "--ess-solve-head-linear-lr-mult",
+        type=float,
+        default=1.0,
+        help=(
+            "With a two-slot solve head, the learning-rate multiplier of the linear slot's "
+            "own parameter group (2026-09-26); 1.0 is no separate group."
+        ),
+    )
+    parser.add_argument(
         "--ess-affine-start-epoch",
         type=int,
         default=0,
@@ -7760,6 +7802,7 @@ def main() -> None:
         ess_solve_columns=args.ess_solve_columns,
         ess_affine_weight_decay=args.ess_affine_weight_decay,
         ess_affine_lr_mult=args.ess_affine_lr_mult,
+        ess_solve_head_linear_lr_mult=args.ess_solve_head_linear_lr_mult,
         ess_affine_start_epoch=args.ess_affine_start_epoch,
         dropout=args.dropout,
         ess_affine_start_val_pearson=args.ess_affine_start_val_pearson,

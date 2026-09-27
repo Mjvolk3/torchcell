@@ -997,6 +997,48 @@ PAIRS = [
         "w217_bxdelgolinaapoolmlp256_h12l1p1_e200",
     ),
     (
+        "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+        "betaxanthin",
+        "w220_bxdelaapoolmlp256drop_h12l1p1_e200",
+        "w206_bxdelaapoolmlp256_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+        "betaxanthin",
+        "w221_bxdelaapoolmlp256std_h12l1p1_e200",
+        "w206_bxdelaapoolmlp256_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head at 256 with the linear slot at a tenth of the rate against both slots at the full rate",
+        "betaxanthin",
+        "w222_bxdelgolinaapoolmlp256lr01_h12l1p1_e200",
+        "w217_bxdelgolinaapoolmlp256_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head at 256 with the linear slot at a tenth of the rate against the pool alone through 256",
+        "betaxanthin",
+        "w222_bxdelgolinaapoolmlp256lr01_h12l1p1_e200",
+        "w206_bxdelaapoolmlp256_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+        "betaxanthin",
+        "w223_bxdelgolinaapoolmlp256lr001_h12l1p1_e200",
+        "w217_bxdelgolinaapoolmlp256_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against a tenth",
+        "betaxanthin",
+        "w223_bxdelgolinaapoolmlp256lr001_h12l1p1_e200",
+        "w222_bxdelgolinaapoolmlp256lr01_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against the pool alone through 256",
+        "betaxanthin",
+        "w223_bxdelgolinaapoolmlp256lr001_h12l1p1_e200",
+        "w206_bxdelaapoolmlp256_h12l1p1_e200",
+    ),
+    (
         "amino acids: measured betaxanthin score alone in the affine against GO alone, twelve seeds",
         "mulleder19",
         "w203_aadelbxscore_h12l1p1_e200",

@@ -140,6 +140,18 @@ the annotation's slot on every seed, and this is the best arm of the study with 
 annotation in it, 0.04 under the pool alone. A 400-epoch budget leaves the pool through
 256 where 200 epochs left it, the same epoch and the same value on every seed (196), so
 the width curve's maximum is a level. Cells queued: two slots at 128 (200), dropout 0.3
-and the standardized encoding on the pool through 256 (203, 204), and on the amino acids
+and the standardized encoding on the pool through 256 (203, 204), on the amino acids
 the score through a hidden layer of 256 with Cooper's peaks linear and through the same
-layer (205 to 207).
+layer (205 to 207), and Cooper's peaks alone through 256 (211), a substitute for the
+pool rather than an addition, where the perceptron reads the peaks alone at 0.131 and
+appended to the pool as steadying it (0.245 against 0.219 at width 256, the spread
+from 0.042 to 0.010) (Section~\ref{sec:physics}). Dropout 0.3 inside the transformer
+leaves the pool through 256 at 0.279 with a paired difference of zero (203), and
+standardizing the pool instead of $\log(1+v)$ costs it 0.10 (204). What the
+transformer contributes is now measured (Section~\ref{sec:decomposition}): on the
+pool through 256 the backbone's head is a constant on two seeds of six and adds 0.05
+on the other four, the slot alone reads 0.257 and the arm 0.279; with the annotation
+in the slot the head is a constant on every seed and the read is the slot's. No cell
+of the study has read the graphs, since the regularizer and the hard mask index a
+second block and every cell ran one. The layer-pattern ladder at width 36 with nine
+heads (212 to 216) and the release rule on the pool slot (210) are queued.

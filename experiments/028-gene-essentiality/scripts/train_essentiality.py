@@ -681,6 +681,17 @@ class BxCell(BaseModel):
             "KL regularizer was replaced by this after the July runs."
         ),
     )
+    attention_mask_layers: list[int] = Field(
+        default=[1],
+        description=(
+            "Which transformer blocks carry the hard mask (0-based, so [1] is the SECOND "
+            "block and a one-block cell cannot be masked). Rounds 212 to 216 (2026-09-27) "
+            "read the layer pattern the user asked for, an unmasked block followed by one "
+            "or two masked ones ([S,M], [S,M,M]), against the same depth unmasked and "
+            "against the KL regularizer, whose head map also indexes block 1 and so was "
+            "inert on every one-block cell (graph_reg_loss 0.0 at every epoch)."
+        ),
+    )
     learnable_embedding: bool = Field(
         default=False,
         description=(
@@ -2335,6 +2346,7 @@ def build_cell(
     abort_on_collapse: bool = False,
     aux_mulleder: bool = False,
     attention_mask: bool = False,
+    attention_mask_layers: list[int] | None = None,
     pert_heads: int = 6,
     layers: int | None = None,
     hidden: int | None = None,
@@ -2530,6 +2542,7 @@ def build_cell(
         abort_on_collapse=abort_on_collapse,
         aux_mulleder=aux_mulleder,
         attention_mask=attention_mask,
+        attention_mask_layers=list(attention_mask_layers or [1]),
         pert_heads=pert_heads,
         learnable_embedding=learnable_embedding,
         kcat_tier=kcat_tier,
@@ -4150,7 +4163,9 @@ class TwoSlotSolveHead(nn.Module):
     annotation where one shared layer read 0.240 (2026-09-26).
     """
 
-    def __init__(self, n_linear: int, n_rest: int, hidden: int, out_features: int) -> None:
+    def __init__(
+        self, n_linear: int, n_rest: int, hidden: int, out_features: int
+    ) -> None:
         """Build the two slots; ``n_rest`` must be positive."""
         super().__init__()
         assert n_rest > 0, (n_linear, n_rest)
@@ -4184,9 +4199,9 @@ def apply_solve_head(cell: BxCell, affine: FbaAffine) -> None:
     if cell.ess_solve_head_linear_columns > 0:
         n_linear = len(cell.ess_fba_media) + cell.ess_solve_head_linear_columns
         assert n_linear < m, (n_linear, m)
-        affine.linear = TwoSlotSolveHead(n_linear, m - n_linear, h, affine.out_features).to(
-            affine.fba_table.device
-        )
+        affine.linear = TwoSlotSolveHead(
+            n_linear, m - n_linear, h, affine.out_features
+        ).to(affine.fba_table.device)
         print(
             f"[solve-head] two slots over {m} columns: Linear({n_linear}, {affine.out_features}) "
             f"over the media ratios and the first {cell.ess_solve_head_linear_columns} solve "
@@ -5316,7 +5331,11 @@ def build_model_for_cell(
             "dropout": 0.1,
             "enabled": False,
         },
-        attention_mask_config=ATTENTION_MASK_CONFIG if cell.attention_mask else None,
+        attention_mask_config=(
+            {**ATTENTION_MASK_CONFIG, "layers": list(cell.attention_mask_layers)}
+            if cell.attention_mask
+            else None
+        ),
         # The model reads cell_graph["gene"].x only when it is TOLD it has precomputed
         # embeddings; without this it looks for a learnable table that is now disabled and
         # raises "No gene embeddings available".
@@ -5796,7 +5815,8 @@ def run_cell(
     affine_params = [
         p
         for n, p in model.named_parameters()
-        if n.split(".")[0] == "fba_readout" and (not slot_own_group or id(p) not in slot_ids)
+        if n.split(".")[0] == "fba_readout"
+        and (not slot_own_group or id(p) not in slot_ids)
     ]
     affine_ids = {id(p) for p in affine_params}
     affine_own_group = bool(affine_params) and (
@@ -5813,7 +5833,10 @@ def run_cell(
         groups: list[dict[str, Any]] = [{"params": other_params}]
         if slot_own_group:
             groups.append(
-                {"params": slot_params, "lr": cell.lr * cell.ess_solve_head_linear_lr_mult}
+                {
+                    "params": slot_params,
+                    "lr": cell.lr * cell.ess_solve_head_linear_lr_mult,
+                }
             )
             print(
                 f"[slot-group] {sum(p.numel() for p in slot_params)} linear-slot parameters "
@@ -7339,6 +7362,13 @@ def main() -> None:
         action="store_true",
         help="The 020 grid's hard graph masking, one relation per attention head.",
     )
+    parser.add_argument(
+        "--attention-mask-layers",
+        nargs="+",
+        type=int,
+        default=[1],
+        help="0-based transformer blocks that carry the hard mask; [1 2] masks the second and third.",
+    )
     parser.add_argument("--pert-heads", type=int, default=6)
     parser.add_argument(
         "--learnable-embedding",
@@ -7746,6 +7776,7 @@ def main() -> None:
         abort_on_collapse=args.abort_on_collapse,
         aux_mulleder=args.aux_mulleder,
         attention_mask=args.attention_mask,
+        attention_mask_layers=args.attention_mask_layers,
         pert_heads=args.pert_heads,
         layers=args.layers,
         hidden=args.hidden,

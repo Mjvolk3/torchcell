@@ -31,6 +31,7 @@ import time
 
 import numpy as np
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -50,6 +51,30 @@ class ConcatStoreProvenance(StoreProvenance):
     n_genes_with_appended_row: int
     column_layout: str
     flux_fields_from: str = "base"
+
+
+class MeasuredConcatStoreProvenance(BaseModel):
+    """Two measured stores concatenated (2026-09-27: the pool with Cooper's peaks).
+
+    Neither side carries flux provenance, so the record holds the two sources' own
+    records verbatim under ``base_provenance`` and ``appended_provenance``.
+    """
+
+    model_config = {"extra": "forbid"}
+
+    method: str
+    base_store: str
+    base_sha256: str
+    base_provenance: dict
+    appended_store: str
+    appended_sha256: str
+    appended_provenance: dict
+    n_sets: int
+    n_genes_with_appended_row: int
+    column_layout: str
+    flux_fields_from: str = "none"
+    python_hash_seed: str
+    flux_sha256: str
 
 
 def load(stem: str) -> dict:
@@ -110,16 +135,31 @@ def main() -> None:
         flux_sha256=hashlib.sha256(v_del.tobytes()).hexdigest(),
         n_sets=len(base["genes"]) + 1,
     )
-    provenance = ConcatStoreProvenance(
-        **keep,
+    origin = dict(
         base_store=base["path"],
         base_sha256=hashlib.sha256(base["v_deletion"].tobytes()).hexdigest(),
         appended_store=app["path"],
         appended_sha256=hashlib.sha256(app["v_deletion"].tobytes()).hexdigest(),
         n_genes_with_appended_row=n_app,
         column_layout=f"{args.base} ({len(base['rxn_ids'])}) | {args.append} ({len(app['rxn_ids'])})",
-        flux_fields_from=flux_fields_from,
     )
+    measured_both = not any(
+        k in bp or k in ap for k in ("n_lethal_zero_flux", "background_genes")
+    )
+    if measured_both:
+        provenance: BaseModel = MeasuredConcatStoreProvenance(
+            method=keep["method"],
+            base_provenance=bp,
+            appended_provenance=ap,
+            n_sets=keep["n_sets"],
+            python_hash_seed="0",
+            flux_sha256=keep["flux_sha256"],
+            **origin,
+        )
+    else:
+        provenance = ConcatStoreProvenance(
+            **keep, flux_fields_from=flux_fields_from, **origin
+        )
     path = osp.join(args.out_dir, f"ess_solve_encodings_{args.out}.npz")
     assert not osp.exists(path), f"{path} exists; stores are never overwritten"
     np.savez(
@@ -137,7 +177,8 @@ def main() -> None:
         "n_genes": len(base["genes"]),
         "n_genes_with_appended_row": n_app,
         "n_columns": int(v_del.shape[1]),
-        "column_layout": provenance.column_layout,
+        "column_layout": origin["column_layout"],
+        "flux_fields_from": "none" if measured_both else flux_fields_from,
         "seconds": time.time() - started,
         "generated_by": "experiments/031-betaxanthin-module/scripts/target_store_concat.py",
     }

@@ -116,6 +116,147 @@ def raw_mlp(name: str, arm: str, key: str):
     return run
 
 
+def cooper_mlp(name: str, arm: str, key: str):
+    """A value of one arm of a CPU perceptron run over Cooper's store or the pool with
+    Cooper's peaks appended (target_go_models.py --store YPD_bx_cooperpool or
+    YPD_bx_aapoolcooper); ``name`` is the result file's stem after ``go_models_betaxanthin_``.
+    """
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, f"go_models_betaxanthin_{name}.json")))
+        assert d["store"] in ("YPD_bx_cooperpool", "YPD_bx_aapoolcooper"), name
+        a = next(x for x in d["arms"] if x["arm"] == arm)
+        if key == "select_epoch_min":
+            return float(min(r["select_epoch"] for r in a["seeds"]))
+        if key == "select_epoch_max":
+            return float(max(r["select_epoch"] for r in a["seeds"]))
+        return float(a[key])
+
+    return run
+
+
+def cooper_mlp_paired_wins(name: str, arm: str, ref_name: str, ref_arm: str):
+    """Seeds on which the Cooper run's arm reads above the reference pool run's arm."""
+
+    def run() -> float:
+        import json
+
+        a = json.load(open(osp.join(RESULTS, f"go_models_betaxanthin_{name}.json")))
+        b = json.load(open(osp.join(RESULTS, f"go_models_betaxanthin_{ref_name}.json")))
+        x = {
+            r["seed"]: r["test_pinned_spearman"]
+            for r in next(t for t in a["arms"] if t["arm"] == arm)["seeds"]
+        }
+        y = {
+            r["seed"]: r["test_pinned_spearman"]
+            for r in next(t for t in b["arms"] if t["arm"] == ref_arm)["seeds"]
+        }
+        assert set(x) == set(y)
+        return float(sum(x[k] > y[k] for k in x))
+
+    return run
+
+
+def decomposition(name: str, key: str):
+    """A summary value of a target_head_decomposition run (``name`` its stem)."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, f"target_head_decomposition_{name}.json")))
+        return float(d["summary"][key])
+
+    return run
+
+
+def decomposition_cells(name: str, what: str):
+    """Over a decomposition's cells: ``n_constant`` (head spread under a hundredth of
+    the slot's), ``max_full_vs_reported`` (the rebuild against the reported Spearman),
+    ``max_sd_ratio_constant``, or the min or max over LIVE cells of ``backbone_adds``,
+    ``head``, ``head_vs_slot``, or of ``select_epoch`` over all cells.
+    """
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, f"target_head_decomposition_{name}.json")))
+        cells = d["cells"]
+        live = [c for c in cells if c["sd_ratio_head_over_slot"] >= 1e-2]
+        if what == "n_constant":
+            return float(len(cells) - len(live))
+        if what == "max_full_vs_reported":
+            return max(
+                abs(c["full"]["spearman_vs_target"] - c["reported_spearman"])
+                for c in cells
+            )
+        if what == "max_sd_ratio_constant":
+            return max(c["sd_ratio_head_over_slot"] for c in cells if c not in live)
+        stat, key = what.split("_", 1)
+        f = {"min": min, "max": max}[stat]
+        if key == "select_epoch":
+            return float(f(c["select_epoch"] for c in cells))
+        if key == "backbone_adds":
+            return float(f(c["backbone_adds"] for c in live))
+        if key == "head":
+            return float(f(c["backbone_head"]["spearman_vs_target"] for c in live))
+        if key == "head_vs_slot":
+            return float(f(c["spearman_head_vs_slot"] for c in live))
+        raise KeyError(what)
+
+    return run
+
+
+def agreement(name: str, key: str):
+    """A summary value of a target_prediction_agreement run."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(
+            open(osp.join(RESULTS, f"target_prediction_agreement_{name}.json"))
+        )
+        return float(d["summary"][key])
+
+    return run
+
+
+def agreement_max_below(name: str, ceiling: float):
+    """The largest same-seed agreement under ``ceiling`` (the live seeds' band)."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(
+            open(osp.join(RESULTS, f"target_prediction_agreement_{name}.json"))
+        )
+        return max(r["spearman"] for r in d["seeds"] if r["spearman"] < ceiling)
+
+    return run
+
+
+def graph_reg_loss_over_cells(layers: int, what: str):
+    """Over every result file of the study with ``layers`` transformer blocks: the count
+    of cells, or the maximum graph regularization loss logged at any epoch.
+    """
+
+    def run() -> float:
+        import glob
+        import json
+
+        mx, n = 0.0, 0
+        for path in glob.glob(osp.join(RESULTS, "w*_s27*.json")):
+            d = json.load(open(path))
+            if "history" not in d or d["cell"]["layers"] != layers:
+                continue
+            n += 1
+            mx = max(mx, max(x.get("graph_reg_loss", 0.0) for x in d["history"]))
+        return float(n if what == "n" else mx)
+
+    return run
+
+
 def pool_mlp(hidden: int, arm: str, key: str, name: str | None = None):
     """A value of one arm of the CPU perceptron sweep over the measured pool
     (target_go_models.py --store YPD_bx_aapool --mlp-hidden <hidden>); ``name`` picks a
@@ -9828,6 +9969,671 @@ CHECKS: list[Check] = [
             "betaxanthin", "sampled_mean", "forest", "mean_spearman"
         ),
         tolerance=0.0006,
+    ),
+    # sec:physics -- Cooper's peaks through the perceptron, alone and beside the pool.
+    Check(
+        claim="cooper mlp: peaks alone 256",
+        stated=0.131,
+        recompute=cooper_mlp("cooper_h256", "store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: peaks alone top-50",
+        stated=1.03,
+        recompute=cooper_mlp("cooper_h256", "store_mlp", "single_mean_top50"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="cooper mlp: GO linear beside the peaks",
+        stated=0.233,
+        recompute=cooper_mlp(
+            "cooper_h256", "go_linear_store_mlp", "single_mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: GO linear beside the pool at 256 (reference)",
+        stated=0.260,
+        recompute=pool_mlp(
+            256,
+            "go_linear_store_mlp",
+            "single_mean_spearman",
+            "go_models_betaxanthin_pool_twoslot_h256.json",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: two-slot pool minus two-slot peaks",
+        stated=0.027,
+        recompute=lambda: (
+            pool_mlp(
+                256,
+                "go_linear_store_mlp",
+                "single_mean_spearman",
+                "go_models_betaxanthin_pool_twoslot_h256.json",
+            )()
+            - cooper_mlp("cooper_h256", "go_linear_store_mlp", "single_mean_spearman")()
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: pool with peaks alone 256",
+        stated=0.245,
+        recompute=cooper_mlp("poolcooper_h256", "store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: pool alone 256 (reference)",
+        stated=0.219,
+        recompute=pool_mlp(256, "store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: pool with peaks minus pool alone",
+        stated=0.026,
+        recompute=lambda: (
+            cooper_mlp("poolcooper_h256", "store_mlp", "single_mean_spearman")()
+            - pool_mlp(256, "store_mlp", "single_mean_spearman")()
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: pool with peaks above pool alone on seeds",
+        stated=3,
+        recompute=cooper_mlp_paired_wins(
+            "poolcooper_h256", "store_mlp", "pool_h256", "store_mlp"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="cooper mlp: pool alone sd 256",
+        stated=0.042,
+        recompute=pool_mlp(256, "store_mlp", "single_sd_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: pool with peaks sd 256",
+        stated=0.010,
+        recompute=cooper_mlp("poolcooper_h256", "store_mlp", "single_sd_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: pool alone at 1024 (reference)",
+        stated=0.236,
+        recompute=pool_mlp(1024, "store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: pool with peaks minus pool alone at 1024",
+        stated=0.009,
+        recompute=lambda: (
+            cooper_mlp("poolcooper_h256", "store_mlp", "single_mean_spearman")()
+            - pool_mlp(1024, "store_mlp", "single_mean_spearman")()
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: two slots over pool with peaks",
+        stated=0.264,
+        recompute=cooper_mlp(
+            "poolcooper_h256", "go_linear_store_mlp", "single_mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: two slots gain from the peaks",
+        stated=0.004,
+        recompute=lambda: (
+            cooper_mlp(
+                "poolcooper_h256", "go_linear_store_mlp", "single_mean_spearman"
+            )()
+            - pool_mlp(
+                256,
+                "go_linear_store_mlp",
+                "single_mean_spearman",
+                "go_models_betaxanthin_pool_twoslot_h256.json",
+            )()
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: two slots with peaks above without on seeds",
+        stated=5,
+        recompute=cooper_mlp_paired_wins(
+            "poolcooper_h256",
+            "go_linear_store_mlp",
+            "pool_twoslot_h256",
+            "go_linear_store_mlp",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="cooper mlp: two slots with peaks ensemble",
+        stated=0.265,
+        recompute=cooper_mlp(
+            "poolcooper_h256", "go_linear_store_mlp", "ensemble_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: two slots without peaks ensemble",
+        stated=0.266,
+        recompute=pool_mlp(
+            256,
+            "go_linear_store_mlp",
+            "ensemble_spearman",
+            "go_models_betaxanthin_pool_twoslot_h256.json",
+        ),
+        tolerance=0.0006,
+    ),
+    # sec:rounds -- round 204, the pool through 256 read standardized.
+    Check(
+        claim="round 204: pool mlp256 standardized arm",
+        stated=0.182,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 204: arm sd",
+        stated=0.017,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 204: log1p control",
+        stated=0.279,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 204: paired difference",
+        stated=-0.097,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 204: paired sd",
+        stated=0.023,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 204: seeds above control",
+        stated=0,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 204: arm top-50",
+        stated=3.99,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 204: control top-50",
+        stated=4.69,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "mean_top50_enrichment",
+            "control",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 204: ensemble",
+        stated=0.187,
+        recompute=ensemble("w221_bxdelaapoolmlp256std_h12l1p1_e200", "spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 204: seed min",
+        stated=0.160,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "arm",
+            "spearman",
+            "min",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 204: seed max",
+        stated=0.207,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "arm",
+            "spearman",
+            "max",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 204: select epoch min",
+        stated=2,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "arm",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 204: select epoch max",
+        stated=8,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 204: select val pearson min",
+        stated=0.22,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "arm",
+            "select_val_pearson",
+            "min",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 204: select val pearson max",
+        stated=0.27,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "arm",
+            "select_val_pearson",
+            "max",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 204: control select epoch min",
+        stated=29,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "control",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 204: control select epoch max",
+        stated=138,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 read standardized against log1p",
+            "control",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    # sec:rounds -- round 203, dropout 0.3 on the pool through 256; the agreement of predictions.
+    Check(
+        claim="round 203: arm",
+        stated=0.279,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 203: arm sd",
+        stated=0.018,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 203: control",
+        stated=0.279,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 203: control sd",
+        stated=0.023,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "sd_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 203: paired difference",
+        stated=0.0,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 203: paired sd",
+        stated=0.028,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 203: seeds above",
+        stated=3,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 203: arm top-50",
+        stated=4.56,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 203: control top-50",
+        stated=4.69,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "mean_top50_enrichment",
+            "control",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 203: ensemble",
+        stated=0.293,
+        recompute=ensemble("w220_bxdelaapoolmlp256drop_h12l1p1_e200", "spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 203: ensemble top-50",
+        stated=5.59,
+        recompute=ensemble(
+            "w220_bxdelaapoolmlp256drop_h12l1p1_e200", "top50_enrichment"
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 203: select epoch min",
+        stated=32,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "arm",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 203: select epoch max",
+        stated=138,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 203: seeds agreeing at 1.0000",
+        stated=2,
+        recompute=agreement("w220_vs_w206", "n_seeds_at_or_above_0.9999"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 203: min same-seed agreement",
+        stated=0.91,
+        recompute=agreement("w220_vs_w206", "min_same_seed_spearman"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 203: max same-seed agreement among the live seeds",
+        stated=0.98,
+        recompute=agreement_max_below("w220_vs_w206", 0.9999),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 203: seed-pair agreement",
+        stated=0.91,
+        recompute=agreement("w220_vs_w206", "mean_control_seed_pair_spearman"),
+        tolerance=0.006,
+    ),
+    # sec:decomposition -- the backbone's head and the slot, separated.
+    Check(
+        claim="decomposition: rebuild matches reported (max over arms)",
+        stated=0.0,
+        recompute=lambda: max(
+            decomposition_cells(n, "max_full_vs_reported")()
+            for n in (
+                "w206_aapoolmlp256",
+                "w167_go",
+                "w156_pfba",
+                "w198_aapool_linear",
+                "w199_aapoolmlp64",
+                "w217_twoslot256",
+                "w218_threefam_twoslot",
+            )
+        ),
+        tolerance=0.001,
+    ),
+    Check(
+        claim="decomposition: pool 256 constant heads",
+        stated=2,
+        recompute=decomposition_cells("w206_aapoolmlp256", "n_constant"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="decomposition: pool 256 constant head sd ratio",
+        stated=0.0,
+        recompute=decomposition_cells("w206_aapoolmlp256", "max_sd_ratio_constant"),
+        tolerance=1e-06,
+    ),
+    Check(
+        claim="decomposition: pool 256 live head min",
+        stated=0.05,
+        recompute=decomposition_cells("w206_aapoolmlp256", "min_head"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="decomposition: pool 256 live head max",
+        stated=0.15,
+        recompute=decomposition_cells("w206_aapoolmlp256", "max_head"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="decomposition: pool 256 head vs slot min",
+        stated=0.04,
+        recompute=decomposition_cells("w206_aapoolmlp256", "min_head_vs_slot"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="decomposition: pool 256 head vs slot max",
+        stated=0.14,
+        recompute=decomposition_cells("w206_aapoolmlp256", "max_head_vs_slot"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="decomposition: pool 256 backbone adds min (live)",
+        stated=-0.02,
+        recompute=decomposition_cells("w206_aapoolmlp256", "min_backbone_adds"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="decomposition: pool 256 backbone adds max (live)",
+        stated=0.055,
+        recompute=decomposition_cells("w206_aapoolmlp256", "max_backbone_adds"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="decomposition: pool 256 slot alone",
+        stated=0.257,
+        recompute=decomposition("w206_aapoolmlp256", "mean_slot_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="decomposition: pool 256 backbone adds mean",
+        stated=0.021,
+        recompute=decomposition("w206_aapoolmlp256", "mean_backbone_adds"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="decomposition: pool 256 full",
+        stated=0.279,
+        recompute=decomposition("w206_aapoolmlp256", "mean_full_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="decomposition: GO affine constant heads",
+        stated=6,
+        recompute=decomposition_cells("w167_go", "n_constant"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="decomposition: two-slot 256 constant heads",
+        stated=6,
+        recompute=decomposition_cells("w217_twoslot256", "n_constant"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="decomposition: three families constant heads",
+        stated=6,
+        recompute=decomposition_cells("w218_threefam_twoslot", "n_constant"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="decomposition: annotation arms select epoch min",
+        stated=7,
+        recompute=lambda: min(
+            decomposition_cells(n, "min_select_epoch")()
+            for n in ("w167_go", "w217_twoslot256", "w218_threefam_twoslot")
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="decomposition: annotation arms select epoch max",
+        stated=15,
+        recompute=lambda: max(
+            decomposition_cells(n, "max_select_epoch")()
+            for n in ("w167_go", "w217_twoslot256", "w218_threefam_twoslot")
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="decomposition: annotation arms read the slot within two ten-thousandths",
+        stated=0.0,
+        recompute=lambda: max(
+            abs(decomposition(n, "mean_backbone_adds")())
+            for n in ("w167_go", "w217_twoslot256", "w218_threefam_twoslot")
+        ),
+        tolerance=0.0002,
+    ),
+    Check(
+        claim="decomposition: flux affine constant heads",
+        stated=1,
+        recompute=decomposition_cells("w156_pfba", "n_constant"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="decomposition: flux affine sd ratio",
+        stated=1.0,
+        recompute=decomposition("w156_pfba", "mean_sd_ratio_head_over_slot"),
+        tolerance=0.15,
+    ),
+    Check(
+        claim="decomposition: flux affine head vs slot",
+        stated=0.13,
+        recompute=decomposition("w156_pfba", "mean_spearman_head_vs_slot"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="decomposition: flux affine backbone adds",
+        stated=0.023,
+        recompute=decomposition("w156_pfba", "mean_backbone_adds"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="decomposition: pool linear backbone adds",
+        stated=0.004,
+        recompute=decomposition("w198_aapool_linear", "mean_backbone_adds"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="decomposition: pool 64 backbone adds",
+        stated=-0.004,
+        recompute=decomposition("w199_aapoolmlp64", "mean_backbone_adds"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="decomposition: perceptron over the pool at 1024 (reference)",
+        stated=0.236,
+        recompute=pool_mlp(1024, "store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="graphs: one-block cells",
+        stated=378,
+        recompute=graph_reg_loss_over_cells(1, "n"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="graphs: one-block max graph_reg_loss",
+        stated=0.0,
+        recompute=graph_reg_loss_over_cells(1, "max"),
+        tolerance=1e-09,
+    ),
+    Check(
+        claim="graphs: two-block cells",
+        stated=24,
+        recompute=graph_reg_loss_over_cells(2, "n"),
+        tolerance=0.5,
     ),
 ]
 

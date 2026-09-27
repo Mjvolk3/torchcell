@@ -286,10 +286,65 @@ the ladder's rows are strains Cooper did not measure and carry the reference row
 reads $-0.001$, 0.094 and 0.113 by ridge, nearest neighbors and forest with calls of
 0.6 to 1.8: a third of M\"ulleder's pool on every model. Cooper's own duplicate
 identifiers agree at a Spearman of 0.06 (the sibling document's Section~4), so the
-columns carry little of the strain to begin with, and the transformer is not asked to
-read them.
+columns carry little of the strain to begin with. Through the perceptron
+(Table~\ref{tab:cooper-mlp-betaxanthin}; the pool sweep's arms with Cooper's store)
+the peaks alone read 0.131 at width 256 with calls at chance (top-50 1.03), the
+forest's level, and GO linear beside them 0.233, under GO beside the pool (0.260) by
+0.027. Appended to the pool (36 measured columns, store
+\texttt{YPD\_bx\_aapoolcooper}) the peaks read 0.245 alone against the pool's 0.219
+at the same width, $+0.026$ on three seeds of six, with the pool's spread of 0.042
+brought to 0.010: two seeds of the pool alone select at epoch 18 to 21 under 0.17, and
+with Cooper's columns beside them neither does, so at this width the second screen
+steadies the first more than it adds to it, and against the pool alone at its best
+width (0.236 at 1,024) the gain is 0.009. In the two-slot head the peaks add 0.004 to
+the pool on five seeds of six (0.264 against 0.260, ensembles 0.265 and 0.266): within
+the band, and not a cost. Cooper's peaks are read as a substitute for the pool rather
+than an addition to it: their transformer read through 256, alone, is round 211
+(w230), and the appended form (w228) was withdrawn unstarted.
 
 \input{tables/pool_mlp_sweep}
+
+\input{tables/cooper_mlp}
+
+\subsection{The backbone's head and the slot, separated\secstatus{todo}}
+\label{sec:decomposition}
+
+A store arm predicts $h(z) + a(s)$, the backbone's context head over the cell graph
+plus the slot over the gene's store row, and the two can be read apart: each cell is
+rebuilt from its checkpoint at the selected epoch, the pinned test set is run once as
+trained and once with the slot replaced by zero, and the difference is the slot
+(Table~\ref{tab:head-decomposition}; \texttt{target\_head\_decomposition.py}, the
+rebuilt full prediction agreeing with the reported Spearman to a thousandth on every
+cell). On the pool through 256 (round 187) the head is a constant on two seeds of six,
+with a spread of $10^{-8}$ of the slot's, the transformer blocks' gradient norm at
+0.0000 from epoch 20 and the 75 pinned genes with no pool row all receiving one
+prediction; on the other four the head is live, reads 0.05 to 0.15 on its own, agrees
+with the slot at 0.04 to 0.14, and adds $+0.055$, $+0.046$, $+0.047$ and $-0.020$ to
+the slot's read. Over the six seeds the slot alone reads 0.257 and the backbone adds
+0.021. So the arm's 0.279 is the pool through the hidden layer, fitted by this trainer,
+plus a backbone that adds 0.05 when it survives and nothing when it does not; the
+0.043 between the transformer and the perceptron over the same columns (0.236) is
+0.02 of fit and 0.02 of a live backbone, and not the graph. With the annotation in
+the slot the head is a constant on every seed: the GO affine (round 150), the two-slot
+head (198) and the three families with two slots (199) select at epochs 7 to 15, before
+the blocks have moved, and their reads are the slot's within two ten-thousandths. The flux
+affine (139) is the one arm whose head is live on every seed, with the head's spread
+at the slot's and the two parts agreeing at 0.13; it adds 0.023 there. The pool linear
+(181) and the pool through 64 (182) add 0.004 and $-0.004$.
+
+The graph never reached any of these backbones. The 019 regularizer and the 020 hard
+mask both index the second transformer block, and every cell of this study ran one
+block: the regularizer's loss is 0.0 at every epoch of all 378 one-block cells and
+nonzero only on the 24 two-block width-90 cells, and the hard mask was never passed.
+The backbone's inputs were the pathway multi-hot and ProtT5 through unmasked,
+unregularized attention over all genes. The layer-pattern ladder on the pool through
+256 (rounds 212 to 216: one block of width 36 with nine heads, two unmasked blocks, two
+blocks with the regularizer on the second, two with the hard mask on the second, and
+three with the hard mask on the second and third) is the first read of the graphs in
+this study, and the release rule on the pool slot (round 210) asks whether a backbone
+that escapes first adds on every seed.
+
+\input{tables/head_decomposition}
 
 \input{tables/go_models}
 

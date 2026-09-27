@@ -903,4 +903,27 @@ the epoch it selected under 200 and reads the same value, 0.279 (sd 0.023), a pa
 difference of exactly zero on six of six: the validation curve never passes its first
 200 epochs' peak. The width curve's maximum is a level, not a budget.
 
+Round 204 is read (job 2886, 4 h 0 min): the pool through 256 read standardized
+instead of $\log(1+v)$, the perceptron sweep's encoding. It reads 0.182 (sd 0.017)
+against the $\log(1+v)$ read at 0.279 ($-0.097$ paired, sd 0.023, zero of six),
+top-50 3.99 against 4.69, ensembled 0.187; the seeds read 0.160 to 0.207 and select
+at epochs 2 to 8 on validation Pearson 0.22 to 0.27, where the $\log(1+v)$ cells
+select at 29 to 138 on 0.36 to 0.40. So the encoding that lifted the perceptron over
+the same columns (0.236 standardized against 0.173 raw, Section~\ref{sec:physics})
+costs the transformer's slot 0.10, and every seed selects within eight epochs, the
+schedule of the annotation's affine: in this trainer the pool is read best as the
+flux stores are read, unscaled.
+
+Round 203 is read (job 2885, 3 h 58 min): the pool through 256 with dropout 0.3 inside
+the transformer, against 0.1. It reads 0.279 (sd 0.018) against 0.279 (sd 0.023), a
+paired difference of $-0.000$ (sd 0.028, three of six), top-50 4.56 against 4.69,
+ensembled 0.293 with a top-50 of 5.59; the seeds select at epochs 32 to 138. On two
+seeds of six the two cells' pinned predictions agree to a Spearman of 1.0000 with the
+same selected epoch, although their training curves differ from the first epoch; on the
+other four they agree at 0.91 to 0.98, above the 0.91 that two seeds of the same arm
+agree to (\texttt{target\_prediction\_agreement.py}). A change inside the
+transformer that leaves a seed's prediction untouched did not reach the prediction,
+and Section~\ref{sec:decomposition} measures why: on those two seeds the backbone's
+head is a constant on the pinned genes and the prediction is the slot alone.
+
 \input{tables/target_transfer}

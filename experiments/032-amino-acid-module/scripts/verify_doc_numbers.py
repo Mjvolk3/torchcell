@@ -99,6 +99,24 @@ def isobutanol_cross(kind: str, key: str, field: str = "spearman"):
     return run
 
 
+def cooper_mlp(hidden: int, arm: str, key: str):
+    """A value of one arm of the CPU perceptron over Cooper's peaks on the amino acids
+    (target_go_models.py --target amino_acids --store YPD_bx_cooperpool --mlp-hidden <hidden>).
+    """
+
+    def run() -> float:
+        import json
+
+        d = json.load(
+            open(osp.join(RESULTS, f"go_models_amino_acids_cooper_h{hidden}.json"))
+        )
+        assert d["store"] == "YPD_bx_cooperpool" and d["mlp_hidden"] == hidden
+        a = next(x for x in d["arms"] if x["arm"] == arm)
+        return float(a[key])
+
+    return run
+
+
 def score_mlp(hidden: int, arm: str, key: str):
     """A value of one arm of the CPU perceptron sweep over the betaxanthin score
     (target_go_models.py --target amino_acids --store SM_gem_bxscore --mlp-hidden <hidden>).
@@ -4284,6 +4302,69 @@ CHECKS: list[Check] = [
         stated=0.10,
         recompute=concordance_summary("cooper_retest_pearson_log_mean"),
         tolerance=0.005,
+    ),
+    # sec:physics -- Cooper's peaks through the perceptron.
+    Check(
+        claim="cooper mlp: peaks alone 256",
+        stated=0.049,
+        recompute=cooper_mlp(256, "store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: peaks alone 1024",
+        stated=0.052,
+        recompute=cooper_mlp(1024, "store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: forest over the peaks (ladder)",
+        stated=0.093,
+        recompute=store_baseline(
+            "amino_acids", "cooper_pool", "forest", "mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: GO with peaks 256",
+        stated=0.064,
+        recompute=cooper_mlp(256, "go_store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: GO with peaks 1024",
+        stated=0.065,
+        recompute=cooper_mlp(1024, "go_store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: GO linear beside peaks 1024",
+        stated=0.068,
+        recompute=cooper_mlp(1024, "go_linear_store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: GO linear beside peaks 1024 sd",
+        stated=0.003,
+        recompute=cooper_mlp(1024, "go_linear_store_mlp", "single_sd_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: GO linear beside peaks 1024 ensemble",
+        stated=0.070,
+        recompute=cooper_mlp(1024, "go_linear_store_mlp", "ensemble_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: GO with ProtT5 (reference)",
+        stated=0.065,
+        recompute=go_model("go_prot_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper mlp: GO with the score at 1024 (reference)",
+        stated=0.066,
+        recompute=score_mlp(1024, "go_store_mlp", "single_mean_spearman"),
+        tolerance=0.0006,
     ),
 ]
 

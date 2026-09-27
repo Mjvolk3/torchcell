@@ -186,9 +186,9 @@
     measured amino-acid pool through a hidden layer of 256 against the layer of 64, twelve seeds & 12 & 0.2781 (0.0250) & 0.2537 (0.0414) & $+0.0244$ (0.0409) & 9/12 & 4.61 / 4.24 \\
     measured amino-acid pool through a hidden layer of 256 against GO alone, twelve seeds & 12 & 0.2781 (0.0250) & 0.2029 (0.0019) & $+0.0751$ (0.0255) & 12/12 & 4.61 / 4.99 \\
     measured amino-acid pool through a hidden layer of 256 against the control, twelve seeds & 12 & 0.2781 (0.0250) & 0.0759 (0.0547) & $+0.2021$ (0.0470) & 12/12 & 4.61 / 4.06 \\
+    measured amino-acid pool through a hidden layer of 256 with a budget of 400 epochs against the budget of 200 & 6 & 0.2788 (0.0234) & 0.2788 (0.0234) & $+0.0000$ (0.0000) & 0/6 & 4.69 / 4.69 \\
     two-slot head, GO linear beside the pool through 64, against the same columns through one shared layer of 64 & 6 & 0.2241 (0.0028) & 0.2059 (0.0063) & $+0.0182$ (0.0069) & 6/6 & 5.66 / 4.59 \\
     two-slot head, GO linear beside the pool through 64, against the pool alone through 64 & 6 & 0.2241 (0.0028) & 0.2399 (0.0479) & $-0.0157$ (0.0488) & 2/6 & 5.66 / 4.03 \\
-    two-slot head, GO linear beside the pool through 64, against the same columns in the linear affine & 6 & 0.2241 (0.0028) & 0.2082 (0.0024) & $+0.0159$ (0.0029) & 6/6 & 5.66 / 4.89 \\
     \hline
   \end{tabular}
 \end{table}
@@ -203,6 +203,7 @@
     \hline
     arm against control & seeds & arm (sd) & control (sd) & difference (sd) & higher & top-50 \\
     \hline
+    two-slot head, GO linear beside the pool through 64, against the same columns in the linear affine & 6 & 0.2241 (0.0028) & 0.2082 (0.0024) & $+0.0159$ (0.0029) & 6/6 & 5.66 / 4.89 \\
     two-slot head, GO linear beside the pool through 64, against GO alone & 6 & 0.2241 (0.0028) & 0.2023 (0.0014) & $+0.0219$ (0.0027) & 6/6 & 5.66 / 5.03 \\
     two-slot head, GO linear beside the pool through 256, against the pool alone through 256 & 6 & 0.2248 (0.0046) & 0.2788 (0.0234) & $-0.0540$ (0.0204) & 0/6 & 4.99 / 4.69 \\
     two-slot head, GO linear beside the pool through 256, against the two slots at 64 & 6 & 0.2248 (0.0046) & 0.2241 (0.0028) & $+0.0006$ (0.0039) & 4/6 & 4.99 / 5.66 \\
@@ -211,6 +212,11 @@
     three families with two slots against the same columns through one shared layer of 64 & 6 & 0.2392 (0.0033) & 0.2165 (0.0089) & $+0.0227$ (0.0104) & 6/6 & 5.32 / 4.53 \\
     three families with two slots against GO linear beside the pool through 256 & 6 & 0.2392 (0.0033) & 0.2248 (0.0046) & $+0.0144$ (0.0043) & 6/6 & 5.32 / 4.99 \\
     three families with two slots against the pool alone through 256 & 6 & 0.2392 (0.0033) & 0.2788 (0.0234) & $-0.0396$ (0.0217) & 0/6 & 5.32 / 4.69 \\
+    measured amino-acid pool through a hidden layer of 256 with transformer dropout 0.3 against without & 6 & 0.2787 (0.0183) & 0.2788 (0.0234) & $-0.0001$ (0.0279) & 3/6 & 4.56 / 4.69 \\
+    measured amino-acid pool through a hidden layer of 256 read standardized against log1p & 6 & 0.1820 (0.0170) & 0.2788 (0.0234) & $-0.0968$ (0.0226) & 0/6 & 3.99 / 4.69 \\
+    three families with two slots against the pool alone through 256, twelve seeds & 6 & 0.2392 (0.0033) & 0.2781 (0.0250) & $-0.0396$ (0.0217) & 0/6 & 5.32 / 4.61 \\
+    three families with two slots against GO alone, twelve seeds & 6 & 0.2392 (0.0033) & 0.2029 (0.0019) & $+0.0369$ (0.0043) & 6/6 & 5.32 / 4.99 \\
+    three families with two slots against the HiGHS store with GO, twelve seeds & 6 & 0.2392 (0.0033) & 0.2144 (0.0080) & $+0.0277$ (0.0082) & 6/6 & 5.32 / 4.98 \\
     \hline
   \end{tabular}
 \end{table}

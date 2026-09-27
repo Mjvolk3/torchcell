@@ -614,6 +614,169 @@ def pool_mlp_sweep() -> str | None:
     )
 
 
+#: The Cooper perceptron runs (2026-09-27): Cooper's seventeen peaks alone, and on
+#: betaxanthin the pool with Cooper's peaks appended (store YPD_bx_aapoolcooper), through
+#: the same perceptron arms as the pool sweep, one file per (store, width).
+COOPER_MLP_FILES = {
+    "betaxanthin": (
+        ("go_models_betaxanthin_pool_h256.json", "pool"),
+        ("go_models_betaxanthin_pool_twoslot_h256.json", "pool"),
+        ("go_models_betaxanthin_cooper_h256.json", "Cooper"),
+        ("go_models_betaxanthin_poolcooper_h256.json", "pool + Cooper"),
+    ),
+    "amino_acids": (
+        ("go_models_amino_acids_cooper_h256.json", "Cooper"),
+        ("go_models_amino_acids_cooper_h1024.json", "Cooper"),
+    ),
+}
+COOPER_MLP_LABELS = {
+    "store_mlp": "perceptron over the store",
+    "go_store_mlp": "perceptron over GO with the store",
+    "go_linear_store_mlp": "GO linear beside the store's perceptron (two slots)",
+}
+
+
+def cooper_mlp(target: str) -> str | None:
+    """Cooper's peaks through a perceptron, alone and (on betaxanthin) beside the pool."""
+    rows = []
+    calls = target == "betaxanthin"
+    for name, store_label in COOPER_MLP_FILES[target]:
+        src = results(target, name)
+        if not osp.isfile(src):
+            return None
+        with open(src) as fh:
+            d = json.load(fh)
+        h = d["mlp_hidden"]
+        for a in d["arms"]:
+            single = f"{a['single_mean_spearman']:+.3f} ({a['single_sd_spearman']:.3f})"
+            ens = f"{a['ensemble_spearman']:+.3f}"
+            if calls:
+                single += f" / {a['single_mean_top50']:.2f}"
+                ens += f" / {a['ensemble_top50']:.2f}"
+            epochs = f"{min(r['select_epoch'] for r in a['seeds'])} to {max(r['select_epoch'] for r in a['seeds'])}"
+            rows.append(
+                f"    {store_label} & {COOPER_MLP_LABELS[a['arm']]} & {h} & "
+                f"{a['seeds'][0]['n_parameters']:,} & {single} & {ens} & {epochs} \\\\"
+            )
+    endpoint = (
+        "the betaxanthin score" if calls else "M\\\"ulleder's nineteen amino acids"
+    )
+    stores = (
+        "the measured pool (nineteen columns), Cooper's seventeen relative peaks, and the "
+        "pool with Cooper's peaks appended (36 columns, store YPD\\_bx\\_aapoolcooper from "
+        "\\texttt{target\\_store\\_concat.py})"
+        if calls
+        else "Cooper's seventeen relative peaks (store YPD\\_bx\\_cooperpool)"
+    )
+    single_col = (
+        "the single-seed pinned-test Spearman with the standard deviation over six seeds "
+        "and, after the slash, the top-50 enrichment; the six-seed ensemble scored the "
+        "same way"
+        if calls
+        else "the single-seed mean pinned-test Spearman over the amino acids with the "
+        "standard deviation over six seeds; the six-seed ensemble"
+    )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        f"  \\caption[Cooper's peaks through a perceptron]{{Measured stores through a "
+        f"perceptron predicting {endpoint}, on CPU: {stores}, each log1p then standardized "
+        "on the training rows, alone, with the propagated GO multi-hot through the same "
+        "hidden layer, and with GO through a linear map beside the store's hidden layer "
+        "(two slots), one ReLU hidden layer of the stated width and a linear head, on the "
+        "ladder's split, full batch, Adam at $10^{-3}$, 200 epochs, the epoch selected by a "
+        "five-epoch moving average of the validation per-feature Pearson. Columns: the "
+        f"store, the arm, hidden width, parameters, {single_col}, the range of selected "
+        "epochs. Written by \\texttt{target\\_notes\\_tex\\_tables.py} from "
+        f"\\texttt{{results/go\\_models\\_{target.replace('_', '\\_')}\\_*.json}} "
+        "(\\texttt{target\\_go\\_models.py --store <store> --mlp-hidden H}).}\n"
+        f"  \\label{{tab:cooper-mlp-{target.replace('_', '-')}}}\n"
+        "  \\begin{tabular}{@{}p{20mm}p{40mm}rrrrp{16mm}@{}}\n    \\hline\n"
+        "    store & model & width & parameters & single seed (sd) & ensemble & epochs \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        target,
+        "cooper_mlp",
+        body,
+        f"results/go_models_{target}_cooper_h<H>.json"
+        + (" (and the pool files)" if calls else ""),
+    )
+
+
+#: The decomposition runs (2026-09-27, target_head_decomposition.py): the result-file
+#: stem's name and the arm's label, in the order the table shows them.
+HEAD_DECOMPOSITION = (
+    ("w167_go", "GO affine (round 150)"),
+    ("w156_pfba", "HiGHS flux affine (round 139)"),
+    ("w198_aapool_linear", "pool, linear slot (round 181)"),
+    ("w199_aapoolmlp64", "pool through 64 (round 182)"),
+    ("w206_aapoolmlp256", "pool through 256 (round 187)"),
+    ("w217_twoslot256", "GO linear beside the pool through 256 (round 198)"),
+    (
+        "w218_threefam_twoslot",
+        "three families linear beside the pool through 256 (round 199)",
+    ),
+)
+CONSTANT_SD_RATIO = 1e-2
+
+
+def head_decomposition() -> str | None:
+    """Each store arm's prediction split into the backbone's head and the slot."""
+    rows = []
+    for name, label in HEAD_DECOMPOSITION:
+        src = results("betaxanthin", f"target_head_decomposition_{name}.json")
+        if not osp.isfile(src):
+            return None
+        with open(src) as fh:
+            d = json.load(fh)
+        cells = d["cells"]
+        alive = [c for c in cells if c["sd_ratio_head_over_slot"] >= CONSTANT_SD_RATIO]
+        n_const = len(cells) - len(alive)
+        full = sum(c["full"]["spearman_vs_target"] for c in cells) / len(cells)
+        slot = sum(c["slot"]["spearman_vs_target"] for c in cells) / len(cells)
+        adds = sum(c["backbone_adds"] for c in cells) / len(cells)
+        if alive:
+            head = sum(c["backbone_head"]["spearman_vs_target"] for c in alive) / len(
+                alive
+            )
+            ratio = sum(c["sd_ratio_head_over_slot"] for c in alive) / len(alive)
+            agree = sum(c["spearman_head_vs_slot"] for c in alive) / len(alive)
+            head_s, ratio_s, agree_s = f"{head:+.3f}", f"{ratio:.2f}", f"{agree:+.2f}"
+        else:
+            head_s = ratio_s = agree_s = "--"
+        rows.append(
+            f"    {label} & {n_const} of {len(cells)} & {full:+.3f} & {slot:+.3f} & "
+            f"{head_s} & {ratio_s} & {agree_s} & {adds:+.3f} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The backbone's head and the slot, separated]{Each store arm's "
+        "pinned-test prediction rebuilt from its checkpoint at the selected epoch and split "
+        "into the backbone's context head $h(z)$ (the affine replaced by zero) and the slot "
+        "$a(s)$ (the difference), six seeds an arm. Columns: the seeds on which the head is "
+        "a constant on the pinned genes (its spread under a hundredth of the slot's); the "
+        "Spearman of the full prediction and of the slot alone against the target, over all "
+        "six seeds; over the seeds with a live head, the head's own Spearman, the ratio of "
+        "the head's spread to the slot's, and the Spearman between the two parts; and what "
+        "the backbone adds, the full read minus the slot's, over all six seeds. Written by "
+        "\\texttt{target\\_notes\\_tex\\_tables.py} from "
+        "\\texttt{results/target\\_head\\_decomposition\\_*.json} "
+        "(\\texttt{target\\_head\\_decomposition.py}).}\n"
+        "  \\label{tab:head-decomposition}\n"
+        "  \\begin{tabular}{@{}p{52mm}rrrrrrr@{}}\n    \\hline\n"
+        "    arm & constant head & full & slot & head & sd head/slot & head vs slot & backbone adds \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "betaxanthin",
+        "head_decomposition",
+        body,
+        "results/target_head_decomposition_<arm>.json",
+    )
+
+
 SCORE_MLP_WIDTHS = (16, 256, 1024)
 SCORE_MLP_LABELS = {
     "store_mlp": "perceptron over the measured betaxanthin score",
@@ -735,6 +898,9 @@ def endpoint_matrix() -> str | None:
 def main() -> None:
     paths = [
         pool_mlp_sweep(),
+        cooper_mlp("betaxanthin"),
+        cooper_mlp("amino_acids"),
+        head_decomposition(),
         endpoint_matrix(),
         score_mlp_sweep(),
         target_transfer("betaxanthin"),

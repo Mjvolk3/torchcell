@@ -113,11 +113,22 @@ forest over GO alone, 0.078 for GO with the betaxanthin score and 0.071 for that
 alone. So the ordering of inputs on this target is measured-to-measured first, then a
 measured endpoint from another pathway, then the annotation, and the two amino-acid
 screens read each other better than either reads its own gene's annotation, on 842 test
-genotypes of which 102 carry the reference row because Cooper did not measure them. The
+genotypes of which 102 carry the reference row because Cooper did not measure them.
+Through the perceptron (Table~\ref{tab:cooper-mlp-amino-acids}) the peaks alone read
+0.049 at width 256 and 0.052 at 1,024, half the forest's 0.093 over the same columns
+and under the GO perceptron (0.054): the forest reads Cooper's columns as it reads
+the betaxanthin score, better than any trained head does. Beside GO the peaks add: in
+one hidden layer 0.064 and 0.065, and GO linear beside the peaks' hidden layer of
+1,024 reads 0.068 (sd 0.003, ensemble 0.070), above GO with ProtT5 (0.065) and GO with
+the betaxanthin score (0.066), the highest single-seed read of any perceptron on this
+target. So the ordering the forest gives is the perceptron's too: the peaks alone
+under the annotation, and the peaks beside it above every other pair. The
 transformer's read of the same columns, through the linear affine and through a hidden
 layer of 256, is queued (rounds 206, 207).
 
 \input{tables/score_mlp_sweep}
+
+\input{tables/cooper_mlp}
 
 \input{tables/store_degeneracy}
 

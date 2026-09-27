@@ -1039,6 +1039,27 @@ PAIRS = [
         "w206_bxdelaapoolmlp256_h12l1p1_e200",
     ),
     (
+        "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+        "betaxanthin",
+        "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200",
+        "w206_bxdelaapoolmlp256_h12l1p1_e200",
+        tuple(range(2700, 2712)),
+    ),
+    (
+        "betaxanthin: three families with two slots against GO alone, twelve seeds",
+        "betaxanthin",
+        "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+        tuple(range(2700, 2712)),
+    ),
+    (
+        "betaxanthin: three families with two slots against the HiGHS store with GO, twelve seeds",
+        "betaxanthin",
+        "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200",
+        "w168_bxdelgopfba_h12l1p1_e200",
+        tuple(range(2700, 2712)),
+    ),
+    (
         "amino acids: measured betaxanthin score alone in the affine against GO alone, twelve seeds",
         "mulleder19",
         "w203_aadelbxscore_h12l1p1_e200",

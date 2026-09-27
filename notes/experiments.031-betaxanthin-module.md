@@ -582,3 +582,5 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B65 | 204 | w221 | del + the pool through 256, standardized | job 2886, running |
 | B66 | 201 | w222 | del + two slots at 256, linear slot at lr x0.1 | job 2887, pending |
 | B67 | 202 | w223 | del + two slots at 256, linear slot at lr x0.01 | job 2888, pending |
+
+- Queued B68 = w224 = w218 seeds 2706 to 2711 (job 2890; twelve-seed pairs vs w206, w167, w168), round 205.

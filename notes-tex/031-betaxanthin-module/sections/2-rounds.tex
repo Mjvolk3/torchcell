@@ -1027,4 +1027,16 @@ loss is 0.0 at every epoch here too, since one block carries no regularized head
 cell is graph-free by construction and is the control the three graph patterns are read
 against (213 to 216).
 
+Round 213 is read (job 2899, 3 h 48 min): the pool through 256 on two unmasked blocks
+of width 36 (the $[S, S]$ pattern, 100,927 parameters), the depth control for the
+masked patterns. It reads 0.270 (sd 0.023) against the one-block width-36 cell's 0.291
+($-0.021$ paired, sd 0.036, three of six), top-50 4.13 against 5.26, ensembled 0.282
+with a top-50 of 4.19; the seeds read 0.235 to 0.306 and select at epochs 34 to 194.
+On the covered genes it reads 0.207 against 0.214, and on the 73 uncovered strains
+$-0.015$ against 0.142: the second unmasked block gives back the whole of what the
+wider one-block backbone gained on the unmeasured strains and nothing on the measured
+ones, so the three graph patterns (214 to 216) are read against a depth control that
+sits under its own width control and under the width-12 incumbent (0.279). The
+regularizer's loss is 0.0 here too.
+
 \input{tables/target_transfer}

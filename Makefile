@@ -75,9 +75,11 @@ diff-cov: cov
 # (version, release id, commit index, datasets, nodes, aliases, faults), whether the
 # hosts are in sync and how far behind main they are, then health probes (Browser
 # seed, tc-lit, merge-queue loop, slurm, disks, Radiant). Read-only. See scripts/ops.sh.
-.PHONY: ops ops-health ops-releases
+.PHONY: ops ops-fast ops-health ops-releases
 ops:
 	@bash scripts/ops.sh status
+ops-fast:
+	@OPS_HOSTS=gilahyper OPS_TIMEOUT_SECONDS=2 bash scripts/ops.sh status
 ops-health:
 	@bash scripts/ops.sh health
 ops-releases:
@@ -126,6 +128,7 @@ help:
 	@echo "  make tc-onto-mermaid - Generate Mermaid diagrams from schema"
 	@echo "  make ops             - Served KG releases on every host + service health"
 	@echo "  make ops-health      - Health probes only; make ops-releases - the table only"
+	@echo "  make ops-fast        - GilaHyper only, 2 s probes: the panel in a few seconds, no radiant rows"
 	@echo "  make paper           - Build submission + editing + twocolumn PDFs"
 	@echo "  make paper-submission/-editing/-twocolumn/-figproto - one PDF"
 	@echo "  make paper-fig       - Force re-render all figures from draw.io + size/scale check"

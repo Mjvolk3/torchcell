@@ -31,6 +31,13 @@
 #   OPS_TC_LIT_URL                             default http://localhost:8723
 #   OPS_BROWSER_URL                            default http://localhost:7474
 #   OPS_TIMEOUT_SECONDS                        default 5 (curl); the bolt probes get 4x
+#   OPS_HOSTS                                  default "gilahyper,radiant"; a host that is
+#                                              not listed is neither queried nor probed
+#
+# Speed: the radiant bolt probe (about 13 s when the store faults) and its https probe
+# (the full curl timeout when the host is down) are most of a slow run, so
+#   make ops-fast       = OPS_HOSTS=gilahyper OPS_TIMEOUT_SECONDS=2 bash scripts/ops.sh status
+# gives the local panel in a few seconds and prints no radiant rows or sync verdict.
 #
 # Exit 0 always: a read-only reporter.
 
@@ -64,6 +71,11 @@ TC_LIT_URL="${OPS_TC_LIT_URL:-http://localhost:8723}"
 BROWSER_URL="${OPS_BROWSER_URL:-http://localhost:7474}"
 TIMEOUT="${OPS_TIMEOUT_SECONDS:-5}"
 BOLT_TIMEOUT=$((TIMEOUT * 4))
+HOSTS=",${OPS_HOSTS:-gilahyper,radiant},"
+
+wants_host() {  # name -> 0 when the host is in OPS_HOSTS
+    [[ "$HOSTS" == *",$1,"* ]]
+}
 
 line() {  # icon color name code detail
     printf "  %s%s%s  %-22s %-6s %s\n" "$2" "$1" "$RESET" "$3" "$4" "$5"
@@ -143,10 +155,11 @@ probe_disk() {  # name path
 # warning or two on import; those lines are dropped so the table stays a table. A host
 # that hangs or refuses gets one "(dbms) ... faulting" row from the module itself.
 release_table() {
-    PYTHONWARNINGS=ignore timeout $((BOLT_TIMEOUT * 2 + 10)) "$PY" -m torchcell.knowledge_graphs.releases \
-        --repo "$REPO_ROOT" status --host-timeout "$BOLT_TIMEOUT" \
-        --host "gilahyper=$GH_URI|$GH_USER|$GH_PASSWORD" \
-        --host "radiant=$RADIANT_URI|$RADIANT_USER|$RADIANT_PASSWORD" 2>&1 \
+    local hosts=()
+    wants_host gilahyper && hosts+=(--host "gilahyper=$GH_URI|$GH_USER|$GH_PASSWORD")
+    wants_host radiant && hosts+=(--host "radiant=$RADIANT_URI|$RADIANT_USER|$RADIANT_PASSWORD")
+    PYTHONWARNINGS=ignore timeout $((BOLT_TIMEOUT * ${#hosts[@]} + 10)) "$PY" -m torchcell.knowledge_graphs.releases \
+        --repo "$REPO_ROOT" status --host-timeout "$BOLT_TIMEOUT" "${hosts[@]}" 2>&1 \
         | grep -vE '^INFO --|DeprecationWarning|^<frozen|^$'
 }
 
@@ -165,10 +178,12 @@ print_releases() {
     local gh_rel radiant_rel
     gh_rel=$(default_release gilahyper "$table")
     radiant_rel=$(default_release radiant "$table")
-    if [[ -n "$gh_rel" && "$gh_rel" != "-" && "$gh_rel" == "$radiant_rel" ]]; then
-        echo "sync: in sync ($gh_rel)"
-    else
-        echo "sync: DIVERGED -- gilahyper=${gh_rel:-?} radiant=${radiant_rel:-?}"
+    if wants_host gilahyper && wants_host radiant; then
+        if [[ -n "$gh_rel" && "$gh_rel" != "-" && "$gh_rel" == "$radiant_rel" ]]; then
+            echo "sync: in sync ($gh_rel)"
+        else
+            echo "sync: DIVERGED -- gilahyper=${gh_rel:-?} radiant=${radiant_rel:-?}"
+        fi
     fi
     local main_sha main_date main_subject
     main_sha=$(git -C "$REPO_ROOT" rev-parse --short=8 main 2>/dev/null || echo "(no main)")
@@ -177,6 +192,7 @@ print_releases() {
     echo "main: ${main_date}-${main_sha}${main_subject:+  (${main_subject})}"
     for pair in "gilahyper=$gh_rel" "radiant=$radiant_rel"; do
         local host="${pair%%=*}" rel="${pair#*=}" sha behind
+        wants_host "$host" || continue
         if [[ -z "$rel" || "$rel" == "-" ]]; then
             printf '      %s: no release node\n' "$host"; continue
         fi
@@ -194,16 +210,20 @@ print_releases() {
 }
 
 print_health() {
-    echo "== health (gilahyper) =="
-    probe_browser
-    probe_http "tc-lit" "$TC_LIT_URL/health"
-    probe_merge_queue_loop
-    probe_slurm
-    probe_disk "disk /scratch" "/scratch"
-    probe_disk "disk /db" "/db"
-    probe_disk "disk /bulk" "/bulk"
-    echo "== health (radiant) =="
-    probe_http "radiant https" "$RADIANT_HTTPS/" -k
+    if wants_host gilahyper; then
+        echo "== health (gilahyper) =="
+        probe_browser
+        probe_http "tc-lit" "$TC_LIT_URL/health"
+        probe_merge_queue_loop
+        probe_slurm
+        probe_disk "disk /scratch" "/scratch"
+        probe_disk "disk /db" "/db"
+        probe_disk "disk /bulk" "/bulk"
+    fi
+    if wants_host radiant; then
+        echo "== health (radiant) =="
+        probe_http "radiant https" "$RADIANT_HTTPS/" -k
+    fi
 }
 
 ACTION="${1:-status}"

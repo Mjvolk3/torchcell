@@ -3133,6 +3133,75 @@ def solve_tolerance_transfer() -> str | None:
     )
 
 
+LABEL_PROPAGATION_GRAPHS = [
+    ("physical", "physical"),
+    ("regulatory", "regulatory"),
+    ("tflink", "TFLink"),
+    ("string12_0_neighborhood", "STRING neighborhood"),
+    ("string12_0_fusion", "STRING fusion"),
+    ("string12_0_cooccurence", "STRING co-occurrence"),
+    ("string12_0_coexpression", "STRING coexpression"),
+    ("string12_0_experimental", "STRING experimental"),
+    ("string12_0_database", "STRING database"),
+    ("union_of_9", "union of nine"),
+]
+
+
+def graph_label_propagation() -> str | None:
+    """The labeled-neighbor essential fraction on the held-out genes, per graph and reach."""
+    src = osp.join(RESULTS, "graph_label_propagation.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    by = {(r["graph"], r["hops"]): r for r in d["reads"]}
+    rows = []
+    for graph, label in LABEL_PROPAGATION_GRAPHS:
+        for hops in (1, 2):
+            r = by[(graph, hops)]
+
+            def f(key: str, fmt: str) -> str:
+                v = r[key]
+                return "--" if v != v else format(v, fmt)
+
+            rows.append(
+                f"    {label} & {hops} & {r['n_test_covered']} & "
+                f"{r['mean_labeled_neighbors']:.0f} & {f('auroc_covered', '.3f')} & "
+                f"{r['auroc_filled']:.3f} & {f('null_mean', '.3f')} $\\pm$ {f('null_sd', '.3f')} & "
+                f"{f('z', '+.1f')} & {r['labeled_loo_auroc']:.3f} & {r['n_labeled_covered']} \\\\"
+            )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Label propagation of essentiality on the graphs]{Essentiality read on "
+        "the held-out genes by the essential fraction among a gene's labeled neighbors, per "
+        f"graph and reach, with nothing fitted. Labeled genes are the {d['n_labeled']} "
+        "training and validation genes of the released split (base rate "
+        f"{d['labeled_base_rate']:.3f}); ``covered'' is how many of the {d['n_test']} held-out "
+        "genes have at least one labeled gene within the reach and ``neighbors'' their mean "
+        "number; ``AUROC'' is read on the covered genes and ``filled'' on all held-out genes "
+        "with the base rate where no labeled gene is reached; ``null'' is the mean and "
+        f"standard deviation of the covered read over {d['permutations']} draws in which each "
+        "gene's labeled neighbors are replaced by as many labeled genes drawn at random, "
+        "and $z$ the read's distance from it; ``LOO'' the predictor scored leave-one-out on "
+        "the $n$ labeled genes with a labeled neighbor (within two hops nearly every labeled "
+        "gene reaches nearly every other and the leave-one-out mean is then anti-correlated "
+        "with the gene's own label, so the two-hop LOO column is not a read). The regulatory "
+        "and TFLink graphs are made undirected. Written by \\texttt{notes\\_tex\\_tables.py} "
+        "from \\texttt{results/graph\\_label\\_propagation.json} "
+        "(\\texttt{graph\\_label\\_propagation.py}).}\n"
+        "  \\label{tab:graph-label-propagation}\n"
+        "  \\begin{tabular}{@{}lrrrrrrrrr@{}}\n    \\hline\n"
+        "    graph & hops & covered & neighbors & AUROC & filled & null & $z$ & LOO & $n$ \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "graph_label_propagation", body, "results/graph_label_propagation.json"
+    )
+
+
+
 def main() -> None:
     paths = [
         wl_test(),
@@ -3155,6 +3224,7 @@ def main() -> None:
         go006_comparison(),
         store_ladder(),
         graph_baselines(),
+        graph_label_propagation(),
         graph_baselines_relational(),
         graph_baselines_split(),
         graph_baselines_go(),

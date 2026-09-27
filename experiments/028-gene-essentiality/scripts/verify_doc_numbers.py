@@ -493,6 +493,21 @@ def cls_arm(index: int, key: str) -> Callable[[], float]:
     return field("cls_readout.json", "arms", index, key)
 
 
+
+def label_propagation(graph: str, hops: int, key: str) -> Callable[[], float]:
+    """A value of one graph at one reach from graph_label_propagation.py, or a run-level
+    count (``n_labeled``, ``n_test``)."""
+
+    def run() -> float:
+        d = json.load(open(osp.join(RESULTS, "graph_label_propagation.json")))
+        if key in ("n_labeled", "n_test"):
+            return float(d[key])
+        r = next(x for x in d["reads"] if x["graph"] == graph and x["hops"] == hops)
+        return float(r[key])
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:store-discriminability -- the stores and the two cuts.
     Check(
@@ -3232,6 +3247,126 @@ CHECKS: list[Check] = [
         claim="round108: ... splits the hierarchy wins",
         stated=0,
         recompute=dcell("resplits", "dcell_style_shared", "n_arm_above"),
+    ),
+    Check(
+        claim="label propagation: labeled genes",
+        stated=787,
+        recompute=label_propagation("physical", 1, "n_labeled"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="label propagation: held-out genes",
+        stated=195,
+        recompute=label_propagation("physical", 1, "n_test"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="label propagation: coexpression AUROC",
+        stated=0.902,
+        recompute=label_propagation("string12_0_coexpression", 1, "auroc_covered"),
+    ),
+    Check(
+        claim="label propagation: coexpression covered",
+        stated=195,
+        recompute=label_propagation("string12_0_coexpression", 1, "n_test_covered"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="label propagation: coexpression neighbors",
+        stated=118,
+        recompute=label_propagation("string12_0_coexpression", 1, "mean_labeled_neighbors"),
+        tolerance=0.6,
+    ),
+    Check(
+        claim="label propagation: coexpression null mean",
+        stated=0.509,
+        recompute=label_propagation("string12_0_coexpression", 1, "null_mean"),
+    ),
+    Check(
+        claim="label propagation: coexpression null sd",
+        stated=0.062,
+        recompute=label_propagation("string12_0_coexpression", 1, "null_sd"),
+    ),
+    Check(
+        claim="label propagation: coexpression z",
+        stated=6.3,
+        recompute=label_propagation("string12_0_coexpression", 1, "z"),
+        tolerance=0.06,
+    ),
+    Check(
+        claim="label propagation: coexpression LOO",
+        stated=0.857,
+        recompute=label_propagation("string12_0_coexpression", 1, "labeled_loo_auroc"),
+    ),
+    Check(
+        claim="label propagation: coexpression LOO n",
+        stated=787,
+        recompute=label_propagation("string12_0_coexpression", 1, "n_labeled_covered"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="label propagation: coexpression two hops",
+        stated=0.622,
+        recompute=label_propagation("string12_0_coexpression", 2, "auroc_covered"),
+    ),
+    Check(
+        claim="label propagation: union AUROC",
+        stated=0.897,
+        recompute=label_propagation("union_of_9", 1, "auroc_covered"),
+    ),
+    Check(
+        claim="label propagation: union two hops",
+        stated=0.5,
+        recompute=label_propagation("union_of_9", 2, "auroc_covered"),
+    ),
+    Check(
+        claim="label propagation: experimental AUROC",
+        stated=0.782,
+        recompute=label_propagation("string12_0_experimental", 1, "auroc_covered"),
+    ),
+    Check(
+        claim="label propagation: neighborhood AUROC",
+        stated=0.802,
+        recompute=label_propagation("string12_0_neighborhood", 1, "auroc_covered"),
+    ),
+    Check(
+        claim="label propagation: neighborhood covered",
+        stated=141,
+        recompute=label_propagation("string12_0_neighborhood", 1, "n_test_covered"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="label propagation: database AUROC",
+        stated=0.72,
+        recompute=label_propagation("string12_0_database", 1, "auroc_covered"),
+    ),
+    Check(
+        claim="label propagation: database covered",
+        stated=176,
+        recompute=label_propagation("string12_0_database", 1, "n_test_covered"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="label propagation: physical AUROC",
+        stated=0.657,
+        recompute=label_propagation("physical", 1, "auroc_covered"),
+    ),
+    Check(
+        claim="label propagation: physical covered",
+        stated=125,
+        recompute=label_propagation("physical", 1, "n_test_covered"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="label propagation: tflink AUROC",
+        stated=0.495,
+        recompute=label_propagation("tflink", 1, "auroc_covered"),
+    ),
+    Check(
+        claim="label propagation: regulatory covered at one hop",
+        stated=1,
+        recompute=label_propagation("regulatory", 1, "n_test_covered"),
+        tolerance=0.5,
     ),
 ]
 

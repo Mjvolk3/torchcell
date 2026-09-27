@@ -173,6 +173,29 @@ the pooled transformer (0.774) and level with the transformer with FBA's four ra
 the validation curve still rising; at 400 epochs the same cell reads 0.857 and selects
 epochs 392 to 397, so the budget is what bounds it.
 
+The labels alone carry more than any of these models read from the edges
+(Table~\ref{tab:graph-label-propagation}, \texttt{graph\_label\_propagation.py}). Scoring
+every held-out gene by the essential fraction among its labeled neighbors, the 787
+training and validation genes with a call, the STRING coexpression graph reads 0.902 on
+all 195 held-out genes with nothing fitted, over 118 labeled neighbors a gene, against a
+null of $0.509 \pm 0.062$ when each gene's labeled neighbors are replaced by as many
+labeled genes drawn at random ($z = 6.3$). The union of the nine reads 0.897, STRING
+experimental 0.782, STRING neighborhood 0.802 on the 141 genes it covers, STRING
+database 0.720 on 176, the physical graph 0.657 on 125 (within two null deviations) and
+TFLink 0.495; the regulatory graph reaches one held-out gene at one hop. Scored
+leave-one-out on the labeled genes the coexpression fraction reads 0.857 on 787. Two
+hops reach nearly every labeled gene and the read falls (coexpression 0.622; the union
+0.500, every gene reaching all 787). So one round of label propagation over coexpression
+is 0.07 above graph convolution with ProtT5 over the same union (0.834), 0.03 above the
+MLP with the transformer's three inputs (0.870), and 0.01 to 0.02 under the transformer
+on this split (0.912 to 0.920, Section~\ref{sec:round84-98}): what the convolution reads
+from the edges is a part of what the neighbors' labels say outright, and the transformer
+reaches its number without either, since its regularizer and its hard mask index a
+second block that no one-block cell has (the layer-pattern ladder now queued, w134 to
+w138, is the first read of them).
+
+\input{tables/graph_label_propagation}
+
 The transformer's inputs move these cells the way they move the transformer, and the
 comparison says where the transformer's number comes from. Given the chromosome-pathway
 indicator and the four FBA ratios as node features beside ProtT5, the MLP with no graph

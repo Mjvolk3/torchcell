@@ -62,10 +62,11 @@ retrobiosynthesis with predicted enzyme annotation places 55,734 reactions besid
 4,131 of Yeast9, with median predicted Michaelis constants about twofold higher in that
 underground network than in the known one~\citep{wuSystematicallyExploringYeast2026}. A
 campaign deletes or overexpresses a few genes and keeps the strain that makes more of one
-product; the coupling that made the cell robust is still there and is not measured.
-\textbf{b}, An interaction is the departure of a measured combination from an expectation,
-drawn for the multiplicative null with a negative departure, the common case on growth:
-genome-wide, about 550,000 negative and 350,000 positive digenic
+product; the coupling that made the cell robust to nature is still there and is not
+measured. \textbf{b}, An interaction is the departure of a measured combination from an
+expectation, drawn for the multiplicative null with a positive departure, the case a
+campaign is after. On growth the other sign is the common one: genome-wide, about 550,000
+negative and 350,000 positive digenic
 interactions~\citep{costanzoGlobalGeneticInteraction2016}, and an estimated hundred times
 as many negative trigenic ones, about 25\%
 weaker~\citep{kuzminSystematicAnalysisComplex2018}.
@@ -226,14 +227,16 @@ from $0.1$ to $1.6$ for the two log-scale ones, which is why those crowd near $1
 out at low titer. Three of the four expect the same surface, and the additive null is the
 one that does not: its level sets are straight where the others are hyperbolas. The two
 surfaces differ by $(1 - f_i)(1 - f_j)$, which is $0.25$ where both singles halve the
-titer; that point is marked in every panel with what the model expects there. \textbf{e}, The two families of
-null as statements about the system. A multiplicative null says each deletion keeps a
-fraction of what reaches it, which is how independent steps of one flux compose and is the
-convention the growth interaction screens use. An additive null says each deletion removes
-an amount from a shared pool, and so counts the part of the first deletion's loss that the
-second would have taken again. \textbf{f}, The four models fit here: what each expects, the
-scale its residual is measured on, what it is fit to, and the reading of the system under
-which it is the natural null. Equations in the Methods.}{fig:model-intuition}
+titer; that point is marked in every panel with what the model expects there. \textbf{e},
+The two families of null as hypotheses about the system. A multiplicative null takes the
+deletions as independent factors on one flux, the convention of the growth interaction
+screens; the second deletion acts on what the first left. An additive null takes each
+deletion as a fixed amount off a shared pool, and so removes the part the two losses share
+a second time: the pool drawn is the multiplicative expectation $f_i f_j$, and the additive
+null keeps $f_i + f_j - 1$ of it. \textbf{f}, The four models fit here: the digenic
+interaction each scores, the scale its residual is measured on, what it is fit to, and the
+hypothesis under which it is the natural null. Equations in the
+Methods.}{fig:model-intuition}
 \end{figure*}
 
 \begin{figure*}[t]
@@ -272,10 +275,10 @@ generalized linear model with a log link and a Gamma family; and ordinary least 
 log titer differenced against the base strain. The four are not four estimates of one
 quantity. They encode different statements about how two deletions are expected to combine,
 and they measure their residuals on different scales
-(Fig.~\ref{fig:model-intuition}). A multiplicative null says a deletion keeps a fraction of
-what reaches it, which is how independent steps of a single flux compose and is why the
-growth interaction screens use it; an additive null says a deletion removes an amount from a
-shared pool, which is the reading a titer in milligrams per liter invites. The two differ by
+(Fig.~\ref{fig:model-intuition}). A multiplicative null takes the deletions as independent
+factors on a single flux, which is why the growth interaction screens use it; an additive
+null takes each deletion as a fixed amount off a shared pool, which is the reading a titer
+in milligrams per liter invites. The two differ by
 exactly $(1 - f_i)(1 - f_j)$ at two deletions, so they separate most where both single
 deletions are severe (Fig.~\ref{fig:model-intuition}a,d).
 

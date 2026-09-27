@@ -25,13 +25,23 @@
 # WHY A SCHEMATIC OF THE NULLS AT ALL. The four models are four lines of algebra in the
 # Methods, and a reader who takes the algebra at face value will read "multiplicative" as
 # the default and the other three as robustness checks. The schematic says what each null
-# is a statement ABOUT: a multiplicative null says two deletions each keep a FRACTION of
-# what reaches them, which is how independent steps of one flux compose and is why the
-# growth screens use it; an additive null says each deletion removes an ABSOLUTE amount
-# from a shared pool, which is closer to how a titer is built. The two differ by exactly
-# (1 - f_i)(1 - f_j): the part of the first deletion's loss that the second deletion would
-# have taken again. That is the whole of the disagreement, and it is the reason the choice
-# of null is a modeling claim about the system rather than a taste.
+# is a HYPOTHESIS about: a multiplicative null says the deletions are independent factors
+# on one flux, which is why the growth screens use it; an additive null says each deletion
+# removes a fixed amount from a shared pool, which is closer to how a titer is built. The
+# two differ by exactly (1 - f_i)(1 - f_j): the part of the first deletion's loss that the
+# second deletion would have taken again. That is the whole of the disagreement, and it is
+# the reason the choice of null is a modeling claim about the system rather than a taste.
+#
+# AUTHOR REVIEW, 2026.09.27. The table's last column is written as the hypothesis under
+# which each model is the natural null, one line per row, and without "keeps a fraction of
+# what reaches it": the framing of the document is a campaign trying to RAISE a product,
+# and a loss-shaped phrase reads against it. The second column is each model's digenic
+# interaction in the Methods' symbols rather than the expectation alone. In the schematic
+# the one line of text for each null sits ABOVE its drawing, the identity sits directly
+# under the row, and the additive pool is drawn as the multiplicative expectation f_i f_j,
+# bracketed over its whole width, split into what the additive null keeps and the overlap
+# it removes a second time. Panel b of Fig. 1 draws a POSITIVE interaction, the case a
+# campaign is after, rather than the negative one that is the common case on growth.
 #
 # UNITS and TYPE come from drawio_doc: 3.9392 canvas units per mm, Arial, fontSize 8.3 for
 # figure text (5.98 pt) and 11.1 for panel letters (7.99 pt).
@@ -88,40 +98,37 @@ H_ROW0 = 31.0         # the height of the two schematic panels, wherever they ar
 Y_ROW1 = 5.0          # top of the three measured panels (52 mm tall)
 Y_ROW2 = 62.0         # top of the level-set row (40 mm tall)
 Y_ROW3 = 107.0        # top of the schematic of the nulls
-Y_ROW4 = 125.0        # top of the table
+Y_ROW4 = 131.0        # top of the table; the schematic grew by 6 mm for its bracket row
 LETTER_DY = 4.6       # a letter sits this far above its block
 
-# The "expects" column carries a short expression and the "residual" column a two-word
-# phrase that wrapped at 21 mm (author review, 2026.09.18): 27 and 21 became 18 and 30.
+# The interaction column holds an expression up to 16 mm wide and the residual column a
+# two-word phrase, so they take 24 and 22 mm; the hypothesis column takes the rest, 71 mm,
+# which holds one line of about 64 characters at 5.98 pt.
 TABLE_COLS = [
-    ("model", 20.0),
-    ("expects, for a double", 18.0),
-    ("residual measured on", 30.0),
+    ("model", 18.0),
+    ("digenic interaction", 24.0),
+    ("residual measured on", 22.0),
     ("fit to, and what that assumes", 42.0),
-    ("the reading that makes it the natural null", 65.0),
+    ("hypothesis under which it is the natural null", 71.0),
 ]
-# (color, name, equation key, residual scale, what it is fit to, the reading)
+# (color, name, equation key, residual scale, what it is fit to, the hypothesis)
 TABLE_ROWS = [
-    (C_MULT, "multiplicative", "mult",
+    (C_MULT, "multiplicative", "eps_mult",
      "linear titer",
      "strain means; one standard error per strain, propagated by the delta method",
-     "each deletion keeps a FRACTION of what reaches it, as independent steps of one flux "
-     "do; the null of the growth screens"),
-    (C_ADD, "additive", "add",
+     "independent factors on one flux; the common null on growth screens"),
+    (C_ADD, "additive", "eps_add",
      "linear titer",
      "strain means; one standard error per strain, propagated by the delta method",
-     "each deletion removes a fixed AMOUNT from a shared pool, closer to how a titer in "
-     "mg/L is built up"),
-    (C_GLM, "GLM log-link", "glm",
+     "fixed amounts from a shared pool, as a titer in mg/L is built up"),
+    (C_GLM, "GLM log-link", "beta_ij",
      "log titer",
      "replicate titers; Gamma family, spread proportional to the mean (panel c)",
-     "the readout is positive and noisier where it is larger, and every strain's replicates "
-     "are used rather than its mean"),
-    (C_OLS, "log-OLS", "glm",
+     "a positive readout whose spread grows with its level (panel c)"),
+    (C_OLS, "log-OLS", "eps_log",
      "log titer",
      "replicate log ratios to the base strain; constant spread on the log scale",
-     "the question is whether a deletion's FOLD effect carries into a new background, which "
-     "is a log-scale question"),
+     "a deletion's fold effect carries into a new background"),
 ]
 
 # The genome-wide counts on growth that panel b quotes. Each is a verbatim figure from the
@@ -245,7 +252,8 @@ def motivation(doc, x0, y0, w, h):
     doc.edge("a-arrow", line_style(C_RULE, 0.6, arrow=True),
              points=[(mm(mx + 3.0), mm(y0 + 15.5)), (mm(mx + third - 3.0), mm(y0 + 15.5))])
     text(doc, "a-mid-n2",
-         "the coupling that made the cell robust is still there, and is not measured",
+         "the coupling that made the cell robust to nature is still there, and is not "
+         "measured",
          mx, y0 + 17.5, third, 10, "center", top)
 
     # --- the factory: a vessel, an impeller, one arrow out
@@ -273,31 +281,36 @@ def classic(doc, x0, y0, w, h):
     expectation.
 
     Left, the bars: base strain, the two singles, the expected double as an outline and
-    the measured double filled, with the gap between them named above. A negative
-    interaction is drawn because it is the common case on growth. Right, what is known
-    about how common such departures are on yeast growth, and what predicting them would
-    buy.
+    the measured double filled, with the gap between them named above. A POSITIVE
+    interaction is drawn, two deletions that each raise titer and together raise it more
+    than their product, since that is the case a campaign is after (author review,
+    2026.09.27; the negative departure drawn before is the common case on growth, and the
+    text beside the bars says so). Right, what is known about how common such departures
+    are on yeast growth, and what predicting them would buy.
     """
-    # --- bars, in titer relative to the base strain, generic values
-    bars = [("base", 1.00, C_RULE, False), ("i", 0.70, C_MULT, False),
-            ("j", 0.60, C_MULT, False), ("expected", 0.42, C_MULT, True),
-            ("measured", 0.22, C_ADD, False)]
-    bar_w, gap, axis_h = 7.0, 2.4, 12.5
+    # --- bars, in titer relative to the base strain, generic values; the singles are gray
+    # like the base, and the interaction is the one blue bar, the sign positive tau takes
+    # in the panels under this row
+    bars = [("base", 1.00, C_RULE, False), ("i", 1.20, C_RULE, False),
+            ("j", 1.30, C_RULE, False), ("expected", 1.56, C_MULT, True),
+            ("measured", 1.95, C_MULT, False)]
+    bar_w, gap, unit_h = 7.0, 2.4, 7.2   # unit_h: millimetres per unit of titer
+    top_v = max(v for _, v, _, _ in bars)
     bx = x0 + 2.0
-    base_y = y0 + 6.0 + axis_h
+    base_y = y0 + 6.0 + top_v * unit_h
     xs = []
     for k, (name, v, color, dashed) in enumerate(bars):
         x = bx + k * (bar_w + gap)
         xs.append(x)
         fill = "#FFFFFF" if dashed else FILL[color]
         doc.vertex(f"b-bar{k}", "", shape_style("rounded=0", color, fill=fill, dashed=dashed),
-                   mm(x), mm(base_y - v * axis_h), mm(bar_w), mm(v * axis_h))
+                   mm(x), mm(base_y - v * unit_h), mm(bar_w), mm(v * unit_h))
     # axis line and the base level
     doc.edge("b-axis", line_style("#000000", 0.5),
              points=[(mm(bx - 1.0), mm(base_y)), (mm(xs[-1] + bar_w + 1.0), mm(base_y))])
     doc.edge("b-base", line_style(C_RULE, 0.4, dashed=True),
-             points=[(mm(bx - 1.0), mm(base_y - axis_h)),
-                     (mm(xs[-1] + bar_w + 1.0), mm(base_y - axis_h))])
+             points=[(mm(bx - 1.0), mm(base_y - unit_h)),
+                     (mm(xs[-1] + bar_w + 1.0), mm(base_y - unit_h))])
     # labels under the bars: words for the base and the double, math for the singles
     lw = bar_w + gap
     text(doc, "b-l0", "base", xs[0] - gap / 2, base_y + 0.3, lw, 4, "center")
@@ -310,13 +323,14 @@ def classic(doc, x0, y0, w, h):
     # the interaction: a double-headed bracket from the expected top to the measured top,
     # and its definition above the bars, where nothing else is
     ax_x = xs[4] + bar_w + 1.4
+    v_exp, v_meas = bars[3][1], bars[4][1]
     doc.edge("b-gap", line_style("#000000", 0.5, arrow=True)
              + "startArrow=classic;startFill=1;startSize=2.5;",
-             points=[(mm(ax_x), mm(base_y - 0.42 * axis_h)), (mm(ax_x), mm(base_y - 0.22 * axis_h))])
+             points=[(mm(ax_x), mm(base_y - v_exp * unit_h)), (mm(ax_x), mm(base_y - v_meas * unit_h))])
     doc.edge("b-tick1", line_style(C_RULE, 0.3, dashed=True),
-             points=[(mm(xs[3] + bar_w), mm(base_y - 0.42 * axis_h)), (mm(ax_x + 0.8), mm(base_y - 0.42 * axis_h))])
+             points=[(mm(xs[3] + bar_w), mm(base_y - v_exp * unit_h)), (mm(ax_x + 0.8), mm(base_y - v_exp * unit_h))])
     doc.edge("b-lead", line_style(C_RULE, 0.3),
-             points=[(mm(ax_x), mm(base_y - 0.42 * axis_h - 0.5)), (mm(ax_x), mm(y0 + 3.4))])
+             points=[(mm(ax_x), mm(base_y - v_meas * unit_h - 0.5)), (mm(ax_x), mm(y0 + 3.4))])
     equation(doc, "b-eps", "eps_def", ax_x - 5.0, y0 + 1.6)
     text(doc, "b-eps-t", "the interaction", ax_x - 12.0, y0 - 0.5 - 2.6, 14, 4, "center")
 
@@ -340,19 +354,28 @@ def classic(doc, x0, y0, w, h):
 def schematic(doc, x0, y0, w):
     """Where the two families of null come from, as one short row.
 
-    Left, a flux through two steps, each keeping a fraction. Right, one pool that each
-    deletion takes an absolute amount out of. One line under each, and under both the
-    identity that is the whole of their disagreement. The titles the halves carried and
-    the second sentence under each were cut (author review, 2026.09.18): the boxes say
-    what the halves are, and the row is 15.5 mm rather than 22.
+    One line of text over each half, the drawings on one baseline under them, and the
+    identity that is the whole of their disagreement directly under the row (author
+    review, 2026.09.27; the text had sat under the drawings, in two lines on the left).
+    Left, a flux through two steps, each keeping a fraction, ending at f_i f_j. Right, the
+    same f_i f_j as a pool bracketed over its whole width, split into the part the
+    additive null keeps and the overlap it removes a second time, so the two halves end
+    on the same quantity and the identity under them is visible before it is read.
     """
     half = (w - 8.0) / 2.0
     x1 = x0 + half + 8.0
+    note_h = 4.0                 # one line of 5.98 pt type
+    box_y, box_h = y0 + 9.8, 8.0   # room over the boxes for the right half's bracket
+    doc.vertex("d-mult-note",
+               "multiplicative: the second deletion acts only on what the first let through",
+               text_style("left"), mm(x0), mm(y0), mm(half), mm(note_h))
+    doc.vertex("d-add-note",
+               "additive: each loss comes off the whole pool, so their overlap is removed twice",
+               text_style("left"), mm(x1), mm(y0), mm(half), mm(note_h))
 
     # --- fractions compose
     bw, gap = 17.0, 3.0
     xs = [x0 + i * (bw + gap) for i in range(4)]
-    box_y, box_h = y0, 8.0
     for i, x in enumerate(xs):
         color = C_MULT if 0 < i < 3 else C_RULE
         doc.vertex(f"d-mult{i}", "", box_style(color), mm(x), mm(box_y), mm(bw), mm(box_h))
@@ -368,31 +391,29 @@ def schematic(doc, x0, y0, w):
                    mm(xs[i]), mm(box_y + 2.3) - 7, mm(bw), 14)
         equation(doc, f"d-mult{i}-eq", name, xs[i] + bw / 2, box_y + 5.7)
     equation(doc, "d-mult3-eq", "mult", xs[3] + bw / 2, box_y + box_h / 2)
-    doc.vertex("d-mult-note",
-               "multiplicative: the second deletion acts only on what the first let through",
-               text_style("left"), mm(x0), mm(y0 + 8.6), mm(half), 12)
 
-    # --- amounts add
-    pool_y, pool_h = y0, 8.0
-    loss_w = 21.0
-    keep_w = half - 2 * loss_w
+    # --- amounts add: the pool is f_i f_j, what the multiplicative null keeps, split into
+    # what the additive null keeps and the overlap it takes off a second time
+    over_w = 26.0
+    keep_w = half - over_w
     doc.vertex("d-pool-keep", "", cell_style("#FFFFFF", "center"),
-               mm(x1), mm(pool_y), mm(keep_w), mm(pool_h))
-    doc.vertex("d-pool-i", "", cell_style(FILL[C_ADD], "center"),
-               mm(x1 + keep_w), mm(pool_y), mm(loss_w), mm(pool_h))
-    doc.vertex("d-pool-j", "", cell_style(FILL[C_ADD], "center"),
-               mm(x1 + keep_w + loss_w), mm(pool_y), mm(loss_w), mm(pool_h))
-    equation(doc, "d-pool-keep-eq", "add", x1 + keep_w / 2, pool_y + pool_h / 2)
-    equation(doc, "d-pool-i-eq", "loss_i", x1 + keep_w + loss_w / 2, pool_y + pool_h / 2)
-    equation(doc, "d-pool-j-eq", "loss_j", x1 + keep_w + 1.5 * loss_w, pool_y + pool_h / 2)
-    doc.vertex("d-add-note",
-               "additive: each loss comes off the whole pool, so their overlap is removed twice",
-               text_style("left"), mm(x1), mm(y0 + 8.6), mm(half), 12)
+               mm(x1), mm(box_y), mm(keep_w), mm(box_h))
+    doc.vertex("d-pool-over", "", cell_style(FILL[C_ADD], "center"),
+               mm(x1 + keep_w), mm(box_y), mm(over_w), mm(box_h))
+    equation(doc, "d-pool-keep-eq", "add", x1 + keep_w / 2, box_y + box_h / 2)
+    equation(doc, "d-pool-over-eq", "gap", x1 + keep_w + over_w / 2, box_y + box_h / 2)
+    # a square bracket over the whole pool, f_i f_j centered above it
+    br_y, tick = box_y - 0.8, 1.0
+    doc.edge("d-pool-br", line_style("#000000", 0.5),
+             points=[(mm(x1), mm(br_y - tick)), (mm(x1), mm(br_y)),
+                     (mm(x1 + half), mm(br_y)), (mm(x1 + half), mm(br_y - tick))])
+    equation(doc, "d-pool-br-eq", "mult", x1 + half / 2, br_y - tick - 2.4)
 
-    # --- the identity, as three cells so the expression is typeset rather than spelled
+    # --- the identity, directly under the row, as three cells so the expression is
+    # typeset rather than spelled
     eq_w = EQ_SIZES["gap"][0]
     lead_w = 70.0
-    y_gap = y0 + 13.0
+    y_gap = box_y + box_h + 3.2
     doc.vertex("d-gap-a", "the two nulls differ by exactly", text_style("right"),
                mm(x0), mm(y_gap) - 7, mm(lead_w), 14)
     equation(doc, "d-gap-eq", "gap", x0 + lead_w + 1.0 + eq_w / 2, y_gap)
@@ -406,6 +427,8 @@ def table(doc, y0):
 
     Rows hold two lines of 5.98 pt type, 4.2 mm of ink, in 6.4 mm; the 8 mm they had
     carried a band of air the page could no longer afford once the top row was added.
+    The second column is an image, each model's digenic interaction typeset by the panels
+    script, so the cell under it stays empty.
     """
     head_h, row_h = 5.0, 6.4
     x = 2.0

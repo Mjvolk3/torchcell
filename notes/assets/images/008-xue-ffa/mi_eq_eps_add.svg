@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="58.8806" height="21.1000" viewBox="0 0 58.8806 21.1000" xmlns="http://www.w3.org/2000/svg" version="1.1"><g transform="scale(1.3888888889)">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 15.192 
+L 42.39401 15.192 
+L 42.39401 0 
+L 0 0 
+L 0 15.192 
+z
+" style="fill: none"/>
+  </g>
+  <g id="text_1">
+   <!-- $\varepsilon^{+}_{ij} = f_{ij} - f_i - f_j + 1$ -->
+   <g transform="translate(0.72 9.201375)">
+    <text>
+     <tspan x="0" y="-0.3465" style="font-style: italic; font-size: 6px; font-family: 'Arial'">ε</tspan>
+     <tspan x="10.989047" y="-0.3465" style="font-style: italic; font-size: 6px; font-family: 'Arial'">f</tspan>
+     <tspan x="20.324063" y="-0.3465" style="font-style: italic; font-size: 6px; font-family: 'Arial'">f</tspan>
+     <tspan x="28.725973" y="-0.3465" style="font-style: italic; font-size: 6px; font-family: 'Arial'">f</tspan>
+     <tspan x="2.7345" y="-4.528125" style="font-size: 4.2px; font-family: 'Arial'">+</tspan>
+     <tspan x="2.636719" y="2.640375" style="font-style: italic; font-size: 4.2px; font-family: 'Arial'">i</tspan>
+     <tspan x="3.569824" y="2.640375" style="font-style: italic; font-size: 4.2px; font-family: 'Arial'">j</tspan>
+     <tspan x="12.656039" y="1.445625" style="font-style: italic; font-size: 4.2px; font-family: 'Arial'">i</tspan>
+     <tspan x="13.589145" y="1.445625" style="font-style: italic; font-size: 4.2px; font-family: 'Arial'">j</tspan>
+     <tspan x="21.991055" y="1.445625" style="font-style: italic; font-size: 4.2px; font-family: 'Arial'">i</tspan>
+     <tspan x="30.392965" y="1.445625" style="font-style: italic; font-size: 4.2px; font-family: 'Arial'">j</tspan>
+     <tspan x="6.485531" y="-0.3465" style="font-size: 6px; font-family: 'Arial'">=</tspan>
+     <tspan x="15.820547" y="-0.3465" style="font-size: 6px; font-family: 'Arial'">−</tspan>
+     <tspan x="24.222457" y="-0.3465" style="font-size: 6px; font-family: 'Arial'">−</tspan>
+     <tspan x="32.624367" y="-0.3465" style="font-size: 6px; font-family: 'Arial'">+</tspan>
+     <tspan x="37.127883" y="-0.3465" style="font-size: 6px; font-family: 'Arial'">1</tspan>
+    </text>
+   </g>
+  </g>
+ </g>
+</g></svg>

@@ -260,6 +260,12 @@ EQUATIONS = {
     # the measured double from what the singles predict.
     "f_ij": r"$f_{ij}$",
     "eps_def": r"$\varepsilon_{ij} = f_{ij} - f_i\,f_j$",
+    # The table's interaction column: each model's digenic score in the Methods' own
+    # symbols, so a row maps to its equation there (author review, 2026.09.27).
+    "eps_mult": r"$\varepsilon^{\times}_{ij} = f_{ij} - f_i\,f_j$",
+    "eps_add": r"$\varepsilon^{+}_{ij} = f_{ij} - f_i - f_j + 1$",
+    "beta_ij": r"$\beta_{ij}$",
+    "eps_log": r"$g_{ij} - g_i - g_j$",
 }
 
 

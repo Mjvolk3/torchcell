@@ -85,7 +85,10 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" "${PTRACE_OPT[@]}" \
         set -a; source /.env; set +a
         wandb login \$WANDB_API_KEY >/dev/null
         echo container_cpu_max=\$(cat /sys/fs/cgroup/cpu.max) memory_max=\$(cat /sys/fs/cgroup/memory.max)
-        $RUNNER -m $KG_MODULE --config-name $KG_CONFIG $KG_OVERRIDES
+        # py-spy exits 'No child process' AFTER the child finished cleanly (job 2874);
+        # under PROFILE=1 the generation log, not py-spy's status, says whether it ran.
+        $RUNNER -m $KG_MODULE --config-name $KG_CONFIG $KG_OVERRIDES || [ '$PROFILE' = '1' ]
+        [ -f biocypher_file_name.txt ] || { echo 'generation did not finish'; exit 1; }
         CALL=\$(cat biocypher_file_name.txt)
         OUT_DIR=/var/lib/neo4j/\$(dirname \$CALL)
         echo GENERATION_OUT=\$OUT_DIR

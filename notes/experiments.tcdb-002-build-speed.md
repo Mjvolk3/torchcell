@@ -137,3 +137,49 @@ Round 4 arms: a py-spy profile of the main process on a Costanzo-only 500k arm; 
 children per chunk cut from 5 to 1 (`adapters.io_to_total_worker_ratio=0.02`, the
 loader now only reads LMDB since transform runs in the chunk worker); and a 4x larger
 single-pass chunk (`adapters.chunk_size=4e5`).
+
+## 2026.09.26 - Round 4: the writer is the bottleneck; round 5 moves rendering into the workers
+
+Round 4 arms, 48 CPUs / 192 GB unless noted (`results/arms.csv`):
+
+| job | arm | overrides on r3 | wall s | peak GB | outcome |
+|--:|---|---|--:|--:|---|
+| 2874 | profile-writer | Costanzo-only 500k, 16 CPUs / 64 GB, py-spy on the main process | 317 | 42 | profile in `results/2874_profile_top.txt` |
+| 2875 | io-ratio-0.02 | `adapters.io_to_total_worker_ratio=0.02` | 1,423 | 191.7 | 4% faster than r3, at the memory limit |
+| 2876 | chunk-4e5-single-pass | `adapters.chunk_size=4e5` | killed | 192 | OOM-killed 4 min in |
+
+<https://wandb.ai/zhao-group/tcdb/runs/xrz8d73c>
+
+Readings:
+
+- Job 2875's telemetry (the first arm with `res/parent_cores`): the main process sits at
+  1.0 core (p90 1.06) through all of Costanzo while the container averages 7.8 of 48
+  cores. The CSV writer is the critical path.
+- The profile (job 2874, `scripts/profile_summary.py`) shows the main thread active
+  about half the wall and waiting on futures the other half; the executor's management
+  thread, which unpickles every BioCypherNode into the same process, takes the rest of
+  the core. In the active half: BioCypher's per-node label ancestry, PascalCase
+  conversion, quoting, dedup and CSV flush, plus 5% in loading the dataset's reference
+  index JSON.
+- Memory: BioCypher's deduplicator keeps a `src_tgt` string per edge of every type,
+  about 95 GB for the 525M-edge full build, which matches the 100 GB parent RSS on job
+  2032. The 166 to 192 GB peaks on the ladder are that plus the in-flight results
+  backlog while the parent drains.
+
+Round 5 (`torchcell/fast_csv.py`, commit 60b09ac6): the chunk workers render the
+neo4j-admin rows themselves from specs frozen off the live BioCypher writer (property
+order and types per label, `:LABEL` ancestry, delimiters) and ship compact (key, line)
+lists; the main process dedups and appends to `<Pascal>-part000.csv`, then hands the
+property dicts back so BioCypher writes the headers and the import call. Edge dedup is
+exact but bounded: an edge with an Experiment endpoint can only repeat when that
+experiment node repeated, so only the duplicated experiment ids are kept and full keys
+are checked for edges touching one; edge types between shared entities keep full keys.
+
+Verified in the production container (BioCypher 0.15.2) with
+`scripts/test_fast_csv_equivalence.py` on SmfKuzmin2018 plus a 30k Costanzo dmf subset:
+23 labels, 356,697 rows, every label's data lines identical as multisets, every header
+file identical, import call identical up to BioCypher's set ordering.
+
+Arms submitted: 2881 `r5 fast-writer` (r3 overrides + `adapters.fast_writer=true`) and
+2882 `r5 fast-writer-io0.02` (plus `adapters.io_to_total_worker_ratio=0.02`), both
+48 CPUs / 192 GB.

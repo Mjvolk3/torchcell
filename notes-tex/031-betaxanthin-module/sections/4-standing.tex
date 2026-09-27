@@ -133,8 +133,10 @@ In the transformer the two-slot head reads 0.224 at 64, 0.225 at 128 and 0.225 a
 above every cell with the annotation in it on every seed with the tightest band and
 the best single-seed call (top-50 5.66), and 0.054 under the pool alone through 256:
 it selects at epochs 5 to 15 on the annotation's early peak, before the pool's slot
-has trained, where the perceptron's two slots selected at 64 to 165. The linear slot at
-a tenth and a hundredth of the rate is the fix in flight (201, 202). With the three
+has trained, where the perceptron's two slots selected at 64 to 165. The linear slot at a tenth of the rate (201) moves the
+selection to epochs 55 to 104 and the read to 0.234, $+0.009$ over the full rate and
+$-0.045$ under the pool alone, 0.184 against 0.212 on the covered genes; the hundredth
+(202) is in flight. With the three
 families in the two slots, GO and both flux programs linear beside the pool through
 256, the head reads 0.239 with a band of 0.003 (199): the flux programs add 0.014 to
 the annotation's slot on every seed, and this is the best arm of the study with the

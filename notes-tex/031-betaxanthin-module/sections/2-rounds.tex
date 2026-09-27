@@ -942,4 +942,20 @@ the pool's slot and the backbone have trained (Section~\ref{sec:decomposition}),
 the hidden slot's width is never read. The linear slot at a lower rate (201, 202) is
 the arm that can change this.
 
+Round 201 is read (job 2887, 3 h 41 min): the two-slot head at 256 with the linear GO
+slot in its own parameter group at a tenth of the rate. It reads 0.234 (sd 0.015)
+against both slots at the full rate at 0.225 ($+0.009$ paired, sd 0.013, four of six)
+and against the pool alone through 256 at 0.279 ($-0.045$, sd 0.024, zero of six),
+top-50 5.56 against 4.99 and 4.69, ensembled 0.239 with a top-50 of 5.79; the seeds
+read 0.215 to 0.247 and select at epochs 55 to 104 on validation Pearson 0.29 to 0.33,
+where the full-rate head selected at 9 to 15 on 0.27 to 0.29. So the slower slot does
+what it was built to do, the cell selecting after the pool's slot has trained with a
+higher validation correlation, and the read moves 0.009 for it; it stays 0.045 under
+the pool alone. On the covered genes it reads 0.184 against the pool alone's 0.212 and
+the full-rate head's 0.171, and it ranks the uncovered genes at the 34th percentile
+where the pool alone puts them at the fifth (Section~\ref{sec:coverage}): with the
+annotation's linear slot beside it, the head no longer separates the strains the pool
+never measured, and the covered-gene read stays under the pool's. The annotation in a
+linear slot costs the pool on both groups of genes, at either rate.
+
 \input{tables/target_transfer}

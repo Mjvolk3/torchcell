@@ -30,10 +30,14 @@ homozygous, over a shared gene universe. Wildenhain has eighteen times the compo
 the next largest and a fifth of the gene panel. Vanacloig is the smallest and is the
 application target, and it is the only dataset whose dose is not a number.
 
-One correction worth recording, because it was wrong in an earlier reading of the raw files.
-The Hoepfner score matrices are genes by screens, not screens by genes: the roughly 5{,}900
-columns per file are 2{,}956 experiments run in duplicate, and the 6{,}681 rows are the
-genes.
+Two corrections worth recording, because both were wrong in earlier readings of the raw files.
+The Hoepfner score matrices are genes by screens, not screens by genes: the 6{,}681 rows are
+the genes. And the roughly 5{,}900 columns per file are not experiments run in duplicate. A
+census of every column header (Table~\ref{tab:hoepfnerceiling}) finds 2{,}905 adjusted-score
+columns in the HIP file and 2{,}904 in the HOP file, each carrying a distinct experiment, plus
+a companion gene-wise z score for every one of them. The doubling is the second normalization,
+not a second measurement, and Section~\ref{sec:joinability} takes up what that means for
+Hoepfner's prediction ceiling.
 
 \notesec{The physical and medium fields are dataset identity}
 The served record carries the medium, the temperature, the aerobicity, the duration, the pH

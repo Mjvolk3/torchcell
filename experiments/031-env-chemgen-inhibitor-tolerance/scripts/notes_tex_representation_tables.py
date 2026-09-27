@@ -478,6 +478,53 @@ def t13_per_dataset_baselines() -> None:
     )
 
 
+def t14_hoepfner_ceiling() -> None:
+    """Hoepfner's ceiling recovered from cross-screen repeats, per arm."""
+    audit = pd.read_csv(osp.join(RESULTS, "hoepfner_column_audit.csv"))
+    pairs = pd.read_csv(osp.join(RESULTS, "hoepfner_cross_screen_reliability.csv"))
+    base = pd.read_csv(osp.join(RESULTS, "per_dataset_baselines_summary.csv"))
+    best = base[
+        (base["dataset"] == "hoepfner2014")
+        & (base["target"] == "centered")
+        & (base["features"] != "none")
+    ]["spearman_median"].max()
+    rows = []
+    for arm, g in pairs.groupby("arm"):
+        col = audit[audit["file"].str.startswith(arm)].iloc[0]
+        cap = float(g["ceiling_r_truth"].median())
+        rows.append(
+            {
+                "arm": arm,
+                "experiments deposited": f"{int(col['distinct_experiment_ids']):,}",
+                "repeated columns": int(col["experiment_ids_appearing_twice"]),
+                "condition pairs": len(g),
+                "compounds": int(g["inchikey"].nunique()),
+                "reliability": f"{g['reliability_single'].median():.3f}",
+                "ceiling": f"{cap:.3f}",
+                "of ceiling": f"{best / cap:.2f}",
+            }
+        )
+    allcap = float(pairs["ceiling_r_truth"].median())
+    rows.append(
+        {
+            "arm": "both",
+            "experiments deposited": f"{int(audit['distinct_experiment_ids'].sum()):,}",
+            "repeated columns": int(audit["experiment_ids_appearing_twice"].sum()),
+            "condition pairs": len(pairs),
+            "compounds": int(pairs["inchikey"].nunique()),
+            "reliability": f"{pairs['reliability_single'].median():.3f}",
+            "ceiling": f"{allcap:.3f}",
+            "of ceiling": f"{best / allcap:.2f}",
+        }
+    )
+    write(
+        "t14-hoepfner-ceiling",
+        tex_table(pd.DataFrame(rows), align="lrrrrrrr"),
+        "hoepfner_column_audit.csv and hoepfner_cross_screen_reliability.csv from "
+        "hoepfner_replicate_ceiling.py",
+    )
+
+
 def main() -> None:
     t1_datasets()
     t2_chemical_space()
@@ -492,6 +539,7 @@ def main() -> None:
     t11_unification()
     t12_cross_overlap()
     t13_per_dataset_baselines()
+    t14_hoepfner_ceiling()
 
 
 if __name__ == "__main__":

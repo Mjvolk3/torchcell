@@ -148,12 +148,59 @@ better on Wildenhain and both Hillenmeyer arms, by the largest margin on Wildenh
 reaches 0.394 against ridge at 0.249. The earlier finding that ridge beat every
 nearest-neighbor variant was measured on Vanacloig alone and does not generalize.
 
-Two limits on the ceilings in that table. Hoepfner serves no uncertainty on any record, so it
-has no ceiling and its score is reported alone. And the Hillenmeyer and Wildenhain ceilings
-rest on the minority of cells that carry a served standard error, 33, 17 and 1 percent
-respectively, which is the subset measured more than once and therefore not a random sample of
-the dataset. Only the Vanacloig ceiling, at 97 percent of cells, is estimated from
-substantially the whole matrix.
+One limit on the ceilings in that table. The Hillenmeyer and Wildenhain ceilings rest on the
+minority of cells that carry a served standard error, 33, 17 and 1 percent respectively, which
+is the subset measured more than once and therefore not a random sample of the dataset. Only
+the Vanacloig ceiling, at 97 percent of cells, is estimated from substantially the whole
+matrix. Hoepfner serves no uncertainty at all, and the next subsection recovers a ceiling for
+it by a different route.
+
+\notesec{Hoepfner has no served error, and a ceiling is still recoverable}
+The absence is real and typed: the loader records it as a provenance gap because the source
+folds the replicate $t$-test into the adjusted score rather than releasing a per-cell error.
+Two different questions follow, and they have different answers
+(Table~\ref{tab:hoepfnerceiling}).
+
+Are the two technical replicates recoverable? No. Each compound was profiled at two wells in
+the same plate, but a census of every column header in both deposited matrices finds one
+adjusted-score column per experiment and no experiment id appearing twice. The two wells are
+already combined inside that column, and the only other column per experiment is the companion
+z score, which is a second normalization of the same numbers rather than a second measurement.
+
+Is there any repeated measurement at all? Yes, and it is the more useful kind. Fourteen
+compounds were screened at the same concentration in more than one study, and a study is a
+separate screen with its own control set, giving 71 condition pairs across the two arms. Two
+such screens are parallel measurements of the same condition, so their correlation over genes
+estimates the reliability of one served value directly, and the ceiling is its square root.
+The median reliability is 0.611 and the median ceiling 0.781, with the heterozygous arm at
+0.797 and the homozygous arm at 0.758. Against that ceiling the best baseline of
+Table~\ref{tab:perdataset} reaches 24 percent.
+
+This estimate is not the same quantity as the served-error ceilings elsewhere in the document,
+and the difference runs in the conservative direction. A cross-screen repeat carries the batch
+variation that two wells in one plate do not, so it measures reliability against everything
+that changes between screens. That is closer to what a model trained across screens faces, and
+closer to Vanacloig's three-batch replicate agreement than to a within-plate standard error.
+Two cautions on it: the fourteen repeated compounds are the ones a screening campaign repeats,
+which are reference compounds rather than a random sample of the panel, and the pairs are
+spread unevenly, with methotrexate alone contributing 30 of the 71.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/hoepfner_replicate_ceiling.py ->
+%% results/hoepfner_column_audit.csv and results/hoepfner_cross_screen_reliability.csv,
+%% rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Recovering a ceiling for Hoepfner. Experiments deposited and repeated columns come
+from a census of every column header in the two score matrices: no experiment appears twice,
+so the technical replicates are not separately deposited. The condition pairs are the same
+compound at the same concentration in two different studies; for parallel measurements the
+observed correlation estimates the reliability of one value and the ceiling is its square
+root. The last column is the best baseline of Table~\ref{tab:perdataset} as a fraction of that
+ceiling.}
+\label{tab:hoepfnerceiling}
+\input{tables/t14-hoepfner-ceiling}
+\end{table}
 
 %% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/per_dataset_baselines.py ->
 %% results/per_dataset_baselines_summary.csv, rendered by notes_tex_representation_tables.py.

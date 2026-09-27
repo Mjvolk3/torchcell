@@ -187,13 +187,14 @@ def _points(
     color: str,
     marker: str = "o",
     jitter: float = 0.07,
+    size: float = 9,
 ) -> None:
     """Seed points: arm color face, black edge; the arm mean as a short black bar."""
     xs = x + np.linspace(-jitter, jitter, len(vals)) if len(vals) > 1 else np.array([x])
     ax.scatter(
         xs,
         vals,
-        s=9,
+        s=size,
         marker=marker,
         facecolor=color,
         edgecolor="black",
@@ -274,7 +275,13 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             vals = pool[pool.arm == arm][col].dropna().to_numpy()
             if len(vals):
                 _points(
-                    a, XPOS[arm] + dx, vals, ARM_COLOR[arm], marker=marker, jitter=0.05
+                    a,
+                    XPOS[arm] + dx,
+                    vals,
+                    ARM_COLOR[arm],
+                    marker=marker,
+                    jitter=0.05,
+                    size=6,
                 )
             star = _stars(pvals.get((arm, reading)))
             if star:
@@ -302,13 +309,16 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             label=label,
         )
     a.plot([], [], color="black", lw=0.7, label="arm mean")
-    a.scatter([], [], s=0, label="* vs no penalty, paired t, per reading")
+    a.scatter([], [], s=0, label="* vs no penalty, paired t")
     a.legend(
         loc="lower left",
         frameon=False,
-        handletextpad=0.3,
-        borderpad=0.2,
-        labelspacing=0.25,
+        fontsize=5,
+        handletextpad=0.2,
+        borderpad=0.1,
+        labelspacing=0.15,
+        handlelength=1.2,
+        markerscale=0.8,
     )
 
     # b: held-out point loss, at epoch 29 and at its minimum
@@ -347,7 +357,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
         facecolor="white",
         edgecolor="black",
         linewidth=0.4,
-        label="minimum over epochs",
+        label="at min validation loss",
     )
     b.legend(loc="upper right", frameon=False, handletextpad=0.3, borderpad=0.2)
 

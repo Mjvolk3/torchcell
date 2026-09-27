@@ -59,7 +59,9 @@ jobs:
         # file-selection step, to honor Decision 5 (experiments out of the gate).
         # tests/ is in scope too: new tests are typed (plan.test-suite-buildout Decision 8),
         # and pre-commit already runs strict mypy on ^(torchcell|tests)/.
-        FILES=$(git diff --name-only origin/main...HEAD -- 'torchcell/**/*.py' 'tests/**/*.py' ':(exclude)torchcell/experiments/**')
+        # --diff-filter=d: a deleted module is not a file to type-check (a deprecation
+        # PR once failed here with "Cannot read file").
+        FILES=$(git diff --name-only --diff-filter=d origin/main...HEAD -- 'torchcell/**/*.py' 'tests/**/*.py' ':(exclude)torchcell/experiments/**')
         if [ -n "$FILES" ]; then
           echo "Changed torchcell files:"; echo "$FILES"
           mypy $FILES --config-file=pyproject.toml --follow-imports=silent

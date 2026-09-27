@@ -587,6 +587,33 @@ case "$ARM" in
                      ARM_TAGS=(heads-expression "split${ARM##*_s}" expression stage-joint round-joint) ;;
   J_joint05_s[0-9])  OVERRIDES=(multitask.head_weights.per_gene_aux=0.5 data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(heads-proteome-expression aux-w05 "split${ARM##*_s}" proteome stage-joint round-joint) ;;
+  # ==================== DECONFOUNDED JOINT ROUND (2026.09.27, v19) =========================
+  # conf/cgt_expr_v19_joint_clean.yaml explains the round. Every arm runs on the both-label
+  # rows with every head unmasked, so the arms differ in the active loss terms only. K_prot is
+  # the proteome head alone; K_expr is the expression head alone, carried by the `per_gene`
+  # slot re-pointed at expression exactly as J_expr was (same PerGeneHead module as the joint
+  # arm's `per_gene_aux`; the reveal schedule, the one thing that made J_expr's head differ,
+  # is off in every arm); K_joint is the config's default. Split seeds run to 11, so the
+  # patterns take one or two digits. K_perm joins when the trainer can permute one head's
+  # labels across training strains.
+  K_prot_s[0-9]|K_prot_s1[01])
+                     OVERRIDES=("multitask.active_heads=[per_gene]"
+                                "multitask.standardize_per_feature_target=[per_gene]"
+                                trainer.checkpoint.metric_monitor=val/mean/pearson_per_feature
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(heads-proteome mask-off "split${ARM##*_s}" proteome stage-joint_clean round-joint-clean) ;;
+  K_expr_s[0-9]|K_expr_s1[01])
+                     OVERRIDES=("multitask.active_heads=[per_gene]"
+                                "multitask.head_phenotypes.per_gene=[expression_log2_ratio]"
+                                multitask.head_phenotype_names.per_gene=expression
+                                "multitask.standardize_per_feature_target=[per_gene]"
+                                trainer.checkpoint.monitor=val/expression/pearson_per_feature
+                                trainer.checkpoint.metric_monitor=val/mean/pearson_per_feature
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(heads-expression mask-off "split${ARM##*_s}" expression stage-joint_clean round-joint-clean) ;;
+  K_joint_s[0-9]|K_joint_s1[01])
+                     OVERRIDES=(data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(heads-proteome-expression aux-w1 mask-off "split${ARM##*_s}" proteome stage-joint_clean round-joint-clean) ;;
   # ============================ WEIGHT-DECAY ROUND (2026.09.15, v15) =======================
   # Strong AdamW weight decay on the v13 reference at the full budget, split seeds 1 and 2
   # (conf/cgt_expr_v15_wd.yaml explains the round). The reference keeps the incumbent's 1e-8.
@@ -645,7 +672,7 @@ case "$ARM" in
   # J_* added 2026.09.23 for the v16 continuation (epochs 500 to 1,200, three per card);
   # the first segment ran 500 epochs with the respawn and lost nothing, and the setting
   # touches the loader only, not the model or the batches it sees.
-  L_*|Y_*|J_*) OVERRIDES+=(data_module.persistent_workers=true) ;;
+  L_*|Y_*|J_*|K_*) OVERRIDES+=(data_module.persistent_workers=true) ;;
 esac
 
 # PYTHONPATH pins the WORKTREE's torchcell: without it a script run from a worktree

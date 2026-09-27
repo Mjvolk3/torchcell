@@ -190,6 +190,28 @@ ROUNDS: dict[str, Round] = {
         ),
         max_runs=36,
     ),
+    "v19": Round(
+        project="torchcell_019_prot_v19",
+        report_title="v19 deconfounded joint round: proteome head, expression head and both on identical rows",
+        view_name="v19 joint clean round by arm",
+        view_id=None,
+        arm_re=r"K_(prot|expr|joint|perm)_(s\d+)",
+        phenotype="proteome",
+        splits=[f"s{i}" for i in range(12)],
+        split_label={f"s{i}": f"split {i}" for i in range(12)},
+        intro=(
+            "36 runs, three per card on IGB cabbi and gpu, 1,200 epochs (config "
+            "cgt_expr_v19_joint_clean): K_prot is the proteome head alone, K_expr the "
+            "expression head alone, K_joint both heads on one trunk, all on the strains that "
+            "carry both labels with every head unmasked, so the arms differ in the active loss "
+            "terms only. Twelve split seeds, one init seed each. Per-head windows: proteome "
+            "epochs 200 to 400, expression 1,000 to 1,200. Nothing here is a result until the "
+            "runs finish."
+        ),
+        max_runs=48,
+        label_key="protein_abundance",
+        extra_phenotypes=("expression",),
+    ),
     "v18": Round(
         project="torchcell_019_expr_v18",
         report_title="v18 hygiene round: the masked objective off and a per-gene context row",

@@ -467,6 +467,29 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_v16_joint
           EXTRA_OV="" ;;
+  # ------------------------------------------------ DECONFOUNDED JOINT ROUND (2026.09.27, v19)
+  # The v16 question with the arms differing in the active loss terms only, on the both-label
+  # rows, every head unmasked, twelve split seeds x one init seed, 1,200 epochs
+  # (conf/cgt_expr_v19_joint_clean.yaml, which also carries the pre-registered test). 36 runs
+  # as twelve tasks of three, the three arms of one partition per card. Tasks are
+  # partition-major; queue the first six on cabbi (<= 5 days) and the last six on the gpu
+  # partition under %3, chained after whatever of ours is already queued there, so the two
+  # throttles never add. K_perm arrives as its own stage when the trainer can permute labels.
+  #
+  #   H=$(git rev-parse HEAD); D=$(git diff HEAD | sha256sum | cut -d" " -f1)
+  #   sbatch -J 019-v19w1-joint_clean -p cabbi --gres=gpu:1 --cpus-per-task=12 --mem=120g \
+  #       --time=3-00:00:00 --array=0-5 --export=ALL,W5_STAGE=joint_clean,\
+  #   TORCHCELL_SOURCE_GIT_HASH=$H,TORCHCELL_SOURCE_DIFF_SHA256=$D \
+  #       experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
+  #   sbatch -J 019-v19w1-joint_clean -p gpu --gres=gpu:1 --cpus-per-task=12 --mem=120g \
+  #       --time=3-00:00:00 --array=6-11%3 --dependency=afterany:<pending gpu array> ... (same)
+  joint_clean) JOBS=()
+          for s in 0 1 2 3 4 5 6 7 8 9 10 11; do
+            JOBS+=("K_prot_s${s}:0" "K_expr_s${s}:0" "K_joint_s${s}:0")
+          done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_v19_joint_clean
+          EXTRA_OV="" ;;
   # ------------------------------------------------------- PERTURBATION-LOCALITY ROUND (2026.09.18)
   # The v13 reference against the hop-0 self-indicator and 2-hop graph propagation of the
   # deletion, split seeds 0 to 3, init seeds 0 to 2, 1,200 epochs (conf/cgt_expr_v17_locality.yaml).
@@ -537,7 +560,7 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep|head|split|proteome|wd|joint|locality|hygiene)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep|head|split|proteome|wd|joint|locality|hygiene|joint_clean)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

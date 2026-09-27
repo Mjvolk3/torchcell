@@ -135,6 +135,38 @@ ROUNDS: dict[str, dict[str, Any]] = {
     # Y_ctx is the per-gene affine row over the strain context. The mask arm is also to be
     # judged at matched WALL CLOCK, which this script does not do: it scores at matched
     # epochs, where the mask arm is expected to tie while costing 24% less card time.
+    # The deconfounded joint round: both-label rows, unmasked heads, twelve partitions x one
+    # seed. Read twice, once per head, each against its own single-head arm; K_perm (labels
+    # permuted) is read as the second alt when it runs. NOTE: the round registers PER-HEAD
+    # windows (proteome 200 to 400, expression 1,000 to 1,200) and non-inferiority on the
+    # proteome; this script's single matched window is the descriptive read until the
+    # per-head window lands.
+    "v19": {
+        "project": "zhao-group/torchcell_019_prot_v19",
+        "phenotype": "proteome",
+        "prefix": "K_",
+        "arm_re": r"K_(prot|joint|perm)_(s\d+)",
+        "skip_re": r"K_expr_s\d+",
+        "ref": "prot",
+        "alt": "joint",
+        "alt_extra": ["perm"],
+        "splits": [f"s{i}" for i in range(12)],
+        "baselines_dir": "baselines_split_fig3_proteome",
+        "out": "v19_joint_clean_readout.json",
+    },
+    "v19_expr": {
+        "project": "zhao-group/torchcell_019_prot_v19",
+        "phenotype": "expression",
+        "prefix": "K_",
+        "arm_re": r"K_(expr|joint|perm)_(s\d+)",
+        "skip_re": r"K_prot_s\d+",
+        "ref": "expr",
+        "alt": "joint",
+        "alt_extra": ["perm"],
+        "splits": [f"s{i}" for i in range(12)],
+        "baselines_dir": "expression_baselines_split",
+        "out": "v19_joint_clean_expr_readout.json",
+    },
     "v18": {
         "project": "zhao-group/torchcell_019_expr_v18",
         "phenotype": "expression",

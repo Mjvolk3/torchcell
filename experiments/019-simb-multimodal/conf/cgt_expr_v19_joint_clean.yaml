@@ -1,0 +1,102 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v19_joint_clean.yaml
+# [[experiments.019-simb-multimodal.conf.cgt_expr_v19_joint_clean]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/conf/cgt_expr_v19_joint_clean
+#
+# THE DECONFOUNDED JOINT ROUND (2026-09-27), project v19. The joint proteome-and-expression
+# question of v16, rebuilt so the arms differ in the active loss terms and in nothing else.
+# Design and evidence: notes-tex/019-simb-multimodal-expression/sections/5-joint-plan.tex
+# and the five reviews under review/2026-09-27-joint-review/.
+#
+# WHAT v16 GOT WRONG, MEASURED. Its expression-only control iterated the whole union store
+# (117 optimizer steps per epoch, about eleven labeled rows per batch of 32) because
+# `require_modalities []` let the 3,127 proteome-only genotypes ride along with the loss
+# masked off; in that regime the head never launched on four of six cards (Fisher p 8e-5
+# against every other expression-only run of the campaign). Its two expression heads also
+# differed in the reveal schedule (masked `per_gene` against unmasked `per_gene_aux`), and its
+# proteome arms differed by 4% in rows and steps. So v16 measured "the proteome loss keeps a
+# starved trunk training", not joint training against a competent single-head model.
+#
+# THE STORE. `fig3_proteome` restricted to the genotypes carrying BOTH labels
+# (`require_modalities` intersects on phenotype label): 1,349 records, about 1,100 train /
+# 125 val / 125 test per split seed, all single deletions, so 35 steps per epoch and the same
+# rows, the same steps and the same batches for every arm. The 2.5x more strains the union
+# would hand the joint arm is a data-quantity term, priced separately if wanted; this round
+# isolates the second label.
+#
+# THE HEADS. `per_gene` is the proteome head and `per_gene_aux` the expression head, both
+# PerGeneHead MLPs over the same head input, both z-scored per feature on the train split,
+# both UNMASKED: `mask_schedule [0]` in every arm, by the decision of 2026-09-25 to drop the
+# masked objective (measured -0.012 at twelve pairs in v18, borne equally by every arm here).
+# The arms are made from this one config by the active head list alone (gh_expr_008_arm.sh,
+# K_* arms): K_prot = [per_gene], K_expr = [per_gene_aux], K_joint = both at weight 1.
+# K_perm (the joint arm with the expression labels permuted across training strains, the
+# null that separates label information from a second head's regularizing effect) needs a
+# permutation option in the trainer and joins the round when that lands.
+#
+# PARTITIONS. Twelve split seeds (0 to 11), ONE initialization seed each. Measured on v17 and
+# v18, the arm effect clusters by partition (intraclass correlation 0.50 to 0.72), so at a
+# fixed run count more partitions beat more seeds (36 runs as 12 x 1 give a standard error of
+# 0.0070 against 0.0098 for 4 x 3), and a partition-level sign-flip test needs at least six
+# partitions to reach p < 0.05 at all. Seeds 4 to 11 are new draws of the same partition
+# procedure (split_gene_overlap_audit.py: the draw never looks at gene identity).
+#
+# BUDGET 1,200 epochs, with PER-HEAD scoring windows declared here from v14 and v16:
+# proteome = mean of val/proteome/pearson_per_feature over epochs 200 to 400 (the head
+# peaks at a median epoch of 140 to 259 and decays; J_ref at 500 equals v14 at 1,960 within
+# 0.005), expression = mean of val/expression/pearson_per_feature over epochs 1,000 to 1,200
+# (the head is still rising at 500 in every run). The rolling maximum is reported beside
+# each as the biased order statistic it is.
+#
+# PRE-REGISTERED TEST (intersection-union, one-sided alpha 0.05 on each, no correction):
+#   H1a  expression superiority: K_joint - K_expr > 0 on the expression window, paired over
+#        the twelve partitions;
+#   H1b  proteome non-inferiority at margin 0.015: K_joint - K_prot > -0.015 on the proteome
+#        window, paired over the twelve partitions. The margin sits above the between-partition
+#        sd of the proteome score (0.009 to 0.016) and below the single-partition bootstrap sd
+#        (0.026); at the v16 point estimate of -0.008 it needs 24 pairs at 80% power, so this
+#        round can declare non-inferiority only if the true cost is under about 0.005, and
+#        that limit is part of the registration.
+#   "Joint training helps" is claimed only if BOTH reject. Secondary, always reported, never
+#   substituted: the interaction with K_perm on both heads once it runs; the partition-level
+#   sign-flip p (attainable minimum 0.0005 at twelve partitions); the intent-to-treat read
+#   beside the guarded read; the held-out test score per head at that head's own
+#   best-validation checkpoint; the gene-disjoint expression subset; reliability-weighted
+#   proteome Pearson; NMSE as a descriptive.
+#
+# LAUNCH FAILURES. A head whose val/<head>/pred_sd_ratio has not exceeded 0.05 by epoch 200
+# has not launched (the strain-blind stationary point of the pinball loss; 0 false positives
+# in 110 healthy runs, every never-launched run caught). Such a run is killed and relaunched
+# from a NEW initialization seed inside the same partition and arm, recorded as a relaunch;
+# a resumed checkpoint is not a relaunch (a resumed never-launched run stayed at zero for 55
+# more epochs in v16). A run that launches and then decays is scored as logged and flagged;
+# if more than two of twelve pairs are lost this way the round is reported as underpowered.
+# Until the LaunchGuard callback lands the check is done from W&B at epoch 200 by hand.
+#
+# CAPACITY CONTROL, declared: the three arms share one trunk at identical width and depth
+# and take the same number of optimizer steps, so this is the equal-total-compute comparison
+# (the one under which multi-task training wins in Standley et al. 2020); the
+# equal-per-task-capacity comparison (single heads at twice the steps) is not run here.
+defaults:
+  - cgt_expr_v16_joint
+  - _self_
+
+wandb:
+  project: torchcell_019_prot_v19
+  tags: [joint-clean-round, v19]
+
+cell_dataset:
+  # Both labels on every row: identical rows, steps and batches for every arm.
+  require_modalities: [protein_abundance, expression_log2_ratio]
+
+multitask:
+  # Unmasked everywhere; the reveal machinery stays wired but never reveals.
+  mask_schedule: [0]
+
+trainer:
+  max_epochs: 1200
+  checkpoint:
+    # Joint arm: proteome head selects the first checkpoint, expression head the second;
+    # the single-head arms override both to their own head in gh_expr_008_arm.sh.
+    monitor: val/proteome/pearson_per_feature
+    metric_monitor: val/expression/pearson_per_feature
+    save_loss_min: true

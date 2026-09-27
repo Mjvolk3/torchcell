@@ -63,6 +63,7 @@ STAGES: dict[str, tuple[str, str, int]] = {
     "joint": ("v16 joint", "cgt_expr_v16_joint", 1200),
     "locality": ("v17 locality", "cgt_expr_v17_locality", 1200),
     "hygiene": ("v18 hygiene", "cgt_expr_v18_hygiene", 1200),
+    "joint_clean": ("v19 joint clean", "cgt_expr_v19_joint_clean", 1200),
 }
 NAME_RE = re.compile(r"019-(?P<round>v\d+)w(?P<wave>\d+)-(?P<stage>[a-z_]+)")
 EPOCH_RE = re.compile(r"Epoch (\d+)")

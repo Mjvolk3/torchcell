@@ -519,7 +519,10 @@ def test_reopen_reads_the_built_store_without_reprocessing(
     """
     first = build(tmp_path, cls)
     records = [first[i] for i in range(n)]
+    # py-lmdb refuses to open one path twice in a process; release the first handle.
+    first.close_lmdb()
     (Path(first.root) / "raw" / RAW_NAME).unlink()
     second = cls(root=first.root)
     assert len(second) == n
     assert [second[i] for i in range(n)] == records
+    second.close_lmdb()

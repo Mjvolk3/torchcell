@@ -31,8 +31,9 @@ Every panel carries the same light horizontal grid. Panel titles state the findi
 panel shows; each is checked against the summary numbers in the document's Section 2.
 
 Repo figure standards: Arial 6 pt, boxed axes, palette from torchcell.utils, panel letters
-outside the axes, no bbox_inches="tight". Tick labels are standalone mathtext; prose
-labels spell lambda in decimals because Arial has no superscript minus or nabla glyph.
+outside the axes, no bbox_inches="tight". Prose
+labels spell lambda in decimals because Arial has no superscript minus or nabla glyph; the
+ladder axis is log10 lambda so no text falls under 5 pt.
 """
 
 from __future__ import annotations
@@ -51,7 +52,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from matplotlib.ticker import MultipleLocator
+from matplotlib.ticker import FixedLocator, FuncFormatter, MultipleLocator, NullLocator
 from numpy.typing import NDArray
 
 from torchcell.timestamp import timestamp
@@ -113,17 +114,9 @@ LADDER = [
     "mask",
     RANDOM,
 ]
-LADDER_TICKS = [
-    "none",
-    "$10^{-5}$",
-    "$10^{-4}$",
-    "$10^{-3}$",
-    "$10^{-2}$",
-    "$10^{-1}$",
-    "$1$",
-    "mask",
-    "random",
-]
+# Exponents of lambda at full size: mathtext superscripts render at 0.7 of the font
+# (4.2 pt at 6 pt), under Nature's 5 pt floor, so the axis carries log10 lambda instead.
+LADDER_TICKS = ["none", "−5", "−4", "−3", "−2", "−1", "0", "mask", "rand"]
 XPOS = {arm: i for i, arm in enumerate(LADDER)}
 ARM_COLOR = {arm: PLOT_PALETTE[k] for arm, k in ARM_INDEX.items()}
 ARM_SHORT = {
@@ -153,7 +146,7 @@ READINGS = {
     "min_loss": ("s", 0.27, "val_pearson_at_min_loss", 0.4605),
 }
 PROBE_EPOCHS = [0, 1, 2, 5, 10, 20]
-X_LABEL = "λ (graph prior weight)"
+X_LABEL = "log10 λ (graph prior weight)"
 
 
 def _box(ax: Axes) -> None:
@@ -210,10 +203,18 @@ def _not_logged(ax: Axes, x: float, y: float, color: str) -> None:
 
 def _ladder_axis(ax: Axes, xlabel: str = X_LABEL) -> None:
     ax.set_xticks(range(len(LADDER)))
-    ax.set_xticklabels(LADDER_TICKS, rotation=40, ha="right", rotation_mode="anchor")
+    ax.set_xticklabels(LADDER_TICKS)
     ax.set_xlim(-0.6, len(LADDER) - 0.4)
     ax.set_xlabel(xlabel)
     _box(ax)
+
+
+def _plain_log_ticks(ax: Axes, ticks: list[float]) -> None:
+    """Log axis with decimal tick labels at full font size: the default 10^k mathtext puts
+    the exponent at 0.7 of the font, under the 5 pt floor."""
+    ax.yaxis.set_major_locator(FixedLocator(ticks))
+    ax.yaxis.set_minor_locator(NullLocator())
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
 
 
 def _stars(p: float | None) -> str:
@@ -409,6 +410,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             _points(d, XPOS[arm], vals, ARM_COLOR[arm])
     d.set_yscale("log")
     d.set_ylim(2e2, 3e3)
+    _plain_log_ticks(d, [300, 1000, 3000])
     _not_logged(d, XPOS["kl_0"], 2.3e2, ARM_COLOR["kl_0"])
     _not_logged(d, XPOS["mask"], 2.3e2, ARM_COLOR["mask"])
     d.text(
@@ -476,6 +478,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
     e.text(0.35, 1.4e-3, "none, mask: 0", va="center", fontsize=5, color="black")
     e.set_yscale("log")
     e.set_ylim(1e-3, 5e3)
+    _plain_log_ticks(e, [0.001, 0.01, 0.1, 1, 10, 100, 1000])
     e.set_xticks(xs)
     e.set_xticklabels([str(p) for p in PROBE_EPOCHS])
     e.set_xlim(-0.4, len(PROBE_EPOCHS) - 0.2)

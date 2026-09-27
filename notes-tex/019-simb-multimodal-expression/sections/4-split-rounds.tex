@@ -1,0 +1,128 @@
+%% notes-tex/019-simb-multimodal-expression/sections/4-split-rounds.tex
+%% SOURCE: experiments/019-simb-multimodal/results/v13_split_readout.json,
+%% v14_proteome_readout.json, v15_wd_readout.json, v16_joint_readout.json,
+%% v16_joint_expr_readout.json, v17_locality_readout.json, v18_hygiene_readout.json, all
+%% written by v13_split_readout.py (--round <round> [--min-epoch 1000]) on 2026-09-26 and
+%% 2026-09-27 from W&B projects torchcell_019_expr_v13, _prot_v14, _expr_v15, _prot_v16,
+%% _expr_v17, _expr_v18; the day-by-day record is
+%% notes/user.Mjvolk3.torchcell.tasks.weekly.2026.37.md (2026-09-19 to 2026-09-27).
+
+\section{The split rounds, 2026-09-13 to 2026-09-27: partition dominates every lever\secstatus{todo}}
+\label{sec:split-rounds}
+
+The rounds after the readout round share one template, registered in the expression-fit
+review of 2026-09-17: the arms of a contrast run co-resident on one card for one partition
+(a split seed, which fixes the held-out strains) and one initialization seed, so every
+contrast is paired within card; the score is the mean of the per-gene validation Pearson
+over the last sixth of the budget (the fixed window), reported beside the rolling maximum,
+which is an upward-biased order statistic; a lever is adopted only above $+0.02$ with the
+paired confidence interval excluding zero, at least three of four partitions positive, and
+the test score at the best-validation checkpoint agreeing in sign. Six rounds ran under it,
+on the IGB \file{gpu} A40s and the \file{cabbi} RTX~6000 cards, three or four runs per card.
+Every number below is the fixed-window contrast at the matched epoch unless it says
+otherwise; ``pairs'' counts partition by seed.
+
+\pfstep{The partition is the largest effect in every round} Holding the arm fixed, the
+partition mean of the reference arm spans $0.128$ to $0.164$ over the four v13 partitions
+at epoch 5{,}179, $0.116$ to $0.182$ in v17 at 1{,}199, $0.112$ to $0.163$ in v18 at
+1{,}121, and $0.064$ to $0.089$ on the proteome in v14 at 1{,}352. Folding the test strains
+into training on split 0 lifts the same validation strains from $0.164$ to $0.213$
+(\texttt{s0\_90}). No arm effect in any round reaches half of the partition spread, so a
+contrast read on one partition is a statement about that partition.
+\src{experiments/019-simb-multimodal/results/v13_split_readout.json, v14_proteome_readout.json, v17_locality_readout.json, v18_hygiene_readout.json}
+
+\pfstep{v13 and v14, the readout concatenation, a tie on both labels} \texttt{V\_concat}
+hands the per-gene readout the concatenation of the perturbed gene state, the gene's own
+embedding and the strain context in place of the perturbed state alone. On expression
+(v13, 24 runs, four partitions plus the 90/10 fold, two seeds, canceled at epoch
+5{,}179 of 6{,}000 once the run mean had moved $+0.001$ since epoch 4{,}000) the contrast
+is $+0.025$ with a paired sd of $0.052$ over twelve pairs ($t = 1.6$, seven of twelve
+positive); the sd is one collapsed reference run (\texttt{825on260}, zero from epoch
+1{,}344), and the eleven clean pairs read $+0.007$. On the Messner knockout proteome (v14,
+16 runs, four partitions, two seeds, canceled at 1{,}352 of 2{,}000 with every run past
+its peak) it is $+0.007$, sd $0.015$, eight pairs, five positive. Neither approaches the
+bar. Both rounds forfeited the end-of-run test pass; the best-validation checkpoints are
+pulled to GilaHyper and unread.
+\src{experiments/019-simb-multimodal/results/v13_split_readout.json, v14_proteome_readout.json, eval_ckpt_manifest_v13.tsv, eval_ckpt_manifest_v14.tsv}
+
+\pfstep{v15, weight decay, cut short by the five-day rule} AdamW decay $10^{-2}$ and
+$10^{-1}$ against the reference $10^{-8}$ on split seeds 1 and 2, two seeds, 6{,}000
+epochs budgeted. Four of twelve runs died on 2026-09-20 of a 60~s file-lock timeout in a
+respawned data-loader worker (the trainer reads \file{experiment_types.json} under an
+exclusive lock at every worker start, and \file{persistent_workers} was off), the two
+orphaned cards were canceled, and the survivor was stopped at the cabbi five-day limit at
+epoch 3{,}770. At the last shared epoch, 1{,}094, over four pairs: $10^{-2}$ reads
+$+0.011$ ($t = 1.7$, three of four), $10^{-1}$ reads $-0.010$ ($t = -1.6$, one of four).
+Neither is a result at that epoch; the rounds that followed run with persistent workers.
+\src{experiments/019-simb-multimodal/results/v15_wd_readout.json}
+
+\pfstep{v17, where the deletion enters, twelve pairs, not adopted} The reference adds one
+deletion vector to every gene token after the graph attention layers. \texttt{L\_self} adds
+the hop-0 indicator ``this token is the deleted gene''; \texttt{L\_prop2} adds the one- and
+two-hop reachability of the deletion along each of the nine gene-gene graphs, nineteen
+features in all, gate forced open. Four partitions, three seeds, 1{,}200 epochs, 36 runs
+on the A40s. Propagation reads $+0.012$, sd $0.033$, nine of twelve positive, with the
+confidence interval running from $-0.009$ to $+0.033$, and $+0.003$ on the test set at the
+best-validation checkpoint (seven of twelve). The self indicator reads $+0.010$ ($t = 1.4$)
+and $+0.004$ on test. At eleven pairs propagation had read $+0.020$ with nine positive; the
+twelfth (\texttt{sylu3gsw}, split 3, seed 2) peaked at $0.062$ by epoch 175 and decayed to
+$0.009$ while its two card mates reached $0.10$ and $0.14$, and the template scores all
+twelve. The layer chain cannot carry the deletion's reach on its own because no layer
+sees the deletion; whether injecting it before the graph layers recovers the eleven-pair
+number is untested.
+\src{experiments/019-simb-multimodal/results/v17_locality_readout.json}
+
+\pfstep{v18, the masked objective off and a per-gene context row, twelve pairs with one
+partial} \texttt{Y\_k0} sets \file{mask_schedule} to $[0]$, removing the masked-label
+objective that every run since v10 carried, with the plumbing left in place;
+\texttt{Y\_ctx} gives every gene an affine row over the strain context, zero-gated so step
+0 is the shared MLP. Four partitions, three seeds, 1{,}200 epochs, 36 runs on cabbi at
+one to three cards, the last task at epoch 1{,}121 when read (window 921 to 1{,}121). The
+no-mask arm reads $-0.012$, sd $0.017$, four of twelve positive, negative on every
+partition ($-0.003$, $-0.008$, $-0.010$, $-0.028$), and runs 21 to 25\,\% more epochs per
+hour than its card mates (759 against 629 epochs at one moment on one card, 360 against
+289 and 272 against 219 on two others). The context row reads $+0.005$, sd $0.015$, nine
+of twelve positive, $-0.017$ on split 0 and $+0.009$ to $+0.015$ on the other three.
+Neither clears the bar. The masked objective is dropped from the trunk for its cost, not
+for a gain, by decision of 2026-09-25; the imputation capability it served returns as its
+own round if that application returns.
+\src{experiments/019-simb-multimodal/results/v18_hygiene_readout.json}
+
+\pfstep{v16, the joint round at 500 epochs, partial on both sides} Three arms on the
+\file{fig3_proteome} partition, where every strain carries both readouts: \texttt{J\_ref},
+the proteome head alone (v14's reference at this budget); \texttt{J\_expr}, the expression
+head alone on the same strains; \texttt{J\_joint}, both heads on one trunk, the proteome
+head the checkpoint monitor. Three partitions, two seeds, 500 epochs, eighteen runs, three
+per A40. On the proteome, joint minus proteome-only reads $-0.008$, sd $0.013$, three of
+six positive ($-0.016$ on the rolling maximum, none of six). On expression, four of the six
+expression-only runs collapsed to exactly zero validation Pearson (peaks below $0.03$ by
+epochs 39 to 388), while every joint expression head trained, to $0.08$ to $0.12$, and every
+one was still rising at epoch 499 with a slope of $+0.003$ to $+0.023$ per hundred epochs;
+on the two clean pairs joint minus expression-only is $+0.007$. The proteome-only reference
+peaked between epochs 93 and 463 with its validation loss rising from epoch 180 to 230 on
+all six runs; two of the six joint proteome heads peaked at 437 and 497. So the joint arm is
+scored before its own peak on both heads while the reference is scored past its peak, and
+the 500-epoch reads are partial. Every run left \file{last.ckpt}; on 2026-09-23 all
+eighteen were continued to epoch 1{,}200 as new W\&B runs carrying \file{wandb.resumed_from}
+(IGB 2410399, \file{gpu}, three cards, launcher stage \file{resume_many}), and the readout
+stitches each continuation onto its source. The continuation started on 2026-09-26 and is
+read when it finishes.
+\src{experiments/019-simb-multimodal/results/v16_joint_readout.json, v16_joint_expr_readout.json, v16_resume_map.tsv}
+
+\pfstep{Collapse is the recurring phenomenon, and it decides calls} A run whose validation
+Pearson decays to near zero and stays there: one of 24 in v13, four of six expression-only
+runs in v16, two of 36 in v17 (\texttt{tnv3dbe4}, self indicator, split 1 seed 0, and
+\texttt{sylu3gsw}), none of 36 in v18 so far, none of the 24 joint or proteome-only runs in
+v16. Which arm collapses shows no pattern across rounds, and a single collapsed pair moved
+v17's twelve-pair contrast from above the bar to below it. Any claim built on a paired
+contrast has to state in advance how a collapsed run is scored; the template currently
+scores it as it stands. What causes the collapse is not measured.
+\src{experiments/019-simb-multimodal/results/v13_split_readout.json, v16_joint_expr_readout.json, v17_locality_readout.json, v18_hygiene_readout.json}
+
+\pfstep{Cluster rules that shaped these rounds} Every \file{cabbi} submission carries a
+walltime of at most five days; the scheduler accepted a ten-day job and the rule is
+enforced at the submit line. The \file{gpu} partition has six A40s in all and, by the IGB
+administrator's instruction of 2026-09-21, at most three of ours run at once
+(\texttt{--array=<range>\%3}), with arrays chained by dependency when two are pending so
+the two throttles do not add. Both rules are written into the launcher's header.
+\src{experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm}

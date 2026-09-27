@@ -1,0 +1,6 @@
+dataset,gene,gene_common,host_deletions,n_perturbed_genes,ploidy,perturbation,compound,inchikey,dose,dose_basis,medium,measurement_type,sick_sign_in_source,orientation_factor,response_raw,response_oriented,dataset_median_oriented,dataset_sd_oriented,response_standardized
+Vanacloig 2022,YBR058C,UBP14,PDR1+SNQ2+PDR3,4,haploid,marker_deletion,crystal violet,ZXJXZNDDNMQXFV-UHFFFAOYSA-M,not stated,IC30,SYNH3_MINUS,log2_ratio,-1,1,-3.4003,-3.4003,-0.0446,0.6994,-4.7979
+Hillenmeyer HET,YBR058C,YBR058C,none,1,diploid,engineered_copy_number,nocodazole,KYRVNWMVYQXFEU-UHFFFAOYSA-N,2.0 ug/mL,none,YPD,log2_ratio,1,-1,1.9238,-1.9238,-0.0346,0.4391,-4.3024
+Hoepfner 2014,YBR058C,YBR058C,none,1,diploid,kanmx_deletion,Epothilon B Derivative,FODFUEDBIXOGNY-AKXQMUJXSA-N,30.0 uM,IC30,YPD,sensitivity_score,-1,1,-7.1709,-7.1709,0.0,1.5994,-4.4835
+Wildenhain 2015,YMR263W,SAP30,none,1,haploid,barcoded_kanmx_deletion,3-octadecanamido-2-ethoxypropylphosphocholine,QUVZKDZYEOYGKV-UHFFFAOYSA-N,20.0 uM,none,SC,z_score,-1,1,-81.837,-81.837,-0.2698,7.5016,-10.8733
+Hillenmeyer HOM (dropped),YBR058C,YBR058C,none,1,diploid,kanmx_deletion,mitomycin c,NWIBSHFKIJFRCO-WUDYKRTCSA-N,1.0 mM,none,YPD,z_score,1,-1,56.2877,-56.2877,-0.0135,3.5288,-15.9473

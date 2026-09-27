@@ -207,6 +207,24 @@ def overlap_rows(cells: dict[str, pd.Series]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def panel_letter(ax: plt.Axes, letter: str) -> None:
+    """Bold lowercase panel letter at the OUTER top-left, per the repo figure standard.
+
+    The letter sits outside the axes so it can never land on a mark, and it is the only text
+    in the figure above 7 pt.
+    """
+    ax.text(
+        -0.16,
+        1.06,
+        letter,
+        transform=ax.transAxes,
+        fontsize=8,
+        fontweight="bold",
+        va="bottom",
+        ha="left",
+    )
+
+
 def panel_distributions(ax: plt.Axes, cells: dict[str, pd.Series]) -> None:
     """Response distributions on a shared axis, which is what makes the scale gap visible."""
     for i, name in enumerate(NAMES):
@@ -225,7 +243,8 @@ def panel_distributions(ax: plt.Axes, cells: dict[str, pd.Series]) -> None:
     ax.set_xlabel("served response (native units)")
     ax.set_ylabel("density (log)")
     ax.legend(frameon=False, fontsize=4.5, loc="lower center", ncol=2)
-    ax.set_title("a  five different scales", loc="left", fontsize=6)
+    ax.set_title("five different scales", loc="left", fontsize=6)
+    panel_letter(ax, "a")
 
 
 def panel_sd(ax: plt.Axes, dist: pd.DataFrame) -> None:
@@ -243,7 +262,8 @@ def panel_sd(ax: plt.Axes, dist: pd.DataFrame) -> None:
     ax.invert_yaxis()
     ax.set_xlabel("standard deviation of the served response")
     ratio = dist["sd"].max() / dist["sd"].min()
-    ax.set_title(f"b  widest / narrowest = {ratio:.0f}x", loc="left", fontsize=6)
+    ax.set_title(f"widest / narrowest = {ratio:.0f}x", loc="left", fontsize=6)
+    panel_letter(ax, "b")
 
 
 def panel_polarity(ax: plt.Axes, dist: pd.DataFrame) -> None:
@@ -272,11 +292,18 @@ def panel_polarity(ax: plt.Axes, dist: pd.DataFrame) -> None:
     )
     ax.axvline(0, color="black", lw=0.5)
     ax.set_xlabel("skew of the response")
-    ax.set_title("c  tail falls on the declared side", loc="left", fontsize=6)
+    ax.set_title("tail falls on the declared side", loc="left", fontsize=6)
+    panel_letter(ax, "c")
 
 
 def panel_matrix(
-    ax: plt.Axes, ov: pd.DataFrame, value: str, title: str, fmt: str, log: bool
+    ax: plt.Axes,
+    ov: pd.DataFrame,
+    value: str,
+    title: str,
+    fmt: str,
+    log: bool,
+    letter: str,
 ) -> None:
     """One lower-triangular dataset-by-dataset matrix."""
     n = len(NAMES)
@@ -303,6 +330,7 @@ def panel_matrix(
     ax.set_xticklabels([LABEL[x] for x in NAMES], rotation=45, ha="right")
     ax.set_yticklabels([LABEL[x] for x in NAMES])
     ax.set_title(title, loc="left", fontsize=6)
+    panel_letter(ax, letter)
     cb = ax.figure.colorbar(im, ax=ax, fraction=0.04, pad=0.03)
     cb.ax.tick_params(labelsize=4.5)
 
@@ -328,7 +356,8 @@ def panel_agreement(ax: plt.Axes, ov: pd.DataFrame) -> None:
     ax.set_ylim(-lim, lim)
     ax.set_xlabel("Spearman as served")
     ax.set_ylabel("Spearman after orientation")
-    ax.set_title("f  orienting lifts every pair", loc="left", fontsize=6)
+    ax.set_title("orienting lifts every pair", loc="left", fontsize=6)
+    panel_letter(ax, "f")
 
 
 def make_figure(
@@ -353,9 +382,9 @@ def make_figure(
     panel_distributions(axes[0, 0], cells)
     panel_sd(axes[0, 1], dist)
     panel_polarity(axes[0, 2], dist)
-    panel_matrix(axes[1, 0], ov, "shared_cells", "d  shared cells", ",.0f", True)
+    panel_matrix(axes[1, 0], ov, "shared_cells", "shared cells", ",.0f", True, "d")
     panel_matrix(
-        axes[1, 1], ov, "spearman_oriented", "e  oriented agreement", ".3f", False
+        axes[1, 1], ov, "spearman_oriented", "oriented agreement", ".3f", False, "e"
     )
     panel_agreement(axes[1, 2], ov)
     for ax in axes.ravel():

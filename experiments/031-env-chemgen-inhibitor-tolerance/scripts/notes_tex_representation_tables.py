@@ -392,13 +392,13 @@ def t11_unification() -> None:
                 "reports": d["measurement_type"].replace("_", " "),
                 "sd": f"{d['sd']:.2f}",
                 "skew": f"{d['skew']:+.1f}",
-                "sick": "negative" if sick < 0 else "positive",
-                "orient": f"{sick:+d}",
+                "sick is": "negative" if sick < 0 else "positive",
+                "$o_k$": f"{-sick:+d}",
             }
         )
     write(
         "t11-unification",
-        tex_table(pd.DataFrame(rows), align="lllllrrll"),
+        tex_table(pd.DataFrame(rows), align="lllllrrll", raw_header=True),
         "dataset_distributions.csv, genotype_overlap.csv and dose_axis_summary.csv from "
         "dataset_joinability.py, exploratory_overlap_panels.py and "
         "environment_axis_coverage.py",
@@ -525,6 +525,120 @@ def t14_hoepfner_ceiling() -> None:
     )
 
 
+#: The controlled vocabulary, alphabetical rather than thematic so a reader can look a term
+#: up. Every term here appears in a figure label or a table header somewhere in the document,
+#: which is the reason it is defined rather than left to context.
+VOCABULARY: list[tuple[str, str]] = [
+    (
+        "calculated logP",
+        "The octanol-water partition coefficient estimated from structure by the Crippen "
+        "method in RDKit. It measures lipophilicity: a negative value is water-preferring, "
+        "a positive value is fat-preferring. Nothing is measured here; it is computed.",
+    ),
+    (
+        "ceiling",
+        "The highest correlation any model could reach against the noise-free response, "
+        "given how noisy the measurement is. It is the square root of the reliability. A "
+        "score of 0.31 against a ceiling of 0.84 means the model captured 37 percent of "
+        "what the data allows, not 31 percent of the truth.",
+    ),
+    (
+        "cell",
+        "One (gene, compound) pair. Used when counting what two datasets both measured, so "
+        "that a comparison is between the same gene under the same compound.",
+    ),
+    (
+        "compound cold-start",
+        "An evaluation that holds out every record of one compound at a time, so the model "
+        "must say something about a molecule it never saw dosed. This is the split that "
+        "matters for predicting a hydrolysate inhibitor.",
+    ),
+    (
+        "HIP, HOP",
+        "The two assays of a pooled chemogenomic screen. HIP (haploinsufficiency profiling) "
+        "uses heterozygous diploids, one wild-type copy left. HOP (homozygous profiling) "
+        "uses homozygous diploids, both copies gone.",
+    ),
+    (
+        "HOM, HET",
+        "The two arms of Hillenmeyer 2008, its homozygous and heterozygous collections, "
+        "released as separate files with different readouts and handled here as separate "
+        "datasets. The homozygous arm is the one dropped.",
+    ),
+    (
+        "MADL score",
+        "Median absolute deviation logarithmic score, the per-experiment readout Hoepfner "
+        "reports: the strain's log abundance ratio minus the median over all strains in the "
+        "sample, divided by the median absolute deviation of that same set.",
+    ),
+    (
+        "orientation factor",
+        "Plus or minus one per dataset, multiplied into the response so that afterwards a "
+        "more negative value means a sicker strain everywhere. It is a sign flip on a "
+        "continuous number, not a threshold and not a class label.",
+    ),
+    (
+        "reliability",
+        "The share of a measurement's variance that is real rather than noise. Estimated "
+        "either from a served standard error or from the agreement between two independent "
+        "measurements of the same condition.",
+    ),
+    (
+        "sensitized host",
+        "A strain whose drug-efflux regulators are deleted so that compounds accumulate "
+        "instead of being pumped out. Vanacloig deletes PDR1, PDR3 and SNQ2, so every one "
+        "of its genotypes carries those three deletions plus the gene being queried, which "
+        "is why its records perturb four genes rather than one.",
+    ),
+]
+
+
+def t15_vocabulary() -> None:
+    """The controlled vocabulary, defined before the terms are used in figures."""
+    rows = [{"term": t, "meaning": d} for t, d in VOCABULARY]
+    df = pd.DataFrame(rows)
+    body = "\n".join(
+        f"{esc(r['term'])} & {esc(r['meaning'])} \\\\" for r in df.to_dict("records")
+    )
+    text = (
+        "\\begin{tabular}{p{3.0cm}p{13.4cm}}\n\\toprule\n"
+        "\\textbf{term} & \\textbf{meaning} \\\\\n\\midrule\n"
+        f"{body}\n\\bottomrule\n\\end{{tabular}}\n"
+    )
+    write(
+        "t15-vocabulary",
+        text,
+        "VOCABULARY in notes_tex_representation_tables.py (curated definitions; the "
+        "measured quantities they name are produced by the scripts cited elsewhere)",
+    )
+
+
+def t16_worked_example() -> None:
+    """One real record per dataset carried through orientation and standardization."""
+    w = pd.read_csv(osp.join(RESULTS, "worked_example_records.csv"))
+    rows = [
+        {
+            "dataset": r["dataset"].replace(" (dropped)", ""),
+            "strain": f"{r['gene']} ({r['gene_common']})"
+            + (" + host" if r["host_deletions"] != "none" else ""),
+            "ploidy": str(r["ploidy"])[:3],
+            "compound": str(r["compound"])[:18],
+            "reports": str(r["measurement_type"]).replace("_", " "),
+            "raw": f"{r['response_raw']:+.2f}",
+            "$o_k$": f"{int(r['orientation_factor']):+d}",
+            r"$\tilde y$": f"{r['response_standardized']:+.2f}",
+        }
+        for _, r in w.iterrows()
+    ]
+    write(
+        "t16-worked-example",
+        tex_table(
+            pd.DataFrame(rows), align="p{2.6cm}p{3.0cm}llp{2.3cm}rrr", raw_header=True
+        ),
+        "worked_example_records.csv from worked_example_records.py",
+    )
+
+
 def main() -> None:
     t1_datasets()
     t2_chemical_space()
@@ -540,6 +654,8 @@ def main() -> None:
     t12_cross_overlap()
     t13_per_dataset_baselines()
     t14_hoepfner_ceiling()
+    t15_vocabulary()
+    t16_worked_example()
 
 
 if __name__ == "__main__":

@@ -299,8 +299,40 @@ def run_dataset(name: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def panel_letter(ax: plt.Axes, letter: str) -> None:
+    """Bold lowercase panel letter at the OUTER top-left, per the repo figure standard.
+
+    The letter sits outside the axes so it can never land on a mark, and it is the only
+    text in the figure above 7 pt.
+    """
+    ax.text(
+        -0.16,
+        1.06,
+        letter,
+        transform=ax.transAxes,
+        fontsize=8,
+        fontweight="bold",
+        va="bottom",
+        ha="left",
+    )
+
+
+def hoepfner_ceiling() -> float:
+    """Hoepfner's cross-screen ceiling, which its served records cannot supply.
+
+    Hoepfner releases no per-record uncertainty, so the reliability route used for the other
+    datasets is unavailable. ``hoepfner_replicate_ceiling.py`` recovers one from conditions
+    screened twice in different studies; see that script for why the two estimators are not
+    the same quantity.
+    """
+    path = osp.join(RESULTS_DIR, "hoepfner_cross_screen_reliability.csv")
+    if not osp.exists(path):
+        return float("nan")
+    return float(pd.read_csv(path)["ceiling_r_truth"].median())
+
+
 def make_figure(summary: pd.DataFrame) -> None:
-    """Encoder comparison: per dataset, per encoder, against the null and the ceiling."""
+    """Six panels on the molecule encoders: what they score, what they cover, how they rank."""
     mpl.rcParams.update(
         {
             "font.family": "Arial",
@@ -313,12 +345,14 @@ def make_figure(summary: pd.DataFrame) -> None:
             "svg.fonttype": "none",
         }
     )
-    cent = summary[(summary["target"] == "centered") & (summary["model"] == "ridge")]
+    cent = summary[(summary["target"] == "centered") & (summary["features"] != "none")]
+    ridge = cent[cent["model"] == "ridge"]
     encoders = sorted(cent["features"].unique())
     present = [n for n in NAMES if n in set(cent["dataset"])]
+    short = [e.replace("_", " ") for e in encoders]
 
     fig, axes = plt.subplots(
-        2, 2, figsize=(mm_to_in(179.0), mm_to_in(110.0)), constrained_layout=True
+        2, 3, figsize=(mm_to_in(179.0), mm_to_in(112.0)), constrained_layout=True
     )
 
     # (a) every encoder, every dataset, ridge on the centered target
@@ -326,7 +360,7 @@ def make_figure(summary: pd.DataFrame) -> None:
     width = 0.8 / max(len(present), 1)
     x = np.arange(len(encoders))
     for i, name in enumerate(present):
-        sub = cent[cent["dataset"] == name].set_index("features")
+        sub = ridge[ridge["dataset"] == name].set_index("features")
         vals = [float(sub["spearman_median"].get(e, np.nan)) for e in encoders]
         ax.bar(
             x + i * width - 0.4 + width / 2,
@@ -338,19 +372,19 @@ def make_figure(summary: pd.DataFrame) -> None:
             label=LABEL[name],
         )
     ax.set_xticks(x)
-    ax.set_xticklabels([e.replace("_", " ") for e in encoders], rotation=45, ha="right")
-    ax.set_ylabel("Spearman, compound cold, centered")
+    ax.set_xticklabels(short, rotation=45, ha="right")
+    ax.set_ylabel("Spearman (ridge)")
     ax.axhline(0, color="black", lw=0.5)
-    ax.legend(frameon=False, fontsize=4.5, ncol=2)
-    ax.set_title("a  molecule features by encoder and dataset", loc="left", fontsize=6)
+    ax.legend(frameon=False, fontsize=4.5, ncol=2, loc="upper left")
+    ax.set_title("ridge by encoder and dataset", loc="left", fontsize=6)
+    panel_letter(ax, "a")
 
-    # (b) best model against the no-feature null, per dataset
+    # (b) best molecule feature against the no-feature null, per dataset
     ax = axes[0, 1]
     rows = []
     for name in present:
         d = summary[(summary["dataset"] == name) & (summary["target"] == "centered")]
-        feat = d[d["features"] != "none"]
-        best = feat["spearman_median"].max()
+        best = d[d["features"] != "none"]["spearman_median"].max()
         null = d[d["model"] == "random_neighbor"]["spearman_median"].median()
         rows.append((name, null, best))
     y = np.arange(len(rows))
@@ -375,28 +409,27 @@ def make_figure(summary: pd.DataFrame) -> None:
     ax.set_yticks(y)
     ax.set_yticklabels([LABEL[r[0]] for r in rows])
     ax.invert_yaxis()
+    ax.set_xlim(0, 1.18 * max(r[2] for r in rows))
     ax.axvline(0, color="black", lw=0.5)
     ax.set_xlabel("Spearman, centered target")
-    ax.legend(frameon=False, fontsize=4.5, loc="lower right")
-    ax.set_title("b  every dataset beats its null", loc="left", fontsize=6)
+    # upper right INSIDE the axes: the top bar is the shortest of the five, so the legend
+    # sits over empty plot area, and anchoring it outside collided with the panel title
+    ax.legend(frameon=False, fontsize=4.5, loc="upper right")
+    ax.set_title("every dataset beats its null", loc="left", fontsize=6)
+    panel_letter(ax, "b")
 
-    # (c) ridge against kNN, one point per dataset and encoder
-    ax = axes[1, 0]
-    piv = (
-        summary[summary["target"] == "centered"]
-        .pivot_table(
-            index=["dataset", "features"], columns="model", values="spearman_median"
-        )
-        .reset_index()
-    )
-    piv = piv[piv["features"] != "none"]
+    # (c) ridge against nearest-neighbor transfer
+    ax = axes[0, 2]
+    piv = cent.pivot_table(
+        index=["dataset", "features"], columns="model", values="spearman_median"
+    ).reset_index()
     knn_col = "knn5" if "knn5" in piv.columns else "knn1"
     for name in present:
         sub = piv[piv["dataset"] == name]
         ax.scatter(
             sub[knn_col],
             sub["ridge"],
-            s=8,
+            s=7,
             color=COLOR[name],
             edgecolor="black",
             lw=0.3,
@@ -408,53 +441,127 @@ def make_figure(summary: pd.DataFrame) -> None:
     ax.plot([lo, hi], [lo, hi], color="#666666", lw=0.5, ls="--")
     ax.set_xlabel(f"{knn_col} Spearman")
     ax.set_ylabel("ridge Spearman")
-    ax.legend(frameon=False, fontsize=4.5, loc="upper left")
-    ax.set_title("c  ridge against neighbor transfer", loc="left", fontsize=6)
+    ax.annotate("ridge wins", (lo + 0.02, hi - 0.02), fontsize=4.5, color="#666666")
+    ax.annotate("kNN wins", (hi - 0.09, lo + 0.01), fontsize=4.5, color="#666666")
+    ax.set_title("ridge against neighbor transfer", loc="left", fontsize=6)
+    panel_letter(ax, "c")
 
-    # (d) fraction of the ceiling reached, where a ceiling exists
-    ax = axes[1, 1]
-    have = summary[
-        (summary["target"] == "centered")
-        & (summary["features"] != "none")
-        & summary["ceiling_median"].notna()
-    ]
+    # (d) headroom against the ceiling, with Hoepfner's cross-screen estimate
+    ax = axes[1, 0]
+    hoep = hoepfner_ceiling()
     rows = []
     for name in present:
-        sub = have[have["dataset"] == name]
-        if sub.empty:
-            rows.append((name, np.nan, np.nan))
-            continue
-        best = sub.loc[sub["spearman_median"].idxmax()]
-        rows.append(
-            (name, float(best["spearman_median"]), float(best["ceiling_median"]))
-        )
+        sub = cent[cent["dataset"] == name]
+        best = float(sub["spearman_median"].max())
+        cap = float(sub["ceiling_median"].median())
+        estimated = False
+        if not np.isfinite(cap) and name == "hoepfner2014":
+            cap, estimated = hoep, True
+        rows.append((name, best, cap, estimated))
     y = np.arange(len(rows))
-    for i, (name, best, cap) in enumerate(rows):
+    for i, (name, best, cap, estimated) in enumerate(rows):
         if not np.isfinite(cap):
-            ax.text(
-                0.02,
-                i,
-                "no served uncertainty",
-                fontsize=5,
-                va="center",
-                color="#A24A46",
-            )
             continue
-        ax.barh(i, cap, color="#F5F5F5", edgecolor="#666666", lw=0.4)
-        ax.barh(i, best, color=COLOR[name], edgecolor="black", lw=0.4)
-        ax.text(
-            cap + 0.01,
+        ax.barh(
             i,
-            f"{100 * best / cap:.0f}% of ceiling",
-            fontsize=4.5,
-            va="center",
+            cap,
+            color="#F5F5F5",
+            edgecolor="#666666",
+            lw=0.4,
+            hatch="///" if estimated else "",
         )
+        ax.barh(i, best, color=COLOR[name], edgecolor="black", lw=0.4)
+        ax.text(cap + 0.02, i, f"{100 * best / cap:.0f}%", fontsize=4.5, va="center")
     ax.set_yticks(y)
     ax.set_yticklabels([LABEL[r[0]] for r in rows])
     ax.invert_yaxis()
     ax.set_xlim(0, 1.15)
-    ax.set_xlabel("Spearman (bar) against the reliability ceiling (outline)")
-    ax.set_title("d  headroom, where a ceiling exists", loc="left", fontsize=6)
+    ax.set_xlabel("score (solid) against ceiling (outline)")
+    ax.set_title("headroom; hatched = cross-screen", loc="left", fontsize=6)
+    panel_letter(ax, "d")
+
+    # (e) coverage: the dosed compounds against the Yeast9 metabolites
+    ax = axes[1, 1]
+    cov = pd.read_csv(osp.join(RESULTS_DIR, "embedding_coverage.csv"))
+    comp = cov.groupby("encoder").agg(
+        emb=("n_embedded", "sum"), tot=("n_compounds", "sum")
+    )
+    y9 = pd.read_csv(osp.join(RESULTS_DIR, "yeast9_encoder_coverage.csv")).set_index(
+        "encoder"
+    )
+    xs = np.arange(len(encoders))
+    a = [
+        100 * comp["emb"].get(e, np.nan) / comp["tot"].get(e, np.nan) for e in encoders
+    ]
+    b = [
+        100
+        * float(y9["n_embedded"].get(e, np.nan))
+        / float(y9["n_attempted"].get(e, np.nan))
+        for e in encoders
+    ]
+    ax.bar(
+        xs - 0.2,
+        a,
+        width=0.4,
+        color=PLOT_PALETTE[0],
+        edgecolor="black",
+        lw=0.3,
+        label="dosed compounds",
+    )
+    ax.bar(
+        xs + 0.2,
+        b,
+        width=0.4,
+        color=PLOT_PALETTE[4],
+        edgecolor="black",
+        lw=0.3,
+        label="Yeast9 metabolites",
+    )
+    ax.set_xticks(xs)
+    ax.set_xticklabels(short, rotation=45, ha="right")
+    ax.set_ylabel("percent embedded")
+    ax.set_ylim(80, 101)
+    ax.legend(frameon=False, fontsize=4.5, loc="lower left")
+    ax.set_title("coverage of both molecule pools", loc="left", fontsize=6)
+    panel_letter(ax, "e")
+
+    # (f) does the encoder ranking transfer between datasets?
+    ax = axes[1, 2]
+    rank = (
+        ridge.pivot_table(index="features", columns="dataset", values="spearman_median")
+        .rank(ascending=False)
+        .reindex(encoders)
+    )
+    mean_rank = rank.mean(axis=1)
+    order = mean_rank.sort_values().index
+    yy = np.arange(len(order))
+    for i, enc in enumerate(order):
+        vals = rank.loc[enc].dropna().to_numpy()
+        ax.plot([vals.min(), vals.max()], [i, i], color="#666666", lw=0.8, zorder=2)
+        ax.scatter(
+            vals,
+            [i] * len(vals),
+            s=5,
+            color=PLOT_PALETTE[2],
+            edgecolor="black",
+            lw=0.25,
+            zorder=3,
+        )
+        ax.scatter(
+            [mean_rank[enc]],
+            [i],
+            s=14,
+            color=PLOT_PALETTE[1],
+            edgecolor="black",
+            lw=0.4,
+            zorder=4,
+        )
+    ax.set_yticks(yy)
+    ax.set_yticklabels([e.replace("_", " ") for e in order])
+    ax.invert_yaxis()
+    ax.set_xlabel("rank among encoders (1 = best), per dataset")
+    ax.set_title("the ranking does not transfer", loc="left", fontsize=6)
+    panel_letter(ax, "f")
 
     for ax in axes.ravel():
         for side in ("top", "right", "bottom", "left"):

@@ -1,6 +1,6 @@
 %% notes-tex/031-unified-representation/sections/3b-joinability.tex
 
-\section{Can these datasets be joined at all\secstatus{todo}}
+\section{Can these datasets be joined at all\secstatus{tent}}
 \label{sec:joinability}
 
 Pooling is an assertion about the LABEL, not only about the input. Two records that measure
@@ -99,11 +99,22 @@ datasets.
 
 %% SOURCE: notes/experiments.031-env-chemgen-inhibitor-tolerance.mermaid.dataset-unification.md,
 %% rendered by notes/assets/publish/scripts/mermaid_pdf.sh through `make diagrams`.
-\tcfig{figures/dataset_unification.pdf}{One row per kept dataset: what the record is, what the
-source reports, and the common form both are mapped into. The input tuple and the scalar
-target are identical for every row. The only per-source objects are the declared sick-sign
-$s_k$, the training-split scale $\mathrm{sd}_k$ and the source token $t$. The per-dataset
-counts are in Table~\ref{tab:unification}.}{fig:unification}
+\tcfig{figures/dataset_unification.pdf}{One row per kept dataset, read left to right through
+four layers. \textbf{Layer A}, purple, is what the record IS: the strain, its ploidy, and the
+size of the gene and compound panel. Vanacloig's four deletions are the queried gene plus the
+three efflux regulators that make its host drug-sensitive. \textbf{Layer B}, yellow, is what
+the SOURCE REPORTS, in its own units, with its own sign convention and its own spread; the two
+$\log_2$ ratios point in opposite directions because one is taken treated over control and
+the other control over treated. \textbf{Layer C}, orange, is the TRANSFORM and the shared
+form it produces. The orientation factor $o_k$ is a multiplication by plus or minus one, so
+three datasets pass through unchanged and only Hillenmeyer HET flips; it is a sign flip on a
+continuous number and never a threshold, and the target stays a real number that the model
+regresses on. The median and standard deviation come from the training split alone.
+\textbf{Layer D}, red, is what is given up: the homozygous arm of Hillenmeyer 2008, dropped
+because its heterozygous sibling already covers 80 percent of its genes, and the measured
+limit that orienting buys a shared scale rather than a shared response. MADL is the median
+absolute deviation logarithmic score, Hoepfner's per-experiment readout. Per-dataset counts
+are in Table~\ref{tab:unification}.}{fig:unification}
 
 \notesec{Where the datasets overlap on every other axis}
 Figure~\ref{fig:overlap} puts the same question to the genotype, chemistry and dose axes.
@@ -122,11 +133,12 @@ convertible concentration at all.
 \textbf{(a)} Share of the row dataset's genes that the column dataset also measures, with each
 dataset's gene count. \textbf{(b)} The same for compounds. \textbf{(c)} Molecular weight against
 calculated logP for every dosed compound, the Vanacloig panel outlined. \textbf{(d)} Heavy
-atom count; the shaded band is where a substructure fingerprint carries almost no bits.
+atom count; the shaded band below 8 heavy atoms is where a substructure fingerprint carries
+almost no bits, which is where most of the hydrolysate panel sits.
 \textbf{(e)} Each Vanacloig compound's best non-exact Tanimoto in the partner union against its
 size. \textbf{(f)} The molar range each dataset spans, 1st to 99th percentile, with the share
-of records stating a convertible dose. \textbf{(g)} Distinct compounds against distinct genes,
-point area by measured cells. \textbf{(h)} Perturbation class by dataset.}{fig:overlap}
+of records stating a convertible dose. \textbf{(g)} Distinct compounds against distinct
+genes, with each dataset's measured cell count in its label. \textbf{(h)} Perturbation class by dataset.}{fig:overlap}
 
 \notesec{Per-dataset baselines, because a pooled claim needs a per-dataset reference}
 Table~\ref{tab:perdataset} runs the compound cold-start baselines of
@@ -219,10 +231,20 @@ the three-dimensional encoder cannot embed every compound in them.}
 
 %% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/per_dataset_baselines.py ->
 %% encoder_comparison.svg, converted by `make plots`.
-\tcfig{figures/encoder_comparison.pdf}{Molecule encoders compared on the compound cold-start,
-centered target. \textbf{(a)} Every encoder and dataset under ridge. \textbf{(b)} The best
-molecule feature against the no-feature null per dataset. \textbf{(c)} Ridge against
-nearest-neighbor transfer, one point per dataset and encoder; points below the diagonal are
-datasets where neighbor transfer wins, which is every Wildenhain point. \textbf{(d)} The best
-score against the reliability ceiling where the source serves an uncertainty on enough
-cells.}{fig:encoders}
+\tcfig{figures/encoder_comparison.pdf}{Molecule encoders on the compound cold-start, centered
+target. \textbf{(a)} Every encoder and dataset under ridge. \textbf{(b)} The best molecule
+feature against the no-feature null per dataset; every dataset clears its null, and
+Wildenhain's null is by far the highest because a random neighbor among 5{,}170 compounds is
+already informative. \textbf{(c)} Ridge against nearest-neighbor transfer, one point per
+dataset and encoder; points below the diagonal are datasets where neighbor transfer wins,
+which is every Wildenhain point and most Hillenmeyer points. \textbf{(d)} The best score
+against the ceiling. The Hoepfner bar is hatched because its ceiling comes from the
+cross-screen estimator of Table~\ref{tab:hoepfnerceiling} rather than from a served
+uncertainty, so it is not the same quantity as the other four. \textbf{(e)} What share of each
+molecule pool an encoder can embed: the 5{,}472 dosed compounds and the 894 structure-bearing
+Yeast9 metabolites. Only the three-dimensional encoder falls short, on the ions and metal salts
+it cannot build a conformer for, so coverage is not what separates these encoders.
+\textbf{(f)} Each encoder's rank among the twelve on each dataset, the line spanning its best
+and worst rank and the large mark its mean. The spans overlap almost completely, so the
+encoder that wins on one dataset is not the encoder that wins on another and no single choice
+is supported across all five.}{fig:encoders}

@@ -94,12 +94,48 @@ class Arm(BaseModel):
 
 
 ARMS: list[Arm] = [
-    # Round 1b: what the current figure still needs. The random arms carry five seeds: each
-    # seed is a different rewiring as well as a different initialization, so their spread
-    # is the widest in the study (0.011 at n = 2) and the effect they must resolve is 0.02.
-    # The random arm at 1e-3 ran the same
-    # 30-epoch protocol as every other arm (30 logged epochs on both complete seeds); its
-    # third seed finishes on its own and needs no submission.
+    # Round 1b finishes the current figure and answers its two questions where the effect is:
+    # is the prior better than the mask (the ladder top), do the graphs help (the random
+    # control at the lambda that separates). The random arms carry five seeds: each seed is
+    # a different rewiring as well as a different initialization, so their spread is the
+    # widest in the study (0.011 at n = 2) and the effect they must resolve is 0.02. The
+    # round-1 random arm ran the full 30-epoch protocol on both complete seeds.
+    Arm(
+        round="1b",
+        group="do graphs help",
+        name="random graphs, KL 1",
+        change="rand_031, graph_reg_lambda=1",
+        needs_code="",
+        seeds=5,
+        figure="F1 a-c, f",
+    ),
+    Arm(
+        round="1b",
+        group="do graphs help",
+        name="random graphs, KL 0.1",
+        change="rand_031, graph_reg_lambda=0.1",
+        needs_code="",
+        seeds=5,
+        figure="F1 a-c, f",
+    ),
+    Arm(
+        round="1b",
+        group="prior vs mask",
+        name="KL 10",
+        change="graph_reg_lambda=10",
+        needs_code="",
+        seeds=3,
+        figure="F1 a-e",
+    ),
+    Arm(
+        round="1b",
+        group="prior vs mask",
+        name="KL 100",
+        change="graph_reg_lambda=100",
+        needs_code="",
+        seeds=3,
+        figure="F1 a-e",
+    ),
     Arm(
         round="1b",
         group="completion",
@@ -109,43 +145,45 @@ ARMS: list[Arm] = [
         seeds=1,
         figure="F1 a-e",
     ),
+    # Round 2: reach and direction, for both mechanisms. The k-hop target of the prior is the
+    # row-normalized indicator of the k-hop neighborhood (self-loops kept), the same support
+    # the k-hop mask uses, so the two mechanisms are compared on identical targets.
     Arm(
-        round="1b",
-        group="biology vs conditioning",
-        name="random graphs, KL 1",
-        change="rand_031, graph_reg_lambda=1",
-        needs_code="",
-        seeds=5,
-        figure="F1 a-c, F1 f",
-    ),
-    Arm(
-        round="1b",
-        group="biology vs conditioning",
-        name="random graphs, KL 0.1",
-        change="rand_031, graph_reg_lambda=0.1",
-        needs_code="",
-        seeds=5,
-        figure="F1 a-c",
-    ),
-    Arm(
-        round="1b",
-        group="ladder top",
-        name="KL 10",
-        change="graph_reg_lambda=10",
-        needs_code="",
+        round="2",
+        group="reach",
+        name="mask, 2-hop",
+        change="attention_mask hops=2",
+        needs_code="k-hop support: reachability within k steps, self-loops kept",
         seeds=3,
-        figure="F1 a-e",
+        figure="F2 a-f",
     ),
     Arm(
-        round="1b",
-        group="ladder top",
-        name="KL 100",
-        change="graph_reg_lambda=100",
-        needs_code="",
+        round="2",
+        group="reach",
+        name="mask, 3-hop",
+        change="attention_mask hops=3",
+        needs_code="same",
         seeds=3,
-        figure="F1 a-e",
+        figure="F2 a-f",
     ),
-    # Round 2: how the graphs enter (the new mechanism figure)
+    Arm(
+        round="2",
+        group="reach",
+        name="KL 1, 2-hop target",
+        change="graph_regularization hops=2",
+        needs_code="k-hop target: row-normalized k-hop indicator",
+        seeds=3,
+        figure="F2 a-f",
+    ),
+    Arm(
+        round="2",
+        group="reach",
+        name="KL 1, 3-hop target",
+        change="graph_regularization hops=3",
+        needs_code="same",
+        seeds=3,
+        figure="F2 a-f",
+    ),
     Arm(
         round="2",
         group="direction",
@@ -164,70 +202,61 @@ ARMS: list[Arm] = [
         seeds=3,
         figure="F2 a-c",
     ),
+    # Round 3: placement (optional), budget, representation, width
     Arm(
-        round="2",
-        group="reach",
-        name="mask, two-hop",
-        change="attention_mask hops=2",
-        needs_code="support A or A squared, self-loops kept",
-        seeds=3,
-        figure="F2 a-c",
-    ),
-    Arm(
-        round="2",
-        group="placement",
+        round="3",
+        group="placement (optional)",
         name="mask, layers 1-2",
         change="attention_mask layers=[1,2]",
         needs_code="",
         seeds=3,
-        figure="F2 a-f",
+        figure="F3 a-c",
     ),
     Arm(
-        round="2",
-        group="placement",
+        round="3",
+        group="placement (optional)",
         name="mask, layers 3-4",
         change="attention_mask layers=[3,4]",
         needs_code="",
         seeds=3,
-        figure="F2 a-f",
+        figure="F3 a-c",
     ),
     Arm(
-        round="2",
-        group="placement",
+        round="3",
+        group="placement (optional)",
         name="mask, layers 1-4",
         change="attention_mask layers=[1,2,3,4]",
         needs_code="",
         seeds=3,
-        figure="F2 a-f",
+        figure="F3 a-c",
     ),
     Arm(
-        round="2",
-        group="placement",
+        round="3",
+        group="placement (optional)",
         name="KL 1, layers 1-2",
         change="graph_reg_lambda=1, graph_reg_layer=[1,2]",
         needs_code="",
         seeds=3,
-        figure="F2 a-f",
+        figure="F3 a-c",
     ),
     Arm(
-        round="2",
-        group="placement",
+        round="3",
+        group="placement (optional)",
         name="KL 1, layers 3-4",
         change="graph_reg_lambda=1, graph_reg_layer=[3,4]",
         needs_code="",
         seeds=3,
-        figure="F2 a-f",
+        figure="F3 a-c",
     ),
     Arm(
-        round="2",
-        group="placement",
+        round="3",
+        group="placement (optional)",
         name="KL 1, layers 1-4",
         change="graph_reg_lambda=1, graph_reg_layer=[1,2,3,4]",
         needs_code="",
         seeds=3,
-        figure="F2 a-f",
+        figure="F3 a-c",
     ),
-    # Round 3: budget, and whether the prior still helps on the representation we intend to use
     Arm(
         round="3",
         group="budget",
@@ -236,7 +265,7 @@ ARMS: list[Arm] = [
         needs_code="",
         seeds=3,
         epochs=60,
-        figure="F3 a-b",
+        figure="F3 d-e",
     ),
     Arm(
         round="3",
@@ -246,7 +275,7 @@ ARMS: list[Arm] = [
         needs_code="",
         seeds=3,
         epochs=60,
-        figure="F3 a-b",
+        figure="F3 d-e",
     ),
     Arm(
         round="3",
@@ -256,25 +285,65 @@ ARMS: list[Arm] = [
         needs_code="",
         seeds=3,
         epochs=60,
-        figure="F3 a-b",
+        figure="F3 d-e",
     ),
     Arm(
         round="3",
         group="representation",
         name="composite embedding, no penalty",
-        change="embfit_035 minus fitness head, graph_reg_lambda=0",
+        change="embfit_035 (no fitness head), graph_reg_lambda=0",
         needs_code="",
         seeds=3,
-        figure="F3 e",
+        figure="F3 f",
     ),
     Arm(
         round="3",
         group="representation",
         name="composite embedding, KL 1",
-        change="embfit_035 minus fitness head, graph_reg_lambda=1",
+        change="embfit_035 (no fitness head), graph_reg_lambda=1",
         needs_code="",
         seeds=3,
-        figure="F3 e",
+        figure="F3 f",
+    ),
+    Arm(
+        round="3",
+        group="width",
+        name="hidden 360, table, no penalty",
+        change="hidden_channels=360, graph_reg_lambda=0",
+        needs_code="",
+        seeds=3,
+        epochs=30,
+        figure="F3 f",
+    ),
+    Arm(
+        round="3",
+        group="width",
+        name="hidden 360, table, KL 1",
+        change="hidden_channels=360, graph_reg_lambda=1",
+        needs_code="",
+        seeds=3,
+        epochs=30,
+        figure="F3 f",
+    ),
+    Arm(
+        round="3",
+        group="width",
+        name="hidden 360, composite, no penalty",
+        change="hidden_channels=360, embfit_035 (no fitness head), graph_reg_lambda=0",
+        needs_code="re-match preprocessor width",
+        seeds=3,
+        epochs=30,
+        figure="F3 f",
+    ),
+    Arm(
+        round="3",
+        group="width",
+        name="hidden 360, composite, KL 1",
+        change="hidden_channels=360, embfit_035 (no fitness head), graph_reg_lambda=1",
+        needs_code="re-match preprocessor width",
+        seeds=3,
+        epochs=30,
+        figure="F3 f",
     ),
 ]
 
@@ -397,7 +466,7 @@ def wireframe() -> None:
     )
     # F2: how the graphs enter
     f2 = [fig.add_subplot(gs[1, i]) for i in range(6)]
-    cols = "mechanism (12 columns)"
+    cols = "mechanism, reach and direction (9 columns)"
     _panel(
         f2[0],
         "F2a  Pearson, three readings",
@@ -425,7 +494,7 @@ def wireframe() -> None:
         "F2d  val Pearson by epoch",
         "epoch",
         "Pearson",
-        "none, mask L1, L3-4, L1-4,\nKL1 L1, L3-4, L1-4\n(the curves move here\nfrom F1 g)",
+        "none, mask 1/2/3-hop,\nKL1 1/2/3-hop\n(the curves move here\nfrom F1 g)",
         color=BLUE,
     )
     _panel(f2[4], "F2e  train Pearson by epoch", "epoch", "Pearson", "same arms")
@@ -440,7 +509,13 @@ def wireframe() -> None:
         "none, mask, KL 1;\ndoes KL 1 keep rising,\ndoes none keep falling",
         color=BLUE,
     )
-    _panel(f3[1], "F3b  60 epochs, val loss", "epoch (0-59)", "point loss", "same arms")
+    _panel(
+        f3[1],
+        "F3b  placement curves",
+        "epoch",
+        "Pearson",
+        "val Pearson by epoch\nfor the placement arms",
+    )
     _panel(
         f3[2],
         "F3c  discovery",

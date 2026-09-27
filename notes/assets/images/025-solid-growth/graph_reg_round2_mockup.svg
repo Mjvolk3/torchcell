@@ -392,7 +392,7 @@ z
    </g>
    <g id="matplotlib.axis_13">
     <g id="text_31">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="51.867717" y="264.194584" transform="rotate(-0 51.867717 264.194584)">mechanism (12 columns)</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="51.867717" y="264.194584" transform="rotate(-0 51.867717 264.194584)">mechanism, reach and direction (9 columns)</text>
     </g>
    </g>
    <g id="matplotlib.axis_14">
@@ -597,10 +597,10 @@ L 332.742677 177.874016
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_48">
-    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(276.368477 210.078597)">none, mask L1, L3-4, L1-4,</text>
-    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(285.537617 215.367034)">KL1 L1, L3-4, L1-4</text>
-    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(281.375117 220.728597)">(the curves move here</text>
-    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(294.716524 226.148753)">from F1 g)</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(281.37043 210.072503)">none, mask 1/2/3-hop,</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(290.539571 215.434066)">KL1 1/2/3-hop</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(281.375117 220.795628)">(the curves move here</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(294.716524 226.215784)">from F1 g)</text>
    </g>
    <g id="text_49">
     <g id="patch_61">
@@ -801,12 +801,12 @@ z
    </g>
    <g id="matplotlib.axis_27">
     <g id="text_66">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.660157" y="412.30482" transform="rotate(-0 136.660157 412.30482)">epoch (0-59)</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.660157" y="412.231695" transform="rotate(-0 136.660157 412.231695)">epoch</text>
     </g>
    </g>
    <g id="matplotlib.axis_28">
     <g id="text_67">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="104.97002" y="364.96063" transform="rotate(-90 104.97002 364.96063)">point loss</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="104.97002" y="364.96063" transform="rotate(-90 104.97002 364.96063)">Pearson</text>
     </g>
    </g>
    <g id="patch_81">
@@ -830,21 +830,22 @@ L 163.157795 325.984252
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_68">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle; fill: #666666" x="136.660157" y="366.253208" transform="rotate(-0 136.660157 366.253208)">same arms</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(112.618751 363.54313)">val Pearson by epoch</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(111.095704 368.963286)">for the placement arms</text>
    </g>
    <g id="text_69">
     <g id="patch_85">
-     <path d="M 100.62377 314.944252 
-L 107.43002 314.944252 
-L 107.43002 305.719252 
-L 100.62377 305.719252 
+     <path d="M 100.88252 314.944252 
+L 107.68877 314.944252 
+L 107.68877 305.719252 
+L 100.88252 305.719252 
 z
 " style="fill: #ffffff"/>
     </g>
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="101.58377" y="312.405502" transform="rotate(-0 101.58377 312.405502)">n</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="101.84252" y="312.405502" transform="rotate(-0 101.84252 312.405502)">n</text>
    </g>
    <g id="text_70">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.660157" y="319.984252" transform="rotate(-0 136.660157 319.984252)">F3b  60 epochs, val loss</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.660157" y="319.984252" transform="rotate(-0 136.660157 319.984252)">F3b  placement curves</text>
    </g>
   </g>
   <g id="axes_15">

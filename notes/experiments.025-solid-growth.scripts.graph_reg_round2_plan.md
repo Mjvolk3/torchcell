@@ -15,3 +15,5 @@ Revised the same night with a `round` column (1b finishes the current figure; 2 
 ![](./assets/images/025-solid-growth/graph_reg_round2_mockup.svg)
 
 Document: `notes-tex/025-graph-reg-sweep/sections/6-round2.tex`. Readings of round 1: [[experiments.025-solid-growth.graph-reg-sweep]].
+
+Reordered 2026-09-27 after review around the study's two questions: round 1b (17 runs) = random graphs at KL 1 and 0.1 with five seeds, KL 10 and 100, the missing 1e-5 seed; round 2 (18 runs) = reach for both mechanisms, 2-hop and 3-hop mask and 2-hop and 3-hop KL targets on identical supports, plus the direction pair; round 3 (45 runs) = placement (optional), 60-epoch budget, composite pair, and hidden width 360 on table and composite with and without KL 1. 80 runs, about 4,800 GPU-h. Pre-launch check for reach: tabulate the support density of every graph at 1, 2 and 3 hops (the STRING channels are dense).

@@ -247,3 +247,50 @@ group (30 workers x 2 chunks) fills the container to the 128 GB cap, the pool is
 down, and the container runs at 3 to 10 cores for about 15 s while the next pool forks
 and refills. Round 6 makes the group size a knob (`adapters.chunks_per_worker`, commit
 7b75b505); the ladder arm `r6 groups-8` is queued behind the full build.
+
+## 2026.09.27 - Round 7: the byte budget halved Costanzo's node pass; budget and group size crossed on the ladder
+
+Job 2905 (full 51-dataset build, budgeted chunks, 32 CPUs / 128 GB, commit e48ffe2f)
+is running. Its first big adapter is a partial result and already a finding: the
+48 MiB single-pass budget cut Costanzo dmf to 2,355-record chunks (21,371 resolved
+bytes per record, `single-pass chunk 6250 -> 2355` in the job log), and the node pass
+took 5,317 s against 2,794 s on job 2889 with 6,250-record chunks, the only change in
+between (`scripts/full_build_compare.py --job 2905-partial`,
+`results/2905-partial_vs_2032.csv`, node and edge passes split from the samples):
+
+| job | dmf chunk | node pass | mean cores in it | edge pass |
+|---|---|---|---|---|
+| 2889 | 6,250 | 2,794 s | 15.3 | 3,669 s |
+| 2905 | 2,355 | 5,317 s | 8.9 | running, 836 s so far |
+
+The container's cores in the 2905 node pass repeat a 35 s cycle: one 5 s sample at 3
+to 4 cores, then six at 9 to 12 (one pool group of 32 workers x 2 chunks x 2,355
+records). The parent process sits at 0.7 to 0.9 cores through the steady part, so it
+is close to saturated as well. The per-chunk submission cost is not it: pickling the
+bound adapter method is 0.9 ms and the 2,355-record chunk view 0.5 ms
+(measured in the dev tree with the Costanzo adapter). What the parent spends the rest
+of its core on at 4,100 records/s is not measured; the ladder arms below carry the
+same code so a profile arm can follow if the knobs do not recover it.
+
+Round 7 (commit be51e6d1) makes the budget a knob, `adapters.single_pass_chunk_budget_mb`
+(module default 48), and crosses it with the r6 group knob on the ladder at 32 CPUs /
+128 GB, all four arms on the r5 stack with one loader child per worker:
+
+| job | arm | budget MiB | chunks per worker | Costanzo 2M chunk |
+|---|---|---|---|---|
+| 2918 | b48-g2 | 48 | 2 | 2,355 (job 2905's setting) |
+| 2919 | b128-g2 | 128 | 2 | 6,250 (job 2889's setting) |
+| 2920 | b48-g8 | 48 | 8 | 2,355 |
+| 2921 | b128-g8 | 128 | 8 | 6,250 |
+
+Job 2883 (r5 at 32 CPUs, before the budget, 724 s) is the reference. The queued r6
+arm 2913 was cancelled in favor of 2920, which is the same arm with the overrides made
+explicit. The four arms sit behind eleven pending 8 h packs; they start through the
+hold and release trick once job 2905 releases its 32 CPUs.
+
+Budget sizing, from the two measured cases: worker memory per chunk ran about 9x the
+resolved JSON on both Bloom (12,500 records of 19.7 KB, 36 to 104 GB across 30
+workers, job 2889) and Costanzo (6,250 of 21.4 KB, 43 GB mean anonymous memory
+across 32 workers, job 2889). 128 MiB puts Costanzo back at 6,250 and Bloom at
+6,800 records, about 1.25 GB per worker; whether Bloom survives that at 32 workers
+is the full build's question, not the ladder's.

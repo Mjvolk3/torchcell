@@ -1,0 +1,3 @@
+adapter,wall_s,node_s,edge_s,node_cores,edge_cores,job2032_s,speedup
+SmfCostanzo2016Adapter,35.1,20.0,15.0,0.8,1.0,174.0,5.0
+DmfCostanzo2016Adapter,6152.5,5316.8,835.7,8.9,9.3,15931.0,2.6

@@ -296,12 +296,19 @@ def figure_inventory(
     labels = ["no structure", "names a set of\nstereoisomers", "names one molecule"]
     colors = ["#F5F5F5", PLOT_PALETTE[1], PLOT_PALETTE[0]]
     left = 0.0
-    for v, lab, c in zip(vals, labels, colors, strict=True):
+    # the three segments differ in width by more than a factor of two, so their labels are
+    # staggered in height; side by side at one height the last two overlapped
+    depths = [-0.45, -0.45, -0.80]
+    for v, lab, c, d in zip(vals, labels, colors, depths, strict=True):
         ax.barh(0, v, left=left, color=c, edgecolor="black", lw=0.4)
         ax.text(left + v / 2, 0.38, f"{v:,}", ha="center", fontsize=5)
-        ax.text(left + v / 2, -0.42, lab, ha="center", fontsize=4.5, va="top")
+        ax.text(left + v / 2, d, lab, ha="center", fontsize=4.5, va="top")
+        if d < -0.5:
+            ax.plot(
+                [left + v / 2, left + v / 2], [-0.12, d + 0.04], color="#666666", lw=0.4
+            )
         left += v
-    ax.set_ylim(-1.1, 0.7)
+    ax.set_ylim(-1.5, 0.7)
     ax.set_yticks([])
     ax.set_xlabel("distinct species")
     ax.set_title("only 20% is pinned to one molecule", loc="left", fontsize=6)

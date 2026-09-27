@@ -8,16 +8,18 @@ rather than as a flux model.
 
 %% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/yeast9_chemical_accounting.py ->
 %% yeast9_accounting.svg, from results/yeast9_accounting_*.csv, converted by `make plots`.
-\tcfig{figures/yeast9_accounting.pdf}{Yeast9 as a chemical inventory. \textbf{(a)} Distinct
-species by structure class, with the share carrying a SMILES. \textbf{(b)} Published
-metabolome counts, which this script does not measure. \textbf{(c)} How precisely a species is
-named: no structure, a structure with an unassigned stereocenter that names a set of
-stereoisomers, or a structure that names one molecule. \textbf{(d)} Share of each reaction's
-participants carrying a structure. \textbf{(e)} Species reachable from the model's own
-boundary metabolites when a reaction fires as soon as any one substrate is present, an
-upper bound that ignores stoichiometry and thermodynamics. \textbf{(f)} The species without a
-structure, split into those a lookup could recover and those that can never have one.}
-{fig:accounting}
+\tcfig{figures/yeast9_accounting.pdf}{\textbf{Yeast9 names 1{,}378
+chemical species, and only a fifth of them are pinned to a single molecule.} The reconstruction
+read as a chemical inventory rather than as a flux model. \textbf{a}, Distinct species by
+structure class, with the share carrying a SMILES. \textbf{b}, Published metabolome counts,
+which this script does not measure. \textbf{c}, How precisely a species is named: no structure,
+a structure with an unassigned stereocenter that names a set of stereoisomers, or a structure
+that names one molecule. \textbf{d}, Share of each reaction's participants carrying a
+structure. \textbf{e}, Species reachable from the model's own boundary metabolites when a
+reaction fires as soon as any one substrate is present, an upper bound that ignores
+stoichiometry and thermodynamics and that saturates in four rounds. \textbf{f}, The species
+without a structure, split into those a lookup could recover and those that can never have
+one.}{fig:accounting}
 
 Four measurements matter.
 

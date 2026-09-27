@@ -10,17 +10,18 @@ its own limits.
 
 %% SOURCE: notes/experiments.031-env-chemgen-inhibitor-tolerance.mermaid.unified-input.md,
 %% rendered by notes/assets/publish/scripts/mermaid_pdf.sh through `make diagrams`.
-\tcfig{figures/unified_input.pdf}{One input representation and one decoder for the four kept
-datasets, in the notation of the cell graph transformer: $N$ genes, $d_h$ the hidden width,
-$S$ the perturbed set, $H_{\mathrm{pert}}$ the Type I output, $R_\phi$ a Type II readout.
-Gray is a served dataset, purple a per-record input channel, yellow the fixed embedding table,
-orange a computation, blue the optional metabolism branch, red what the representation drops
-or does not carry. The genotype is a per-gene functional dose whose background level is the
-ploidy, and it scales the perturbation operator through $\gamma(m_j)$. The environment is a
-compound set and a medium set through the shared molecule encoder, a dose-basis token and a
-masked log molar value, pooled into one context $z_E$. The dataset token $t$ carries the
-measurement scale and every physical field, because each of those is constant within a
-dataset. The decoder is one scalar head over the concatenation.}{fig:unified}
+\tcfig{figures/unified_input.pdf}{\textbf{One input
+representation and one decoder for the four kept datasets.} Drawn in the notation of the cell
+graph transformer: $N$ genes, $d_h$ the hidden width, $S$ the perturbed set,
+$H_{\mathrm{pert}}$ the Type I output, $R_\phi$ a Type II readout. Gray is a served dataset,
+purple a per-record input channel, yellow the fixed embedding table, orange a computation,
+blue the optional metabolism branch, red what the representation drops or does not carry. The
+genotype is a per-gene functional dose whose background level is the ploidy, and it scales the
+perturbation operator through $\gamma(m_j)$. The environment is a compound set and a medium set
+through the shared molecule encoder, a dose-basis token and a masked log molar value, pooled
+into one context $z_E$. The dataset token $t$ carries the measurement scale and every physical
+field, because each of those is constant within a dataset. The decoder is one scalar head over
+the concatenation.}{fig:unified}
 
 \notesec{Genotype}
 A per-gene functional dose over the gene universe, $d \in \{0, \tfrac{1}{2}, 1\}^{N}$ with

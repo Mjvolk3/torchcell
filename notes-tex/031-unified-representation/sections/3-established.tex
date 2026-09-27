@@ -37,10 +37,13 @@ conditions whose index is at or below zero.}
 
 %% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/replicate_noise_and_ceilings.py ->
 %% vanacloig_ceilings.svg, from results/condition_noise_vanacloig2022.csv, converted by `make plots`.
-\tcfig{figures/vanacloig_ceilings.pdf}{Every Vanacloig compound, ordered by its ceiling on the
-correlation with the noise-free response (bars, $\sqrt{\mathrm{rel}}$), with the raw three-batch
-replicate Spearman (circles) and the between-batch hit Jaccard (squares). A compound with no
-bar has an index at or below zero.}{fig:ceilings}
+\tcfig{figures/vanacloig_ceilings.pdf}{\textbf{Most Vanacloig compounds
+allow a high ceiling, and six allow none at all.} Every compound of the panel, ordered by the
+ceiling it places on any model's correlation with the noise-free response, which is the square
+root of its reliability. Bars are that ceiling, circles the raw agreement between the three
+batch replicates over genes, and squares the between-batch overlap of the bottom-5 percent hit
+sets. A compound with no bar has a reliability index at or below zero, meaning its served error
+is as large as its spread across genes, so no model can be scored on it.}{fig:ceilings}
 
 \notesec{Cross-dataset transfer is a gene prior, not compound-matched transfer}
 Between Vanacloig and the Hillenmeyer homozygous arm the per-gene mean response correlates at

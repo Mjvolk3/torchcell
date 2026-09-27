@@ -71,14 +71,18 @@ pairs.}
 
 %% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/dataset_joinability.py ->
 %% dataset_joinability.svg, converted by `make plots`.
-\tcfig{figures/dataset_joinability.pdf}{Whether the five datasets can share one target.
-\textbf{(a)} Response density per dataset on a log scale, which is where the phenotype lives.
-\textbf{(b)} Standard deviation of the served response. \textbf{(c)} Skew beside the sign each
-source declares for a sick strain; hatching marks the two datasets whose sources use the
-opposite convention. \textbf{(d)} Shared (gene, compound) cells per pair, log color scale.
-\textbf{(e)} Spearman on those shared cells after orienting. \textbf{(f)} The same pairs as
-served against oriented, point area by shared cells; red points are pairs whose sources
-disagree about the sign.}{fig:joinability}
+\tcfig{figures/dataset_joinability.pdf}{\textbf{The five datasets
+disagree about the scale of the response and about which sign means a sick strain.}
+\textbf{a}, Response density per dataset on a log scale, where the phenotype lives; the
+distributions differ in width by a factor of twenty and in which tail is heavy. \textbf{b},
+Standard deviation of the served response, the factor a pooled squared-error loss would weight
+by. \textbf{c}, Skew beside the sign each source declares for a sick strain, an independent
+check on the declared convention; hatching marks the two datasets whose sources use the
+opposite sign. \textbf{d}, Shared (gene, compound) cells for every dataset pair on a log color
+scale, which is where agreement can be observed at all. \textbf{e}, Spearman correlation on
+those shared cells after orienting both datasets to one convention. \textbf{f}, The same pairs
+as served against oriented, point area by shared cells; red points are pairs whose sources
+disagree about the sign, and every pair moves above zero once oriented.}{fig:joinability}
 
 \notesec{Agreement after orienting is real, positive, and small}
 Once oriented, every pair correlates positively, but weakly: the median over the ten pairs is
@@ -99,22 +103,21 @@ datasets.
 
 %% SOURCE: notes/experiments.031-env-chemgen-inhibitor-tolerance.mermaid.dataset-unification.md,
 %% rendered by notes/assets/publish/scripts/mermaid_pdf.sh through `make diagrams`.
-\tcfig{figures/dataset_unification.pdf}{One row per kept dataset, read left to right through
-four layers. \textbf{Layer A}, purple, is what the record IS: the strain, its ploidy, and the
-size of the gene and compound panel. Vanacloig's four deletions are the queried gene plus the
-three efflux regulators that make its host drug-sensitive. \textbf{Layer B}, yellow, is what
-the SOURCE REPORTS, in its own units, with its own sign convention and its own spread; the two
-$\log_2$ ratios point in opposite directions because one is taken treated over control and
-the other control over treated. \textbf{Layer C}, orange, is the TRANSFORM and the shared
-form it produces. The orientation factor $o_k$ is a multiplication by plus or minus one, so
-three datasets pass through unchanged and only Hillenmeyer HET flips; it is a sign flip on a
-continuous number and never a threshold, and the target stays a real number that the model
-regresses on. The median and standard deviation come from the training split alone.
-\textbf{Layer D}, red, is what is given up: the homozygous arm of Hillenmeyer 2008, dropped
-because its heterozygous sibling already covers 80 percent of its genes, and the measured
-limit that orienting buys a shared scale rather than a shared response. MADL is the median
-absolute deviation logarithmic score, Hoepfner's per-experiment readout. Per-dataset counts
-are in Table~\ref{tab:unification}.}{fig:unification}
+\tcfig{figures/dataset_unification.pdf}{\textbf{Four datasets, one
+input tuple and one continuous target, with two scalars per source doing all the work.} One row
+per kept dataset, read left to right through four layers. \textbf{a}, What the record is: the
+strain, its ploidy and the size of the gene and compound panel. Vanacloig's four deletions are
+the queried gene plus the three efflux regulators that make its host drug-sensitive.
+\textbf{b}, What the source reports, in its own units and sign convention; the two $\log_2$
+ratios point in opposite directions because one is taken treated over control and the other
+control over treated, and MADL is the median absolute deviation logarithmic score.
+\textbf{c}, The transform and the shared form it produces. The orientation factor $o_k$
+multiplies by plus or minus one, so three datasets pass through unchanged and only Hillenmeyer
+HET flips; it is a sign flip on a continuous number and never a threshold, and the median and
+standard deviation come from the training split alone. \textbf{d}, What is given up: the
+homozygous arm of Hillenmeyer 2008, dropped because its heterozygous sibling already covers 80
+percent of its genes, and the measured limit that orienting buys a shared scale rather than a
+shared response. Per-dataset counts are in Table~\ref{tab:unification}.}{fig:unification}
 
 \notesec{Where the datasets overlap on every other axis}
 Figure~\ref{fig:overlap} puts the same question to the genotype, chemistry and dose axes.
@@ -129,16 +132,20 @@ convertible concentration at all.
 
 %% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/exploratory_overlap_panels.py ->
 %% exploratory_overlap.svg, converted by `make plots`.
-\tcfig{figures/exploratory_overlap.pdf}{Overlap on every axis a pooled model sees.
-\textbf{(a)} Share of the row dataset's genes that the column dataset also measures, with each
-dataset's gene count. \textbf{(b)} The same for compounds. \textbf{(c)} Molecular weight against
-calculated logP for every dosed compound, the Vanacloig panel outlined. \textbf{(d)} Heavy
-atom count; the shaded band below 8 heavy atoms is where a substructure fingerprint carries
-almost no bits, which is where most of the hydrolysate panel sits.
-\textbf{(e)} Each Vanacloig compound's best non-exact Tanimoto in the partner union against its
-size. \textbf{(f)} The molar range each dataset spans, 1st to 99th percentile, with the share
-of records stating a convertible dose. \textbf{(g)} Distinct compounds against distinct
-genes, with each dataset's measured cell count in its label. \textbf{(h)} Perturbation class by dataset.}{fig:overlap}
+\tcfig{figures/exploratory_overlap.pdf}{\textbf{Genes overlap
+heavily, compounds barely, and the application panel sits outside the chemistry the partners
+cover.} \textbf{a}, Share of the row dataset's genes that the column dataset also measures,
+with each dataset's gene count. \textbf{b}, The same for compounds, where the shares collapse.
+\textbf{c}, Molecular weight against calculated logP for every dosed compound, the Vanacloig
+panel outlined; the partner libraries are drug-like and the application panel is small and
+polar. \textbf{d}, Heavy atom count; the shaded band below 8 heavy atoms is where a
+substructure fingerprint carries almost no bits, which is where most of the hydrolysate panel
+sits. \textbf{e}, Each Vanacloig compound's best non-exact Tanimoto in the partner union
+against its size, showing that the compounds without a neighbor are the small ones.
+\textbf{f}, The molar range each dataset spans, 1st to 99th percentile, with the share of
+records stating a convertible dose. \textbf{g}, Distinct compounds against distinct genes, with
+each dataset's measured cell count in its label. \textbf{h}, Perturbation class by
+dataset.}{fig:overlap}
 
 \notesec{Per-dataset baselines, because a pooled claim needs a per-dataset reference}
 Table~\ref{tab:perdataset} runs the compound cold-start baselines of
@@ -231,20 +238,19 @@ the three-dimensional encoder cannot embed every compound in them.}
 
 %% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/per_dataset_baselines.py ->
 %% encoder_comparison.svg, converted by `make plots`.
-\tcfig{figures/encoder_comparison.pdf}{Molecule encoders on the compound cold-start, centered
-target. \textbf{(a)} Every encoder and dataset under ridge. \textbf{(b)} The best molecule
-feature against the no-feature null per dataset; every dataset clears its null, and
-Wildenhain's null is by far the highest because a random neighbor among 5{,}170 compounds is
-already informative. \textbf{(c)} Ridge against nearest-neighbor transfer, one point per
-dataset and encoder; points below the diagonal are datasets where neighbor transfer wins,
-which is every Wildenhain point and most Hillenmeyer points. \textbf{(d)} The best score
-against the ceiling. The Hoepfner bar is hatched because its ceiling comes from the
+\tcfig{figures/encoder_comparison.pdf}{\textbf{Molecule features
+carry signal in every dataset, and no single encoder choice is supported across them.}
+Compound cold-start, centered target. \textbf{a}, Every encoder and dataset under ridge.
+\textbf{b}, The best molecule feature against the no-feature null per dataset; every dataset
+clears its null, and Wildenhain's null is by far the highest because a random neighbor among
+5{,}170 compounds is already informative. \textbf{c}, Ridge against nearest-neighbor transfer,
+one point per dataset and encoder; points below the diagonal are datasets where neighbor
+transfer wins, which is every Wildenhain point and most Hillenmeyer points. \textbf{d}, The
+best score against the ceiling. The Hoepfner bar is hatched because its ceiling comes from the
 cross-screen estimator of Table~\ref{tab:hoepfnerceiling} rather than from a served
-uncertainty, so it is not the same quantity as the other four. \textbf{(e)} What share of each
-molecule pool an encoder can embed: the 5{,}472 dosed compounds and the 894 structure-bearing
-Yeast9 metabolites. Only the three-dimensional encoder falls short, on the ions and metal salts
-it cannot build a conformer for, so coverage is not what separates these encoders.
-\textbf{(f)} Each encoder's rank among the twelve on each dataset, the line spanning its best
-and worst rank and the large mark its mean. The spans overlap almost completely, so the
-encoder that wins on one dataset is not the encoder that wins on another and no single choice
-is supported across all five.}{fig:encoders}
+uncertainty, so it is not the same quantity as the other four. \textbf{e}, What share of each
+molecule pool an encoder can embed, the 5{,}472 dosed compounds beside the 894
+structure-bearing Yeast9 metabolites; only the three-dimensional encoder falls short, on the
+ions and metal salts it cannot build a conformer for, so coverage is not what separates these
+encoders. \textbf{f}, Each encoder's rank among the twelve on each dataset, the line spanning
+its best and worst rank and the large mark its mean; the spans overlap almost completely.}{fig:encoders}

@@ -982,4 +982,20 @@ pool's 0.206 and the annotation's 0.142. The level of the best arm with the anno
 in it is 0.237 with the tightest band of any store arm, 0.04 under the pool alone on
 every seed and on both groups of genes.
 
+Round 210 is read (job 2896, 3 h 33 min): the pool through 256 with the slot frozen
+until epoch 5 and until the trailing validation Pearson reaches 0.15, round 131's
+release rule, asked because the decomposition found the backbone's head a constant on
+two seeds of six (Section~\ref{sec:decomposition}). Five seeds of six released at
+epoch 5 and read 0.255 (sd 0.027) against 0.281 for the same five from epoch 0; the
+sixth never released, its validation correlation peaking at 0.16 against the rule's
+0.15 threshold, and it reads 0.005. Over six seeds the arm reads 0.213 with a standard
+deviation of 0.105, the widest band of any arm in the study, ensembled 0.251; the
+released seeds select at epochs 30 to 138 on validation Pearson 0.37 to 0.42, the
+highest validation correlations recorded here, where the slot from epoch 0 selects on
+0.36 to 0.40. On the covered genes the arm reads 0.154 against 0.212. So a backbone
+that trains alone for five epochs reaches a higher validation correlation and a lower
+test read, and on one seed the rule prevents the slot from ever opening: holding the
+slot back does not make the backbone add, it makes the cell depend on the backbone's
+escape. The pool slot from epoch 0 stays the arm.
+
 \input{tables/target_transfer}

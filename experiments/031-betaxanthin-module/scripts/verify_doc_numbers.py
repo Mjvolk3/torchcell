@@ -398,6 +398,51 @@ def pair_seed_subset(pair: str, side: str, seeds: tuple[int, ...], key: str):
     return run
 
 
+def release(stem: str, what: str):
+    """Over an arm's result files: how many cells released their slot (``n_released``),
+    the release epoch they share (``epoch``), the mean or sd of the pinned Spearman over
+    the released cells (``mean``, ``sd``), the unreleased cell's read (``unreleased``),
+    or the released cells' smallest selected epoch (``select_epoch_min``).
+    """
+
+    def run() -> float:
+        import glob
+        import json
+
+        import numpy as np
+
+        rows = []
+        for path in sorted(glob.glob(osp.join(RESULTS, f"{stem}_s27*.json"))):
+            d = json.load(open(path))
+            rows.append(
+                (
+                    d.get("affine_start_epoch_actual"),
+                    float(d["test"]["pinned"]["spearman"]),
+                    int(d["select_epoch"]),
+                )
+            )
+        rel = [r for r in rows if r[0] is not None]
+        if what == "n_released":
+            return float(len(rel))
+        if what == "epoch":
+            epochs = {r[0] for r in rel}
+            assert len(epochs) == 1, epochs
+            return float(next(iter(epochs)))
+        if what == "mean":
+            return float(np.mean([r[1] for r in rel]))
+        if what == "sd":
+            return float(np.std([r[1] for r in rel], ddof=1))
+        if what == "select_epoch_min":
+            return float(min(r[2] for r in rel))
+        if what == "unreleased":
+            out = [r[1] for r in rows if r[0] is None]
+            assert len(out) == 1, len(out)
+            return float(out[0])
+        raise KeyError(what)
+
+    return run
+
+
 def pool_mlp(hidden: int, arm: str, key: str, name: str | None = None):
     """A value of one arm of the CPU perceptron sweep over the measured pool
     (target_go_models.py --store YPD_bx_aapool --mlp-hidden <hidden>); ``name`` picks a
@@ -12161,6 +12206,131 @@ CHECKS: list[Check] = [
         stated=0.142,
         recompute=coverage(
             "w218_twelve", "w167_bxdelgo_h12l1p1_e200", "mean_spearman_covered"
+        ),
+        tolerance=0.0006,
+    ),
+    # sec:rounds -- round 210, the pool slot under the release rule.
+    Check(
+        claim="round 210: released seeds",
+        stated=5,
+        recompute=release("w229_bxdelaapoolmlp256rel_h12l1p1_e200", "n_released"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 210: release epoch",
+        stated=5,
+        recompute=release("w229_bxdelaapoolmlp256rel_h12l1p1_e200", "epoch"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 210: released mean",
+        stated=0.255,
+        recompute=release("w229_bxdelaapoolmlp256rel_h12l1p1_e200", "mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: released sd",
+        stated=0.027,
+        recompute=release("w229_bxdelaapoolmlp256rel_h12l1p1_e200", "sd"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: unreleased seed",
+        stated=0.005,
+        recompute=release("w229_bxdelaapoolmlp256rel_h12l1p1_e200", "unreleased"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: six-seed arm",
+        stated=0.213,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 under the release rule (the slot frozen until epoch 5 and validation Pearson 0.15) against the slot from epoch 0",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: six-seed sd",
+        stated=0.105,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 under the release rule (the slot frozen until epoch 5 and validation Pearson 0.15) against the slot from epoch 0",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: control",
+        stated=0.279,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 under the release rule (the slot frozen until epoch 5 and validation Pearson 0.15) against the slot from epoch 0",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: ensemble",
+        stated=0.251,
+        recompute=ensemble("w229_bxdelaapoolmlp256rel_h12l1p1_e200", "spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: released select epoch min",
+        stated=30,
+        recompute=release("w229_bxdelaapoolmlp256rel_h12l1p1_e200", "select_epoch_min"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 210: released select epoch max",
+        stated=138,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 under the release rule (the slot frozen until epoch 5 and validation Pearson 0.15) against the slot from epoch 0",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 210: released val pearson max",
+        stated=0.42,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 under the release rule (the slot frozen until epoch 5 and validation Pearson 0.15) against the slot from epoch 0",
+            "arm",
+            "select_val_pearson",
+            "max",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 210: control val pearson min",
+        stated=0.36,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 under the release rule (the slot frozen until epoch 5 and validation Pearson 0.15) against the slot from epoch 0",
+            "control",
+            "select_val_pearson",
+            "min",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 210: control val pearson max",
+        stated=0.4,
+        recompute=pair_cells(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 under the release rule (the slot frozen until epoch 5 and validation Pearson 0.15) against the slot from epoch 0",
+            "control",
+            "select_val_pearson",
+            "max",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 210: covered",
+        stated=0.154,
+        recompute=coverage(
+            "w229", "w229_bxdelaapoolmlp256rel_h12l1p1_e200", "mean_spearman_covered"
         ),
         tolerance=0.0006,
     ),

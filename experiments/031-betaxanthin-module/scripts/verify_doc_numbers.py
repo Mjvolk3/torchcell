@@ -316,6 +316,39 @@ def pool_mlp_covered(name: str):
     return run
 
 
+def store_baseline_covered(
+    target: str, rep: str, model: str, key: str = "mean_spearman"
+):
+    """The ladder's read on the pinned genes the store covers (target_store_baselines.py,
+    2026-09-27: ``test_pinned_covered``).
+    """
+
+    def run() -> float:
+        import json
+
+        study = {
+            "betaxanthin": "031-betaxanthin-module",
+            "amino_acids": "032-amino-acid-module",
+        }[target]
+        d = json.load(
+            open(
+                osp.join(
+                    os.environ["EXPERIMENT_ROOT"],
+                    study,
+                    "results",
+                    f"store_baselines_{target}.json",
+                )
+            )
+        )
+        block = d["representations"][rep][model]["selected_on_val"][
+            "test_pinned_covered"
+        ]
+        assert block is not None, (rep, model)
+        return float(block[key])
+
+    return run
+
+
 def pool_mlp(hidden: int, arm: str, key: str, name: str | None = None):
     """A value of one arm of the CPU perceptron sweep over the measured pool
     (target_go_models.py --store YPD_bx_aapool --mlp-hidden <hidden>); ``name`` picks a
@@ -11206,6 +11239,53 @@ CHECKS: list[Check] = [
         stated=0.28,
         recompute=store_baseline("betaxanthin", "aa_pool", "forest", "mean_spearman"),
         tolerance=0.0006,
+    ),
+    # sec:coverage -- the ladder's covered-only reads.
+    Check(
+        claim="coverage ladder: forest covered",
+        stated=0.226,
+        recompute=store_baseline_covered("betaxanthin", "aa_pool", "forest"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage ladder: forest all (reference)",
+        stated=0.28,
+        recompute=store_baseline("betaxanthin", "aa_pool", "forest", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage ladder: knn covered",
+        stated=0.239,
+        recompute=store_baseline_covered("betaxanthin", "aa_pool", "knn"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage ladder: knn all (reference)",
+        stated=0.285,
+        recompute=store_baseline("betaxanthin", "aa_pool", "knn", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage ladder: ridge covered",
+        stated=0.165,
+        recompute=store_baseline_covered("betaxanthin", "aa_pool", "ridge"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage ladder: ridge all (reference)",
+        stated=0.149,
+        recompute=store_baseline("betaxanthin", "aa_pool", "ridge", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="coverage ladder: covered genes",
+        stated=556,
+        recompute=lambda: float(
+            __import__("json").load(
+                open(osp.join(RESULTS, "store_baselines_betaxanthin.json"))
+            )["representations"]["aa_pool"]["n_pinned_covered"]
+        ),
+        tolerance=0.5,
     ),
 ]
 

@@ -90,26 +90,44 @@ STUDY = {
 #: (the prototroph's medium), which is not Cooper's medium; the annotation and
 #: sequence representations do not depend on the medium.
 COOPER_KEYS = [
-    "lysine_related_peak1", "arginine", "gshbiotin", "n_acetylornithine",
-    "leucine+isoleucine+citrulline", "glutamine+valine", "methionine+proline",
-    "threonine", "alanine", "serine", "asparagine+tyrosine", "glycine", "lysine_a",
-    "ornithine", "lysine_b", "glutamate", "aspartate",
+    "lysine_related_peak1",
+    "arginine",
+    "gshbiotin",
+    "n_acetylornithine",
+    "leucine+isoleucine+citrulline",
+    "glutamine+valine",
+    "methionine+proline",
+    "threonine",
+    "alanine",
+    "serine",
+    "asparagine+tyrosine",
+    "glycine",
+    "lysine_a",
+    "ornithine",
+    "lysine_b",
+    "glutamate",
+    "aspartate",
 ]
 CSV_TARGETS: dict[str, dict[str, Any]] = {
     "cooper": {
         **TARGETS["amino_acids"],
         "columns": COOPER_KEYS,
         "dump_head": None,
-        "csv": osp.join(DATA_ROOT, "data/torchcell/amino_acid_cooper2010/preprocess/data.csv"),
+        "csv": osp.join(
+            DATA_ROOT, "data/torchcell/amino_acid_cooper2010/preprocess/data.csv"
+        ),
         "gene_column": "perturbed_gene_name",
-    },
+    }
 }
 #: (store file stem, column slice or None, flux-encoded or not) per representation.
 REPRESENTATIONS: dict[str, dict[str, Any]] = {
     "betaxanthin": {
         "pfba_glpk_full": {"store": "YPD_bx", "block": "v_deletion", "flux": True},
         "pfba_glpk_growth": {
-            "store": "YPD_bx", "block": "v_deletion", "flux": True, "columns": 4177
+            "store": "YPD_bx",
+            "block": "v_deletion",
+            "flux": True,
+            "columns": 4177,
         },
         "pfba_highs": {"store": "YPD_bx_pfba", "block": "v_deletion", "flux": True},
         # The minimum-norm flux at maximal growth (target_physics_store.py --variant l2,
@@ -123,10 +141,26 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         # reaction (mdf) or over those under 100 kJ/mol (mdfcap100); and the sampled cone
         # (target_sampled_flux_store.py), the mean over draws.
         "mdf_conc": {"store": "YPD_bx_mdf", "block": "v_deletion", "flux": True},
-        "mdfcap100_conc": {"store": "YPD_bx_mdfcap100", "block": "v_deletion", "flux": True},
-        "sampled_mean": {"store": "YPD_bx_sampledmean", "block": "v_deletion", "flux": True},
-        "mdfcap100_poly_mean": {"store": "YPD_bx_mdfcap100polymean", "block": "v_deletion", "flux": True},
-        "mdfcap100_poly_spread": {"store": "YPD_bx_mdfcap100polyspread", "block": "v_deletion", "flux": True},
+        "mdfcap100_conc": {
+            "store": "YPD_bx_mdfcap100",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "sampled_mean": {
+            "store": "YPD_bx_sampledmean",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "mdfcap100_poly_mean": {
+            "store": "YPD_bx_mdfcap100polymean",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "mdfcap100_poly_spread": {
+            "store": "YPD_bx_mdfcap100polyspread",
+            "block": "v_deletion",
+            "flux": True,
+        },
         # The annotation side (target_go_affine_store.py): the propagated GO multi-hot
         # over every annotated gene, alone and appended to the HiGHS parsimonious vector.
         "go": {"store": "YPD_bx_go", "block": "v_deletion", "flux": False},
@@ -137,9 +171,21 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         # to GO with the HiGHS vector (target_store_concat.py).
         "aa_pool": {"store": "YPD_bx_aapool", "block": "v_deletion", "flux": True},
         "go_aapool": {"store": "YPD_bx_goaapool", "block": "v_deletion", "flux": True},
-        "gopfba_aapool": {"store": "YPD_bx_gopfbaaapool", "block": "v_deletion", "flux": True},
-        "aapool_pfba": {"store": "YPD_bx_aapoolpfba", "block": "v_deletion", "flux": True},
-        "cooper_pool": {"store": "YPD_bx_cooperpool", "block": "v_deletion", "flux": True},
+        "gopfba_aapool": {
+            "store": "YPD_bx_gopfbaaapool",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "aapool_pfba": {
+            "store": "YPD_bx_aapoolpfba",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "cooper_pool": {
+            "store": "YPD_bx_cooperpool",
+            "block": "v_deletion",
+            "flux": True,
+        },
     },
     "amino_acids": {
         "pfba_highs": {"store": "SM_gem", "block": "v_deletion", "flux": True},
@@ -147,22 +193,50 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         "gpr_counts": {"store": "SM_gem_gpronly", "block": "v_deletion", "flux": True},
         "flux_stats": {"store": "SM_gem", "block": "gene_flux_stats", "flux": False},
         "mdf_conc": {"store": "SM_gem_mdf", "block": "v_deletion", "flux": True},
-        "mdfcap100_conc": {"store": "SM_gem_mdfcap100", "block": "v_deletion", "flux": True},
-        "sampled_mean": {"store": "SM_gem_sampledmean", "block": "v_deletion", "flux": True},
-        "mdfcap100_poly_mean": {"store": "SM_gem_mdfcap100polymean", "block": "v_deletion", "flux": True},
-        "mdfcap100_poly_spread": {"store": "SM_gem_mdfcap100polyspread", "block": "v_deletion", "flux": True},
+        "mdfcap100_conc": {
+            "store": "SM_gem_mdfcap100",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "sampled_mean": {
+            "store": "SM_gem_sampledmean",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "mdfcap100_poly_mean": {
+            "store": "SM_gem_mdfcap100polymean",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "mdfcap100_poly_spread": {
+            "store": "SM_gem_mdfcap100polyspread",
+            "block": "v_deletion",
+            "flux": True,
+        },
         "go": {"store": "SM_gem_go", "block": "v_deletion", "flux": False},
         "gopfba": {"store": "SM_gem_gopfba", "block": "v_deletion", "flux": True},
         # The reverse of the betaxanthin pool read (target_pool_store.py --source
         # cachera): the strain's own Cachera betaxanthin score, signed, so standardized
         # and never log(1 + |v|); alone and appended to GO.
         "bx_score": {"store": "SM_gem_bxscore", "block": "v_deletion", "flux": False},
-        "go_bxscore": {"store": "SM_gem_gobxscore", "block": "v_deletion", "flux": False},
-        "cooper_pool": {"store": "YPD_bx_cooperpool", "block": "v_deletion", "flux": True},
+        "go_bxscore": {
+            "store": "SM_gem_gobxscore",
+            "block": "v_deletion",
+            "flux": False,
+        },
+        "cooper_pool": {
+            "store": "YPD_bx_cooperpool",
+            "block": "v_deletion",
+            "flux": True,
+        },
     },
 }
 REPRESENTATIONS["cooper"] = REPRESENTATIONS["amino_acids"]
-PRIMARY_STORE = {"betaxanthin": "pfba_glpk_full", "amino_acids": "pfba_highs", "cooper": "pfba_highs"}
+PRIMARY_STORE = {
+    "betaxanthin": "pfba_glpk_full",
+    "amino_acids": "pfba_highs",
+    "cooper": "pfba_highs",
+}
 FOREST_LEAF_GRID = [1, 5, 20]
 FOREST_TREES = 300
 TOP_K = 50
@@ -250,8 +324,13 @@ def main() -> None:
         frame = pd.read_csv(spec["csv"])
         assert not frame[spec["gene_column"]].duplicated().any(), spec["csv"]
         frame = frame.set_index(spec["gene_column"])
-        csv_rows = {str(g): frame.loc[g, columns].to_numpy(np.float64) for g in frame.index}
-        print(f"  csv target: {len(csv_rows)} genes with a row in {spec['csv']}", flush=True)
+        csv_rows = {
+            str(g): frame.loc[g, columns].to_numpy(np.float64) for g in frame.index
+        }
+        print(
+            f"  csv target: {len(csv_rows)} genes with a row in {spec['csv']}",
+            flush=True,
+        )
 
     cfg = train_bx.load_config()
     genome = SCerevisiaeGenome(
@@ -331,7 +410,9 @@ def main() -> None:
         if keep_pinned["test"][i] and len(perts["test"][i]) == 1
     }
     shared = sorted(set(mine) & set(theirs))
-    assert not theirs or len(shared) >= 500, f"only {len(shared)} pinned genes match the dump"
+    assert not theirs or len(shared) >= 500, (
+        f"only {len(shared)} pinned genes match the dump"
+    )
     for gene in shared:
         theirs_vec = np.array(
             [np.nan if v is None else float(v) for v in np.atleast_1d(theirs[gene])]
@@ -341,18 +422,29 @@ def main() -> None:
 
     mu = np.array(
         [
-            y["train"][obs["train"][:, f], f].mean() if obs["train"][:, f].any() else 0.0
+            y["train"][obs["train"][:, f], f].mean()
+            if obs["train"][:, f].any()
+            else 0.0
             for f in range(len(columns))
         ]
     )[None, :]
     resid_dense = {name: np.where(obs[name], y[name] - mu, 0.0) for name in y}
 
-    def score(pred: np.ndarray, name: str, pinned_only: bool, covered: np.ndarray,
-              full_stats: bool = False) -> dict[str, Any]:
-        sel = (keep_pinned[name] if pinned_only else np.ones(len(y[name]), bool)) & covered
+    def score(
+        pred: np.ndarray,
+        name: str,
+        pinned_only: bool,
+        covered: np.ndarray,
+        full_stats: bool = False,
+    ) -> dict[str, Any]:
+        sel = (
+            keep_pinned[name] if pinned_only else np.ones(len(y[name]), bool)
+        ) & covered
         n_stat = 2000 if full_stats else 0
         block: dict[str, Any] = {
-            "per_feature_pearson": per_feature_pearson(pred[sel], y[name][sel], obs[name][sel]),
+            "per_feature_pearson": per_feature_pearson(
+                pred[sel], y[name][sel], obs[name][sel]
+            ),
             "nmse": nmse(pred[sel], y[name][sel], mu, obs[name][sel]),
             "n": int(sel.sum()),
         }
@@ -375,28 +467,39 @@ def main() -> None:
     reps: dict[str, dict[str, Any]] = {}
     not_built: list[str] = []
     for rep_name, rep_spec in REPRESENTATIONS[args.target].items():
-        if not osp.isfile(osp.join(TABLE_DIR, f"ess_solve_encodings_{rep_spec['store']}.npz")):
+        if not osp.isfile(
+            osp.join(TABLE_DIR, f"ess_solve_encodings_{rep_spec['store']}.npz")
+        ):
             # A store that has not been built yet is reported as such, not filled.
             not_built.append(rep_name)
-            print(f"  {rep_name}: store {rep_spec['store']} not built; skipped", flush=True)
+            print(
+                f"  {rep_name}: store {rep_spec['store']} not built; skipped",
+                flush=True,
+            )
             continue
         rows, wild, dim = load_store(rep_spec)
         p: dict[str, np.ndarray] = {}
         filled: dict[str, int] = {}
+        # Which rows the store covers (2026-09-27): a row the store does not cover reads
+        # the wild-type row here, where the trainer reads zeros, so the ladder carries no
+        # coverage indicator; the covered-only read is scored beside the pinned read.
+        covered_rows: dict[str, np.ndarray] = {}
         for name in y:
             mat = np.zeros((len(perts[name]), dim))
+            cov = np.zeros(len(perts[name]), bool)
             n_fill = 0
             for i, genes in enumerate(perts[name]):
                 vecs = [rows[g] for g in genes if g in rows]
                 if vecs:
-                    mat[i] = np.mean(vecs, axis=0)
+                    mat[i], cov[i] = np.mean(vecs, axis=0), True
                 else:
                     mat[i] = wild
                     n_fill += 1
-            p[name], filled[name] = mat, n_fill
+            p[name], filled[name], covered_rows[name] = mat, n_fill, cov
         reps[rep_name] = {
             "p": p,
             "ok": {name: np.ones(len(perts[name]), bool) for name in y},
+            "covered": covered_rows,
             "dim": dim,
             "filled_wild_type": filled,
             "store": rep_spec["store"],
@@ -414,12 +517,18 @@ def main() -> None:
                 mat[i], good[i] = np.mean(vecs, axis=0), True
         p_emb[name], ok_emb[name] = mat, good
     reps["prot_T5_all"] = {
-        "p": p_emb, "ok": ok_emb, "dim": dim, "filled_wild_type": {}, "store": None
+        "p": p_emb,
+        "ok": ok_emb,
+        "covered": ok_emb,
+        "dim": dim,
+        "filled_wild_type": {},
+        "store": None,
     }
     primary = reps[PRIMARY_STORE[args.target]]
     reps[f"{PRIMARY_STORE[args.target]}+prot_T5_all"] = {
         "p": {n: np.concatenate([primary["p"][n], p_emb[n]], axis=1) for n in y},
         "ok": ok_emb,
+        "covered": {n: primary["covered"][n] & ok_emb[n] for n in y},
         "dim": primary["dim"] + dim,
         "filled_wild_type": primary["filled_wild_type"],
         "store": primary["store"],
@@ -445,6 +554,7 @@ def main() -> None:
 
     for rep_name, rep in reps.items():
         p, ok = rep["p"], rep["ok"]
+        covered = rep["covered"]
         pm = p["train"][ok["train"]].mean(axis=0, keepdims=True)
         ps = p["train"][ok["train"]].std(axis=0, keepdims=True) + 1e-8
         p = {n: (p[n] - pm) / ps for n in p}
@@ -454,6 +564,9 @@ def main() -> None:
             "store": rep["store"],
             "filled_wild_type": rep["filled_wild_type"],
             "n_scored": {s: int(ok[s].sum()) for s in ("val", "test")},
+            "n_pinned_covered": int(
+                (keep_pinned["test"] & ok["test"] & covered["test"]).sum()
+            ),
         }
 
         def select(cells: list[dict[str, Any]], keys: list[str]) -> dict[str, Any]:
@@ -463,13 +576,21 @@ def main() -> None:
             # unrounded argmax flipped between runs on 1e-13 float noise (2026-09-23).
             best = max(
                 enumerate(cells),
-                key=lambda ic: (round(float(ic[1]["val"]["per_feature_pearson"]), 6), ic[0]),
+                key=lambda ic: (
+                    round(float(ic[1]["val"]["per_feature_pearson"]), 6),
+                    ic[0],
+                ),
             )[1]
             return {
                 "selected_on_val": {
                     **{k: best[k] for k in keys},
                     "val": best["val"],
                     "test_pinned": score(best["_pred"], "test", True, ok["test"], True),
+                    "test_pinned_covered": (
+                        score(best["_pred"], "test", True, ok["test"] & covered["test"])
+                        if not bool((ok["test"] & covered["test"]).all())
+                        else None
+                    ),
                 },
                 "cells": [
                     {
@@ -498,7 +619,10 @@ def main() -> None:
 
         # ridge / bilinear
         cells = [
-            evaluate(lambda q, k=k, r=r: bilinear(r_tr, p_tr, q, k, r), {"k_gene": k, "ridge": r})
+            evaluate(
+                lambda q, k=k, r=r: bilinear(r_tr, p_tr, q, k, r),
+                {"k_gene": k, "ridge": r},
+            )
             for k in ranks
             if k <= min(r_tr.shape)
             for r in RIDGE_GRID

@@ -380,10 +380,14 @@ $\log(1+v)$ encoding it takes the trainer's fit from 0.179 to 0.268, and with th
 growth ratio prepended the harness reads 0.274 (sd 0.006, ensemble 0.275) on all pinned
 genes and 0.216 on the covered ones, against the transformer's 0.279 and 0.212. A
 perceptron of 5,890 parameters over twenty columns, trained in seconds a seed, is the
-transformer's best arm to within its seed spread, on both groups of genes. The ladder's
-forest at 0.280 (Table~\ref{tab:store-baselines}) read the wild-type row for the
-uncovered genes and carries no indicator; its read on the covered genes alone is not
-yet taken.
+transformer's best arm to within its seed spread, on both groups of genes. The ladder
+(Table~\ref{tab:store-baselines}) read the wild-type row for the uncovered genes, and
+that row is separable too, one exact vector 73 rows share that a forest can make a leaf
+of and a neighbor search ties on: the forest reads 0.226 on the covered genes against
+0.280 on all, the nearest neighbors 0.239 against 0.285, and the ridge, which cannot
+isolate a row, 0.165 against 0.149. On the measured strains the forest over the pool
+(0.226) is the highest read of any model, above the transformer's slot (0.212) and its
+CPU replica (0.216).
 
 \input{tables/coverage_split}
 

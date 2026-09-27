@@ -49,7 +49,15 @@ RESULTS_DIR = osp.join(
     EXPERIMENT_ROOT, "031-env-chemgen-inhibitor-tolerance", "results"
 )
 EMBED_DIR = osp.join(RESULTS_DIR, "embeddings")
-DATASETS = ["vanacloig2022", "hillenmeyer2008_hom", "hillenmeyer2008_het"]
+# the five served chemogenomic stores the representation design spans: three for record
+# count, Wildenhain for compound diversity, Vanacloig as the application target
+DATASETS = [
+    "vanacloig2022",
+    "hillenmeyer2008_hom",
+    "hillenmeyer2008_het",
+    "hoepfner2014",
+    "wildenhain2015",
+]
 
 
 def load_identity_table() -> dict[str, dict[str, object]]:
@@ -76,15 +84,21 @@ def dataset_compounds(name: str) -> tuple[list[str], int]:
     for ik, comp in (
         df[["inchikey", "compound"]].drop_duplicates().itertuples(index=False)
     ):
+        # The InChIKey field is the authority on how many compounds a record dosed: a key
+        # is alphanumeric with dashes and can never contain the pipe the flattener joins
+        # on. A compound NAME can: Wildenhain carries PubChem synonym strings with a
+        # literal pipe in them, so a name that does not split into the same number of
+        # parts is treated as one opaque label rather than aligned position by position.
         ik_parts = str(ik).split("|")
         comp_parts = str(comp).split("|")
-        if len(ik_parts) != len(comp_parts):
-            raise ValueError(f"{name}: {ik!r} vs {comp!r} disagree on compound count")
-        for k, c in zip(ik_parts, comp_parts, strict=True):
+        aligned = len(ik_parts) == len(comp_parts)
+        for i, k in enumerate(ik_parts):
             if k:
                 keys.add(k)
-            elif c:
-                no_key.add(c)
+            elif aligned and comp_parts[i]:
+                no_key.add(comp_parts[i])
+            elif str(comp):
+                no_key.add(str(comp))
     return sorted(keys), len(no_key)
 
 

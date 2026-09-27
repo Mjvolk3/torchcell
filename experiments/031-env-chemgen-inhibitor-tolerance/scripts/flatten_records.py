@@ -28,7 +28,11 @@ from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     HetHillenmeyer2008Dataset,
     HomHillenmeyer2008Dataset,
 )
+from torchcell.datasets.scerevisiae.hoepfner2014 import EnvChemgenHoepfner2014Dataset
 from torchcell.datasets.scerevisiae.vanacloig2022 import EnvChemgenVanacloig2022Dataset
+from torchcell.datasets.scerevisiae.wildenhain2015 import (
+    EnvChemgenWildenhain2015Dataset,
+)
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -47,6 +51,10 @@ DATASETS: dict[str, tuple[type, str]] = {
         HetHillenmeyer2008Dataset,
         "env_chemgen_hillenmeyer2008_het",
     ),
+    # added for the five-dataset representation design: Hoepfner is the largest served
+    # chemogenomic store and Wildenhain carries by far the most distinct compounds
+    "hoepfner2014": (EnvChemgenHoepfner2014Dataset, "env_chemgen_hoepfner2014"),
+    "wildenhain2015": (EnvChemgenWildenhain2015Dataset, "env_chemgen_wildenhain2015"),
 }
 
 

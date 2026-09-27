@@ -25,9 +25,12 @@ from typing import Any
 
 import torch
 from dotenv import load_dotenv
+from sortedcontainers import SortedDict
 
 from torchcell.data.cell_data import to_cell_data
+from torchcell.data.neo4j_cell import create_graph_from_gene_set
 from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph
+from torchcell.graph.graph import GeneMultiGraph
 from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -183,7 +186,13 @@ def main() -> None:
         genome=genome,
     )
     multigraph = build_gene_multigraph(graph=graph, graph_names=GRAPHS)
-    cell_graph = to_cell_data(multigraph, None, add_remaining_gene_self_loops=True)
+    # As Neo4jCellDataset does: the node set is the `base` graph over the genome's genes,
+    # and to_cell_data refuses a multigraph without it.
+    graphs = SortedDict(multigraph.graphs.copy())
+    graphs["base"] = create_graph_from_gene_set(genome.gene_set)
+    cell_graph = to_cell_data(
+        GeneMultiGraph(graphs=graphs), None, add_remaining_gene_self_loops=True
+    )
     n = int(cell_graph["gene"].num_nodes)
     print(
         f"cell graph: {n} genes, edge types {[e[1] for e in cell_graph.edge_types]}; {time.time() - t0:.0f} s, rss {_rss_gb():.1f} GB"

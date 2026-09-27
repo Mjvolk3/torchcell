@@ -62,7 +62,12 @@ def _env_axes(env: dict[str, Any], prefix: str) -> dict[str, Any]:
     """Flatten one Environment dict into prefixed scalar columns."""
     media = env["media"]
     temp = env.get("temperature")
-    compounds, inchikeys, cids, values, units, bases, solvents, physical = (
+    # smiles is carried because the served Compound is the provenance authority for
+    # structure: Hoepfner derives 88 of its 148 InChIKeys from the released Table S1
+    # SMILES, and those keys have no curated identity-table row, so the served record is
+    # the only place their structure exists
+    (compounds, inchikeys, smiles, cids, values, units, bases, solvents, physical) = (
+        [],
         [],
         [],
         [],
@@ -77,6 +82,7 @@ def _env_axes(env: dict[str, Any], prefix: str) -> dict[str, Any]:
             c, conc = p["compound"], p["concentration"]
             compounds.append(c["name"])
             inchikeys.append(c.get("inchikey") or "")
+            smiles.append(c.get("smiles") or "")
             cids.append(str(c.get("pubchem_cid") or ""))
             values.append("" if conc.get("value") is None else str(conc["value"]))
             units.append(conc.get("unit") or "")
@@ -107,6 +113,7 @@ def _env_axes(env: dict[str, Any], prefix: str) -> dict[str, Any]:
         f"{prefix}n_small_molecules": len(compounds),
         f"{prefix}compound": "|".join(compounds),
         f"{prefix}inchikey": "|".join(inchikeys),
+        f"{prefix}smiles": "|".join(smiles),
         f"{prefix}pubchem_cid": "|".join(cids),
         f"{prefix}dose_value": "|".join(values),
         f"{prefix}dose_unit": "|".join(units),

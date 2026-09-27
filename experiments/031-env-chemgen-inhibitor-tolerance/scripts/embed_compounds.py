@@ -39,6 +39,7 @@ import time
 
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 from dotenv import load_dotenv
 
 from torchcell.molecule import ENCODERS, MoleculeEncoder
@@ -102,6 +103,29 @@ def dataset_compounds(name: str) -> tuple[list[str], int]:
     return sorted(keys), len(no_key)
 
 
+def served_smiles(datasets: list[str]) -> dict[str, str]:
+    """InChIKey -> SMILES as the SERVED record carries it, over the given datasets.
+
+    The flattened records carry the ``Compound.smiles`` of every dosed compound. This is the
+    only structure source for a key the curated identity table has no row for.
+    """
+    out: dict[str, str] = {}
+    for name in datasets:
+        path = osp.join(RESULTS_DIR, f"records_{name}.parquet")
+        # a parquet written before the smiles column was added simply has nothing to give
+        if "smiles" not in pq.ParquetFile(path).schema.names:
+            print(
+                f"  {name}: no smiles column, re-flatten to use the served structures"
+            )
+            continue
+        df = pd.read_parquet(path, columns=["inchikey", "smiles"]).drop_duplicates()
+        for ik, sm in df.itertuples(index=False):
+            for k, s in zip(str(ik).split("|"), str(sm).split("|"), strict=False):
+                if k and s and k not in out:
+                    out[k] = s
+    return out
+
+
 def embed_all(
     encoder: MoleculeEncoder, smiles_by_key: dict[str, str]
 ) -> tuple[dict[str, np.ndarray], dict[str, str]]:
@@ -146,10 +170,26 @@ def main() -> None:
             f"{n_no_key} dosed compound names with no InChIKey"
         )
     union = sorted(set().union(*per_dataset.values()))
-    smiles_by_key = {
-        k: table[k]["smiles"] for k in union if table.get(k, {}).get("smiles")
-    }
-    print(f"union: {len(union)} InChIKeys, {len(smiles_by_key)} with SMILES")
+    # STRUCTURE SOURCE PRECEDENCE, not a fallback. The curated identity table WINS where it
+    # has a row, because the curated and SMILES-derived routes measurably disagree on the
+    # stereo block for some compounds. Where the table has no row at all the served record
+    # is the only source, and it is the provenance authority: Hoepfner derives 88 of its 148
+    # InChIKeys from the released Table S1 SMILES and those keys were never curated.
+    served = served_smiles(args.datasets)
+    smiles_by_key: dict[str, str] = {}
+    n_from_served = 0
+    for k in union:
+        curated = table.get(k, {}).get("smiles")
+        if curated:
+            smiles_by_key[k] = str(curated)
+        elif served.get(k):
+            smiles_by_key[k] = served[k]
+            n_from_served += 1
+    print(
+        f"union: {len(union)} InChIKeys, {len(smiles_by_key)} with SMILES "
+        f"({n_from_served} taken from the served record because the identity table has "
+        f"no row)"
+    )
 
     os.makedirs(EMBED_DIR, exist_ok=True)
     rows = []

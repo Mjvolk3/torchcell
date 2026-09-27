@@ -154,10 +154,15 @@ the round's config header. Then two rounds, launchable together.
 \item \textbf{v20, the conditioned cross-modal round.} Same store. Expression head from the
   genotype alone against the same head with the strain's observed proteome revealed through the
   existing conditioning channel and scored with it revealed; the mirror pair predicting the
-  proteome with expression revealed. Three split seeds, two initialization seeds, six pairs per
-  direction, 600 epochs, three per card, eight tasks of about 20 hours; on \file{cabbi} about
-  three days. Expected effect $+0.11$ and $+0.16$ against a minimum detectable $0.019$. Needs
-  one metric change, logging the auxiliary head with the other modality revealed.
+  proteome with expression revealed. The first direction needs no training: the six v16 joint
+  runs already trained with the proteome revealed on three of four steps and validation already
+  sweeps the reveal sizes, but the trainer logs the sweep for the masked head only, so one
+  change to \file{\_cache\_masked\_metric} and a re-evaluation of the six saved checkpoints at
+  zero against 1,000 revealed proteins on the expression head, with another strain's proteome as
+  the permuted control, gives six within-run pairs in under a GPU-day. The mirror direction is a
+  training round: three split seeds, two initialization seeds, two arms, 600 epochs, three per
+  card, four tasks of about 20 hours on \file{cabbi}, about two days. Expected effects $+0.11$
+  and $+0.16$ against a minimum detectable $0.019$.
 \end{itemize}
 
 Two decisions are the author's. Whether v19 runs on the both-label intersection, which makes

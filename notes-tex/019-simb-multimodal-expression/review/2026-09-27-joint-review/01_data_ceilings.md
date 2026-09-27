@@ -98,6 +98,14 @@ above reliability 0.5 (`results/expression_ceiling_replicate.json`). So **expres
 reliable label and the proteome is the noisy one**, by a factor of about two in achievable r
 (0.775 vs 0.417 on the honest routes).
 
+Where the trained model sits against those ceilings (from the same two JSONs):
+
+| label | honest ceiling | route | trained CGT | fraction realized |
+|---|---|---|---|---|
+| proteome | 0.417 | duplicate strains, 149 pairs | 0.099 (v14 partition mean) | 0.237 |
+| proteome | 0.614 | HIS3 WT-CV decomposition | 0.099 | 0.161 |
+| expression | 0.775 | cross-study test-retest, 82 pairs | 0.109 | 0.126 |
+
 Structure: rank 32 of a train-basis SVD captures 67.2 percent of expression variance and only
 38.8 percent of proteome variance (mine, on the build's matrices). The proteome is the harder,
 flatter, noisier target.
@@ -205,17 +213,23 @@ r/1024 = 0.008 / 0.031 / 0.125. So the two tasks share 3 to 13 times more genoty
 than chance, and 63 to 90 percent of each subspace stays private.
 
 Caveats, stated plainly. This bounds *linear* transfer through a ProtT5 representation of the
-deleted gene; the CGT is nonlinear and reads a graph, so the bound is not a proof about the
-CGT. The +0.005 to +0.006 is a point estimate from one fold draw, not an effect with a
-confidence interval (a 5-seed paired repeat is running; see the note at the end of this
-section).
+deleted gene; the CGT is nonlinear and reads a graph, so the bound is not a proof about the CGT.
+And **the +0.005 to +0.006 rests on ONE fold draw**, so it has no confidence interval. It is
+robust to the penalty grid: rerunning the same draw with a narrower grid (`part5.json`, seed 0)
+gives `P_from_E r128` 0.0809 and `r256` 0.0823 against `P_full` 0.0761, i.e. +0.0048 and
++0.0062, and `E_from_P` -0.0049 at r = 128 and +0.0018 at r = 256. A 5-fold-draw paired repeat
+was launched and produced only its first draw before the box went to load 423 from other users;
+I killed it rather than add load. So treat +0.005 to +0.006 as a single-draw point estimate that
+is stable under retuning but not yet under resampling, and note that it is smaller than the
+between-partition sd of the trained model (0.013 to 0.035, addendum item 3).
 
 The other channel a shared trunk has is extra rows. Learning curves, fixed penalty, one held-out
 20 percent per label (`part6.json`):
 
-| genotype -> expression | 155: 0.064 | 311: 0.093 | 622: 0.113 | 933: 0.129 | 1,244: 0.134 |
-|---|---|---|---|---|---|
-| genotype -> proteome | 223: 0.037 | 447: 0.054 | 895: 0.066 | 1,790: 0.083 | 3,581: 0.092 |
+| n_train | 155 | 223 | 311 | 447 | 622 | 895 | 933 | 1,244 | 1,790 | 2,685 | 3,581 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| genotype -> expression (310 held out) | 0.064 | | 0.093 | | 0.113 | | 0.129 | 0.134 | | | |
+| genotype -> proteome (895 held out) | | 0.037 | | 0.054 | | 0.066 | | | 0.083 | 0.086 | 0.092 |
 
 Both curves are still rising, so both heads are data-limited, but the rows joint training adds
 are the wrong rows for the wrong head: **the proteome head gains 205 extra records (+4.6
@@ -265,7 +279,9 @@ labeled rows. That is a *data-loading* property of the store, not of the model, 
 J_expr is not a usable reference. The joint arm's expression head sees the same 11 labeled rows
 plus the proteome loss on the other ~31.
 
-Example runs (v16, the joint round):
+Runs to look at. `k7rzebp0` is `J_joint_s0` seed 0, whose expression head trained (window mean
+0.0870, `results/v16_joint_expr_readout.json`); `hyasw3nx` is `J_expr_s0` seed 0, the
+expression-only reference whose head never launched (window mean -0.0003, same file).
 
 https://wandb.ai/zhao-group/torchcell_019_prot_v16/runs/k7rzebp0
 
@@ -297,29 +313,35 @@ within split seed and init seed, with the paired t on the differences. Assumed p
 (addendum item 3). Throughput from the brief: v18 ran 1,200 epochs in 19 to 31 h at 3 runs per
 card on cabbi; v16 joint ran 500 epochs in ~30 h at 3 per card on A40.
 
-### E1. Conditioned cross-modal head, the provable claim (rank 1)
+### E1. Score the cross-modal conditioning the v16 runs ALREADY performed (rank 1)
 
-The only design whose effect size the data supports. Arms, all on `fig3_proteome` with
-`require_modalities [protein_abundance, expression_log2_ratio]` so every row carries both
-(1,103 train / 125 val / 121 test on seed 0):
+The only design whose effect size the data supports, and most of it is already trained. v16's
+joint arm already has `mask_head: per_gene` on the PROTEOME and the expression head as
+`per_gene_aux`, and validation already runs the whole reveal sweep k = 0, 10, 100, 1,000
+(`_masked_step`, stage != train). What is missing is one line: `_cache_masked_metric` is called
+for `self.mask_head` only, so `val/expression/pearson_per_feature@k` is never logged. Extend it
+to every active head, then re-evaluate the saved checkpoints with the existing harness
+(`trainer.eval_ckpt_path` + `gh_eval_ckpt_predictions.slurm`, manifest pattern in
+`results/eval_ckpt_manifest_v14.tsv`).
 
-- `C_geno`: expression head, genotype only, `mask_schedule [0]` (no reveal).
-- `C_cond`: identical, but the trunk additionally receives the strain's OBSERVED proteome
-  through the existing `observed_labels` channel with the proteome as the revealed modality,
-  scored on expression at every step, and **evaluated with the proteome revealed** (the honest
-  evaluation of an imputation model).
-- Mirror pair `C_geno_P` / `C_cond_P` with the roles swapped (predict proteome, reveal
-  expression).
-
-Partitions x seeds: 3 split seeds x 2 init seeds = 6 pairs per direction, 24 runs. Epochs 600
-(v14's proteome peak is at a median epoch of 150 and the expression rounds peak by ~400). 3
-runs per card, ~20 h per task, 8 tasks: A40 `gpu` at `--array=0-7%3` finishes in about 3 days.
-Pre-registered rule: one-sided paired t on `C_cond - C_geno`, reject at p < 0.05. Expected
-effect from section 4: +0.11 on expression and +0.16 on the proteome; MDE at 6 pairs is 0.019,
-so this is a 6-sigma design. Result the PI can state: "given a strain's proteome, the model
-predicts its transcriptome at r = X against Y from genotype alone, p < 10^-4, on held-out
-strains" -- a provable multimodal claim, honestly labeled as conditioning rather than shared-trunk
-synergy.
+- Arms: the 6 existing `J_joint` runs at k = 0 (genotype only) versus k = 1,000 (about half the
+  proteome revealed), expression head, on the SAME 125 to 126 both-label validation strains per
+  seed, restricted to the rows that carry a proteome to reveal.
+- Partitions x seeds: 3 split seeds x 2 init seeds = 6 paired within-run contrasts. No training.
+- Epochs / runs per card / wall: inference only, 12 checkpoint evaluations, well under one
+  GPU-day on one `gpu` card.
+- Pre-registered rule: one-sided paired t on `k1000 - k0` for `val/expression/pearson_per_feature`,
+  reject at p < 0.05, plus the strain-permuted control of revealing ANOTHER strain's proteome
+  (which section 4's null puts at -0.014).
+- Expected effect from section 4: +0.11 on the expression head. MDE at 6 pairs is 0.019, so this
+  is a 6-sigma design. Result the PI can state: "given a strain's measured proteome, the model
+  predicts its transcriptome at r = X against Y from genotype alone on the same held-out
+  strains, p < 10^-3, and at chance when handed another strain's proteome" -- a provable
+  multimodal claim, honestly labeled as conditioning rather than shared-trunk synergy.
+- Mirror direction (reveal expression, predict proteome) needs a real training round, since no
+  run has `mask_head` on the expression label: 3 split seeds x 2 init seeds x 2 arms = 12 runs,
+  600 epochs, 3 per card, ~20 h per task, 4 tasks on `gpu` `--array=0-3%3`, about 2 days. Same
+  rule; expected effect +0.16.
 
 ### E2. Non-inferiority of the joint trunk, both heads (rank 2)
 
@@ -356,8 +378,8 @@ wall. Pre-registered rule: Page trend test (or a paired linear contrast with wei
 across log aux weight) on the per-seed differences from `S_ref`, one-sided p < 0.05; plus the
 non-inferiority bound of E2 as a secondary. Result the PI can state, if it lands: "the
 auxiliary transcriptome head improves the proteome head monotonically in its weight
-(trend p = X)". If it does not land, the recorded outcome is "measured null at the 0.015 MDE",
-which is worth having.
+(trend p = X)". If it does not land, the recorded outcome is "measured null, per-contrast MDE
+0.023 at 4 pairs", which is worth having as a bound.
 
 ### E4. Restrict the metric to reliable features (rank 4, zero extra GPU)
 

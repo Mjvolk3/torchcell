@@ -175,3 +175,31 @@ and below each bar, the ceiling a correlation could reach through both endpoints
 the geometric mean of the screen's within-screen duplicate agreement and the amino acid's
 log10 retest Spearman. Written by
 \texttt{isobutanol\_amino\_acid\_correlation.py}.}{fig:isobutanol-cross}
+
+\subsection{The endpoint matrix, and what a joint model could share\secstatus{todo}}
+\label{sec:endpoint-matrix}
+
+The question behind the isobutanol read is whether a second production endpoint trained
+beside betaxanthin could lift it. What a joint model can share is bounded by the
+strain-level signal the two endpoints hold in common, and the third pair of the matrix
+closes it: Cachera's betaxanthin score against the biosensor over the 4,353 strains both
+screens hold reads $-0.041$ (interval $-0.070$ to $-0.013$) against a ceiling of 0.51,
+eight percent of what the two endpoints' noise allows and on the wrong side of zero.
+The full matrix, each pair read on the strains both screens measured, with the pool
+entries the out-of-fold ridge from the nineteen concentrations and every ceiling
+built by one rule (Table~\ref{tab:endpoint-matrix}): the amino-acid pool shares 56
+percent of its ceiling with betaxanthin and 42 percent with the biosensor, and the two
+production endpoints share 8 percent of theirs with each other.
+
+\input{tables/endpoint_matrix}
+
+The one prior on the design is negative. In August a shared-trunk model of betaxanthin
+with the nineteen amino acids as an auxiliary head read $-0.020$ against betaxanthin
+alone, paired over four seeds with a spread of 0.012, and the auxiliary head tripled the
+run-to-run spread of the betaxanthin read, from 0.007 to 0.023, so detecting a lift of
+0.015 on that design needs about twenty-two seeds an arm. Against a shared signal of
+$-0.041$ the isobutanol version of that design has less to share than the amino-acid one
+that failed, at the same cost. The other endpoint as an input rather than a second
+task is where the campaign's gains have come from, and that is the form the third
+endpoint should take if it is read at all: the amino-acid pool through a hidden layer
+as an input for the biosensor, which the ridge already reads at 0.102.

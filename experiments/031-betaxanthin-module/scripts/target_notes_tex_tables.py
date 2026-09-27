@@ -82,7 +82,9 @@ def target_transfer(target: str) -> str | None:
     comp_rows = []
     for head, items in report["comparators"].items():
         comp_rows.append(f"    \\multicolumn{{2}}{{@{{}}l}}{{\\textit{{{head}}}}} \\\\")
-        comp_rows.extend(f"    {name} & {value:.4f} \\\\" for name, value in items.items())
+        comp_rows.extend(
+            f"    {name} & {value:.4f} \\\\" for name, value in items.items()
+        )
     label = STUDY[target]["label"]
     statistic = (
         "the pinned-test Spearman at the epoch selected on validation Pearson (centered "
@@ -104,7 +106,9 @@ def target_transfer(target: str) -> str | None:
         "    arm against control & seeds & arm (sd) & control (sd) & difference (sd) & "
         "higher & top-50 \\\\\n    \\hline\n"
     )
-    chunks = [rows[i : i + PAIRS_PER_TABLE] for i in range(0, len(rows), PAIRS_PER_TABLE)]
+    chunks = [
+        rows[i : i + PAIRS_PER_TABLE] for i in range(0, len(rows), PAIRS_PER_TABLE)
+    ]
     pair_tables = []
     for k, chunk in enumerate(chunks):
         if k == 0:
@@ -126,12 +130,14 @@ def target_transfer(target: str) -> str | None:
                 f"  \\label{{tab:target-transfer-{k + 1}}}\n"
             )
         pair_tables.append(
-            "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n" + caption + header
-            + "\n".join(chunk) + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n\n"
+            "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+            + caption
+            + header
+            + "\n".join(chunk)
+            + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n\n"
         )
     body = (
-        "".join(pair_tables)
-        + "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "".join(pair_tables) + "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
         "  \\caption[The 027 comparators]{The pinned-test Spearman of the 027 rounds "
         "on the same split and statistic, read by "
         "\\texttt{target\\_transfer\\_readout.py} from 027's result files: the mean over "
@@ -167,7 +173,7 @@ STORE_LABELS = {
     "gol2": "GO multi-hot with the minimum-norm flux appended",
     "bx_score": "measured Cachera betaxanthin score of the strain (1 column, standardized)",
     "go_bxscore": "GO multi-hot with the measured betaxanthin score appended",
-    "aa_pool": "measured M\\\"ulleder amino-acid pool of the strain (19 mM columns)",
+    "aa_pool": 'measured M\\"ulleder amino-acid pool of the strain (19 mM columns)',
     "go_aapool": "GO multi-hot with the measured pool appended",
     "gopfba_aapool": "HiGHS parsimonious store with GO and the measured pool appended",
     "aapool_pfba": "measured pool with the HiGHS parsimonious vector appended, on the pool's genes",
@@ -191,7 +197,11 @@ def store_baselines(target: str) -> str | None:
             if tp.get("top50_enrichment") is not None:
                 cell += f" / {tp['top50_enrichment']:.2f}"
             cells.append(cell)
-        rows.append(f"    {STORE_LABELS.get(rep, rep)} & {o['dim']} & " + " & ".join(cells) + " \\\\")
+        rows.append(
+            f"    {STORE_LABELS.get(rep, rep)} & {o['dim']} & "
+            + " & ".join(cells)
+            + " \\\\"
+        )
     cell_note = {
         "betaxanthin": "the cell is the pinned-test Spearman and, after the slash, the top-50 enrichment",
         "amino_acids": "the cell is the mean pinned-test Spearman over the 19 amino acids",
@@ -204,7 +214,9 @@ def store_baselines(target: str) -> str | None:
         ),
     }[target]
     name = "store_baselines" if target != "cooper" else "store_baselines_cooper"
-    label = "tab:store-baselines" if target != "cooper" else "tab:store-baselines-cooper"
+    label = (
+        "tab:store-baselines" if target != "cooper" else "tab:store-baselines-cooper"
+    )
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
         "  \\caption[CPU baselines over the store representations]{Each deleted gene "
@@ -229,7 +241,9 @@ def store_baselines(target: str) -> str | None:
 
 def store_degeneracy(target: str) -> str | None:
     """No-effect deletions whose vector differs from the wild type's, this target's stores."""
-    src = osp.join(EXPERIMENT_ROOT, "031-betaxanthin-module", "results", "store_degeneracy.json")
+    src = osp.join(
+        EXPERIMENT_ROOT, "031-betaxanthin-module", "results", "store_degeneracy.json"
+    )
     if not osp.isfile(src):
         return None
     with open(src) as fh:
@@ -257,7 +271,12 @@ def store_degeneracy(target: str) -> str | None:
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
-    return write(target, "store_degeneracy", body, "031-betaxanthin-module/results/store_degeneracy.json")
+    return write(
+        target,
+        "store_degeneracy",
+        body,
+        "031-betaxanthin-module/results/store_degeneracy.json",
+    )
 
 
 def amino_acid_concordance() -> str | None:
@@ -273,7 +292,11 @@ def amino_acid_concordance() -> str | None:
     for s in d["matched"]:
         parts = s["mulleder"].split("+")
         mul_rt = sum(mul[p]["spearman_retest_log10"] for p in parts) / len(parts)
-        coo_rt = coo[s["cooper_peak"]]["spearman"] if s["cooper_peak"] in coo else float("nan")
+        coo_rt = (
+            coo[s["cooper_peak"]]["spearman"]
+            if s["cooper_peak"] in coo
+            else float("nan")
+        )
         rows.append(
             f"    {s['cooper_peak'].replace('_', ' ')} & {s['mulleder']} & {s['n']} & "
             f"${s['spearman']:+.3f}$ & ${s['pearson_log']:+.3f}$ & "
@@ -282,7 +305,7 @@ def amino_acid_concordance() -> str | None:
         )
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
-        "  \\caption[M\\\"ulleder 2016 against Cooper 2010]{The two deletion-collection "
+        '  \\caption[M\\"ulleder 2016 against Cooper 2010]{The two deletion-collection '
         "amino-acid screens on their "
         f"{d['n_shared_strains']:,} shared strains, matched on the collection's ORF name. "
         "Cooper's CE-LIF peaks (a linear ratio to the plate mean; composite peaks list "
@@ -296,19 +319,28 @@ def amino_acid_concordance() -> str | None:
         "\\texttt{results/amino\\_acid\\_dataset\\_concordance.json}.}\n"
         "  \\label{tab:amino-acid-concordance}\n"
         "  \\begin{tabular}{@{}llrrrrrr@{}}\n    \\hline\n"
-        "    Cooper peak & M\\\"ulleder & strains & Spearman & log Pearson & top 5\\% & "
-        "M\\\"ulleder replicate & Cooper replicate \\\\\n    \\hline\n"
+        '    Cooper peak & M\\"ulleder & strains & Spearman & log Pearson & top 5\\% & '
+        'M\\"ulleder replicate & Cooper replicate \\\\\n    \\hline\n'
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
-    return write("amino_acids", "amino_acid_concordance", body, "results/amino_acid_dataset_concordance.json")
+    return write(
+        "amino_acids",
+        "amino_acid_concordance",
+        body,
+        "results/amino_acid_dataset_concordance.json",
+    )
 
 
 def mulleder_retest() -> str | None:
     """Mulleder 2016's 194 strains measured twice, per amino acid, and the ceiling it sets
-    on a model: the square root of the between-strain share of a measurement's variance."""
+    on a model: the square root of the between-strain share of a measurement's variance.
+    """
     src = osp.join(
-        EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "results", "mulleder_retest_reliability.json"
+        EXPERIMENT_ROOT,
+        "027-betaxanthin-metabolic",
+        "results",
+        "mulleder_retest_reliability.json",
     )
     if not osp.isfile(src):
         return None
@@ -329,7 +361,7 @@ def mulleder_retest() -> str | None:
     )
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
-        "  \\caption[M\\\"ulleder 2016 retest and the model ceiling]{M\\\"ulleder 2016's "
+        '  \\caption[M\\"ulleder 2016 retest and the model ceiling]{M\\"ulleder 2016\'s '
         f"retest, the {d['n_orfs_measured_twice']} strains measured twice, per amino acid. "
         "Pearson and Spearman between the two $\\log_{10}$ measurements; the "
         f"quality-control sample's sd over its {d['n_qc_injections']} injections (the "
@@ -348,7 +380,9 @@ def mulleder_retest() -> str | None:
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
     return write(
-        "amino_acids", "mulleder_retest", body,
+        "amino_acids",
+        "mulleder_retest",
+        body,
         "experiments/027-betaxanthin-metabolic/results/mulleder_retest_reliability.json",
     )
 
@@ -362,7 +396,10 @@ def betaxanthin_amino_acid_correlation() -> str | None:
         return None
     with open(src) as fh:
         d = json.load(fh)
-    screen_label = {"mulleder2016": "M\\\"ulleder 2016 (mM)", "cooper2010": "Cooper 2010 (ratio)"}
+    screen_label = {
+        "mulleder2016": 'M\\"ulleder 2016 (mM)',
+        "cooper2010": "Cooper 2010 (ratio)",
+    }
     tables = []
     for screen in ("mulleder2016", "cooper2010"):
         rows = []
@@ -375,7 +412,11 @@ def betaxanthin_amino_acid_correlation() -> str | None:
                 f"$[{s['ci_low']:+.3f}, {s['ci_high']:+.3f}]$ & "
                 f"{s['top5_overlap']} / {s['top5_expected']:.1f} & {ceiling} \\\\"
             )
-        inputs_label = {"pool": "ridge, pool", "go": "ridge, GO", "go+pool": "ridge, GO with pool"}
+        inputs_label = {
+            "pool": "ridge, pool",
+            "go": "ridge, GO",
+            "go+pool": "ridge, GO with pool",
+        }
         for p in (x for x in d["pool"] if x["screen"] == screen):
             perm = p["permuted_spearman_oof"]
             rows.append(
@@ -418,7 +459,8 @@ def betaxanthin_amino_acid_correlation() -> str | None:
                 "  \\label{tab:betaxanthin-amino-acid-correlation-cooper}\n"
             )
         tables.append(
-            "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n" + caption
+            "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+            + caption
             + "  \\begin{tabular}{@{}lrrlrr@{}}\n    \\hline\n"
             "    " + screen_label[screen] + " & strains & Spearman & 95\\% interval & "
             "top 5\\% & ceiling \\\\\n    \\hline\n"
@@ -427,7 +469,9 @@ def betaxanthin_amino_acid_correlation() -> str | None:
         )
     body = "".join(tables)
     return write(
-        "amino_acids", "betaxanthin_amino_acid_correlation", body,
+        "amino_acids",
+        "betaxanthin_amino_acid_correlation",
+        body,
         "results/betaxanthin_amino_acid_correlation.json",
     )
 
@@ -520,7 +564,9 @@ POOL_MLP_EXTRA = (
 def pool_mlp_sweep() -> str | None:
     """The measured pool through a perceptron on CPU, one (arm, width, depth) per row."""
     rows = []
-    files = [f"go_models_betaxanthin_pool_h{h}.json" for h in POOL_MLP_WIDTHS] + list(POOL_MLP_EXTRA)
+    files = [f"go_models_betaxanthin_pool_h{h}.json" for h in POOL_MLP_WIDTHS] + list(
+        POOL_MLP_EXTRA
+    )
     for name in files:
         src = results("betaxanthin", name)
         if not osp.isfile(src):
@@ -560,7 +606,12 @@ def pool_mlp_sweep() -> str | None:
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
-    return write("betaxanthin", "pool_mlp_sweep", body, "results/go_models_betaxanthin_pool_h<H>.json")
+    return write(
+        "betaxanthin",
+        "pool_mlp_sweep",
+        body,
+        "results/go_models_betaxanthin_pool_h<H>.json",
+    )
 
 
 SCORE_MLP_WIDTHS = (16, 256, 1024)
@@ -608,12 +659,83 @@ def score_mlp_sweep() -> str | None:
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
-    return write("amino_acids", "score_mlp_sweep", body, "results/go_models_amino_acids_bxscore_h<H>.json")
+    return write(
+        "amino_acids",
+        "score_mlp_sweep",
+        body,
+        "results/go_models_amino_acids_bxscore_h<H>.json",
+    )
+
+
+def endpoint_matrix() -> str | None:
+    """The three endpoint pairs, their shared strain-level signal and their ceilings.
+
+    What a joint model of two endpoints could share is bounded by the signal the two hold
+    in common; the pool entries are the out-of-fold ridge from the nineteen concentrations,
+    the betaxanthin-isobutanol entry the Spearman of the two scores.
+    """
+    bx_aa = results("amino_acids", "betaxanthin_amino_acid_correlation.json")
+    aa_ib = results("amino_acids", "isobutanol_amino_acid_correlation.json")
+    if not (osp.isfile(bx_aa) and osp.isfile(aa_ib)):
+        return None
+    with open(bx_aa) as fh:
+        a = json.load(fh)
+    with open(aa_ib) as fh:
+        b = json.load(fh)
+    bx_pool = next(
+        p for p in a["pool"] if p["screen"] == "mulleder2016" and p["inputs"] == "pool"
+    )
+    bx_ceiling = float(
+        np.mean([f["ceiling"] for f in a["features"] if f["screen"] == "mulleder2016"])
+    )
+    ib_pool = next(p for p in b["pool"] if p["inputs"] == "pool")
+    ib_ceiling = float(np.mean([f["ceiling"] for f in b["features"]]))
+    bx_ib = b["betaxanthin"]
+    rows = [
+        (
+            "betaxanthin and the amino-acid pool",
+            bx_pool["spearman_oof"],
+            bx_ceiling,
+            bx_pool["n"],
+        ),
+        (
+            "the amino-acid pool and isobutanol",
+            ib_pool["spearman_oof"],
+            ib_ceiling,
+            ib_pool["n"],
+        ),
+        ("betaxanthin and isobutanol", bx_ib["spearman"], bx_ib["ceiling"], bx_ib["n"]),
+    ]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The endpoint matrix]{The strain-level signal each pair of endpoints "
+        "holds in common, on the strains both screens measured, with the ceiling each read "
+        "is bounded by. The two pool rows are the out-of-fold Spearman of a ridge from "
+        "M\\\"ulleder's nineteen concentrations over five strain folds; the last row is the "
+        "Spearman of Cachera's betaxanthin score against the biosensor's log10 fold change. "
+        "Each ceiling is the geometric mean of the two endpoints' reliabilities, averaged "
+        "over the amino acids where the pair involves the pool. Written by "
+        "\\texttt{target\\_notes\\_tex\\_tables.py} from "
+        "\\texttt{betaxanthin\\_amino\\_acid\\_correlation.json} and "
+        "\\texttt{isobutanol\\_amino\\_acid\\_correlation.json}.}\n"
+        "  \\label{tab:endpoint-matrix}\n"
+        "  \\begin{tabular}{@{}lrrrr@{}}\n    \\hline\n"
+        "    pair & strains & shared signal & ceiling & share of ceiling \\\\\n    \\hline\n"
+        + "\n".join(
+            f"    {name} & {n:,} & ${v:+.3f}$ & {c:.2f} & {100.0 * abs(v) / c:.0f} percent \\\\"
+            for name, v, c, n in rows
+        )
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "amino_acids", "endpoint_matrix", body, "the two cross-endpoint result files"
+    )
 
 
 def main() -> None:
     paths = [
         pool_mlp_sweep(),
+        endpoint_matrix(),
         score_mlp_sweep(),
         target_transfer("betaxanthin"),
         target_transfer("amino_acids"),

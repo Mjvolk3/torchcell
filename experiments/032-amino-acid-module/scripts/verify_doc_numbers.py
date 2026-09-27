@@ -20,6 +20,7 @@ import os
 import os.path as osp
 import sys
 
+import numpy as np
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -1228,6 +1229,137 @@ CHECKS: list[Check] = [
             ]["cooper_pool"]["filled_wild_type"]["test"]
         ),
         tolerance=0.5,
+    ),
+    # sec:endpoint-matrix -- betaxanthin against isobutanol, the third pair (2026-09-27).
+    Check(
+        claim="endpoint matrix: bx-ib shared strains",
+        stated=4353,
+        recompute=lambda: float(
+            json.load(
+                open(osp.join(RESULTS, "isobutanol_amino_acid_correlation.json"))
+            )["betaxanthin"]["n"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="endpoint matrix: bx-ib spearman",
+        stated=-0.041,
+        recompute=lambda: float(
+            json.load(
+                open(osp.join(RESULTS, "isobutanol_amino_acid_correlation.json"))
+            )["betaxanthin"]["spearman"]
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="endpoint matrix: bx-ib interval low",
+        stated=-0.070,
+        recompute=lambda: float(
+            json.load(
+                open(osp.join(RESULTS, "isobutanol_amino_acid_correlation.json"))
+            )["betaxanthin"]["ci_low"]
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="endpoint matrix: bx-ib interval high",
+        stated=-0.013,
+        recompute=lambda: float(
+            json.load(
+                open(osp.join(RESULTS, "isobutanol_amino_acid_correlation.json"))
+            )["betaxanthin"]["ci_high"]
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="endpoint matrix: bx-ib ceiling",
+        stated=0.51,
+        recompute=lambda: float(
+            json.load(
+                open(osp.join(RESULTS, "isobutanol_amino_acid_correlation.json"))
+            )["betaxanthin"]["ceiling"]
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="endpoint matrix: bx-ib share of ceiling (percent)",
+        stated=8,
+        recompute=lambda: (
+            100.0
+            * abs(
+                json.load(
+                    open(osp.join(RESULTS, "isobutanol_amino_acid_correlation.json"))
+                )["betaxanthin"]["spearman"]
+            )
+            / json.load(
+                open(osp.join(RESULTS, "isobutanol_amino_acid_correlation.json"))
+            )["betaxanthin"]["ceiling"]
+        ),
+        tolerance=0.6,
+    ),
+    Check(
+        claim="endpoint matrix: bx-aa pool ridge",
+        stated=0.226,
+        recompute=lambda: float(
+            next(
+                p
+                for p in json.load(
+                    open(osp.join(RESULTS, "betaxanthin_amino_acid_correlation.json"))
+                )["pool"]
+                if p["screen"] == "mulleder2016" and p["inputs"] == "pool"
+            )["spearman_oof"]
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="endpoint matrix: aa-ib pool ridge",
+        stated=0.102,
+        recompute=isobutanol_cross("pool", "pool", "spearman_oof"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="endpoint matrix: aa-ib share of ceiling (percent)",
+        stated=42,
+        recompute=lambda: (
+            100.0
+            * isobutanol_cross("pool", "pool", "spearman_oof")()
+            / isobutanol_cross("mean_ceiling", "")()
+        ),
+        tolerance=1.0,
+    ),
+    Check(
+        claim="endpoint matrix: bx-aa share of ceiling (percent)",
+        stated=56,
+        recompute=lambda: (
+            100.0
+            * float(
+                next(
+                    p
+                    for p in json.load(
+                        open(
+                            osp.join(RESULTS, "betaxanthin_amino_acid_correlation.json")
+                        )
+                    )["pool"]
+                    if p["screen"] == "mulleder2016" and p["inputs"] == "pool"
+                )["spearman_oof"]
+            )
+            / float(
+                np.mean(
+                    [
+                        f["ceiling"]
+                        for f in json.load(
+                            open(
+                                osp.join(
+                                    RESULTS, "betaxanthin_amino_acid_correlation.json"
+                                )
+                            )
+                        )["features"]
+                        if f["screen"] == "mulleder2016"
+                    ]
+                )
+            )
+        ),
+        tolerance=1.0,
     ),
     # sec:isobutanol-cross -- the isobutanol biosensor against the pool (2026-09-27).
     Check(

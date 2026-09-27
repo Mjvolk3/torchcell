@@ -65,6 +65,7 @@ DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 sys.path.insert(0, osp.join(EXPERIMENT_ROOT, "032-amino-acid-module", "scripts"))
 from betaxanthin_amino_acid_correlation import (  # noqa: E402
+    CACHERA,
     GO_STORE,
     IMAGES,
     MULLEDER,
@@ -88,6 +89,9 @@ from torchcell.utils import (  # noqa: E402
 )
 
 LOPEZ = osp.join(DATA_ROOT, "data/torchcell/isobutanol_screen_lopez2024")
+RELIABILITY_027 = osp.join(
+    EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "results", "target_reliability.json"
+)
 IB_RELIABILITY = osp.join(
     EXPERIMENT_ROOT,
     "027-betaxanthin-metabolic",
@@ -105,7 +109,11 @@ class Report(BaseModel):
     n_shared: int
     isobutanol_reliability: float
     isobutanol_reliability_source: str
+    #: Strains the screen shares with Cachera's betaxanthin score.
+    n_shared_betaxanthin: int
     features: list[FeatureStat]
+    #: The betaxanthin score against the biosensor, the third pair of the endpoint matrix.
+    betaxanthin: FeatureStat
     pool: list[PoolFit]
     figure: str
     note: str
@@ -195,6 +203,29 @@ def main() -> None:
             f"permuted {np.mean(p.permuted_spearman_oof):+.4f}"
         )
 
+    # THE THIRD PAIR OF THE ENDPOINT MATRIX (2026-09-27): the betaxanthin score against
+    # the biosensor, the one pair the cross-endpoint reads had never covered, and the
+    # number that says how much a joint model of the two could share.
+    bx = pd.read_csv(osp.join(CACHERA, "preprocess", "data.csv")).set_index("orf")
+    shared_bx = sorted(set(ib) & set(bx.index))
+    y_bx = np.log10(np.array([ib[g] for g in shared_bx], dtype=float))
+    bx_vals = bx.loc[shared_bx, "level"].to_numpy(float)
+    # Cachera's own reliability, the stored variance-components value the sibling read uses.
+    with open(RELIABILITY_027) as fh:
+        bx_rel = float(
+            next(t for t in json.load(fh)["targets"] if t["target"] == "Betaxanthin")[
+                "reliability_stored_value"
+            ]
+        )
+    betaxanthin = feature_stat(
+        "cachera2023", "betaxanthin_score", y_bx, bx_vals, bx_rel, ib_rel, rng
+    )
+    print(
+        f"  betaxanthin_score     n {betaxanthin.n:5d} rho {betaxanthin.spearman:+.3f} "
+        f"[{betaxanthin.ci_low:+.3f}, {betaxanthin.ci_high:+.3f}] "
+        f"ceiling {betaxanthin.ceiling:.2f}"
+    )
+
     os.makedirs(IMAGES, exist_ok=True)
     # The repo's figure conventions: Arial 6 pt, real text in the SVG (svg.fonttype
     # "none", so the built PDF embeds a font rather than outlining the labels), a
@@ -248,6 +279,8 @@ def main() -> None:
         n_shared=len(shared),
         isobutanol_reliability=ib_rel,
         isobutanol_reliability_source="within_first_screen.pairs.spearman_log10",
+        n_shared_betaxanthin=len(shared_bx),
+        betaxanthin=betaxanthin,
         features=features,
         pool=pool,
         figure=figure,

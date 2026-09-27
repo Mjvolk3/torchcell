@@ -23,6 +23,7 @@
  "n_shared": 4360,
  "isobutanol_reliability": 0.30855074359144413,
  "isobutanol_reliability_source": "within_first_screen.pairs.spearman_log10",
+ "n_shared_betaxanthin": 4353,
  "features": [
   {
    "screen": "mulleder2016",
@@ -310,6 +311,21 @@
    "ceiling": 0.2566279723439101
   }
  ],
+ "betaxanthin": {
+  "screen": "cachera2023",
+  "key": "betaxanthin_score",
+  "n": 4353,
+  "spearman": -0.04116831370981882,
+  "spearman_p": 0.0065967338886566765,
+  "ci_low": -0.06971318063832194,
+  "ci_high": -0.01306555145865477,
+  "top5_overlap": 3,
+  "top5_expected": 10.917528141511601,
+  "top5_enrichment": 0.2747874758017002,
+  "top5_hypergeom_p": 0.9991262143719687,
+  "reliability": 0.8442469380924851,
+  "ceiling": 0.5103851687923898
+ },
  "pool": [
   {
    "screen": "lopez2024",

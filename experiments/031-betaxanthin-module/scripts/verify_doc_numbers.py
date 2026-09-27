@@ -6539,6 +6539,45 @@ CHECKS: list[Check] = [
         ),
         tolerance=0.006,
     ),
+    # sec:rounds -- round 196, the pool through 256 at 400 epochs.
+    Check(
+        claim="round 196: pool mlp256 e400 arm",
+        stated=0.279,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with a budget of 400 epochs against the budget of 200",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 196: pool mlp256 e400 arm sd",
+        stated=0.023,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with a budget of 400 epochs against the budget of 200",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 196: paired difference is zero",
+        stated=0.0,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with a budget of 400 epochs against the budget of 200",
+            "mean_difference",
+        ),
+        tolerance=0.00005,
+    ),
+    Check(
+        claim="round 196: paired sd is zero",
+        stated=0.0,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 with a budget of 400 epochs against the budget of 200",
+            "sd_difference",
+        ),
+        tolerance=0.00005,
+    ),
     # sec:physics -- the raw-encoding perceptrons and their 1,000-epoch rerun (2026-09-27).
     Check(
         claim="raw mlp: pool alone 256",

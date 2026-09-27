@@ -616,3 +616,4 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 ## 2026.09.27 - Round 201 read: the linear GO slot at a tenth of the rate
 
 - w222 (job 2887): 0.234 (sd 0.015) against 0.225 at the full rate (+0.009 on four of six) and 0.279 for the pool alone (-0.045 on zero of six); selection moves from epochs 9 to 15 to 55 to 104. Covered-only 0.184 (pool alone 0.212, full rate 0.171); the uncovered genes sit at the 34th percentile against the pool alone's fifth (`results/target_coverage_split_w222.json`). The annotation's linear slot costs the pool on both groups at either rate.
+- Round 202 (w223, job 2888): the linear slot at a hundredth of the rate reads 0.211 (sd 0.027), under the full rate (0.225) and the tenth (0.234) and 0.068 under the pool alone; covered-only 0.166. The rate curve peaks at the tenth; the two-slot form is closed under the pool alone on this target.

@@ -958,4 +958,16 @@ annotation's linear slot beside it, the head no longer separates the strains the
 never measured, and the covered-gene read stays under the pool's. The annotation in a
 linear slot costs the pool on both groups of genes, at either rate.
 
+Round 202 is read (job 2888, 3 h 41 min): the linear GO slot at a hundredth of the
+rate. It reads 0.211 (sd 0.027) against the full rate at 0.225 ($-0.014$ paired, sd
+0.028, two of six), against the tenth at 0.234 ($-0.023$, sd 0.025, one of six) and
+against the pool alone at 0.279 ($-0.068$, sd 0.044, zero of six), top-50 5.26,
+ensembled 0.241 with a top-50 of 5.39; the seeds read 0.180 to 0.242 and select at
+epochs 34 to 197 on validation Pearson 0.30 to 0.34, with the widest band of the three
+rates; on the covered genes it reads 0.166. So the rate curve of the linear slot is
+0.225, 0.234 and 0.211 at the full rate, a tenth and a hundredth, a maximum at the
+tenth that stays 0.045 under the pool alone: a slot that learns too slowly to set the
+early selection also learns too slowly to add, and the two-slot form is closed on this
+target with the pool alone above every version of it.
+
 \input{tables/target_transfer}

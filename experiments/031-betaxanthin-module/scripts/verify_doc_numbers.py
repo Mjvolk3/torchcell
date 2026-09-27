@@ -11674,6 +11674,218 @@ CHECKS: list[Check] = [
         ),
         tolerance=0.0006,
     ),
+    # sec:rounds -- round 202, the linear slot at a hundredth of the rate.
+    Check(
+        claim="round 202: arm",
+        stated=0.211,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: arm sd",
+        stated=0.027,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: vs full rate paired",
+        stated=-0.014,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: vs full rate paired sd",
+        stated=0.028,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: vs full rate seeds above",
+        stated=2,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 202: tenth (reference)",
+        stated=0.234,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against a tenth",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: vs tenth paired",
+        stated=-0.023,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against a tenth",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: vs tenth paired sd",
+        stated=0.025,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against a tenth",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: vs tenth seeds above",
+        stated=1,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against a tenth",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 202: vs pool paired",
+        stated=-0.068,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against the pool alone through 256",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: vs pool paired sd",
+        stated=0.044,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against the pool alone through 256",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: vs pool seeds above",
+        stated=0,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against the pool alone through 256",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 202: arm top-50",
+        stated=5.26,
+        recompute=transfer(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 202: ensemble",
+        stated=0.241,
+        recompute=ensemble("w223_bxdelgolinaapoolmlp256lr001_h12l1p1_e200", "spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: ensemble top-50",
+        stated=5.39,
+        recompute=ensemble(
+            "w223_bxdelgolinaapoolmlp256lr001_h12l1p1_e200", "top50_enrichment"
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 202: seed min",
+        stated=0.18,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "arm",
+            "spearman",
+            "min",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: seed max",
+        stated=0.242,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "arm",
+            "spearman",
+            "max",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 202: select epoch min",
+        stated=34,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "arm",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 202: select epoch max",
+        stated=197,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 202: select val pearson min",
+        stated=0.3,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "arm",
+            "select_val_pearson",
+            "min",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 202: select val pearson max",
+        stated=0.34,
+        recompute=pair_cells(
+            "betaxanthin: two-slot head at 256 with the linear slot at a hundredth of the rate against both slots at the full rate",
+            "arm",
+            "select_val_pearson",
+            "max",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 202: covered",
+        stated=0.166,
+        recompute=coverage(
+            "w223",
+            "w223_bxdelgolinaapoolmlp256lr001_h12l1p1_e200",
+            "mean_spearman_covered",
+        ),
+        tolerance=0.0006,
+    ),
 ]
 
 

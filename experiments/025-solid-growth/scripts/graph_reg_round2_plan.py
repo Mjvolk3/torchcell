@@ -115,7 +115,7 @@ ARMS: list[Arm] = [
         name="random graphs, KL 1",
         change="rand_031, graph_reg_lambda=1",
         needs_code="",
-        seeds=3,
+        seeds=5,
         figure="F1 a-c, F1 f",
     ),
     Arm(
@@ -124,7 +124,7 @@ ARMS: list[Arm] = [
         name="random graphs, KL 0.1",
         change="rand_031, graph_reg_lambda=0.1",
         needs_code="",
-        seeds=3,
+        seeds=5,
         figure="F1 a-c",
     ),
     Arm(

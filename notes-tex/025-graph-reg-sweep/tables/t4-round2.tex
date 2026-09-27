@@ -4,8 +4,8 @@
 round & question & arm & change on \texttt{ctrl\_013} & code & seeds & epochs & GPU-h \\
 \midrule
 1b & completion & KL 1e-5, seed 2 & \texttt{graph\_reg\_lambda=1e-5}, \texttt{seed=2} & none & 1 & 30 & 54 \\
- & biology vs conditioning & random graphs, KL 1 & \texttt{rand\_031}, \texttt{graph\_reg\_lambda=1} & none & 3 & 30 & 162 \\
- &  & random graphs, KL 0.1 & \texttt{rand\_031}, \texttt{graph\_reg\_lambda=0.1} & none & 3 & 30 & 162 \\
+ & biology vs conditioning & random graphs, KL 1 & \texttt{rand\_031}, \texttt{graph\_reg\_lambda=1} & none & 5 & 30 & 270 \\
+ &  & random graphs, KL 0.1 & \texttt{rand\_031}, \texttt{graph\_reg\_lambda=0.1} & none & 5 & 30 & 270 \\
  & ladder top & KL 10 & \texttt{graph\_reg\_lambda=10} & none & 3 & 30 & 162 \\
  &  & KL 100 & \texttt{graph\_reg\_lambda=100} & none & 3 & 30 & 162 \\
 \midrule
@@ -25,6 +25,6 @@ round & question & arm & change on \texttt{ctrl\_013} & code & seeds & epochs & 
  & representation & composite embedding, no penalty & \texttt{embfit\_035} \texttt{minus} \texttt{fitness} \texttt{head}, \texttt{graph\_reg\_lambda=0} & none & 3 & 30 & 162 \\
  &  & composite embedding, KL 1 & \texttt{embfit\_035} \texttt{minus} \texttt{fitness} \texttt{head}, \texttt{graph\_reg\_lambda=1} & none & 3 & 30 & 162 \\
 \midrule
-total & & & & 55 & & 3,456 \\
+total & & & & 59 & & 3,672 \\
 \bottomrule
 \end{tabular}

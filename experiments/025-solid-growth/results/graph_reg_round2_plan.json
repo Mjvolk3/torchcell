@@ -20,11 +20,11 @@
    "name": "random graphs, KL 1",
    "change": "rand_031, graph_reg_lambda=1",
    "needs_code": "",
-   "seeds": 3,
+   "seeds": 5,
    "epochs": 30,
    "figure": "F1 a-c, F1 f",
    "wall_h": 13.5,
-   "gpu_h": 162
+   "gpu_h": 270
   },
   {
    "round": "1b",
@@ -32,11 +32,11 @@
    "name": "random graphs, KL 0.1",
    "change": "rand_031, graph_reg_lambda=0.1",
    "needs_code": "",
-   "seeds": 3,
+   "seeds": 5,
    "epochs": 30,
    "figure": "F1 a-c",
    "wall_h": 13.5,
-   "gpu_h": 162
+   "gpu_h": 270
   },
   {
    "round": "1b",
@@ -231,13 +231,13 @@
    "gpu_h": 162
   }
  ],
- "total_runs": 55,
+ "total_runs": 59,
  "runs_per_round": {
-  "1b": 13,
+  "1b": 17,
   "2": 27,
   "3": 15
  },
- "total_gpu_h": 3456,
+ "total_gpu_h": 3672,
  "code_changes": [
   "drop the transpose write in the mask builder",
   "support A or A squared, self-loops kept",

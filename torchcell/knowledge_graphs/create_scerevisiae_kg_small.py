@@ -167,6 +167,11 @@ def main(cfg: DictConfig) -> None:
     single_pass = bool(wandb.config.adapters.get("single_pass", False))
     fast_writer = bool(wandb.config.adapters.get("fast_writer", False))
     chunks_per_worker = int(wandb.config.adapters.get("chunks_per_worker", 2))
+    # r7: MiB of resolved record JSON a single-pass chunk may carry (48 is the
+    # module default that job 2905 ran with).
+    single_pass_chunk_budget_mb = float(
+        wandb.config.adapters.get("single_pass_chunk_budget_mb", 48)
+    )
     # r5: rows rendered in the chunk workers, the main process only dedups and
     # appends (torchcell.fast_csv). The specs are frozen from THIS BioCypher instance
     # before any adapter forks a pool, so every worker inherits them.
@@ -315,6 +320,9 @@ def main(cfg: DictConfig) -> None:
         adapters[-1].single_pass = single_pass
         adapters[-1].row_specs = row_specs
         adapters[-1].chunks_per_worker = chunks_per_worker
+        adapters[-1].single_pass_chunk_budget_bytes = int(
+            single_pass_chunk_budget_mb * 2**20
+        )
     log.info(
         "Built %d adapters; skipped %d with no LMDB: %s",
         len(adapters),

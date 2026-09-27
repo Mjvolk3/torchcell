@@ -41,6 +41,9 @@ adapters:
   # r6 arm: adapters.chunks_per_worker=N (pool group = workers x N chunks; the pool is
   # torn down and re-forked every group). 2 is production.
   chunks_per_worker: 2
+  # r7 arm: adapters.single_pass_chunk_budget_mb=N (resolved-record MiB per
+  # single-pass chunk; sets the chunk length per adapter). 48 is the module default.
+  single_pass_chunk_budget_mb: 48
 
 datasets:
   - MetaboliteZelezniak2018Dataset # 95 records

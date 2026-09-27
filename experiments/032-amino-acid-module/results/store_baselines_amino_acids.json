@@ -33403,6 +33403,2572 @@
     ]
    }
   },
+  "cooper_pool": {
+   "dim": 17,
+   "store": "YPD_bx_cooperpool",
+   "filled_wild_type": {
+    "train": 489,
+    "val": 36,
+    "test": 102
+   },
+   "n_scored": {
+    "val": 270,
+    "test": 842
+   },
+   "ridge": {
+    "selected_on_val": {
+     "k_gene": 19,
+     "ridge": 0.1,
+     "val": {
+      "per_feature_pearson": 0.04665765406888124,
+      "nmse": 0.9907288224722415,
+      "n": 270,
+      "mean_spearman": 0.041146679244894326,
+      "per_feature": {
+       "alanine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 5.853608079,
+        "max": 7.38647842,
+        "spearman": 0.06810278346477233,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.28,
+         "50": 0.32
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 6.814859035781031,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "arginine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 2.570530844,
+        "max": 3.774271981,
+        "spearman": 0.003243037646496011,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.3163161831481345,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "asparagine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.186822099,
+        "max": 1.295870801,
+        "spearman": 0.09552060487331225,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.3157799972000557,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "aspartate": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 4.863361936,
+        "max": 5.287909865,
+        "spearman": 0.06007599997629742,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.22
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.7627820858800085,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamate": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 20.94971513,
+        "max": 23.350098968,
+        "spearman": 0.07352570955297219,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.24,
+         "50": 0.26
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 23.547114454745813,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 27.164533506,
+        "max": 29.421394215,
+        "spearman": -0.007693145705509448,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.24,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 30.657399317131247,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glycine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.581903608,
+        "max": 2.15685518,
+        "spearman": 0.07703384759697701,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.206048885798401,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "histidine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 4.387449486,
+        "max": 5.007310626,
+        "spearman": 0.0014260531922519794,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.16
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.608598499699123,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "isoleucine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.391522154,
+        "max": 0.420919095,
+        "spearman": 0.02903791249670005,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.41791562705468394,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "leucine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.256302357,
+        "max": 0.28525603,
+        "spearman": -0.024827716648383947,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.30372989247933435,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "lysine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.724809699,
+        "max": 0.988029488,
+        "spearman": 0.047245925073232505,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.12
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.9816082288430769,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "methionine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.100440985,
+        "max": 0.1310382,
+        "spearman": 0.1418086845902887,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.14291287335398156,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "phenylalanine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.271057604,
+        "max": 0.300381233,
+        "spearman": 0.017805993556095055,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.3114697393125649,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "proline": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.031849135,
+        "max": 1.153605891,
+        "spearman": -0.0469269450936363,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.2443840279559375,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "serine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 2.128980514,
+        "max": 2.37107857,
+        "spearman": 0.08145790812848917,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.04,
+         "50": 0.12
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.498908564195285,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "threonine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 3.901955244,
+        "max": 4.096108999,
+        "spearman": -0.0012926046886141337,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.08,
+         "50": 0.12
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.265503695676334,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tryptophan": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.036925548,
+        "max": 0.041346619,
+        "spearman": 0.0847733772452627,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.2,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.04307522503785801,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tyrosine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 2.581899257,
+        "max": 3.562829867,
+        "spearman": 0.13101901255415674,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.32,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 3.3300565329672316,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "valine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.231479533,
+        "max": 1.491554453,
+        "spearman": -0.04954953215816811,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.24,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.4288102420776048,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       }
+      }
+     },
+     "test_pinned": {
+      "per_feature_pearson": 0.07293175172284776,
+      "nmse": 0.9975379006114635,
+      "n": 564,
+      "mean_spearman": 0.033093451131518015,
+      "per_feature": {
+       "alanine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 5.887006668,
+        "max": 7.363065531,
+        "spearman": 0.0902939209538729,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.32,
+         "50": 0.3
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 6.6752654440659684,
+        "permutation_p": 0.0285,
+        "permutation_null_sd": 0.041711824770377603,
+        "bootstrap_ci95": [
+         0.0029891011597129235,
+         0.1713258096565972
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "arginine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 2.633188503,
+        "max": 3.816575854,
+        "spearman": -0.022910922071497388,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.199496005540891,
+        "permutation_p": 0.591,
+        "permutation_null_sd": 0.04187995166490926,
+        "bootstrap_ci95": [
+         -0.1060179636528321,
+         0.05776379138769517
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "asparagine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.167324045,
+        "max": 1.319695138,
+        "spearman": -0.057676695970924806,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.32,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.302176496717958,
+        "permutation_p": 0.18,
+        "permutation_null_sd": 0.04185371140628452,
+        "bootstrap_ci95": [
+         -0.1385798647367433,
+         0.02524682572017287
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "aspartate": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 4.718065816,
+        "max": 5.409258678,
+        "spearman": 0.00338842517532536,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.08,
+         "50": 0.12
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.546759518845171,
+        "permutation_p": 0.9435,
+        "permutation_null_sd": 0.041118579586102065,
+        "bootstrap_ci95": [
+         -0.07874792898925491,
+         0.0860733965746677
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamate": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 20.642099856,
+        "max": 23.520625362,
+        "spearman": 0.0288916674347226,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.26
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 23.354183056052076,
+        "permutation_p": 0.506,
+        "permutation_null_sd": 0.04123830693590999,
+        "bootstrap_ci95": [
+         -0.05073376693243194,
+         0.11128362417338253
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 26.123793454,
+        "max": 29.158628463,
+        "spearman": 0.04620235808098483,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.28,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 30.624134438116172,
+        "permutation_p": 0.2725,
+        "permutation_null_sd": 0.04165353167417695,
+        "bootstrap_ci95": [
+         -0.039947129863390135,
+         0.12777902591866297
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glycine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.612360411,
+        "max": 2.238607796,
+        "spearman": 0.01324969528534049,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.32,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.2130113684991053,
+        "permutation_p": 0.7335,
+        "permutation_null_sd": 0.04122466354456869,
+        "bootstrap_ci95": [
+         -0.0720021953175291,
+         0.09880287283115217
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "histidine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 4.427970823,
+        "max": 5.176748757,
+        "spearman": 0.0031300623256203877,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.04,
+         "50": 0.12
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.550689052463757,
+        "permutation_p": 0.9415,
+        "permutation_null_sd": 0.0422464650541174,
+        "bootstrap_ci95": [
+         -0.07589822272867904,
+         0.08278903572582992
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "isoleucine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.388306976,
+        "max": 0.417342422,
+        "spearman": 0.010105751368523404,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.2
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.4218144755479133,
+        "permutation_p": 0.8045,
+        "permutation_null_sd": 0.04159637013503312,
+        "bootstrap_ci95": [
+         -0.07783536199820659,
+         0.0960853061661519
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "leucine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.256894896,
+        "max": 0.281190693,
+        "spearman": 0.10439464766805877,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.2
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.31277735176318305,
+        "permutation_p": 0.0145,
+        "permutation_null_sd": 0.0427047498472266,
+        "bootstrap_ci95": [
+         0.019263837904891275,
+         0.18447367718488053
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "lysine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.713997952,
+        "max": 0.967656975,
+        "spearman": -0.0737045627174493,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.36,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.9707024589416638,
+        "permutation_p": 0.08,
+        "permutation_null_sd": 0.04215102338811731,
+        "bootstrap_ci95": [
+         -0.15380157433686428,
+         0.010091816574787091
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "methionine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.108023554,
+        "max": 0.132151232,
+        "spearman": 0.06073804048189202,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.143874697708126,
+        "permutation_p": 0.1365,
+        "permutation_null_sd": 0.04181005249482246,
+        "bootstrap_ci95": [
+         -0.027028817386533427,
+         0.15109675346557971
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "phenylalanine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.268342985,
+        "max": 0.302473567,
+        "spearman": 0.08071712412205655,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.3140100328833233,
+        "permutation_p": 0.0555,
+        "permutation_null_sd": 0.041409691774075,
+        "bootstrap_ci95": [
+         -0.0035731278112419145,
+         0.16112402791776934
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "proline": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.048976668,
+        "max": 1.165492302,
+        "spearman": 0.04099398170463431,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.2076026816598369,
+        "permutation_p": 0.33,
+        "permutation_null_sd": 0.04191257181394296,
+        "bootstrap_ci95": [
+         -0.04201907243078277,
+         0.12372638438945845
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "serine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 2.15398328,
+        "max": 2.397357362,
+        "spearman": 0.08333110642574584,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.4722168702084377,
+        "permutation_p": 0.0505,
+        "permutation_null_sd": 0.042262388186423513,
+        "bootstrap_ci95": [
+         0.0041883803396897,
+         0.16559404676482023
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "threonine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 3.891959485,
+        "max": 4.115756509,
+        "spearman": 0.02590875734838674,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.2,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.295199361312904,
+        "permutation_p": 0.523,
+        "permutation_null_sd": 0.041039436995097586,
+        "bootstrap_ci95": [
+         -0.055876034967989645,
+         0.1086983267770043
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tryptophan": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.036795216,
+        "max": 0.041134249,
+        "spearman": 0.08173837773915987,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.04479021944383623,
+        "permutation_p": 0.055,
+        "permutation_null_sd": 0.04273467575142967,
+        "bootstrap_ci95": [
+         -0.0003202172669503113,
+         0.16444594582550695
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tyrosine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 2.536044279,
+        "max": 3.5219153,
+        "spearman": 0.08460524291026521,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.16,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 3.2660416095510643,
+        "permutation_p": 0.054,
+        "permutation_null_sd": 0.04245231539418319,
+        "bootstrap_ci95": [
+         -0.0033944074664094357,
+         0.17040476613210578
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "valine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.185711727,
+        "max": 1.562869549,
+        "spearman": 0.025378593234124357,
+        "topk_precision": {
+         "10": 0.5,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.4237215382625203,
+        "permutation_p": 0.536,
+        "permutation_null_sd": 0.04170747762596129,
+        "bootstrap_ci95": [
+         -0.05393487830293672,
+         0.10756958818514932
+        ],
+        "n_bootstrap_used": 2000
+       }
+      }
+     }
+    },
+    "cells": [
+     {
+      "k_gene": 1,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.011813538508615802,
+      "test_pinned_mean_spearman": 0.000786145173325214
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.011813471974787668,
+      "test_pinned_mean_spearman": 0.000786145173325214
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.011812625171616627,
+      "test_pinned_mean_spearman": 0.0007920900295669107
+     },
+     {
+      "k_gene": 1,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.011804341213471625,
+      "test_pinned_mean_spearman": 0.0007802143257596753
+     },
+     {
+      "k_gene": 1,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.011721863306963863,
+      "test_pinned_mean_spearman": 0.0008663518764198295
+     },
+     {
+      "k_gene": 1,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.010940005877795323,
+      "test_pinned_mean_spearman": 0.0009071955865997694
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.028987056684365325,
+      "test_pinned_mean_spearman": 0.003007412055411196
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.0289870190508874,
+      "test_pinned_mean_spearman": 0.003008381350765367
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.028986624374063203,
+      "test_pinned_mean_spearman": 0.0030102244628284164
+     },
+     {
+      "k_gene": 2,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.028982554467843445,
+      "test_pinned_mean_spearman": 0.0029819774887647763
+     },
+     {
+      "k_gene": 2,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.028941589183326934,
+      "test_pinned_mean_spearman": 0.0031103003071834283
+     },
+     {
+      "k_gene": 2,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.028507755037611264,
+      "test_pinned_mean_spearman": 0.00259597445496549
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.01824649235573501,
+      "test_pinned_mean_spearman": 0.027401934296376045
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.018246461519604584,
+      "test_pinned_mean_spearman": 0.027401934296376045
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.018246166869688565,
+      "test_pinned_mean_spearman": 0.02740149227419859
+     },
+     {
+      "k_gene": 4,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.01824334057307216,
+      "test_pinned_mean_spearman": 0.02739219077100577
+     },
+     {
+      "k_gene": 4,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.018214851754985918,
+      "test_pinned_mean_spearman": 0.027294023460573132
+     },
+     {
+      "k_gene": 4,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.017930597438859042,
+      "test_pinned_mean_spearman": 0.027118735270756433
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.035957255525989294,
+      "test_pinned_mean_spearman": 0.032080273277902936
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.03595721871668328,
+      "test_pinned_mean_spearman": 0.032082253677466845
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.03595681301696483,
+      "test_pinned_mean_spearman": 0.03207762489734743
+     },
+     {
+      "k_gene": 8,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.03595278652935691,
+      "test_pinned_mean_spearman": 0.03204581847626127
+     },
+     {
+      "k_gene": 8,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.03591264378879804,
+      "test_pinned_mean_spearman": 0.03193792034524354
+     },
+     {
+      "k_gene": 8,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.03552455906713782,
+      "test_pinned_mean_spearman": 0.032038154974912074
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.04327246738364158,
+      "test_pinned_mean_spearman": 0.0304442199557207
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.04327245917284809,
+      "test_pinned_mean_spearman": 0.03044591159775373
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.04327236739613028,
+      "test_pinned_mean_spearman": 0.03044665191173576
+     },
+     {
+      "k_gene": 16,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.04327144384440538,
+      "test_pinned_mean_spearman": 0.03046528410679724
+     },
+     {
+      "k_gene": 16,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.04326188443036225,
+      "test_pinned_mean_spearman": 0.030334235843998098
+     },
+     {
+      "k_gene": 16,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.04313467236436907,
+      "test_pinned_mean_spearman": 0.030694330839446865
+     },
+     {
+      "k_gene": 19,
+      "ridge": 0.001,
+      "val_per_feature_pearson": 0.04665787526378836,
+      "test_pinned_mean_spearman": 0.03309418931254657
+     },
+     {
+      "k_gene": 19,
+      "ridge": 0.01,
+      "val_per_feature_pearson": 0.04665785686220701,
+      "test_pinned_mean_spearman": 0.033093866881220985
+     },
+     {
+      "k_gene": 19,
+      "ridge": 0.1,
+      "val_per_feature_pearson": 0.04665765406888124,
+      "test_pinned_mean_spearman": 0.033093451131518015
+     },
+     {
+      "k_gene": 19,
+      "ridge": 1.0,
+      "val_per_feature_pearson": 0.04665567204223203,
+      "test_pinned_mean_spearman": 0.033112583899722554
+     },
+     {
+      "k_gene": 19,
+      "ridge": 10.0,
+      "val_per_feature_pearson": 0.04663572823756438,
+      "test_pinned_mean_spearman": 0.03294696522759703
+     },
+     {
+      "k_gene": 19,
+      "ridge": 100.0,
+      "val_per_feature_pearson": 0.04643039800879348,
+      "test_pinned_mean_spearman": 0.03311840682675832
+     }
+    ]
+   },
+   "knn": {
+    "selected_on_val": {
+     "k": 25,
+     "val": {
+      "per_feature_pearson": 0.0687493002965283,
+      "nmse": 1.0082957559707013,
+      "n": 270,
+      "mean_spearman": 0.050769253617487034,
+      "per_feature": {
+       "alanine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 5.790900737,
+        "max": 7.174750892,
+        "spearman": 0.19195205258815004,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.24,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 6.814859035781031,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "arginine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 2.353177444,
+        "max": 4.174018391,
+        "spearman": 0.01499073246005939,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.16,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.3163161831481345,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "asparagine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.149850518,
+        "max": 1.308867338,
+        "spearman": 0.026390198477406607,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.16,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.3157799972000557,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "aspartate": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 4.718574399,
+        "max": 5.50689751,
+        "spearman": 0.09117666739783548,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.08,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.7627820858800085,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamate": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 20.093903078,
+        "max": 23.965679562,
+        "spearman": -0.006480757654074217,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.26
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 23.547114454745813,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 26.094351436,
+        "max": 29.968859992,
+        "spearman": 0.02274429561462792,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.2,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 30.657399317131247,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glycine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.697599836,
+        "max": 2.122326051,
+        "spearman": 0.03730862512163003,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.08,
+         "50": 0.14
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.206048885798401,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "histidine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 4.389866571,
+        "max": 5.232790455,
+        "spearman": -0.011486709677943631,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.22
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.608598499699123,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "isoleucine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.384505194,
+        "max": 0.426399512,
+        "spearman": -0.05859266375176503,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.2,
+         "50": 0.12
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.41791562705468394,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "leucine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.241012632,
+        "max": 0.292078256,
+        "spearman": 0.11024587820762996,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.30372989247933435,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "lysine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.675551536,
+        "max": 1.004368138,
+        "spearman": 0.038614915790067886,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.16,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.9816082288430769,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "methionine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.101218145,
+        "max": 0.135280001,
+        "spearman": 0.2082619100098125,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.24,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.14291287335398156,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "phenylalanine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.260168424,
+        "max": 0.339858138,
+        "spearman": 0.02564441533373704,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.24,
+         "50": 0.16
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.3114697393125649,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "proline": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.996932525,
+        "max": 1.194940909,
+        "spearman": -0.00560835561753314,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.22
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.2443840279559375,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "serine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 2.145766242,
+        "max": 2.683193478,
+        "spearman": 0.030540762361733753,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.08,
+         "50": 0.16
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.498908564195285,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "threonine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 3.829219107,
+        "max": 4.281570161,
+        "spearman": 0.019445243985968027,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.2,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.265503695676334,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tryptophan": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.035879315,
+        "max": 0.044912494,
+        "spearman": 0.040098428261549,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.2,
+         "50": 0.16
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.04307522503785801,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tyrosine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 2.407728776,
+        "max": 3.491975593,
+        "spearman": 0.18035642742724867,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.36,
+         "50": 0.22
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 3.3300565329672316,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "valine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.297594288,
+        "max": 1.622383414,
+        "spearman": 0.009013752396113388,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.4288102420776048,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       }
+      }
+     },
+     "test_pinned": {
+      "per_feature_pearson": 0.09836769224062088,
+      "nmse": 0.9963719288885803,
+      "n": 564,
+      "mean_spearman": 0.05733882481134038,
+      "per_feature": {
+       "alanine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 5.842381478,
+        "max": 7.57672637,
+        "spearman": 0.01980377694279982,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.4,
+         "50": 0.28
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 6.6752654440659684,
+        "permutation_p": 0.646,
+        "permutation_null_sd": 0.04208636544262551,
+        "bootstrap_ci95": [
+         -0.06420774319446149,
+         0.10640781411667441
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "arginine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 2.514337995,
+        "max": 4.372029884,
+        "spearman": 0.05152182425557116,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.28,
+         "50": 0.3
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.199496005540891,
+        "permutation_p": 0.2285,
+        "permutation_null_sd": 0.04205791753939544,
+        "bootstrap_ci95": [
+         -0.029701229711329623,
+         0.13527742957644778
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "asparagine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.163580525,
+        "max": 1.317654561,
+        "spearman": 0.0794935220805877,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.24,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.302176496717958,
+        "permutation_p": 0.057,
+        "permutation_null_sd": 0.04207404530175933,
+        "bootstrap_ci95": [
+         -0.004557309633431845,
+         0.15797044879353
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "aspartate": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 4.717513095,
+        "max": 5.556721003,
+        "spearman": 0.16625540300666802,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.546759518845171,
+        "permutation_p": 0.0,
+        "permutation_null_sd": 0.04203706709249313,
+        "bootstrap_ci95": [
+         0.08613213014755913,
+         0.24515527509853022
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamate": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 19.936965327,
+        "max": 24.924058494,
+        "spearman": 0.1005468109826511,
+        "topk_precision": {
+         "10": 0.6,
+         "25": 0.36,
+         "50": 0.28
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 23.354183056052076,
+        "permutation_p": 0.017,
+        "permutation_null_sd": 0.042373543453569244,
+        "bootstrap_ci95": [
+         0.012931101944696486,
+         0.18446152559615162
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 25.277614918,
+        "max": 29.969209299,
+        "spearman": 0.062073622507675875,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.2,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 30.624134438116172,
+        "permutation_p": 0.1345,
+        "permutation_null_sd": 0.04169786368093401,
+        "bootstrap_ci95": [
+         -0.022300796152304382,
+         0.14495753432029077
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glycine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.663096515,
+        "max": 2.599501908,
+        "spearman": 0.05230377552373168,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.36,
+         "50": 0.26
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.2130113684991053,
+        "permutation_p": 0.221,
+        "permutation_null_sd": 0.04344609087125333,
+        "bootstrap_ci95": [
+         -0.03110742786048888,
+         0.13737040179787569
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "histidine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 4.321677918,
+        "max": 5.53431616,
+        "spearman": 0.038074201052301075,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.550689052463757,
+        "permutation_p": 0.3685,
+        "permutation_null_sd": 0.04292612747496262,
+        "bootstrap_ci95": [
+         -0.042341073486058145,
+         0.12184962844408637
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "isoleucine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.381775714,
+        "max": 0.424418765,
+        "spearman": -0.02524219634677593,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.24,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.4218144755479133,
+        "permutation_p": 0.5605,
+        "permutation_null_sd": 0.04270327693535886,
+        "bootstrap_ci95": [
+         -0.11155273557740081,
+         0.05916875364317272
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "leucine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.236664092,
+        "max": 0.289146637,
+        "spearman": 0.05434039800571233,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.31277735176318305,
+        "permutation_p": 0.1965,
+        "permutation_null_sd": 0.041594647295716804,
+        "bootstrap_ci95": [
+         -0.026488458605326223,
+         0.13643553840954192
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "lysine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.67663339,
+        "max": 1.061368581,
+        "spearman": 0.00845670981892507,
+        "topk_precision": {
+         "10": 0.5,
+         "25": 0.4,
+         "50": 0.3
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.9707024589416638,
+        "permutation_p": 0.842,
+        "permutation_null_sd": 0.042162782601918324,
+        "bootstrap_ci95": [
+         -0.07968723145948459,
+         0.08958387071088927
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "methionine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.10597761,
+        "max": 0.136744957,
+        "spearman": 0.10492807505026235,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.16,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.143874697708126,
+        "permutation_p": 0.012,
+        "permutation_null_sd": 0.04237783880161019,
+        "bootstrap_ci95": [
+         0.026934258614147655,
+         0.18796755269991916
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "phenylalanine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.257774523,
+        "max": 0.344846449,
+        "spearman": 0.046662506647502905,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.2,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.3140100328833233,
+        "permutation_p": 0.2825,
+        "permutation_null_sd": 0.042967854675641154,
+        "bootstrap_ci95": [
+         -0.03706645958993364,
+         0.12699544852176894
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "proline": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.022895261,
+        "max": 1.203171033,
+        "spearman": 0.13510236894546893,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.2076026816598369,
+        "permutation_p": 0.001,
+        "permutation_null_sd": 0.041277994940273004,
+        "bootstrap_ci95": [
+         0.05322930816641213,
+         0.21716736909430193
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "serine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 2.071153127,
+        "max": 2.764015567,
+        "spearman": 0.11239159952364756,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.24,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.4722168702084377,
+        "permutation_p": 0.0065,
+        "permutation_null_sd": 0.0417983987665483,
+        "bootstrap_ci95": [
+         0.028994597278859256,
+         0.19531294350902678
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "threonine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 3.820706853,
+        "max": 4.341157676,
+        "spearman": 0.001521129565304811,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.12
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.295199361312904,
+        "permutation_p": 0.9665,
+        "permutation_null_sd": 0.043607574054670924,
+        "bootstrap_ci95": [
+         -0.08076651639685757,
+         0.08298801082419617
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tryptophan": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.035459688,
+        "max": 0.04360429,
+        "spearman": -0.006450431971717106,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.04479021944383623,
+        "permutation_p": 0.891,
+        "permutation_null_sd": 0.04277435857169817,
+        "bootstrap_ci95": [
+         -0.09121691343694044,
+         0.0776484996047688
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tyrosine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 2.425931081,
+        "max": 4.08995495,
+        "spearman": 0.05704579879891519,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.16,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 3.2660416095510643,
+        "permutation_p": 0.1725,
+        "permutation_null_sd": 0.04169318277720432,
+        "bootstrap_ci95": [
+         -0.021224209315515837,
+         0.1320929902380516
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "valine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.298182059,
+        "max": 1.830597369,
+        "spearman": 0.030608777026234674,
+        "topk_precision": {
+         "10": 0.6,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.4237215382625203,
+        "permutation_p": 0.4755,
+        "permutation_null_sd": 0.04368266074471838,
+        "bootstrap_ci95": [
+         -0.05202776072475677,
+         0.11350822427697711
+        ],
+        "n_bootstrap_used": 2000
+       }
+      }
+     }
+    },
+    "cells": [
+     {
+      "k": 1,
+      "val_per_feature_pearson": 0.04373049485731494,
+      "test_pinned_mean_spearman": 0.06043620787423757
+     },
+     {
+      "k": 3,
+      "val_per_feature_pearson": 0.03922562628233792,
+      "test_pinned_mean_spearman": 0.06650947124168909
+     },
+     {
+      "k": 5,
+      "val_per_feature_pearson": 0.04751822749612454,
+      "test_pinned_mean_spearman": 0.08152677783058011
+     },
+     {
+      "k": 10,
+      "val_per_feature_pearson": 0.05860171583728514,
+      "test_pinned_mean_spearman": 0.058950481326133584
+     },
+     {
+      "k": 25,
+      "val_per_feature_pearson": 0.0687493002965283,
+      "test_pinned_mean_spearman": 0.05733882481134038
+     }
+    ]
+   },
+   "forest": {
+    "selected_on_val": {
+     "min_samples_leaf": 5,
+     "n_estimators": 300,
+     "val": {
+      "per_feature_pearson": 0.11860474662963501,
+      "nmse": 0.9736651995263855,
+      "n": 270,
+      "mean_spearman": 0.08572795909102644,
+      "per_feature": {
+       "alanine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 6.120451355,
+        "max": 6.971487643,
+        "spearman": 0.15368122505343812,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.28,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 6.814859035781031,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "arginine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 2.869580808,
+        "max": 3.788206857,
+        "spearman": 0.09539951003359837,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.32,
+         "50": 0.32
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.3163161831481345,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "asparagine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.201228242,
+        "max": 1.273985244,
+        "spearman": 0.12063534755112201,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.3157799972000557,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "aspartate": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 4.95670346,
+        "max": 5.336484335,
+        "spearman": 0.10673051103191435,
+        "topk_precision": {
+         "10": 0.7,
+         "25": 0.4,
+         "50": 0.32
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.7627820858800085,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamate": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 20.975588873,
+        "max": 23.35883783,
+        "spearman": 0.11115512758209188,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.2,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 23.547114454745813,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glutamine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 26.470413122,
+        "max": 29.091795748,
+        "spearman": 0.09104234886165898,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.24,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 30.657399317131247,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "glycine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.798264123,
+        "max": 2.040236441,
+        "spearman": 0.14978569710445558,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.2,
+         "50": 0.22
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.206048885798401,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "histidine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 4.554831546,
+        "max": 5.040627372,
+        "spearman": 0.06831763805094664,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.2
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 5.608598499699123,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "isoleucine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.393796443,
+        "max": 0.410499792,
+        "spearman": -0.013704011732428488,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.41791562705468394,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "leucine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.257581822,
+        "max": 0.276074842,
+        "spearman": 0.039733075358064154,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.18
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.30372989247933435,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "lysine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.767638807,
+        "max": 0.889570298,
+        "spearman": 0.11782243266563884,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.2,
+         "50": 0.16
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.9816082288430769,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "methionine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.113095651,
+        "max": 0.127777339,
+        "spearman": 0.20158664629597375,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.14291287335398156,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "phenylalanine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.274742812,
+        "max": 0.298577582,
+        "spearman": 0.09951395610155626,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.3114697393125649,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "proline": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.074368939,
+        "max": 1.1567176,
+        "spearman": 0.02913195256882745,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.22
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.2443840279559375,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "serine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 2.201209176,
+        "max": 2.358169439,
+        "spearman": -0.009185614046060948,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.08,
+         "50": 0.1
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 2.498908564195285,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "threonine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 3.920614003,
+        "max": 4.081012471,
+        "spearman": 0.07592175002189289,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.32,
+         "50": 0.22
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 4.265503695676334,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tryptophan": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 0.037442817,
+        "max": 0.040532284,
+        "spearman": 0.06864231680999497,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.22
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 0.04307522503785801,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "tyrosine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 2.679233435,
+        "max": 3.256038835,
+        "spearman": 0.1340612463806462,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.22
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 3.3300565329672316,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       },
+       "valine": {
+        "n": 270,
+        "n_distinct_values": 235,
+        "frac_at_mode": 0.13333333333333333,
+        "min": 1.336819168,
+        "max": 1.562234309,
+        "spearman": -0.011439932963828474,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15925925925925927,
+        "high_threshold": 1.4288102420776048,
+        "permutation_p": null,
+        "bootstrap_ci95": null
+       }
+      }
+     },
+     "test_pinned": {
+      "per_feature_pearson": 0.1462181520786557,
+      "nmse": 0.9763979381847895,
+      "n": 564,
+      "mean_spearman": 0.09344623195634431,
+      "per_feature": {
+       "alanine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 6.104298216,
+        "max": 7.326988392,
+        "spearman": 0.05170199859320845,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.36,
+         "50": 0.26
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 6.6752654440659684,
+        "permutation_p": 0.2175,
+        "permutation_null_sd": 0.0421221405523404,
+        "bootstrap_ci95": [
+         -0.029782515301288077,
+         0.13652466760307957
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "arginine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 2.864180166,
+        "max": 3.826377531,
+        "spearman": 0.12520427192841965,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.199496005540891,
+        "permutation_p": 0.0035,
+        "permutation_null_sd": 0.04248119589948713,
+        "bootstrap_ci95": [
+         0.042735709384557105,
+         0.20598179478416906
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "asparagine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.196651301,
+        "max": 1.291638249,
+        "spearman": -0.02519806473854743,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.302176496717958,
+        "permutation_p": 0.5385,
+        "permutation_null_sd": 0.04198395664914429,
+        "bootstrap_ci95": [
+         -0.10721133248981482,
+         0.056655127738992436
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "aspartate": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 4.934217132,
+        "max": 5.226145863,
+        "spearman": 0.12839402863432933,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.16,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.546759518845171,
+        "permutation_p": 0.004,
+        "permutation_null_sd": 0.04230502378402621,
+        "bootstrap_ci95": [
+         0.045816626912808696,
+         0.20434931248445865
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamate": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 20.34735525,
+        "max": 24.100362429,
+        "spearman": 0.14901739554794313,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.44,
+         "50": 0.34
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 23.354183056052076,
+        "permutation_p": 0.0005,
+        "permutation_null_sd": 0.04253971321900271,
+        "bootstrap_ci95": [
+         0.06787378384985769,
+         0.22554132873361404
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glutamine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 24.901777696,
+        "max": 29.455472772,
+        "spearman": 0.11880972213745616,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.24,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 30.624134438116172,
+        "permutation_p": 0.007,
+        "permutation_null_sd": 0.041789540718750615,
+        "bootstrap_ci95": [
+         0.0346678339070804,
+         0.2050733598695151
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "glycine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.750817853,
+        "max": 2.291387363,
+        "spearman": 0.1022602919246315,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.24,
+         "50": 0.26
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.2130113684991053,
+        "permutation_p": 0.0155,
+        "permutation_null_sd": 0.042109479704671895,
+        "bootstrap_ci95": [
+         0.021002015366409832,
+         0.18309180619898607
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "histidine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 4.540799903,
+        "max": 5.039449431,
+        "spearman": 0.09458524651258732,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 5.550689052463757,
+        "permutation_p": 0.021,
+        "permutation_null_sd": 0.0417579012885767,
+        "bootstrap_ci95": [
+         0.012240736477428866,
+         0.1754107100098225
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "isoleucine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.392784812,
+        "max": 0.419281263,
+        "spearman": 0.0471771709396567,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.32,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.4218144755479133,
+        "permutation_p": 0.2575,
+        "permutation_null_sd": 0.041876607606224074,
+        "bootstrap_ci95": [
+         -0.03676487763569857,
+         0.1305898770507292
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "leucine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.255250902,
+        "max": 0.276665934,
+        "spearman": 0.10178612297942945,
+        "topk_precision": {
+         "10": 0.3,
+         "25": 0.28,
+         "50": 0.2
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.31277735176318305,
+        "permutation_p": 0.02,
+        "permutation_null_sd": 0.041999433009116786,
+        "bootstrap_ci95": [
+         0.017612037128549408,
+         0.1837990711419264
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "lysine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.763504844,
+        "max": 0.901934111,
+        "spearman": 0.04215560884632573,
+        "topk_precision": {
+         "10": 0.5,
+         "25": 0.4,
+         "50": 0.34
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.9707024589416638,
+        "permutation_p": 0.3075,
+        "permutation_null_sd": 0.04101807460373518,
+        "bootstrap_ci95": [
+         -0.03820975748248981,
+         0.12069244749942105
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "methionine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.108586996,
+        "max": 0.129821515,
+        "spearman": 0.08692167889043205,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.2,
+         "50": 0.16
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.143874697708126,
+        "permutation_p": 0.0385,
+        "permutation_null_sd": 0.04175120068049453,
+        "bootstrap_ci95": [
+         0.008237689226856014,
+         0.16839958000517044
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "phenylalanine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.269907546,
+        "max": 0.308289583,
+        "spearman": 0.08875809897541441,
+        "topk_precision": {
+         "10": 0.0,
+         "25": 0.2,
+         "50": 0.24
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.3140100328833233,
+        "permutation_p": 0.0355,
+        "permutation_null_sd": 0.041615821396450904,
+        "bootstrap_ci95": [
+         0.006796358400359696,
+         0.1676336037284463
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "proline": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.007402506,
+        "max": 1.17065262,
+        "spearman": 0.14998305568481088,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.32,
+         "50": 0.28
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.2076026816598369,
+        "permutation_p": 0.001,
+        "permutation_null_sd": 0.04378029648330233,
+        "bootstrap_ci95": [
+         0.06438572663596753,
+         0.22975903482687657
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "serine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 2.119554176,
+        "max": 2.410795752,
+        "spearman": 0.1264528249404439,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.12,
+         "50": 0.14
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 2.4722168702084377,
+        "permutation_p": 0.003,
+        "permutation_null_sd": 0.042596104337014176,
+        "bootstrap_ci95": [
+         0.043952376018193524,
+         0.2102166726837399
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "threonine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 3.92424085,
+        "max": 4.108535189,
+        "spearman": 0.11152648752096121,
+        "topk_precision": {
+         "10": 0.1,
+         "25": 0.12,
+         "50": 0.18
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 4.295199361312904,
+        "permutation_p": 0.007,
+        "permutation_null_sd": 0.042079896211945585,
+        "bootstrap_ci95": [
+         0.028196469056299696,
+         0.19403889576717606
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tryptophan": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 0.037109412,
+        "max": 0.040980372,
+        "spearman": 0.11612129946176607,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.24,
+         "50": 0.26
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 0.04479021944383623,
+        "permutation_p": 0.006,
+        "permutation_null_sd": 0.04165531504332392,
+        "bootstrap_ci95": [
+         0.03183475502950861,
+         0.20166380602127293
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "tyrosine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 2.671480234,
+        "max": 3.723949237,
+        "spearman": 0.11853999835269179,
+        "topk_precision": {
+         "10": 0.2,
+         "25": 0.28,
+         "50": 0.28
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 3.2660416095510643,
+        "permutation_p": 0.0095,
+        "permutation_null_sd": 0.04320618676828867,
+        "bootstrap_ci95": [
+         0.03551903672581277,
+         0.19971462889830802
+        ],
+        "n_bootstrap_used": 2000
+       },
+       "valine": {
+        "n": 564,
+        "n_distinct_values": 496,
+        "frac_at_mode": 0.12234042553191489,
+        "min": 1.340751016,
+        "max": 1.626474778,
+        "spearman": 0.04128117003858177,
+        "topk_precision": {
+         "10": 0.4,
+         "25": 0.28,
+         "50": 0.22
+        },
+        "base_rate": 0.15602836879432624,
+        "high_threshold": 1.4237215382625203,
+        "permutation_p": 0.349,
+        "permutation_null_sd": 0.04282234369274648,
+        "bootstrap_ci95": [
+         -0.04611751998926201,
+         0.1287530136521409
+        ],
+        "n_bootstrap_used": 2000
+       }
+      }
+     }
+    },
+    "cells": [
+     {
+      "min_samples_leaf": 1,
+      "n_estimators": 300,
+      "val_per_feature_pearson": 0.11651111754891695,
+      "test_pinned_mean_spearman": 0.0868727435594626
+     },
+     {
+      "min_samples_leaf": 5,
+      "n_estimators": 300,
+      "val_per_feature_pearson": 0.11860474662963501,
+      "test_pinned_mean_spearman": 0.09344623195634431
+     },
+     {
+      "min_samples_leaf": 20,
+      "n_estimators": 300,
+      "val_per_feature_pearson": 0.10605345493544126,
+      "test_pinned_mean_spearman": 0.08572585947099404
+     }
+    ]
+   }
+  },
   "prot_T5_all": {
    "dim": 1024,
    "store": null,
@@ -33767,10 +36333,10 @@
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
         "permutation_p": 0.0,
-        "permutation_null_sd": 0.04169979862863564,
+        "permutation_null_sd": 0.041594162292614596,
         "bootstrap_ci95": [
-         0.06634341322891259,
-         0.23304512331195287
+         0.06585786959616516,
+         0.23313327247915092
         ],
         "n_bootstrap_used": 2000
        },
@@ -33788,11 +36354,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.8605,
-        "permutation_null_sd": 0.0420763740897745,
+        "permutation_p": 0.878,
+        "permutation_null_sd": 0.04369950429501845,
         "bootstrap_ci95": [
-         -0.09073831176155826,
-         0.07259730376696101
+         -0.08780136486620138,
+         0.07359565239685777
         ],
         "n_bootstrap_used": 2000
        },
@@ -33810,11 +36376,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.5485,
-        "permutation_null_sd": 0.04249594012305367,
+        "permutation_p": 0.531,
+        "permutation_null_sd": 0.041398345995804414,
         "bootstrap_ci95": [
-         -0.05312769111321838,
-         0.11101741058633466
+         -0.056709174883361406,
+         0.10725927245905659
         ],
         "n_bootstrap_used": 2000
        },
@@ -33832,11 +36398,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.7675,
-        "permutation_null_sd": 0.04179195099302124,
+        "permutation_p": 0.758,
+        "permutation_null_sd": 0.04219418666198947,
         "bootstrap_ci95": [
-         -0.07212493495522386,
-         0.09355784166621496
+         -0.0684424193977282,
+         0.09634486855930458
         ],
         "n_bootstrap_used": 2000
        },
@@ -33854,11 +36420,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.701,
-        "permutation_null_sd": 0.0428602849596983,
+        "permutation_p": 0.682,
+        "permutation_null_sd": 0.042576152082614234,
         "bootstrap_ci95": [
-         -0.101593881640837,
-         0.0614459761156477
+         -0.10480995117863359,
+         0.06418500977588325
         ],
         "n_bootstrap_used": 2000
        },
@@ -33876,11 +36442,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.527,
-        "permutation_null_sd": 0.0422664484838327,
+        "permutation_p": 0.5185,
+        "permutation_null_sd": 0.0426283651694568,
         "bootstrap_ci95": [
-         -0.057899404815825575,
-         0.11330231675361258
+         -0.053365631094952154,
+         0.10683146558049318
         ],
         "n_bootstrap_used": 2000
        },
@@ -33898,11 +36464,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.1125,
-        "permutation_null_sd": 0.04160970492486979,
+        "permutation_p": 0.1085,
+        "permutation_null_sd": 0.04210060307031402,
         "bootstrap_ci95": [
-         -0.01753104786328573,
-         0.1490723986290466
+         -0.015739149032703837,
+         0.15324550413090024
         ],
         "n_bootstrap_used": 2000
        },
@@ -33920,11 +36486,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.0765,
-        "permutation_null_sd": 0.04127835452072625,
+        "permutation_p": 0.086,
+        "permutation_null_sd": 0.0421758834579583,
         "bootstrap_ci95": [
-         -0.15599469693750528,
-         0.012244487838246488
+         -0.153980933283873,
+         0.009172790586069391
         ],
         "n_bootstrap_used": 2000
        },
@@ -33942,11 +36508,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.683,
-        "permutation_null_sd": 0.04194514945174292,
+        "permutation_p": 0.7045,
+        "permutation_null_sd": 0.04168101175031234,
         "bootstrap_ci95": [
-         -0.09664981781885754,
-         0.06325340912677616
+         -0.09775224813750787,
+         0.06929513170277496
         ],
         "n_bootstrap_used": 2000
        },
@@ -33964,11 +36530,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.0465,
-        "permutation_null_sd": 0.04266603267971026,
+        "permutation_p": 0.0535,
+        "permutation_null_sd": 0.04249992208347372,
         "bootstrap_ci95": [
-         -0.0001822536874654335,
-         0.16523115978650252
+         -0.0030771085089755313,
+         0.1688728091451344
         ],
         "n_bootstrap_used": 2000
        },
@@ -33986,11 +36552,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.0525,
-        "permutation_null_sd": 0.041849868281096554,
+        "permutation_p": 0.0575,
+        "permutation_null_sd": 0.04224190947436831,
         "bootstrap_ci95": [
-         0.0004273537260716882,
-         0.16043013390442482
+         0.0016848028370991678,
+         0.16211211858645572
         ],
         "n_bootstrap_used": 2000
        },
@@ -34008,11 +36574,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.2395,
-        "permutation_null_sd": 0.042282304551879625,
+        "permutation_p": 0.2455,
+        "permutation_null_sd": 0.04244773185659003,
         "bootstrap_ci95": [
-         -0.033609092085241994,
-         0.1327040082768893
+         -0.03474567382984655,
+         0.1362062728258538
         ],
         "n_bootstrap_used": 2000
        },
@@ -34030,11 +36596,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.28,
-        "permutation_null_sd": 0.042679306830625124,
+        "permutation_p": 0.3025,
+        "permutation_null_sd": 0.04297866601819643,
         "bootstrap_ci95": [
-         -0.03923956592526971,
-         0.1287739276662683
+         -0.03814370702217638,
+         0.1287919860457667
         ],
         "n_bootstrap_used": 2000
        },
@@ -34052,11 +36618,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.311,
-        "permutation_null_sd": 0.04239447771532954,
+        "permutation_p": 0.3335,
+        "permutation_null_sd": 0.04203147479638998,
         "bootstrap_ci95": [
-         -0.046299173173173745,
-         0.11900838047198692
+         -0.040457441764138735,
+         0.12434884227335806
         ],
         "n_bootstrap_used": 2000
        },
@@ -34074,11 +36640,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.37,
-        "permutation_null_sd": 0.04270468763057968,
+        "permutation_p": 0.3655,
+        "permutation_null_sd": 0.04268278381667411,
         "bootstrap_ci95": [
-         -0.042877561704414216,
-         0.12020160908711101
+         -0.04243276127590905,
+         0.12177527054071151
         ],
         "n_bootstrap_used": 2000
        },
@@ -34096,11 +36662,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.063,
-        "permutation_null_sd": 0.042328638732510006,
+        "permutation_p": 0.0555,
+        "permutation_null_sd": 0.04167636919050516,
         "bootstrap_ci95": [
-         -0.006123783968361646,
-         0.16300151371082308
+         -0.008960671736620861,
+         0.1625097330331731
         ],
         "n_bootstrap_used": 2000
        },
@@ -34118,11 +36684,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.9285,
-        "permutation_null_sd": 0.04206786732909007,
+        "permutation_p": 0.9355,
+        "permutation_null_sd": 0.04211865162826599,
         "bootstrap_ci95": [
-         -0.08163597690452165,
-         0.08546875776811268
+         -0.07605581508092275,
+         0.08770756600129435
         ],
         "n_bootstrap_used": 2000
        },
@@ -34140,11 +36706,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.319,
-        "permutation_null_sd": 0.04165245023105507,
+        "permutation_p": 0.313,
+        "permutation_null_sd": 0.04131700451268712,
         "bootstrap_ci95": [
-         -0.03663929714263624,
-         0.12344218116440842
+         -0.039849544124369925,
+         0.11902649562024714
         ],
         "n_bootstrap_used": 2000
        },
@@ -34162,11 +36728,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.4565,
-        "permutation_null_sd": 0.04133030700272221,
+        "permutation_p": 0.449,
+        "permutation_null_sd": 0.041826217691084244,
         "bootstrap_ci95": [
-         -0.05901097388912475,
-         0.11389485409501132
+         -0.05271450836976817,
+         0.11376330776029042
         ],
         "n_bootstrap_used": 2000
        }
@@ -34746,11 +37312,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.3795,
-        "permutation_null_sd": 0.04163363625993189,
+        "permutation_p": 0.362,
+        "permutation_null_sd": 0.041410871523376934,
         "bootstrap_ci95": [
-         -0.11910349473071655,
-         0.04454319001486279
+         -0.12525882630858015,
+         0.04456678779632424
         ],
         "n_bootstrap_used": 2000
        },
@@ -34768,11 +37334,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.16,
-        "permutation_null_sd": 0.04252438548626254,
+        "permutation_p": 0.1575,
+        "permutation_null_sd": 0.042482673888562555,
         "bootstrap_ci95": [
-         -0.02220622751254387,
-         0.1425064116275644
+         -0.023421638831726557,
+         0.14532903246985518
         ],
         "n_bootstrap_used": 2000
        },
@@ -34790,11 +37356,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.348,
-        "permutation_null_sd": 0.04198586191459733,
+        "permutation_p": 0.361,
+        "permutation_null_sd": 0.04310547670192942,
         "bootstrap_ci95": [
-         -0.046028328875919254,
-         0.12461981500576735
+         -0.044352168469671084,
+         0.12273502554049617
         ],
         "n_bootstrap_used": 2000
        },
@@ -34812,11 +37378,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.813,
-        "permutation_null_sd": 0.04253503045350758,
+        "permutation_p": 0.8185,
+        "permutation_null_sd": 0.04224461889944721,
         "bootstrap_ci95": [
-         -0.07653545180168883,
-         0.09794343794797808
+         -0.07233664206281255,
+         0.09893020956213605
         ],
         "n_bootstrap_used": 2000
        },
@@ -34834,11 +37400,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.136,
-        "permutation_null_sd": 0.042295488712738416,
+        "permutation_p": 0.1395,
+        "permutation_null_sd": 0.043061686076455406,
         "bootstrap_ci95": [
-         -0.021336532032361667,
-         0.14480234403743794
+         -0.01958798330963964,
+         0.14568384069959142
         ],
         "n_bootstrap_used": 2000
        },
@@ -34856,11 +37422,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.662,
-        "permutation_null_sd": 0.04224363869501584,
+        "permutation_p": 0.6525,
+        "permutation_null_sd": 0.04329647257195118,
         "bootstrap_ci95": [
-         -0.06008438018606737,
-         0.0992531699671393
+         -0.0656478148350865,
+         0.0992156303875698
         ],
         "n_bootstrap_used": 2000
        },
@@ -34878,11 +37444,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.1395,
-        "permutation_null_sd": 0.04312481122253572,
+        "permutation_p": 0.132,
+        "permutation_null_sd": 0.041915241653988744,
         "bootstrap_ci95": [
-         -0.017781829322576943,
-         0.14292211781482841
+         -0.017366917353508746,
+         0.1490643865670486
         ],
         "n_bootstrap_used": 2000
        },
@@ -34900,11 +37466,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.445,
-        "permutation_null_sd": 0.041882368281642705,
+        "permutation_p": 0.4505,
+        "permutation_null_sd": 0.041995614307779636,
         "bootstrap_ci95": [
-         -0.11535402631931535,
-         0.04938502078760664
+         -0.11255609714741462,
+         0.05342674964537072
         ],
         "n_bootstrap_used": 2000
        },
@@ -34922,11 +37488,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.234,
-        "permutation_null_sd": 0.04147488120005605,
+        "permutation_p": 0.2175,
+        "permutation_null_sd": 0.0409871452270946,
         "bootstrap_ci95": [
-         -0.13263171246460898,
-         0.0316785047114173
+         -0.13444513182677334,
+         0.03557472084056577
         ],
         "n_bootstrap_used": 2000
        },
@@ -34944,11 +37510,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.3425,
-        "permutation_null_sd": 0.040996414535711415,
+        "permutation_p": 0.368,
+        "permutation_null_sd": 0.042857260851792756,
         "bootstrap_ci95": [
-         -0.12193184669550423,
-         0.041598936524650014
+         -0.11988502155972787,
+         0.045281296898272386
         ],
         "n_bootstrap_used": 2000
        },
@@ -34966,11 +37532,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.3455,
-        "permutation_null_sd": 0.041853608393251744,
+        "permutation_p": 0.3415,
+        "permutation_null_sd": 0.04195852140525362,
         "bootstrap_ci95": [
-         -0.04334966783283679,
-         0.12317594802277891
+         -0.050447871556233044,
+         0.12117055988155648
         ],
         "n_bootstrap_used": 2000
        },
@@ -34988,11 +37554,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.7355,
-        "permutation_null_sd": 0.042082369415505916,
+        "permutation_p": 0.72,
+        "permutation_null_sd": 0.04054205180918563,
         "bootstrap_ci95": [
-         -0.06970199512892965,
-         0.10113362509176098
+         -0.06837671711347945,
+         0.0989830314087267
         ],
         "n_bootstrap_used": 2000
        },
@@ -35010,11 +37576,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.301,
-        "permutation_null_sd": 0.04401824778357186,
+        "permutation_p": 0.25,
+        "permutation_null_sd": 0.040981927533869505,
         "bootstrap_ci95": [
-         -0.039340218336407794,
-         0.12685938614778283
+         -0.03837808425219833,
+         0.13074516311951262
         ],
         "n_bootstrap_used": 2000
        },
@@ -35032,11 +37598,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.6305,
-        "permutation_null_sd": 0.04248225167405058,
+        "permutation_p": 0.601,
+        "permutation_null_sd": 0.04230677847945373,
         "bootstrap_ci95": [
-         -0.062093409071584185,
-         0.10277442878890705
+         -0.06215555628540744,
+         0.10637459830235141
         ],
         "n_bootstrap_used": 2000
        },
@@ -35054,11 +37620,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.0145,
-        "permutation_null_sd": 0.042787940740639505,
+        "permutation_p": 0.018,
+        "permutation_null_sd": 0.042498313177171634,
         "bootstrap_ci95": [
-         0.016915039219285374,
-         0.18989781047531626
+         0.018460898707055095,
+         0.18331778027102563
         ],
         "n_bootstrap_used": 2000
        },
@@ -35076,11 +37642,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.282,
-        "permutation_null_sd": 0.042273889388334915,
+        "permutation_p": 0.274,
+        "permutation_null_sd": 0.04201545528698011,
         "bootstrap_ci95": [
-         -0.03499996306257852,
-         0.1239805103361798
+         -0.04071292544557434,
+         0.1318552613271773
         ],
         "n_bootstrap_used": 2000
        },
@@ -35098,11 +37664,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.3715,
-        "permutation_null_sd": 0.04251142558446242,
+        "permutation_p": 0.3615,
+        "permutation_null_sd": 0.04190639370325228,
         "bootstrap_ci95": [
-         -0.04495811382735525,
-         0.12078522502070725
+         -0.051988730249035914,
+         0.12399811335876408
         ],
         "n_bootstrap_used": 2000
        },
@@ -35120,11 +37686,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.0215,
-        "permutation_null_sd": 0.04230960209469556,
+        "permutation_p": 0.022,
+        "permutation_null_sd": 0.04256735691868185,
         "bootstrap_ci95": [
-         0.01513236586540032,
-         0.1803520539144123
+         0.014974084624990537,
+         0.18011050505155193
         ],
         "n_bootstrap_used": 2000
        },
@@ -35142,11 +37708,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.6115,
-        "permutation_null_sd": 0.04254647136003974,
+        "permutation_p": 0.615,
+        "permutation_null_sd": 0.04139894154081265,
         "bootstrap_ci95": [
-         -0.10809629080250202,
-         0.062014976940516824
+         -0.1055454567259807,
+         0.061686476070566335
         ],
         "n_bootstrap_used": 2000
        }
@@ -35536,11 +38102,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.008,
-        "permutation_null_sd": 0.04160154182074188,
+        "permutation_p": 0.005,
+        "permutation_null_sd": 0.04188648006927122,
         "bootstrap_ci95": [
-         0.032020440458559764,
-         0.19590560365848997
+         0.033072053498290795,
+         0.1994221913504414
         ],
         "n_bootstrap_used": 2000
        },
@@ -35558,11 +38124,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.7585,
-        "permutation_null_sd": 0.040887382380600475,
+        "permutation_p": 0.7805,
+        "permutation_null_sd": 0.041749833422454294,
         "bootstrap_ci95": [
-         -0.09770662389930107,
-         0.06756499034910876
+         -0.09704455702969979,
+         0.07423342493092605
         ],
         "n_bootstrap_used": 2000
        },
@@ -35580,11 +38146,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.495,
-        "permutation_null_sd": 0.04245290593284213,
+        "permutation_p": 0.47,
+        "permutation_null_sd": 0.0414182125878797,
         "bootstrap_ci95": [
-         -0.11026595956114599,
-         0.04667549886521092
+         -0.11365038879747826,
+         0.0511560221113272
         ],
         "n_bootstrap_used": 2000
        },
@@ -35602,11 +38168,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.053,
-        "permutation_null_sd": 0.04193085381771255,
+        "permutation_p": 0.0595,
+        "permutation_null_sd": 0.04196210731887011,
         "bootstrap_ci95": [
-         -0.002587968879230484,
-         0.1624038384048597
+         -0.005902789338045005,
+         0.16325360761603996
         ],
         "n_bootstrap_used": 2000
        },
@@ -35624,11 +38190,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.101,
-        "permutation_null_sd": 0.041592457623236226,
+        "permutation_p": 0.099,
+        "permutation_null_sd": 0.04092652046386619,
         "bootstrap_ci95": [
-         -0.01322456415554854,
-         0.1491551644446965
+         -0.01396394336043072,
+         0.1511608758226797
         ],
         "n_bootstrap_used": 2000
        },
@@ -35646,11 +38212,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.167,
-        "permutation_null_sd": 0.0421004028785349,
+        "permutation_p": 0.1645,
+        "permutation_null_sd": 0.042765539693691,
         "bootstrap_ci95": [
-         -0.018970626364125276,
-         0.14051291301780217
+         -0.023518930204758634,
+         0.1398364199736119
         ],
         "n_bootstrap_used": 2000
        },
@@ -35668,11 +38234,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.316,
-        "permutation_null_sd": 0.04203010516231872,
+        "permutation_p": 0.3035,
+        "permutation_null_sd": 0.04136797184846563,
         "bootstrap_ci95": [
-         -0.04136961156580512,
-         0.12384707904029398
+         -0.03718500653197394,
+         0.12096549785322123
         ],
         "n_bootstrap_used": 2000
        },
@@ -35690,11 +38256,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.478,
-        "permutation_null_sd": 0.04136941559397363,
+        "permutation_p": 0.4835,
+        "permutation_null_sd": 0.04270535931789969,
         "bootstrap_ci95": [
-         -0.05436155799075449,
-         0.11187098431399109
+         -0.05861254364635183,
+         0.11170979854237736
         ],
         "n_bootstrap_used": 2000
        },
@@ -35712,11 +38278,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.7455,
-        "permutation_null_sd": 0.04256522183756747,
+        "permutation_p": 0.742,
+        "permutation_null_sd": 0.04100229612051256,
         "bootstrap_ci95": [
-         -0.06601554659953433,
-         0.09968505006517825
+         -0.0734105540156632,
+         0.09649705125472462
         ],
         "n_bootstrap_used": 2000
        },
@@ -35734,11 +38300,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.01,
-        "permutation_null_sd": 0.04184266590160664,
+        "permutation_p": 0.013,
+        "permutation_null_sd": 0.0426044181117615,
         "bootstrap_ci95": [
-         0.025883635386019198,
-         0.18927412275387356
+         0.02679706815264755,
+         0.18721614920225588
         ],
         "n_bootstrap_used": 2000
        },
@@ -35756,11 +38322,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.718,
-        "permutation_null_sd": 0.04135119911088601,
+        "permutation_p": 0.7225,
+        "permutation_null_sd": 0.04229149103350323,
         "bootstrap_ci95": [
-         -0.10298642007022343,
-         0.06591447842559447
+         -0.10136656403153056,
+         0.06650433999880663
         ],
         "n_bootstrap_used": 2000
        },
@@ -35778,11 +38344,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.3815,
-        "permutation_null_sd": 0.040993664856163084,
+        "permutation_p": 0.381,
+        "permutation_null_sd": 0.041407733732899,
         "bootstrap_ci95": [
-         -0.04710693214880366,
-         0.1169378395278484
+         -0.0464526335613916,
+         0.12073537402496508
         ],
         "n_bootstrap_used": 2000
        },
@@ -35800,11 +38366,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.1885,
-        "permutation_null_sd": 0.04240627512833643,
+        "permutation_p": 0.213,
+        "permutation_null_sd": 0.04349200164092514,
         "bootstrap_ci95": [
-         -0.026494596170628933,
-         0.14297855601402557
+         -0.02932332208674798,
+         0.13632595042664644
         ],
         "n_bootstrap_used": 2000
        },
@@ -35822,11 +38388,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.038,
-        "permutation_null_sd": 0.040734993733281905,
+        "permutation_p": 0.0445,
+        "permutation_null_sd": 0.04192315340045715,
         "bootstrap_ci95": [
-         0.0024944098143441598,
-         0.16752010700892778
+         -0.00038664805213508777,
+         0.164192824237353
         ],
         "n_bootstrap_used": 2000
        },
@@ -35844,11 +38410,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.001,
-        "permutation_null_sd": 0.0416435782675755,
+        "permutation_p": 0.002,
+        "permutation_null_sd": 0.04291273679395996,
         "bootstrap_ci95": [
-         0.04405726217963091,
-         0.2064939163418107
+         0.039604919385358026,
+         0.20677689237269592
         ],
         "n_bootstrap_used": 2000
        },
@@ -35866,11 +38432,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.0895,
-        "permutation_null_sd": 0.04206706383008798,
+        "permutation_p": 0.0825,
+        "permutation_null_sd": 0.04147246489663715,
         "bootstrap_ci95": [
-         -0.01481506687403245,
-         0.15814918633473704
+         -0.01672617553497568,
+         0.1576293267325259
         ],
         "n_bootstrap_used": 2000
        },
@@ -35888,11 +38454,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.29,
-        "permutation_null_sd": 0.04187685555731741,
+        "permutation_p": 0.2715,
+        "permutation_null_sd": 0.04213036149138016,
         "bootstrap_ci95": [
-         -0.03685274434087571,
-         0.12426991816654023
+         -0.0372533203088668,
+         0.1293714529179518
         ],
         "n_bootstrap_used": 2000
        },
@@ -35910,11 +38476,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.019,
-        "permutation_null_sd": 0.04235186883118036,
+        "permutation_p": 0.021,
+        "permutation_null_sd": 0.04275149779848207,
         "bootstrap_ci95": [
-         0.021505429351318595,
-         0.1804534226805685
+         0.019601953127081434,
+         0.17699586427100755
         ],
         "n_bootstrap_used": 2000
        },
@@ -35932,11 +38498,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.595,
-        "permutation_null_sd": 0.041620144901756514,
+        "permutation_p": 0.593,
+        "permutation_null_sd": 0.04122119136974044,
         "bootstrap_ci95": [
-         -0.05946936900291579,
-         0.10740394484860816
+         -0.06840931372592002,
+         0.10545367802470712
         ],
         "n_bootstrap_used": 2000
        }
@@ -36332,11 +38898,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.0,
-        "permutation_null_sd": 0.04229627235715688,
+        "permutation_p": 0.0005,
+        "permutation_null_sd": 0.04252029389444356,
         "bootstrap_ci95": [
-         0.06546728871974321,
-         0.23696251689422376
+         0.06720961842701981,
+         0.23754834329763103
         ],
         "n_bootstrap_used": 2000
        },
@@ -36354,11 +38920,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.3835,
-        "permutation_null_sd": 0.04220583129113952,
+        "permutation_p": 0.373,
+        "permutation_null_sd": 0.041315726436361576,
         "bootstrap_ci95": [
-         -0.04544780106102164,
-         0.11882765171395293
+         -0.04384627969058643,
+         0.11796775374409624
         ],
         "n_bootstrap_used": 2000
        },
@@ -36376,11 +38942,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.642,
-        "permutation_null_sd": 0.04216104775545676,
+        "permutation_p": 0.6335,
+        "permutation_null_sd": 0.04212089030853047,
         "bootstrap_ci95": [
-         -0.059044002283137643,
-         0.10126287042293652
+         -0.06363906379341863,
+         0.10070001339170453
         ],
         "n_bootstrap_used": 2000
        },
@@ -36398,11 +38964,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.178,
-        "permutation_null_sd": 0.043379703454255195,
+        "permutation_p": 0.1815,
+        "permutation_null_sd": 0.04356431327111931,
         "bootstrap_ci95": [
-         -0.020346672904024,
-         0.14377223497320996
+         -0.024837338403573564,
+         0.13888148495550784
         ],
         "n_bootstrap_used": 2000
        },
@@ -36420,11 +38986,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.9485,
-        "permutation_null_sd": 0.04208524066149357,
+        "permutation_p": 0.958,
+        "permutation_null_sd": 0.04192696421664872,
         "bootstrap_ci95": [
-         -0.08371344477517642,
-         0.08467293637240221
+         -0.08733078525263058,
+         0.07574065849103476
         ],
         "n_bootstrap_used": 2000
        },
@@ -36442,11 +39008,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.251,
-        "permutation_null_sd": 0.04240497936053789,
+        "permutation_p": 0.2535,
+        "permutation_null_sd": 0.04200482582152478,
         "bootstrap_ci95": [
-         -0.035503412084291044,
-         0.13092714771976424
+         -0.04034092094707517,
+         0.131558286114815
         ],
         "n_bootstrap_used": 2000
        },
@@ -36464,11 +39030,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.3005,
-        "permutation_null_sd": 0.042068408924018495,
+        "permutation_p": 0.306,
+        "permutation_null_sd": 0.04219434655303225,
         "bootstrap_ci95": [
-         -0.04139027081715119,
-         0.12727213493668238
+         -0.04197152100617384,
+         0.1269884429379478
         ],
         "n_bootstrap_used": 2000
        },
@@ -36486,11 +39052,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.4365,
-        "permutation_null_sd": 0.04218753357226742,
+        "permutation_p": 0.4305,
+        "permutation_null_sd": 0.042313190756057995,
         "bootstrap_ci95": [
-         -0.11169099554260817,
-         0.05006704565893286
+         -0.11726417489626854,
+         0.05247695955310115
         ],
         "n_bootstrap_used": 2000
        },
@@ -36508,11 +39074,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.069,
-        "permutation_null_sd": 0.04107423708526621,
+        "permutation_p": 0.077,
+        "permutation_null_sd": 0.042000288979871125,
         "bootstrap_ci95": [
-         -0.15481997867568903,
-         0.009892925752422616
+         -0.1519558013472324,
+         0.010868694803690735
         ],
         "n_bootstrap_used": 2000
        },
@@ -36530,11 +39096,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.877,
-        "permutation_null_sd": 0.04215980650476624,
+        "permutation_p": 0.891,
+        "permutation_null_sd": 0.0425391299289011,
         "bootstrap_ci95": [
-         -0.0758356789677348,
-         0.09162453866196896
+         -0.07358161256762066,
+         0.09426565587286723
         ],
         "n_bootstrap_used": 2000
        },
@@ -36552,11 +39118,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.5545,
-        "permutation_null_sd": 0.04328396067888723,
+        "permutation_p": 0.565,
+        "permutation_null_sd": 0.042172396898783104,
         "bootstrap_ci95": [
-         -0.057127100972057754,
-         0.1087245950129417
+         -0.05828168384806272,
+         0.10320567548715746
         ],
         "n_bootstrap_used": 2000
        },
@@ -36574,11 +39140,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.8015,
-        "permutation_null_sd": 0.04289129992547244,
+        "permutation_p": 0.7785,
+        "permutation_null_sd": 0.04297088143781472,
         "bootstrap_ci95": [
-         -0.07455168311975746,
-         0.09744729668053256
+         -0.07281392094953107,
+         0.09550301699873598
         ],
         "n_bootstrap_used": 2000
        },
@@ -36596,11 +39162,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.7685,
-        "permutation_null_sd": 0.04255381650195833,
+        "permutation_p": 0.759,
+        "permutation_null_sd": 0.04115325844752092,
         "bootstrap_ci95": [
-         -0.09796551113095253,
-         0.07146698499955802
+         -0.10214696053633975,
+         0.07333956572933047
         ],
         "n_bootstrap_used": 2000
        },
@@ -36618,11 +39184,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.0525,
-        "permutation_null_sd": 0.04252613859041144,
+        "permutation_p": 0.0455,
+        "permutation_null_sd": 0.041431464746352564,
         "bootstrap_ci95": [
-         -0.0014014322062669317,
-         0.1660802528637568
+         0.003115115349404755,
+         0.1652771182840443
         ],
         "n_bootstrap_used": 2000
        },
@@ -36640,11 +39206,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.1705,
-        "permutation_null_sd": 0.042179167516327054,
+        "permutation_p": 0.1815,
+        "permutation_null_sd": 0.0425227323898639,
         "bootstrap_ci95": [
-         -0.02975096736419115,
-         0.14253547957135157
+         -0.029590272107742125,
+         0.14354431591293362
         ],
         "n_bootstrap_used": 2000
        },
@@ -36662,11 +39228,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.07,
-        "permutation_null_sd": 0.041466708276007284,
+        "permutation_p": 0.09,
+        "permutation_null_sd": 0.042643640333379834,
         "bootstrap_ci95": [
-         -0.0104815410145612,
-         0.15759117518607454
+         -0.009005203950415448,
+         0.1582248881233156
         ],
         "n_bootstrap_used": 2000
        },
@@ -36684,11 +39250,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.074,
-        "permutation_null_sd": 0.0430362221514752,
+        "permutation_p": 0.062,
+        "permutation_null_sd": 0.040960654610379246,
         "bootstrap_ci95": [
-         -0.1574573390486898,
-         0.011537270806520826
+         -0.16283416894790814,
+         0.009320645513082277
         ],
         "n_bootstrap_used": 2000
        },
@@ -36706,11 +39272,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.012,
-        "permutation_null_sd": 0.0418402757118618,
+        "permutation_p": 0.009,
+        "permutation_null_sd": 0.04093537997887496,
         "bootstrap_ci95": [
-         0.020555573088671848,
-         0.18642679378760124
+         0.028071839728235303,
+         0.18925382913706154
         ],
         "n_bootstrap_used": 2000
        },
@@ -36728,11 +39294,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.0235,
-        "permutation_null_sd": 0.041701240939355615,
+        "permutation_p": 0.022,
+        "permutation_null_sd": 0.04274041338216707,
         "bootstrap_ci95": [
-         0.008417931964266873,
-         0.181044419110984
+         0.011362665867923718,
+         0.1797269230378502
         ],
         "n_bootstrap_used": 2000
        }
@@ -37312,11 +39878,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.076,
-        "permutation_null_sd": 0.04263596619684775,
+        "permutation_p": 0.0785,
+        "permutation_null_sd": 0.04162283892197687,
         "bootstrap_ci95": [
-         -0.00985273044040969,
-         0.1587771000070835
+         -0.00925649019037284,
+         0.1618577466273823
         ],
         "n_bootstrap_used": 2000
        },
@@ -37334,11 +39900,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.032,
-        "permutation_null_sd": 0.04243559674253952,
+        "permutation_p": 0.0375,
+        "permutation_null_sd": 0.04334149248480352,
         "bootstrap_ci95": [
-         0.0027744236324315037,
-         0.17297259399304277
+         0.006258753653070834,
+         0.17310352260104886
         ],
         "n_bootstrap_used": 2000
        },
@@ -37356,11 +39922,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.0165,
-        "permutation_null_sd": 0.042881897070314826,
+        "permutation_p": 0.0105,
+        "permutation_null_sd": 0.041078300995305524,
         "bootstrap_ci95": [
-         0.021256252879634743,
-         0.18396452429849466
+         0.017763441577827988,
+         0.18185834961719752
         ],
         "n_bootstrap_used": 2000
        },
@@ -37378,11 +39944,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.058,
-        "permutation_null_sd": 0.043790803711887136,
+        "permutation_p": 0.049,
+        "permutation_null_sd": 0.04200259982505203,
         "bootstrap_ci95": [
-         -0.00019215304846004674,
-         0.16591483362778148
+         -0.0010498107341136154,
+         0.16930759118707192
         ],
         "n_bootstrap_used": 2000
        },
@@ -37400,11 +39966,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.6525,
-        "permutation_null_sd": 0.04266947011144604,
+        "permutation_p": 0.648,
+        "permutation_null_sd": 0.042420467109824764,
         "bootstrap_ci95": [
-         -0.10322410969107206,
-         0.06434457290149358
+         -0.10368500022597055,
+         0.06592887109158402
         ],
         "n_bootstrap_used": 2000
        },
@@ -37422,11 +39988,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.041,
-        "permutation_null_sd": 0.04320039517466791,
+        "permutation_p": 0.0305,
+        "permutation_null_sd": 0.04188479935313138,
         "bootstrap_ci95": [
-         0.00545821051661165,
-         0.180513029053061
+         0.0016376241013547892,
+         0.17236044776476248
         ],
         "n_bootstrap_used": 2000
        },
@@ -37444,11 +40010,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.9965,
-        "permutation_null_sd": 0.04362834328042208,
+        "permutation_p": 0.9995,
+        "permutation_null_sd": 0.04188144955398607,
         "bootstrap_ci95": [
-         -0.0834687426820404,
-         0.08213664871970412
+         -0.08701562525649621,
+         0.07644240838544257
         ],
         "n_bootstrap_used": 2000
        },
@@ -37466,11 +40032,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.7575,
-        "permutation_null_sd": 0.041379806118274985,
+        "permutation_p": 0.7845,
+        "permutation_null_sd": 0.042235737960103804,
         "bootstrap_ci95": [
-         -0.09308056923555715,
-         0.07021518245341005
+         -0.09427566628578879,
+         0.06883737147320484
         ],
         "n_bootstrap_used": 2000
        },
@@ -37488,11 +40054,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.881,
-        "permutation_null_sd": 0.0426764179360851,
+        "permutation_p": 0.8915,
+        "permutation_null_sd": 0.042757817533633447,
         "bootstrap_ci95": [
-         -0.08317981641328655,
-         0.07825332355121914
+         -0.08916503187398839,
+         0.07744018430334117
         ],
         "n_bootstrap_used": 2000
        },
@@ -37510,11 +40076,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.673,
-        "permutation_null_sd": 0.042508354278037466,
+        "permutation_p": 0.6745,
+        "permutation_null_sd": 0.042565220962034286,
         "bootstrap_ci95": [
-         -0.06974409410729819,
-         0.10338183214942143
+         -0.07062788267720829,
+         0.1042589236940137
         ],
         "n_bootstrap_used": 2000
        },
@@ -37532,11 +40098,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.748,
-        "permutation_null_sd": 0.04148090188746853,
+        "permutation_p": 0.739,
+        "permutation_null_sd": 0.04194317483181359,
         "bootstrap_ci95": [
-         -0.09604431200732408,
-         0.07426945445700407
+         -0.09748524620278913,
+         0.07050806862280734
         ],
         "n_bootstrap_used": 2000
        },
@@ -37554,11 +40120,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.0745,
-        "permutation_null_sd": 0.04294108896485429,
+        "permutation_p": 0.073,
+        "permutation_null_sd": 0.04106700862659801,
         "bootstrap_ci95": [
-         -0.008877148657296208,
-         0.157617099331541
+         -0.006366981413827624,
+         0.16283295212720975
         ],
         "n_bootstrap_used": 2000
        },
@@ -37576,11 +40142,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.4435,
-        "permutation_null_sd": 0.04249355832525081,
+        "permutation_p": 0.447,
+        "permutation_null_sd": 0.04357590197790949,
         "bootstrap_ci95": [
-         -0.05614505458962276,
-         0.11516946175965477
+         -0.052558939126897006,
+         0.12157405228713887
         ],
         "n_bootstrap_used": 2000
        },
@@ -37598,11 +40164,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.043,
-        "permutation_null_sd": 0.04296788326531753,
+        "permutation_p": 0.0405,
+        "permutation_null_sd": 0.041899570570859634,
         "bootstrap_ci95": [
-         0.0005324616926355427,
-         0.16275631306768676
+         0.004075932517421388,
+         0.17099021284558083
         ],
         "n_bootstrap_used": 2000
        },
@@ -37620,11 +40186,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.4465,
-        "permutation_null_sd": 0.04145209964362878,
+        "permutation_p": 0.4275,
+        "permutation_null_sd": 0.04268709532558599,
         "bootstrap_ci95": [
-         -0.054186171929426624,
-         0.11446476887396767
+         -0.05358709161357711,
+         0.11640528392602377
         ],
         "n_bootstrap_used": 2000
        },
@@ -37642,11 +40208,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.258,
-        "permutation_null_sd": 0.04251789100397886,
+        "permutation_p": 0.242,
+        "permutation_null_sd": 0.04091412422568521,
         "bootstrap_ci95": [
-         -0.03270521722831557,
-         0.13113402388660417
+         -0.03657930977502224,
+         0.13379702189303572
         ],
         "n_bootstrap_used": 2000
        },
@@ -37664,11 +40230,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.0775,
-        "permutation_null_sd": 0.04144401084897782,
+        "permutation_p": 0.082,
+        "permutation_null_sd": 0.042497600098444346,
         "bootstrap_ci95": [
-         -0.0061077366076034735,
-         0.15560981220575582
+         -0.009095844452690977,
+         0.15625935149386522
         ],
         "n_bootstrap_used": 2000
        },
@@ -37687,10 +40253,10 @@
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
         "permutation_p": 0.0,
-        "permutation_null_sd": 0.04203824265454105,
+        "permutation_null_sd": 0.04275650965830618,
         "bootstrap_ci95": [
-         0.07381594327103003,
-         0.23613169370831857
+         0.07847826551841863,
+         0.23948247370382358
         ],
         "n_bootstrap_used": 2000
        },
@@ -37708,11 +40274,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.2835,
-        "permutation_null_sd": 0.042969566316506065,
+        "permutation_p": 0.2705,
+        "permutation_null_sd": 0.0418309506664273,
         "bootstrap_ci95": [
-         -0.03712375264633581,
-         0.12445301754442267
+         -0.033515787891921854,
+         0.12771347556055215
         ],
         "n_bootstrap_used": 2000
        }
@@ -38102,11 +40668,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 6.6752654440659684,
-        "permutation_p": 0.0115,
-        "permutation_null_sd": 0.04277959800131455,
+        "permutation_p": 0.007,
+        "permutation_null_sd": 0.04138075791157381,
         "bootstrap_ci95": [
-         0.02750561771052033,
-         0.188468643553016
+         0.02513192728920974,
+         0.1918778795560819
         ],
         "n_bootstrap_used": 2000
        },
@@ -38124,11 +40690,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.199496005540891,
-        "permutation_p": 0.3235,
-        "permutation_null_sd": 0.04172421949357513,
+        "permutation_p": 0.3335,
+        "permutation_null_sd": 0.04282315015809569,
         "bootstrap_ci95": [
-         -0.1268589802591691,
-         0.04245399303221366
+         -0.13247286805908565,
+         0.04382827646560277
         ],
         "n_bootstrap_used": 2000
        },
@@ -38146,11 +40712,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.302176496717958,
-        "permutation_p": 0.6945,
-        "permutation_null_sd": 0.0425740932253883,
+        "permutation_p": 0.6965,
+        "permutation_null_sd": 0.04189211861065076,
         "bootstrap_ci95": [
-         -0.09986641200661107,
-         0.06632049032559571
+         -0.09896904887652834,
+         0.06814511829477161
         ],
         "n_bootstrap_used": 2000
        },
@@ -38168,11 +40734,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.546759518845171,
-        "permutation_p": 0.012,
-        "permutation_null_sd": 0.04202123321364016,
+        "permutation_p": 0.0155,
+        "permutation_null_sd": 0.04222417899786903,
         "bootstrap_ci95": [
-         0.017062268401163882,
-         0.18681909506348934
+         0.021574964016792788,
+         0.18504727158199138
         ],
         "n_bootstrap_used": 2000
        },
@@ -38190,11 +40756,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 23.354183056052076,
-        "permutation_p": 0.2515,
-        "permutation_null_sd": 0.04145736193312595,
+        "permutation_p": 0.2685,
+        "permutation_null_sd": 0.04283696399126518,
         "bootstrap_ci95": [
-         -0.03499524272267789,
-         0.12786418989724932
+         -0.03471396375468973,
+         0.13193429911069018
         ],
         "n_bootstrap_used": 2000
        },
@@ -38212,11 +40778,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 30.624134438116172,
-        "permutation_p": 0.039,
-        "permutation_null_sd": 0.04234754196652477,
+        "permutation_p": 0.0325,
+        "permutation_null_sd": 0.04260592879254293,
         "bootstrap_ci95": [
-         0.00785248206049453,
-         0.1732177903882879
+         0.010368963382733165,
+         0.16874463351479962
         ],
         "n_bootstrap_used": 2000
        },
@@ -38234,11 +40800,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.2130113684991053,
-        "permutation_p": 0.1075,
-        "permutation_null_sd": 0.04265039755901674,
+        "permutation_p": 0.116,
+        "permutation_null_sd": 0.042078089157301345,
         "bootstrap_ci95": [
-         -0.01632938553368401,
-         0.14529590328866307
+         -0.013829044897499256,
+         0.15158010494457144
         ],
         "n_bootstrap_used": 2000
        },
@@ -38256,11 +40822,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 5.550689052463757,
-        "permutation_p": 0.341,
-        "permutation_null_sd": 0.04279029780127535,
+        "permutation_p": 0.3355,
+        "permutation_null_sd": 0.04265629644340857,
         "bootstrap_ci95": [
-         -0.04184745946316652,
-         0.12241025652760844
+         -0.042980460020810254,
+         0.12581019219359144
         ],
         "n_bootstrap_used": 2000
        },
@@ -38278,11 +40844,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.4218144755479133,
-        "permutation_p": 0.651,
-        "permutation_null_sd": 0.04179904287228399,
+        "permutation_p": 0.658,
+        "permutation_null_sd": 0.04183168991858814,
         "bootstrap_ci95": [
-         -0.07018779372065855,
-         0.09649455846325133
+         -0.061543611246617176,
+         0.10191456009385776
         ],
         "n_bootstrap_used": 2000
        },
@@ -38300,11 +40866,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.31277735176318305,
-        "permutation_p": 0.0875,
-        "permutation_null_sd": 0.04144699512228796,
+        "permutation_p": 0.0895,
+        "permutation_null_sd": 0.04190324582227232,
         "bootstrap_ci95": [
-         -0.00834017769373326,
-         0.15530002045237293
+         -0.011455703485417554,
+         0.14986428977348912
         ],
         "n_bootstrap_used": 2000
        },
@@ -38322,11 +40888,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.9707024589416638,
-        "permutation_p": 0.464,
-        "permutation_null_sd": 0.04255085564272187,
+        "permutation_p": 0.4785,
+        "permutation_null_sd": 0.04280037644837986,
         "bootstrap_ci95": [
-         -0.10902271916432146,
-         0.051011883671348394
+         -0.10595431572599305,
+         0.04657255088477367
         ],
         "n_bootstrap_used": 2000
        },
@@ -38344,11 +40910,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.143874697708126,
-        "permutation_p": 0.7505,
-        "permutation_null_sd": 0.04055700208433133,
+        "permutation_p": 0.757,
+        "permutation_null_sd": 0.04245510248204308,
         "bootstrap_ci95": [
-         -0.06669986000631335,
-         0.09554981058359995
+         -0.07022918561861255,
+         0.09482734747876148
         ],
         "n_bootstrap_used": 2000
        },
@@ -38366,11 +40932,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.3140100328833233,
-        "permutation_p": 0.068,
-        "permutation_null_sd": 0.04417581573401818,
+        "permutation_p": 0.0535,
+        "permutation_null_sd": 0.041858995008620385,
         "bootstrap_ci95": [
-         -0.004932641614761111,
-         0.16032378062815175
+         0.001855700123571414,
+         0.1643680191665129
         ],
         "n_bootstrap_used": 2000
        },
@@ -38388,11 +40954,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.2076026816598369,
-        "permutation_p": 0.0195,
-        "permutation_null_sd": 0.042051336101511495,
+        "permutation_p": 0.015,
+        "permutation_null_sd": 0.04151496833464311,
         "bootstrap_ci95": [
-         0.017232871968595388,
-         0.18335579912954514
+         0.014328882344052699,
+         0.18002227719044633
         ],
         "n_bootstrap_used": 2000
        },
@@ -38410,11 +40976,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 2.4722168702084377,
-        "permutation_p": 0.0365,
-        "permutation_null_sd": 0.04319484692265708,
+        "permutation_p": 0.035,
+        "permutation_null_sd": 0.04261611786326214,
         "bootstrap_ci95": [
-         0.0068231653422328965,
-         0.1744120553429518
+         0.004905686312210427,
+         0.17617122537688162
         ],
         "n_bootstrap_used": 2000
        },
@@ -38432,11 +40998,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 4.295199361312904,
-        "permutation_p": 0.087,
-        "permutation_null_sd": 0.041586625825746994,
+        "permutation_p": 0.078,
+        "permutation_null_sd": 0.04126530364612249,
         "bootstrap_ci95": [
-         -0.013712976968539908,
-         0.15744069006375386
+         -0.012883066712108905,
+         0.15332633539063686
         ],
         "n_bootstrap_used": 2000
        },
@@ -38454,11 +41020,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 0.04479021944383623,
-        "permutation_p": 0.001,
-        "permutation_null_sd": 0.04161612881813347,
+        "permutation_p": 0.0,
+        "permutation_null_sd": 0.042685103333012224,
         "bootstrap_ci95": [
-         0.0583336829963234,
-         0.22006724916596665
+         0.06337364729263416,
+         0.217805662986889
         ],
         "n_bootstrap_used": 2000
        },
@@ -38476,11 +41042,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 3.2660416095510643,
-        "permutation_p": 0.0005,
-        "permutation_null_sd": 0.04227984657084572,
+        "permutation_p": 0.0,
+        "permutation_null_sd": 0.042428743709499804,
         "bootstrap_ci95": [
-         0.08460564946539366,
-         0.24013499421864407
+         0.08443714395621842,
+         0.24164281086880068
         ],
         "n_bootstrap_used": 2000
        },
@@ -38498,11 +41064,11 @@
         },
         "base_rate": 0.15602836879432624,
         "high_threshold": 1.4237215382625203,
-        "permutation_p": 0.537,
-        "permutation_null_sd": 0.04271599186517343,
+        "permutation_p": 0.518,
+        "permutation_null_sd": 0.042606411071724026,
         "bootstrap_ci95": [
-         -0.10776969226090585,
-         0.054974302353098685
+         -0.10758059252630646,
+         0.05305226077365883
         ],
         "n_bootstrap_used": 2000
        }
@@ -38532,5 +41098,5 @@
    }
   }
  },
- "seconds": 1871.0282144546509
+ "seconds": 4233.143910884857
 }

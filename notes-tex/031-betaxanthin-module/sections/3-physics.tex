@@ -241,7 +241,29 @@ since the perceptron standardizes the columns, trains full batch and selects on 
 smoothed validation curve, so which of those carries the gap is not measured; the
 plain reading is that the columns give a perceptron 0.24 and the transformer's
 hidden slot 0.28, and that the annotation's effect on the pool's read depends on the
-head it enters. A head with two slots, the GO multi-hot through a linear map and the
+head it enters.
+
+Two of those differences are now measured and neither accounts for the gap. Read under
+the transformer's own encoding, the columns as $\log(1+v)$ rather than standardized, the
+perceptron falls to 0.158 at width 256 and 0.173 at 1,024, and a 1,000-epoch budget
+moves the wider setting only to 0.177, so the raw read is converged and the encoding
+costs the perceptron 0.06. Its best over both encodings is therefore 0.236, and the
+transformer reads the same nineteen columns at 0.279. What remains between them is the
+backbone, the batch of 32 against full batch, the continuous ranked probability score
+against a masked squared error, and the smoothed selection; which of those carries the
+0.043 is not measured, but the budget and the encoding do not.
+
+The two-slot form goes the other way, and this is what the transformer's rounds 197 to
+199 reproduce. When the annotation's columns enter through the store, as they do in the
+transformer's two-slot head, the encoding decides what the linear slot gives: under the
+raw encoding that arm reads 0.243 for GO with both flux programs and the pool and 0.237
+for GO with the pool, and at 1,000 epochs 0.242 and 0.237, where standardizing the same
+columns reads 0.106 and 0.179. Standardizing a binary multi-hot is what costs it, and
+the transformer, which reads its store as $\log(1+v)$, sits with the raw column: its
+three-families two-slot head reads 0.239 against the perceptron's 0.242, within 0.003.
+So on the pool alone the two heads differ by 0.043 with nothing left to explain it but
+the backbone and the fit; on the two-slot form over the same concatenated store they
+agree to a thousandth. A head with two slots, the GO multi-hot through a linear map and the
 pool through the hidden layer, summed before the output so the two never share a
 hidden unit, reads 0.260 at width 256 and 0.265 at 1,024 (sd 0.006, ensemble 0.266,
 top-50 5.36, 23,872 parameters): above the shared layer over the same columns (0.240)

@@ -1166,6 +1166,69 @@ CHECKS: list[Check] = [
         recompute=store_baseline("amino_acids", "go", "forest", "mean_spearman"),
         tolerance=0.0006,
     ),
+    # sec:physics -- Cooper as an input for Mulleder on the ladder (2026-09-27).
+    Check(
+        claim="cooper input: ridge",
+        stated=0.033,
+        recompute=store_baseline(
+            "amino_acids", "cooper_pool", "ridge", "mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper input: kNN",
+        stated=0.057,
+        recompute=store_baseline("amino_acids", "cooper_pool", "knn", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper input: forest",
+        stated=0.093,
+        recompute=store_baseline(
+            "amino_acids", "cooper_pool", "forest", "mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper input: GO forest for comparison",
+        stated=0.063,
+        recompute=store_baseline("amino_acids", "go", "forest", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper input: GO with score forest",
+        stated=0.078,
+        recompute=store_baseline(
+            "amino_acids", "go_bxscore", "forest", "mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper input: score alone forest",
+        stated=0.071,
+        recompute=store_baseline("amino_acids", "bx_score", "forest", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="cooper input: test genotypes scored",
+        stated=842,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "store_baselines_amino_acids.json")))[
+                "representations"
+            ]["cooper_pool"]["n_scored"]["test"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="cooper input: test rows on the reference",
+        stated=102,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "store_baselines_amino_acids.json")))[
+                "representations"
+            ]["cooper_pool"]["filled_wild_type"]["test"]
+        ),
+        tolerance=0.5,
+    ),
     # sec:isobutanol-cross -- the isobutanol biosensor against the pool (2026-09-27).
     Check(
         claim="isobutanol cross: shared strains",

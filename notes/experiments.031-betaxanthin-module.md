@@ -584,3 +584,9 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | B67 | 202 | w223 | del + two slots at 256, linear slot at lr x0.01 | job 2888, pending |
 
 - Queued B68 = w224 = w218 seeds 2706 to 2711 (job 2890; twelve-seed pairs vs w206, w167, w168), round 205.
+
+## 2026.09.27 - The encoding and the budget do not explain the perceptron-transformer gap
+
+- MEASURED (`slurm/output/031-pool_raw_direct.out`, `031-split_mlp_raw_direct.out`, `031-raw_e1000_direct.out`; `target_go_models.py` gains `--store-raw` (keep the store's log1p columns, the transformer's encoding) and the `store_split_mlp` arm with `--store-linear-columns N` (the perceptron form of the two-slot head over a CONCATENATED store)): under the raw encoding the pool alone reads 0.158 (h256) and 0.173 (h1024), and 0.177 at a 1,000-epoch budget, so the raw read is converged and the encoding costs the perceptron 0.06. Its best over both encodings is 0.236; the transformer reads the same 19 columns at 0.279. The remaining 0.043 is the backbone plus the fit (batch 32 vs full batch, CRPS vs masked MSE, smoothed vs raw selection) and is NOT the budget or the encoding.
+- MEASURED, the split arm (annotation columns INSIDE the store, as the transformer's two-slot head has them): raw 0.243 (three families) and 0.237 (GO + pool), at 1,000 epochs 0.242 and 0.237; standardized the same columns read 0.106 and 0.179. Standardizing a binary multi-hot is what costs it. The transformer reads its store as log1p and its three-families two-slot head reads 0.239 against the perceptron's 0.242, within 0.003. So the two heads disagree by 0.043 on the pool alone and agree to a thousandth on the two-slot form.
+- Written into the 031 document (section 3); verifier 1,112 checks.

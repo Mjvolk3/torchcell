@@ -108,12 +108,18 @@ ARMS = (
     "go_prot_mlp",
     "go_prot_store_mlp",
     "go_linear_store_mlp",
+    "store_split_mlp",
 )
 #: The two-slot arm (2026-09-26): the GO multi-hot through a linear map and the store
 #: block through the hidden layers, summed before the output, so the annotation and
 #: the store never share a hidden unit; the perceptron form of the head the
 #: transformer study has not built (rounds 185, 188, 191).
 TWO_SLOT_ARMS = ("go_linear_store_mlp",)
+#: The split-store arm (2026-09-27): the first ``--store-linear-columns`` columns of the
+#: store block through a linear map and the rest through the hidden layers, summed; the
+#: perceptron form of the transformer's two-slot head over a concatenated store
+#: (round 199: GO and both flux programs linear beside the pool through 256).
+SPLIT_ARMS = ("store_split_mlp",)
 #: The two hierarchy arms: the shared per-term gene input, and DCell's published input,
 #: one weight vector per (gene, term) annotation pair. Under a split by gene the
 #: published input's columns for a held-out gene receive no gradient, so that arm reads
@@ -128,6 +134,7 @@ ARM_INPUTS = {
     "go_mlp": ("go",),
     "store_mlp": ("store",),
     "go_linear_store_mlp": ("go", "store"),
+    "store_split_mlp": ("store",),
     "prot_mlp": ("prot",),
     "go_store_mlp": ("go", "store"),
     "go_prot_mlp": ("go", "prot"),
@@ -183,6 +190,8 @@ class Report(BaseModel):
     store: str = ""  # the study's flux store (STORE_SPEC) when empty
     mlp_hidden: int = HIDDEN_MLP
     mlp_depth: int = 1
+    store_linear_columns: int = 0
+    store_raw: bool = False
 
 
 class TargetDCell(DCellStyle):
@@ -265,6 +274,7 @@ class Task(BaseModel):
     width: int
     hidden: int = HIDDEN_MLP
     depth: int = 1
+    linear_columns: int = 0
 
 
 # worker state, inherited by fork
@@ -318,6 +328,15 @@ def run_task(task: Task) -> SeedRead:
         if task.arm in TWO_SLOT_ARMS:
             n_go = _BLOCKS["go"].shape[1]
             net = TwoSlot(n_go, x.shape[1] - n_go, task.hidden, task.depth, n_out)
+        elif task.arm in SPLIT_ARMS:
+            assert 0 < task.linear_columns < x.shape[1], (task.linear_columns, x.shape)
+            net = TwoSlot(
+                task.linear_columns,
+                x.shape[1] - task.linear_columns,
+                task.hidden,
+                task.depth,
+                n_out,
+            )
         else:
             net = perceptron(x.shape[1], task.hidden, task.depth, n_out)
     params = list(net.parameters())
@@ -407,6 +426,11 @@ def main() -> None:
     ap.add_argument("--store", default=None)
     ap.add_argument("--mlp-hidden", type=int, default=HIDDEN_MLP)
     ap.add_argument("--mlp-depth", type=int, default=1)
+    ap.add_argument("--store-linear-columns", type=int, default=0)
+    # The store block is log1p then standardized on the training rows; --store-raw keeps
+    # the log1p columns as the transformer's affine reads them (2026-09-27), so a split
+    # arm over a concatenated store matches the transformer's two-slot head's input.
+    ap.add_argument("--store-raw", action="store_true")
     # MEASURED 2026-09-24: a forked pool of two workers sat idle for 77 min with no cell
     # finished (the parent had initialized torch's thread pool before forking, the
     # deadlock the fork warning names); in-process with 16 threads a DCell cell takes
@@ -553,7 +577,11 @@ def main() -> None:
         sd[sd == 0] = 1.0
         return ((block - m) / sd).astype(np.float32)
 
-    _BLOCKS = {"go": x, "store": standardized(store), "prot": standardized(prot)}
+    _BLOCKS = {
+        "go": x,
+        "store": store if args.store_raw else standardized(store),
+        "prot": standardized(prot),
+    }
     print(
         f"  blocks: go {x.shape[1]}, store {store.shape[1]}, prot {prot.shape[1]}",
         flush=True,
@@ -566,6 +594,7 @@ def main() -> None:
             width=args.width,
             hidden=args.mlp_hidden,
             depth=args.mlp_depth,
+            linear_columns=args.store_linear_columns,
         )
         for a in args.arms
         for s in args.seeds
@@ -639,6 +668,8 @@ def main() -> None:
         store=args.store or "",
         mlp_hidden=args.mlp_hidden,
         mlp_depth=args.mlp_depth,
+        store_linear_columns=args.store_linear_columns,
+        store_raw=args.store_raw,
     )
     out = args.out or osp.join(
         EXPERIMENT_ROOT, STUDY[args.target], "results", f"go_models_{args.target}.json"

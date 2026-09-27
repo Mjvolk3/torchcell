@@ -45,4 +45,13 @@ standardizing GO costs the affine 0.005 and its early selection, and beside GO u
 that encoding the score is $+0.001$ (189), so the score adds to the annotation in the
 forest and not in the affine. On twelve seeds the score alone holds the annotation's
 single-seed level (0.056 against 0.057) with six times its spread, and its twelve-seed
-ensemble, 0.072, stays the highest of any arm on this target (195).
+ensemble, 0.072, stays the highest of any arm on this target (195). The highest read of
+any model, though, is the other amino-acid screen: Cooper's seventeen peaks predict
+M\"ulleder's nineteen at 0.093 by forest, above GO with the score (0.078), the score
+alone (0.071) and GO alone (0.063), so the two screens read each other better than
+either reads its own gene's annotation (Section~\ref{sec:physics}). The third endpoint
+agrees: the pool predicts the isobutanol biosensor out of fold at 0.102 against the
+annotation's 0.017 (Section~\ref{sec:isobutanol-cross}). On all three targets a measured
+phenotype of the same strain is worth more than the gene's annotation, and the
+transformer's read of Cooper's columns, linear and through a hidden layer of 256, is
+queued (206, 207).

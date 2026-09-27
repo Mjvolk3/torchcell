@@ -224,3 +224,26 @@ Full 51-dataset generation resubmitted as job 2889 after job 2884 failed on the
 overrides (the production config does not declare the three knobs, so they take
 hydra's `+` prefix there): `KG_CONFIG=kg_uncapped`, `+adapters.inprocess_max_records=25000
 +adapters.single_pass=true +adapters.fast_writer=true`, 32 CPUs / 128 GB.
+
+### Full build, first attempt (job 2889): 37 of 51 adapters in 5 h 18 min, then OOM
+
+Job 2889 ran the r5 settings over `kg_uncapped` at 32 CPUs / 128 GB and was OOM-killed
+at the start of Bloom2019's node pass, adapter 38 of 51. Per adapter against job 2032
+(`scripts/full_build_compare.py`, `results/2889_vs_2032.csv`): over the 32 adapters
+both builds completed, 5.23 h against 20.63 h, 3.9x. Costanzo dmf 6,468 s against
+15,931 s and dmi 8,849 s against 17,761 s (2.5x and 2.0x); the Kuzmin sets 9 to 22x;
+Caudal 982 s against 6,248 s; Kemmeren 578 s against 2,085 s.
+
+Why Bloom died: its adapter config carries no memory reduction factor, so the folded
+single-pass chunk was 12,500 records of 19.7 KB resolved JSON each; 30 workers plus 120
+loader children took anonymous memory from 36 GB to 104 GB in 20 s
+(`runs/2889_r5_full-51-32cpu/telemetry`). Fix (commit e48ffe2f): a single-pass chunk
+carries at most 48 MiB of resolved record JSON, sampled from the dataset, so Bloom gets
+2,555 records per chunk, Costanzo dmf 2,355, floor 256. Resubmitted as job 2905 with
+one loader child per worker.
+
+Why Costanzo is only 2x: the telemetry shows a 47 s cycle during Costanzo. Each pool
+group (30 workers x 2 chunks) fills the container to the 128 GB cap, the pool is torn
+down, and the container runs at 3 to 10 cores for about 15 s while the next pool forks
+and refills. Round 6 makes the group size a knob (`adapters.chunks_per_worker`, commit
+7b75b505); the ladder arm `r6 groups-8` is queued behind the full build.

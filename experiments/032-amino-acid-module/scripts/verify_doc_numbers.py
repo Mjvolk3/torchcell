@@ -4366,6 +4366,211 @@ CHECKS: list[Check] = [
         recompute=score_mlp(1024, "go_store_mlp", "single_mean_spearman"),
         tolerance=0.0006,
     ),
+    # sec:rounds -- round 205, the score through a hidden layer of 256.
+    Check(
+        claim="round 205: arm",
+        stated=0.078,
+        recompute=transfer(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: arm sd",
+        stated=0.007,
+        recompute=transfer(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: score linear",
+        stated=0.06,
+        recompute=transfer(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: vs linear paired",
+        stated=0.018,
+        recompute=transfer(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: vs linear paired sd",
+        stated=0.015,
+        recompute=transfer(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: vs linear seeds above",
+        stated=5,
+        recompute=transfer(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 205: GO alone",
+        stated=0.058,
+        recompute=transfer(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against GO alone",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: vs GO paired",
+        stated=0.02,
+        recompute=transfer(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against GO alone",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: vs GO paired sd",
+        stated=0.007,
+        recompute=transfer(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against GO alone",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: vs GO seeds above",
+        stated=6,
+        recompute=transfer(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against GO alone",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 205: ensemble",
+        stated=0.082,
+        recompute=ensemble("w225_aadelbxscoremlp256_h12l1p1_e200", "spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: seed min",
+        stated=0.072,
+        recompute=aa_pair_cells(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "arm",
+            "spearman",
+            "min",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: seed max",
+        stated=0.09,
+        recompute=aa_pair_cells(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "arm",
+            "spearman",
+            "max",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: select epoch min",
+        stated=47,
+        recompute=aa_pair_cells(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "arm",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 205: select epoch max",
+        stated=197,
+        recompute=aa_pair_cells(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 205: select val pearson min",
+        stated=0.11,
+        recompute=aa_pair_cells(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "arm",
+            "select_val_pearson",
+            "min",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 205: select val pearson max",
+        stated=0.13,
+        recompute=aa_pair_cells(
+            "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+            "arm",
+            "select_val_pearson",
+            "max",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 205: forest over GO with the score (reference)",
+        stated=0.078,
+        recompute=store_baseline(
+            "amino_acids", "go_bxscore", "forest", "mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 205: score store covers the pin",
+        stated=563,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "target_coverage_split_bxscore.json")))[
+                "arms"
+            ][0]["seeds"][0]["n_covered"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 205: pinned genes with a target",
+        stated=564,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "target_coverage_split_bxscore.json")))[
+                "arms"
+            ][0]["seeds"][0]["n_pinned"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 205: covered read",
+        stated=0.08,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "target_coverage_split_bxscore.json")))[
+                "arms"
+            ][0]["mean_spearman_covered"]
+        ),
+        tolerance=0.0006,
+    ),
 ]
 
 

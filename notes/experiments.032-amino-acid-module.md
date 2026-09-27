@@ -327,3 +327,7 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 ## 2026.09.27 - Cooper's peaks through a perceptron
 
 - `target_go_models.py --target amino_acids --store YPD_bx_cooperpool --mlp-hidden 256|1024` (`results/go_models_amino_acids_cooper_h256.json`, `_h1024.json`): the peaks alone 0.049 and 0.052 (the forest reads the same columns at 0.093); GO with the peaks in one layer 0.064 and 0.065; GO linear beside the peaks' layer of 1,024 reads 0.068 (sd 0.003, ensemble 0.070), the highest single-seed perceptron read on this target. Table `tables/cooper_mlp.tex`.
+
+## 2026.09.27 - Round 205 read: the betaxanthin score through a hidden layer of 256
+
+- w225 (job 2891): 0.078 (sd 0.007), +0.018 over the score in the linear affine (0.060, five of six) and +0.020 over GO alone (six of six); ensemble 0.082, the highest of any arm on this target. The score store covers 563 of 564 pinned genes with a target, so no coverage indicator enters (`results/target_coverage_split_bxscore.json`, covered-only 0.080).

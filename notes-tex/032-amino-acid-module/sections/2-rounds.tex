@@ -339,4 +339,16 @@ above the control's twelve-seed ensemble of 0.067 and the annotation's 0.058: at
 twelve seeds the score alone is the annotation's single-seed level with six times its
 spread, and its ensemble stays the highest of any arm on this target.
 
+Round 205 is read (job 2891, 3 h 31 min): the betaxanthin score alone through a GELU
+hidden layer of 256, the nonlinear read of one column. It reads 0.078 (sd 0.007)
+against the same column in the linear affine at 0.060 ($+0.018$ paired, sd 0.015, five
+of six) and against GO alone at 0.058 ($+0.020$, sd 0.007, six of six), ensembled
+0.082; the seeds read 0.072 to 0.090 and select at epochs 47 to 197 on validation
+Pearson 0.11 to 0.13. So the hidden layer does on this target what it did on
+betaxanthin: the single measured column read nonlinearly is the highest single-seed
+read of any transformer arm on the amino acids, at the forest's level over GO with the
+score (0.078), above the annotation on every seed, with the highest ensemble of any
+arm. The score store covers 563 of the 564 pinned genes with a target, so no coverage
+indicator enters this read (0.080 on the covered genes).
+
 \input{tables/target_transfer}

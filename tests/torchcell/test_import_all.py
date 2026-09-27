@@ -80,8 +80,6 @@ KNOWN_BROKEN: dict[str, str] = {
     "torchcell.trainers.regression": "imports WeightedMSELoss, which no longer exists",
     "torchcell.trainers.regression_deep_set_transformer": "imports WeightedMSELoss, which no longer exists",
     "torchcell.trainers.utils": "pydantic-v1 ConstrainedStr, removed in pydantic 2",
-    "torchcell.yeastmine.graphs": "imports gene_graph, not installed",
-    "torchcell.yeastmine.yeastmine": "imports dask, not installed",
 }
 
 # Machine-specific absolute paths in package source, with the line that carries each.

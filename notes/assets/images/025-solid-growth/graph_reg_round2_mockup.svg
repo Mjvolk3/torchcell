@@ -392,7 +392,7 @@ z
    </g>
    <g id="matplotlib.axis_13">
     <g id="text_31">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="51.867717" y="264.194584" transform="rotate(-0 51.867717 264.194584)">mechanism (11 columns)</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="51.867717" y="264.194584" transform="rotate(-0 51.867717 264.194584)">mechanism (12 columns)</text>
     </g>
    </g>
    <g id="matplotlib.axis_14">
@@ -597,8 +597,8 @@ L 332.742677 177.874016
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_48">
-    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(276.093477 210.078597)">none, mask L1, mask L1-4,</text>
-    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(286.787227 215.367034)">KL1 L1, KL1 L1-4</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(276.368477 210.078597)">none, mask L1, L3-4, L1-4,</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(285.537617 215.367034)">KL1 L1, L3-4, L1-4</text>
     <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(281.375117 220.728597)">(the curves move here</text>
     <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(294.716524 226.148753)">from F1 g)</text>
    </g>

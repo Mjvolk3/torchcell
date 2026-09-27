@@ -73,6 +73,7 @@ ORANGE, RED, PURPLE, YELLOW, BLUE, GRAY = PLOT_PALETTE[:6]
 class Arm(BaseModel):
     """One planned arm."""
 
+    round: str  # "1b" finishes the current figure; "2" the mechanism figure; "3" budget and representation
     group: str  # the question it answers
     name: str
     change: str  # the override or config on ctrl_013
@@ -93,8 +94,20 @@ class Arm(BaseModel):
 
 
 ARMS: list[Arm] = [
-    # 1. biology or conditioning: the random-graph control where the effect is
+    # Round 1b: what the current figure still needs. The random arm at 1e-3 ran the same
+    # 30-epoch protocol as every other arm (30 logged epochs on both complete seeds); its
+    # third seed finishes on its own and needs no submission.
     Arm(
+        round="1b",
+        group="completion",
+        name="KL 1e-5, seed 2",
+        change="graph_reg_lambda=1e-5, seed=2",
+        needs_code="",
+        seeds=1,
+        figure="F1 a-e",
+    ),
+    Arm(
+        round="1b",
         group="biology vs conditioning",
         name="random graphs, KL 1",
         change="rand_031, graph_reg_lambda=1",
@@ -103,6 +116,7 @@ ARMS: list[Arm] = [
         figure="F1 a-c, F1 f",
     ),
     Arm(
+        round="1b",
         group="biology vs conditioning",
         name="random graphs, KL 0.1",
         change="rand_031, graph_reg_lambda=0.1",
@@ -110,8 +124,8 @@ ARMS: list[Arm] = [
         seeds=3,
         figure="F1 a-c",
     ),
-    # 2. the turnover the ladder did not reach
     Arm(
+        round="1b",
         group="ladder top",
         name="KL 10",
         change="graph_reg_lambda=10",
@@ -120,6 +134,7 @@ ARMS: list[Arm] = [
         figure="F1 a-e",
     ),
     Arm(
+        round="1b",
         group="ladder top",
         name="KL 100",
         change="graph_reg_lambda=100",
@@ -127,8 +142,9 @@ ARMS: list[Arm] = [
         seeds=3,
         figure="F1 a-e",
     ),
-    # 3. direction: the prior carries it, the mask discards it
+    # Round 2: how the graphs enter (the new mechanism figure)
     Arm(
+        round="2",
         group="direction",
         name="KL 1, symmetric targets",
         change="graph_regularization symmetrize=true",
@@ -137,6 +153,7 @@ ARMS: list[Arm] = [
         figure="F2 a-c",
     ),
     Arm(
+        round="2",
         group="direction",
         name="mask, directed",
         change="attention_mask symmetric=false",
@@ -144,8 +161,8 @@ ARMS: list[Arm] = [
         seeds=3,
         figure="F2 a-c",
     ),
-    # 4. reach: two hops inside the mask
     Arm(
+        round="2",
         group="reach",
         name="mask, two-hop",
         change="attention_mask hops=2",
@@ -153,8 +170,8 @@ ARMS: list[Arm] = [
         seeds=3,
         figure="F2 a-c",
     ),
-    # 5. placement: which layers see the graphs
     Arm(
+        round="2",
         group="placement",
         name="mask, layers 1-2",
         change="attention_mask layers=[1,2]",
@@ -163,6 +180,16 @@ ARMS: list[Arm] = [
         figure="F2 a-f",
     ),
     Arm(
+        round="2",
+        group="placement",
+        name="mask, layers 3-4",
+        change="attention_mask layers=[3,4]",
+        needs_code="",
+        seeds=3,
+        figure="F2 a-f",
+    ),
+    Arm(
+        round="2",
         group="placement",
         name="mask, layers 1-4",
         change="attention_mask layers=[1,2,3,4]",
@@ -171,14 +198,7 @@ ARMS: list[Arm] = [
         figure="F2 a-f",
     ),
     Arm(
-        group="placement",
-        name="mask, all 8 layers",
-        change="attention_mask layers=[0..7]",
-        needs_code="",
-        seeds=3,
-        figure="F2 a-f",
-    ),
-    Arm(
+        round="2",
         group="placement",
         name="KL 1, layers 1-2",
         change="graph_reg_lambda=1, graph_reg_layer=[1,2]",
@@ -187,6 +207,16 @@ ARMS: list[Arm] = [
         figure="F2 a-f",
     ),
     Arm(
+        round="2",
+        group="placement",
+        name="KL 1, layers 3-4",
+        change="graph_reg_lambda=1, graph_reg_layer=[3,4]",
+        needs_code="",
+        seeds=3,
+        figure="F2 a-f",
+    ),
+    Arm(
+        round="2",
         group="placement",
         name="KL 1, layers 1-4",
         change="graph_reg_lambda=1, graph_reg_layer=[1,2,3,4]",
@@ -194,8 +224,9 @@ ARMS: list[Arm] = [
         seeds=3,
         figure="F2 a-f",
     ),
-    # 6. budget: does the strong prior keep rising, does no penalty keep falling
+    # Round 3: budget, and whether the prior still helps on the representation we intend to use
     Arm(
+        round="3",
         group="budget",
         name="no penalty, 60 epochs",
         change="graph_reg_lambda=0, max_epochs=60",
@@ -205,6 +236,7 @@ ARMS: list[Arm] = [
         figure="F3 a-b",
     ),
     Arm(
+        round="3",
         group="budget",
         name="mask, 60 epochs",
         change="mask_028, max_epochs=60",
@@ -214,6 +246,7 @@ ARMS: list[Arm] = [
         figure="F3 a-b",
     ),
     Arm(
+        round="3",
         group="budget",
         name="KL 1, 60 epochs",
         change="graph_reg_lambda=1, max_epochs=60",
@@ -222,14 +255,23 @@ ARMS: list[Arm] = [
         epochs=60,
         figure="F3 a-b",
     ),
-    # 7. fill the hole
     Arm(
-        group="completion",
-        name="KL 1e-5, seed 2",
-        change="graph_reg_lambda=1e-5, seed=2",
+        round="3",
+        group="representation",
+        name="composite embedding, no penalty",
+        change="embfit_035 minus fitness head, graph_reg_lambda=0",
         needs_code="",
-        seeds=1,
-        figure="F1 a-e",
+        seeds=3,
+        figure="F3 e",
+    ),
+    Arm(
+        round="3",
+        group="representation",
+        name="composite embedding, KL 1",
+        change="embfit_035 minus fitness head, graph_reg_lambda=1",
+        needs_code="",
+        seeds=3,
+        figure="F3 e",
     ),
 ]
 
@@ -248,18 +290,21 @@ def write_table(arms: list[Arm]) -> None:
     os.makedirs(TABLES_DIR, exist_ok=True)
     lines = [
         "%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_round2_plan.py -- GENERATED, do not edit",
-        "\\begin{tabular}{llp{4.4cm}p{3.6cm}rrr}",
+        "\\begin{tabular}{clp{2.6cm}p{3.6cm}p{3.0cm}rrr}",
         "\\toprule",
-        "question & arm & change on \\texttt{ctrl\\_013} & code & seeds & epochs & GPU-h \\\\",
+        "round & question & arm & change on \\texttt{ctrl\\_013} & code & seeds & epochs & GPU-h \\\\",
         "\\midrule",
     ]
-    last = ""
+    last_round, last_group = "", ""
     for a in arms:
-        g = a.group if a.group != last else ""
-        last = a.group
+        if a.round != last_round and last_round:
+            lines.append("\\midrule")
+        rd = a.round if a.round != last_round else ""
+        g = a.group if (a.group != last_group or a.round != last_round) else ""
+        last_round, last_group = a.round, a.group
         code = a.needs_code if a.needs_code else "none"
         lines.append(
-            f"{g} & {a.name} & {_tt(a.change)} & {code} & {a.seeds} & {a.epochs} & {a.gpu_h:.0f} \\\\"
+            f"{rd} & {g} & {a.name} & {_tt(a.change)} & {code} & {a.seeds} & {a.epochs} & {a.gpu_h:.0f} \\\\"
         )
     total_runs = sum(a.seeds for a in arms)
     total_gpu = sum(a.gpu_h for a in arms)
@@ -349,7 +394,7 @@ def wireframe() -> None:
     )
     # F2: how the graphs enter
     f2 = [fig.add_subplot(gs[1, i]) for i in range(6)]
-    cols = "mechanism (11 columns)"
+    cols = "mechanism (12 columns)"
     _panel(
         f2[0],
         "F2a  Pearson, three readings",
@@ -377,7 +422,7 @@ def wireframe() -> None:
         "F2d  val Pearson by epoch",
         "epoch",
         "Pearson",
-        "none, mask L1, mask L1-4,\nKL1 L1, KL1 L1-4\n(the curves move here\nfrom F1 g)",
+        "none, mask L1, L3-4, L1-4,\nKL1 L1, L3-4, L1-4\n(the curves move here\nfrom F1 g)",
         color=BLUE,
     )
     _panel(f2[4], "F2e  train Pearson by epoch", "epoch", "Pearson", "same arms")
@@ -452,6 +497,9 @@ def main() -> None:
             for a in ARMS
         ],
         "total_runs": sum(a.seeds for a in ARMS),
+        "runs_per_round": {
+            rd: sum(a.seeds for a in ARMS if a.round == rd) for rd in ("1b", "2", "3")
+        },
         "total_gpu_h": round(sum(a.gpu_h for a in ARMS)),
         "code_changes": sorted({a.needs_code for a in ARMS if a.needs_code}),
     }

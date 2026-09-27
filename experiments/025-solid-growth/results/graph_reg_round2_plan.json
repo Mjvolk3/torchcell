@@ -3,6 +3,19 @@
  "min_per_epoch": 27.0,
  "arms": [
   {
+   "round": "1b",
+   "group": "completion",
+   "name": "KL 1e-5, seed 2",
+   "change": "graph_reg_lambda=1e-5, seed=2",
+   "needs_code": "",
+   "seeds": 1,
+   "epochs": 30,
+   "figure": "F1 a-e",
+   "wall_h": 13.5,
+   "gpu_h": 54
+  },
+  {
+   "round": "1b",
    "group": "biology vs conditioning",
    "name": "random graphs, KL 1",
    "change": "rand_031, graph_reg_lambda=1",
@@ -14,6 +27,7 @@
    "gpu_h": 162
   },
   {
+   "round": "1b",
    "group": "biology vs conditioning",
    "name": "random graphs, KL 0.1",
    "change": "rand_031, graph_reg_lambda=0.1",
@@ -25,6 +39,7 @@
    "gpu_h": 162
   },
   {
+   "round": "1b",
    "group": "ladder top",
    "name": "KL 10",
    "change": "graph_reg_lambda=10",
@@ -36,6 +51,7 @@
    "gpu_h": 162
   },
   {
+   "round": "1b",
    "group": "ladder top",
    "name": "KL 100",
    "change": "graph_reg_lambda=100",
@@ -47,6 +63,7 @@
    "gpu_h": 162
   },
   {
+   "round": "2",
    "group": "direction",
    "name": "KL 1, symmetric targets",
    "change": "graph_regularization symmetrize=true",
@@ -58,6 +75,7 @@
    "gpu_h": 162
   },
   {
+   "round": "2",
    "group": "direction",
    "name": "mask, directed",
    "change": "attention_mask symmetric=false",
@@ -69,6 +87,7 @@
    "gpu_h": 162
   },
   {
+   "round": "2",
    "group": "reach",
    "name": "mask, two-hop",
    "change": "attention_mask hops=2",
@@ -80,6 +99,7 @@
    "gpu_h": 162
   },
   {
+   "round": "2",
    "group": "placement",
    "name": "mask, layers 1-2",
    "change": "attention_mask layers=[1,2]",
@@ -91,6 +111,19 @@
    "gpu_h": 162
   },
   {
+   "round": "2",
+   "group": "placement",
+   "name": "mask, layers 3-4",
+   "change": "attention_mask layers=[3,4]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "2",
    "group": "placement",
    "name": "mask, layers 1-4",
    "change": "attention_mask layers=[1,2,3,4]",
@@ -102,17 +135,7 @@
    "gpu_h": 162
   },
   {
-   "group": "placement",
-   "name": "mask, all 8 layers",
-   "change": "attention_mask layers=[0..7]",
-   "needs_code": "",
-   "seeds": 3,
-   "epochs": 30,
-   "figure": "F2 a-f",
-   "wall_h": 13.5,
-   "gpu_h": 162
-  },
-  {
+   "round": "2",
    "group": "placement",
    "name": "KL 1, layers 1-2",
    "change": "graph_reg_lambda=1, graph_reg_layer=[1,2]",
@@ -124,6 +147,19 @@
    "gpu_h": 162
   },
   {
+   "round": "2",
+   "group": "placement",
+   "name": "KL 1, layers 3-4",
+   "change": "graph_reg_lambda=1, graph_reg_layer=[3,4]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "2",
    "group": "placement",
    "name": "KL 1, layers 1-4",
    "change": "graph_reg_lambda=1, graph_reg_layer=[1,2,3,4]",
@@ -135,6 +171,7 @@
    "gpu_h": 162
   },
   {
+   "round": "3",
    "group": "budget",
    "name": "no penalty, 60 epochs",
    "change": "graph_reg_lambda=0, max_epochs=60",
@@ -146,6 +183,7 @@
    "gpu_h": 324
   },
   {
+   "round": "3",
    "group": "budget",
    "name": "mask, 60 epochs",
    "change": "mask_028, max_epochs=60",
@@ -157,6 +195,7 @@
    "gpu_h": 324
   },
   {
+   "round": "3",
    "group": "budget",
    "name": "KL 1, 60 epochs",
    "change": "graph_reg_lambda=1, max_epochs=60",
@@ -168,19 +207,37 @@
    "gpu_h": 324
   },
   {
-   "group": "completion",
-   "name": "KL 1e-5, seed 2",
-   "change": "graph_reg_lambda=1e-5, seed=2",
+   "round": "3",
+   "group": "representation",
+   "name": "composite embedding, no penalty",
+   "change": "embfit_035 minus fitness head, graph_reg_lambda=0",
    "needs_code": "",
-   "seeds": 1,
+   "seeds": 3,
    "epochs": 30,
-   "figure": "F1 a-e",
+   "figure": "F3 e",
    "wall_h": 13.5,
-   "gpu_h": 54
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "representation",
+   "name": "composite embedding, KL 1",
+   "change": "embfit_035 minus fitness head, graph_reg_lambda=1",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 e",
+   "wall_h": 13.5,
+   "gpu_h": 162
   }
  ],
- "total_runs": 46,
- "total_gpu_h": 2970,
+ "total_runs": 55,
+ "runs_per_round": {
+  "1b": 13,
+  "2": 27,
+  "3": 15
+ },
+ "total_gpu_h": 3456,
  "code_changes": [
   "drop the transpose write in the mask builder",
   "support A or A squared, self-loops kept",

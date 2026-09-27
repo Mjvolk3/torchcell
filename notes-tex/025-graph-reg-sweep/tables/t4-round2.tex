@@ -1,25 +1,30 @@
 %% SOURCE: experiments/025-solid-growth/scripts/graph_reg_round2_plan.py -- GENERATED, do not edit
-\begin{tabular}{llp{4.4cm}p{3.6cm}rrr}
+\begin{tabular}{clp{2.6cm}p{3.6cm}p{3.0cm}rrr}
 \toprule
-question & arm & change on \texttt{ctrl\_013} & code & seeds & epochs & GPU-h \\
+round & question & arm & change on \texttt{ctrl\_013} & code & seeds & epochs & GPU-h \\
 \midrule
-biology vs conditioning & random graphs, KL 1 & \texttt{rand\_031}, \texttt{graph\_reg\_lambda=1} & none & 3 & 30 & 162 \\
- & random graphs, KL 0.1 & \texttt{rand\_031}, \texttt{graph\_reg\_lambda=0.1} & none & 3 & 30 & 162 \\
-ladder top & KL 10 & \texttt{graph\_reg\_lambda=10} & none & 3 & 30 & 162 \\
- & KL 100 & \texttt{graph\_reg\_lambda=100} & none & 3 & 30 & 162 \\
-direction & KL 1, symmetric targets & \texttt{graph\_regularization} \texttt{symmetrize=true} & symmetrize A for the directed graphs before row normalization & 3 & 30 & 162 \\
- & mask, directed & \texttt{attention\_mask} \texttt{symmetric=false} & drop the transpose write in the mask builder & 3 & 30 & 162 \\
-reach & mask, two-hop & \texttt{attention\_mask} \texttt{hops=2} & support A or A squared, self-loops kept & 3 & 30 & 162 \\
-placement & mask, layers 1-2 & \texttt{attention\_mask} \texttt{layers=[1},\texttt{2]} & none & 3 & 30 & 162 \\
- & mask, layers 1-4 & \texttt{attention\_mask} \texttt{layers=[1},\texttt{2},\texttt{3},\texttt{4]} & none & 3 & 30 & 162 \\
- & mask, all 8 layers & \texttt{attention\_mask} \texttt{layers=[0..7]} & none & 3 & 30 & 162 \\
- & KL 1, layers 1-2 & \texttt{graph\_reg\_lambda=1}, \texttt{graph\_reg\_layer=[1},\texttt{2]} & none & 3 & 30 & 162 \\
- & KL 1, layers 1-4 & \texttt{graph\_reg\_lambda=1}, \texttt{graph\_reg\_layer=[1},\texttt{2},\texttt{3},\texttt{4]} & none & 3 & 30 & 162 \\
-budget & no penalty, 60 epochs & \texttt{graph\_reg\_lambda=0}, \texttt{max\_epochs=60} & none & 3 & 60 & 324 \\
- & mask, 60 epochs & \texttt{mask\_028}, \texttt{max\_epochs=60} & none & 3 & 60 & 324 \\
- & KL 1, 60 epochs & \texttt{graph\_reg\_lambda=1}, \texttt{max\_epochs=60} & none & 3 & 60 & 324 \\
-completion & KL 1e-5, seed 2 & \texttt{graph\_reg\_lambda=1e-5}, \texttt{seed=2} & none & 1 & 30 & 54 \\
+1b & completion & KL 1e-5, seed 2 & \texttt{graph\_reg\_lambda=1e-5}, \texttt{seed=2} & none & 1 & 30 & 54 \\
+ & biology vs conditioning & random graphs, KL 1 & \texttt{rand\_031}, \texttt{graph\_reg\_lambda=1} & none & 3 & 30 & 162 \\
+ &  & random graphs, KL 0.1 & \texttt{rand\_031}, \texttt{graph\_reg\_lambda=0.1} & none & 3 & 30 & 162 \\
+ & ladder top & KL 10 & \texttt{graph\_reg\_lambda=10} & none & 3 & 30 & 162 \\
+ &  & KL 100 & \texttt{graph\_reg\_lambda=100} & none & 3 & 30 & 162 \\
 \midrule
-total & & & & 46 & & 2,970 \\
+2 & direction & KL 1, symmetric targets & \texttt{graph\_regularization} \texttt{symmetrize=true} & symmetrize A for the directed graphs before row normalization & 3 & 30 & 162 \\
+ &  & mask, directed & \texttt{attention\_mask} \texttt{symmetric=false} & drop the transpose write in the mask builder & 3 & 30 & 162 \\
+ & reach & mask, two-hop & \texttt{attention\_mask} \texttt{hops=2} & support A or A squared, self-loops kept & 3 & 30 & 162 \\
+ & placement & mask, layers 1-2 & \texttt{attention\_mask} \texttt{layers=[1},\texttt{2]} & none & 3 & 30 & 162 \\
+ &  & mask, layers 3-4 & \texttt{attention\_mask} \texttt{layers=[3},\texttt{4]} & none & 3 & 30 & 162 \\
+ &  & mask, layers 1-4 & \texttt{attention\_mask} \texttt{layers=[1},\texttt{2},\texttt{3},\texttt{4]} & none & 3 & 30 & 162 \\
+ &  & KL 1, layers 1-2 & \texttt{graph\_reg\_lambda=1}, \texttt{graph\_reg\_layer=[1},\texttt{2]} & none & 3 & 30 & 162 \\
+ &  & KL 1, layers 3-4 & \texttt{graph\_reg\_lambda=1}, \texttt{graph\_reg\_layer=[3},\texttt{4]} & none & 3 & 30 & 162 \\
+ &  & KL 1, layers 1-4 & \texttt{graph\_reg\_lambda=1}, \texttt{graph\_reg\_layer=[1},\texttt{2},\texttt{3},\texttt{4]} & none & 3 & 30 & 162 \\
+\midrule
+3 & budget & no penalty, 60 epochs & \texttt{graph\_reg\_lambda=0}, \texttt{max\_epochs=60} & none & 3 & 60 & 324 \\
+ &  & mask, 60 epochs & \texttt{mask\_028}, \texttt{max\_epochs=60} & none & 3 & 60 & 324 \\
+ &  & KL 1, 60 epochs & \texttt{graph\_reg\_lambda=1}, \texttt{max\_epochs=60} & none & 3 & 60 & 324 \\
+ & representation & composite embedding, no penalty & \texttt{embfit\_035} \texttt{minus} \texttt{fitness} \texttt{head}, \texttt{graph\_reg\_lambda=0} & none & 3 & 30 & 162 \\
+ &  & composite embedding, KL 1 & \texttt{embfit\_035} \texttt{minus} \texttt{fitness} \texttt{head}, \texttt{graph\_reg\_lambda=1} & none & 3 & 30 & 162 \\
+\midrule
+total & & & & 55 & & 3,456 \\
 \bottomrule
 \end{tabular}

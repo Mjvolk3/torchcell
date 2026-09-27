@@ -1039,4 +1039,25 @@ ones, so the three graph patterns (214 to 216) are read against a depth control 
 sits under its own width control and under the width-12 incumbent (0.279). The
 regularizer's loss is 0.0 here too.
 
+Round 214 is read (job 2901, 4 h 22 min): the pool through 256 on two blocks of width
+36 with the 020 hard mask on the second, one of the nine relations burned into each of
+its nine heads with self-loops and the summary token free, the first cell of the study
+whose attention is shaped by the graphs. It reads 0.228 (sd 0.048) against the unmasked
+two blocks' 0.270 ($-0.042$ paired, sd 0.044, one of six), top-50 3.66 against 4.13,
+ensembled 0.253 with a top-50 of 5.79; the seeds read 0.159 to 0.277 and select at
+epochs 21 to 194. On the covered genes it reads 0.161 against 0.207, on the uncovered
+0.049 against $-0.015$. Where the loss went is in the decomposition
+(Table~\ref{tab:head-decomposition}): on the unmasked control the backbone's head is a
+constant on four seeds of six and adds $-0.016$ and $+0.035$ on the two where it is
+live; under the mask it is live on five of six, and on the two seeds where its spread
+rivals the slot's it costs the arm 0.081 and 0.105 (the head's own read of the target
+0.071 and $-0.004$ there), while on the one seed where it stays a constant the two
+cells' predictions agree at 1.0000 and read 0.277 alike. The slot alone reads 0.261
+under the mask against 0.267 unmasked. So the mask does what a graph prior is for, it
+keeps the backbone from collapsing to a constant, and the backbone it keeps alive reads
+betaxanthin at $-0.06$ to 0.07 on its own and subtracts from the slot: attention shaped
+by the graphs carries no more of this target than unshaped attention did, and the
+graphs' own read (0.244 by one hop of label propagation, Section~\ref{sec:homophily})
+is not what either backbone learns.
+
 \input{tables/target_transfer}

@@ -719,6 +719,8 @@ HEAD_DECOMPOSITION = (
         "w218_threefam_twoslot",
         "three families linear beside the pool through 256 (round 199)",
     ),
+    ("w232", "pool through 256, two unmasked blocks of width 36 (round 213)"),
+    ("w234", "pool through 256, the hard mask on the second block (round 214)"),
 )
 CONSTANT_SD_RATIO = 1e-2
 

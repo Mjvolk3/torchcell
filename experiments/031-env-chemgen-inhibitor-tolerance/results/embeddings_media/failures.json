@@ -1,0 +1,14 @@
+{
+  "chemberta2_mlm": {},
+  "chemberta2_mtr": {},
+  "ecfp4_bit": {},
+  "ecfp4_count": {},
+  "fcfp4_count": {},
+  "maccs": {},
+  "mol2vec": {},
+  "mole_static": {},
+  "molformer_xl": {},
+  "rdkit_2d": {},
+  "roberta_zinc_480m": {},
+  "unimol_v1": {}
+}

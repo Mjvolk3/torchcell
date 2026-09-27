@@ -183,3 +183,25 @@ file identical, import call identical up to BioCypher's set ordering.
 Arms submitted: 2881 `r5 fast-writer` (r3 overrides + `adapters.fast_writer=true`) and
 2882 `r5 fast-writer-io0.02` (plus `adapters.io_to_total_worker_ratio=0.02`), both
 48 CPUs / 192 GB.
+
+### r5 on the ladder, and the full build
+
+Job 2883, `r5 fast-writer-32cpu` (r3 overrides + `adapters.fast_writer=true`), ran at
+32 CPUs / 128 GB because the two 48-CPU arms (2881, 2882) were stuck behind the GPU
+packs: wall 724 s against r3's 1,489 s on 48 CPUs, peak memory 91.5 GB against 166 GB,
+and the same 29,736,977 data rows as every other arm (the report had been subtracting
+one line per part file; part files carry no header, corrected in `bench_report.py`).
+Costanzo 2M went 1,070 s to 525 s, the mid Kuzmin sets 195 and 167 s to 79 and 63 s.
+The main process is at 0.8 cores during Costanzo and the container at 15 of 32 cores,
+so the writer is off the critical path; the remaining gap to full utilization is on
+the worker side (per-chunk loader forks and the in-order result window).
+
+<https://wandb.ai/zhao-group/tcdb/runs/e63ml5k7>
+
+Ladder wall by round: r0 5,496 s, r1 4,508 s, r2 3,066 s, r3 1,489 s, r5 724 s (r5 on
+32 CPUs, the rest on 48). 7.6x overall.
+
+Full 51-dataset generation with the r5 settings submitted as job 2884
+(`KG_CONFIG=kg_uncapped`, same overrides, 32 CPUs / 128 GB, CSVs removed at the end,
+per-label row counts kept). The comparison target is job 2032: 28 h 15 min,
+472,298,282 node rows and 525,064,964 edge rows before BioCypher's dedup.

@@ -27,6 +27,7 @@ from omegaconf import DictConfig, OmegaConf
 import torchcell
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.build_telemetry import BuildPhase, ResourceSampler
+from torchcell.fast_csv import FastCsvSink, build_row_specs
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 from torchcell.knowledge_graphs.incremental_import import (
@@ -164,6 +165,12 @@ def main(cfg: DictConfig) -> None:
     loader_batch_size = int(wandb.config.adapters["loader_batch_size"])
     inprocess_max_records = int(wandb.config.adapters.get("inprocess_max_records", 0))
     single_pass = bool(wandb.config.adapters.get("single_pass", False))
+    fast_writer = bool(wandb.config.adapters.get("fast_writer", False))
+    # r5: rows rendered in the chunk workers, the main process only dedups and
+    # appends (torchcell.fast_csv). The specs are frozen from THIS BioCypher instance
+    # before any adapter forks a pool, so every worker inherits them.
+    row_specs = build_row_specs(bc) if fast_writer else None
+    sink = FastCsvSink(bc, row_specs) if row_specs is not None else None
 
     wandb.log(
         {
@@ -305,6 +312,7 @@ def main(cfg: DictConfig) -> None:
         # constructor's arguments, and this knob is a build setting, not per adapter.
         adapters[-1].inprocess_max_records = inprocess_max_records
         adapters[-1].single_pass = single_pass
+        adapters[-1].row_specs = row_specs
     log.info(
         "Built %d adapters; skipped %d with no LMDB: %s",
         len(adapters),
@@ -320,7 +328,10 @@ def main(cfg: DictConfig) -> None:
         wandb.log({"adapter_index": adapter_index, "current_adapter": adapter_name})
         log.info(f"Writing nodes for adapter: {adapter_name}")
         start_time = time.time()
-        n_nodes = _count_while_writing(bc.write_nodes, adapter.get_nodes())
+        if sink is not None:
+            n_nodes = sink.write_nodes(adapter.get_nodes())
+        else:
+            n_nodes = _count_while_writing(bc.write_nodes, adapter.get_nodes())
         total_nodes += n_nodes
         wandb.log(
             {
@@ -332,7 +343,10 @@ def main(cfg: DictConfig) -> None:
 
         log.info(f"Writing edges for adapter: {adapter_name}")
         start_time = time.time()
-        n_edges = _count_while_writing(bc.write_edges, adapter.get_edges())
+        if sink is not None:
+            n_edges = sink.write_edges(adapter.get_edges())
+        else:
+            n_edges = _count_while_writing(bc.write_edges, adapter.get_edges())
         total_edges += n_edges
         wandb.log(
             {
@@ -348,6 +362,8 @@ def main(cfg: DictConfig) -> None:
         total_edges,
         len(adapters),
     )
+    if sink is not None:
+        sink.finish()
     generation_wall_s = time.time() - build_t0
     BuildPhase.set("", "finish", "finish")
     timings = sampler.stop()

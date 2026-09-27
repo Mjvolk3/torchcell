@@ -4571,6 +4571,184 @@ CHECKS: list[Check] = [
         ),
         tolerance=0.0006,
     ),
+    # sec:rounds -- round 206, Cooper's peaks through a hidden layer of 256.
+    Check(
+        claim="round 206: arm",
+        stated=0.046,
+        recompute=transfer(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: arm sd",
+        stated=0.006,
+        recompute=transfer(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: GO alone",
+        stated=0.058,
+        recompute=transfer(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: paired",
+        stated=-0.012,
+        recompute=transfer(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: paired sd",
+        stated=0.006,
+        recompute=transfer(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: seeds above",
+        stated=0,
+        recompute=transfer(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 206: ensemble",
+        stated=0.048,
+        recompute=ensemble("w226_aadelcooperpoolmlp256_h12l1p1_e200", "spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: seed min",
+        stated=0.037,
+        recompute=aa_pair_cells(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "arm",
+            "spearman",
+            "min",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: seed max",
+        stated=0.052,
+        recompute=aa_pair_cells(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "arm",
+            "spearman",
+            "max",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: select epoch min",
+        stated=95,
+        recompute=aa_pair_cells(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "arm",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 206: select epoch max",
+        stated=153,
+        recompute=aa_pair_cells(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 206: select val pearson min",
+        stated=0.06,
+        recompute=aa_pair_cells(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "arm",
+            "select_val_pearson",
+            "min",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 206: select val pearson max",
+        stated=0.13,
+        recompute=aa_pair_cells(
+            "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+            "arm",
+            "select_val_pearson",
+            "max",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 206: covered genes",
+        stated=495,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "target_coverage_split_cooper226.json")))[
+                "arms"
+            ][0]["seeds"][0]["n_covered"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 206: covered read",
+        stated=0.04,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "target_coverage_split_cooper226.json")))[
+                "arms"
+            ][0]["mean_spearman_covered"]
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: GO covered read",
+        stated=0.053,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "target_coverage_split_cooper226.json")))[
+                "arms"
+            ][1]["mean_spearman_covered"]
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: Cooper indicator on this target",
+        stated=0.005,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "target_coverage_split_cooper226.json")))[
+                "arms"
+            ][0]["seeds"][0]["coverage_indicator_spearman"]
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 206: forest over Cooper (reference)",
+        stated=0.093,
+        recompute=store_baseline(
+            "amino_acids", "cooper_pool", "forest", "mean_spearman"
+        ),
+        tolerance=0.0006,
+    ),
 ]
 
 

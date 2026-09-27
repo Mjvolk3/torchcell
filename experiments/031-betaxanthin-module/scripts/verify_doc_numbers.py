@@ -238,7 +238,8 @@ def agreement_max_below(name: str, ceiling: float):
 
 def graph_reg_loss_over_cells(layers: int, what: str, max_wave: int = 219):
     """Over every result file of the study with ``layers`` transformer blocks up to wave
-    ``max_wave`` (the cells landed when the decomposition was read): the count of cells,
+    ``max_wave`` at seeds 2700 to 2705 (the cells landed when the decomposition was
+    read): the count of cells,
     or the maximum graph regularization loss logged at any epoch.
     """
 
@@ -249,8 +250,12 @@ def graph_reg_loss_over_cells(layers: int, what: str, max_wave: int = 219):
 
         mx, n = 0.0, 0
         for path in glob.glob(osp.join(RESULTS, "w*_s27*.json")):
-            wave = re.match(r"w(\d+)_", osp.basename(path))
-            if wave is None or int(wave.group(1)) > max_wave:
+            wave = re.match(r"w(\d+)_.*_s(\d+)\.json$", osp.basename(path))
+            if (
+                wave is None
+                or int(wave.group(1)) > max_wave
+                or int(wave.group(2)) > 2705
+            ):
                 continue
             d = json.load(open(path))
             if "history" not in d or d["cell"]["layers"] != layers:
@@ -509,6 +514,10 @@ def seed_level(stem: str, which: str):
             return float(v.min())
         if which == "max":
             return float(v.max())
+        if which == "first6_min":
+            return float(v[:6].min())
+        if which == "first6_max":
+            return float(v[:6].max())
         if which == "mean_top50":
             return float(np.mean([x["top50_enrichment"] for x in a["single"]]))
         raise KeyError(which)
@@ -8262,13 +8271,17 @@ CHECKS: list[Check] = [
     Check(
         claim="round 199: seed min",
         stated=0.235,
-        recompute=seed_level("w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200", "min"),
+        recompute=seed_level(
+            "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200", "first6_min"
+        ),
         tolerance=0.0006,
     ),
     Check(
         claim="round 199: seed max",
         stated=0.243,
-        recompute=seed_level("w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200", "max"),
+        recompute=seed_level(
+            "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200", "first6_max"
+        ),
         tolerance=0.0006,
     ),
     Check(

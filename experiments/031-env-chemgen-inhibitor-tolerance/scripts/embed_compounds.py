@@ -103,13 +103,14 @@ def dataset_compounds(name: str) -> tuple[list[str], int]:
     return sorted(keys), len(no_key)
 
 
-def served_smiles(datasets: list[str]) -> dict[str, str]:
-    """InChIKey -> SMILES as the SERVED record carries it, over the given datasets.
+def served_structures(datasets: list[str]) -> dict[str, dict[str, str]]:
+    """InChIKey -> ``{"smiles", "name"}`` as the SERVED record carries them.
 
-    The flattened records carry the ``Compound.smiles`` of every dosed compound. This is the
-    only structure source for a key the curated identity table has no row for.
+    The flattened records carry the ``Compound.smiles`` and ``Compound.name`` of every dosed
+    compound. This is the only structure source for a key the curated identity table has no
+    row for, and the name is what a failure report for such a key can print.
     """
-    out: dict[str, str] = {}
+    out: dict[str, dict[str, str]] = {}
     for name in datasets:
         path = osp.join(RESULTS_DIR, f"records_{name}.parquet")
         # a parquet written before the smiles column was added simply has nothing to give
@@ -118,11 +119,22 @@ def served_smiles(datasets: list[str]) -> dict[str, str]:
                 f"  {name}: no smiles column, re-flatten to use the served structures"
             )
             continue
-        df = pd.read_parquet(path, columns=["inchikey", "smiles"]).drop_duplicates()
-        for ik, sm in df.itertuples(index=False):
-            for k, s in zip(str(ik).split("|"), str(sm).split("|"), strict=False):
+        df = pd.read_parquet(
+            path, columns=["inchikey", "smiles", "compound"]
+        ).drop_duplicates()
+        for ik, sm, comp in df.itertuples(index=False):
+            ik_parts = str(ik).split("|")
+            sm_parts = str(sm).split("|")
+            comp_parts = str(comp).split("|")
+            # same rule as dataset_compounds: the key field sets the compound count, and a
+            # name only aligns to a key when the name field splits into the same number
+            aligned = len(ik_parts) == len(comp_parts)
+            for i, (k, s) in enumerate(zip(ik_parts, sm_parts, strict=True)):
                 if k and s and k not in out:
-                    out[k] = s
+                    out[k] = {
+                        "smiles": s,
+                        "name": comp_parts[i] if aligned else str(comp),
+                    }
     return out
 
 
@@ -175,15 +187,18 @@ def main() -> None:
     # stereo block for some compounds. Where the table has no row at all the served record
     # is the only source, and it is the provenance authority: Hoepfner derives 88 of its 148
     # InChIKeys from the released Table S1 SMILES and those keys were never curated.
-    served = served_smiles(args.datasets)
+    served = served_structures(args.datasets)
     smiles_by_key: dict[str, str] = {}
+    name_by_key: dict[str, str] = {}
     n_from_served = 0
     for k in union:
         curated = table.get(k, {}).get("smiles")
         if curated:
             smiles_by_key[k] = str(curated)
+            name_by_key[k] = str(table[k]["name"])
         elif served.get(k):
-            smiles_by_key[k] = served[k]
+            smiles_by_key[k] = served[k]["smiles"]
+            name_by_key[k] = served[k]["name"]
             n_from_served += 1
     print(
         f"union: {len(union)} InChIKeys, {len(smiles_by_key)} with SMILES "
@@ -214,7 +229,7 @@ def main() -> None:
             f"in {seconds:.1f}s, failed {len(failed)}"
         )
         for k, msg in failed.items():
-            print(f"  FAILED {k} {table[k]['name']!r}: {msg[:160]}")
+            print(f"  FAILED {k} {name_by_key[k]!r}: {msg[:160]}")
         timing_rows.append(
             {
                 "encoder": enc_name,

@@ -2,15 +2,17 @@
 %% [[experiments.031-env-chemgen-inhibitor-tolerance]]
 %% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/031-unified-representation/031-unified-representation.tex
 %%
-%% Data exploration across the five served chemogenomic datasets, and the input
-%% representation that spans them: what a shared genotype channel can carry, what the
-%% dose axis cannot, how far the compound panels reach chemically, and whether the
-%% Yeast9 metabolites can share the molecule embedding space.
+%% The planning document for the inhibitor-tolerance model, in one place: what the data
+%% exploration established about ceilings and transfer, what a shared input can absorb on
+%% each axis, the molecular encoders and their coverage, where the channels enter the cell
+%% graph transformer and what one decoder over four response scales looks like, and the
+%% representation with its implementation steps.
 %%
 %% Build:  make            -> 031-unified-representation.pdf
 %%         make check      -> the formatting / provenance / style gate
 %%         make tables     -> regenerate tables/*.tex from the result CSVs
 %%         make diagrams   -> re-render the representation figure
+%%         make plots      -> re-convert the reliability panel from ASSET_IMAGES_DIR
 %%
 %% Every figure, table and number is written by a committed script under
 %% experiments/031-env-chemgen-inhibitor-tolerance/scripts/.
@@ -23,9 +25,9 @@
 
 \emergencystretch=3.5em
 
-\title{\vspace{-1.5em}One Input Representation for Five Chemogenomic Datasets\\
-  {\large What a shared genotype channel carries, why the dose axis does not pool,
-   how far the compound panels reach, and whether the metabolites can join}}
+\title{\vspace{-1.5em}Inhibitor Tolerance: Data, Representation and Model Plan\\
+  {\large What the four chemogenomic datasets can share as input, which molecular encoders
+   carry the compounds, and how one decoder reads four response scales}}
 \author{Michael Volk}
 \date{\today}
 
@@ -36,32 +38,34 @@
 \begin{abstract}
 \noindent
 Five served datasets hold 7.48 million chemogenomic records, and training one model across
-them requires a single input representation. They disagree on three axes. Ploidy runs from
-haploid through homozygous diploid to heterozygous diploid. Compound panels run from 41 to
-5{,}170. Dose runs from an unquantified target inhibition through a nine-order-of-magnitude
-molar range to a single fixed concentration. Every number here is measured from the served
-records through their loaders.
+them requires a single input representation and a single decoder. They disagree on four axes.
+Ploidy runs from haploid through homozygous diploid to heterozygous diploid. Compound panels
+run from 41 to 5{,}170. Dose runs from an unquantified target inhibition through a
+nine-order-of-magnitude molar range to a single fixed concentration. And the response is a
+log ratio, a z score or a sensitivity score depending on the source. Every number here is
+measured from the served records through their loaders.
 
-The genotype axis resolves cleanly. The schema already carries heterozygosity in two parts,
-a genome-wide ploidy baseline and a per-locus copy-number deviation, and all five datasets
-round-trip through it. A per-gene functional dose, copies present over copies in the
-reference, is lossless for these five because every perturbation is either a full deletion
-or a one-of-two variant, and it needs no separate ploidy feature because the vector's
-background level is the ploidy. It is also learnable rather than merely expressible:
-Hoepfner supplies 648{,}977 gene-by-compound cells measured both heterozygous and
-homozygous. The gap is entirely in the tensor layer, which reads only a gene name and
-therefore makes those 648{,}977 pairs byte-identical inputs carrying different responses.
+The genotype axis resolves cleanly. The schema already carries heterozygosity as a
+genome-wide ploidy baseline and a per-locus copy-number deviation, and a per-gene functional
+dose, copies present over copies in the reference, is lossless for these datasets because
+every perturbation is a full deletion or a one-of-two variant. It is learnable: Hoepfner
+supplies 648{,}977 gene-by-compound cells measured both heterozygous and homozygous. The gap
+is entirely in the tensor layer, which reads only a gene name and no environment field at
+all. The dose axis does not resolve, so dose enters as a basis token and a masked log molar
+value rather than one number. The physical fields, temperature, aerobicity, duration and pH,
+are constant inside every dataset, so they need no channel and the dataset token carries
+them. Chemically, pooling buys the phenolic inhibitors and not the small alcohols, and
+Wildenhain supplies essentially all of the gain; twelve molecular encoders cover all 5{,}472
+dosed compounds, the 37 medium components and 894 of the 1{,}378 Yeast9 species from one
+embedding table.
 
-The dose axis does not resolve. Forty of Vanacloig's 41 compounds carry no concentration at
-all, only a target-inhibition basis; every Wildenhain compound sits at one fixed
-concentration, so its dose column is constant; and for the 214 compounds dosed in more than
-one dataset the median ratio between the highest and lowest dose is 12.5. Dose therefore
-enters as a basis token rather than a number.
-
-Chemically, pooling buys coverage of the phenolic inhibitors and not of the small alcohols,
-and Wildenhain supplies essentially all of the gain. Yeast9 can share the molecule space
-for the two thirds of its species that have a structure, and 103 of those are dosed
-somewhere in the five datasets.
+Two decisions are taken. The Hillenmeyer homozygous arm is dropped, leaving four datasets and
+6.39 million records. And the functional dose scales the existing cross-attention
+perturbation operator through a factor that equals one for a deletion, so every current
+dataset's model is unchanged and heterozygosity is the only new behavior. The decoder is one
+scalar head with a per-source dataset token at the readout, the mechanism experiment 030
+smoke-tested. The first round is four arms on a fixed compound-cold evaluation within
+Vanacloig, scored against the reliability ceiling of every compound.
 \end{abstract}
 
 \vspace{0.5em}
@@ -70,10 +74,13 @@ somewhere in the five datasets.
 
 \input{sections/1-question}
 \input{sections/2-datasets}
-\input{sections/3-genotype}
-\input{sections/4-dose}
-\input{sections/5-chemistry}
-\input{sections/6-metabolites}
-\input{sections/7-representation}
+\input{sections/3-established}
+\input{sections/4-genotype}
+\input{sections/5-dose}
+\input{sections/6-chemistry}
+\input{sections/7-encoders}
+\input{sections/8-metabolites}
+\input{sections/9-model}
+\input{sections/10-representation}
 
 \end{document}

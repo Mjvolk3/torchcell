@@ -5,13 +5,16 @@
 
 Every table in that document is generated here from a file another script in this folder
 wrote, so no number is hand-authored. Reads ``results/*.csv`` and writes
-``notes-tex/031-unified-representation/tables/*.tex``.
+``notes-tex/031-unified-representation/tables/*.tex``. The encoder provenance table reuses
+the curated ``ENCODER_PROVENANCE`` list of ``notes_tex_tables.py`` so the two documents
+cannot disagree about an encoder's source.
 """
 
 from __future__ import annotations
 
 import os
 import os.path as osp
+import sys
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -19,13 +22,16 @@ from dotenv import load_dotenv
 load_dotenv()
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 RESULTS = osp.join(EXPERIMENT_ROOT, "031-env-chemgen-inhibitor-tolerance", "results")
-REPO = osp.dirname(osp.dirname(osp.abspath(EXPERIMENT_ROOT.rstrip("/"))))
+SCRIPTS = osp.join(EXPERIMENT_ROOT, "031-env-chemgen-inhibitor-tolerance", "scripts")
 TABLES = osp.join(
     osp.dirname(EXPERIMENT_ROOT.rstrip("/")),
     "notes-tex",
     "031-unified-representation",
     "tables",
 )
+sys.path.insert(0, SCRIPTS)
+from notes_tex_tables import ENCODER_PROVENANCE  # noqa: E402
+
 LABEL = {
     "vanacloig2022": "Vanacloig 2022",
     "hillenmeyer2008_hom": "Hillenmeyer HOM",
@@ -33,7 +39,17 @@ LABEL = {
     "hoepfner2014": "Hoepfner 2014",
     "wildenhain2015": "Wildenhain 2015",
 }
+SHORT = {
+    "vanacloig2022": "Vanacloig",
+    "hillenmeyer2008_hom": "HOM",
+    "hillenmeyer2008_het": "HET",
+    "hoepfner2014": "Hoepfner",
+    "wildenhain2015": "Wildenhain",
+}
 ORDER = list(LABEL)
+# the served base-medium enum value for the Vanacloig hydrolysate mimic, as the document
+# names it in prose
+MEDIUM_LABEL = {"SYNH3_MINUS": "SynBase (SynH3 minus)"}
 
 
 def esc(text: object) -> str:
@@ -44,10 +60,16 @@ def esc(text: object) -> str:
     return s
 
 
-def tex_table(df: pd.DataFrame, align: str | None = None) -> str:
-    """A bare tabular, no caption: the document supplies the float and the caption."""
+def tex_table(
+    df: pd.DataFrame, align: str | None = None, raw_header: bool = False
+) -> str:
+    """A bare tabular, no caption: the document supplies the float and the caption.
+
+    ``raw_header`` passes column names through unescaped so a header may carry math.
+    """
     cols = align or ("l" + "r" * (len(df.columns) - 1))
-    head = " & ".join(rf"\textbf{{{esc(c)}}}" for c in df.columns) + r" \\"
+    head_cells = [str(c) if raw_header else esc(c) for c in df.columns]
+    head = " & ".join(rf"\textbf{{{c}}}" for c in head_cells) + r" \\"
     body = "\n".join(
         " & ".join(esc(v) for v in row) + r" \\" for row in df.itertuples(index=False)
     )
@@ -140,11 +162,224 @@ def t4_encoder_yeast9() -> None:
     write("t4-yeast9-encoders", tex_table(df[cols]), "yeast9_encoder_coverage.csv")
 
 
+def t5_encoder_coverage() -> None:
+    """Every encoder over the dosed compounds of all five datasets, plus wall time."""
+    cov = pd.read_csv(osp.join(RESULTS, "embedding_coverage.csv"))
+    datasets = [d for d in ORDER if d in set(cov["dataset"])]
+    rows = []
+    for enc, g in cov.groupby("encoder", sort=True):
+        g = g.set_index("dataset")
+        row: dict[str, object] = {"encoder": enc, "dim": f"{int(g['dim'].iloc[0]):,}"}
+        for d in datasets:
+            row[SHORT[d]] = (
+                f"{int(g.loc[d, 'n_embedded'])} of {int(g.loc[d, 'n_compounds'])}"
+            )
+        row["s"] = f"{float(g['seconds_union'].iloc[0]):.1f}"
+        rows.append(row)
+    write(
+        "t5-encoder-coverage",
+        tex_table(pd.DataFrame(rows), align="lr" + "r" * len(datasets) + "r"),
+        "embedding_coverage.csv from embed_compounds.py",
+    )
+
+
+def t6_encoder_provenance() -> None:
+    """Family, corpus, objective and source of every encoder, from the curated list."""
+    rows = [
+        {
+            "encoder": r["encoder"],
+            "family": r["family"],
+            "trained on": r["corpus"],
+            "objective": r["objective"],
+            "source": r["ref"],
+        }
+        for r in ENCODER_PROVENANCE
+    ]
+    df = pd.DataFrame(rows)
+    # the link is placed after escaping so \href survives; esc() runs on every other cell
+    body = "\n".join(
+        " & ".join(
+            [
+                esc(r["encoder"]),
+                esc(r["family"]),
+                esc(r["trained on"]),
+                esc(r["objective"]),
+                rf"\href{{{src['url']}}}{{{esc(r['source'])}}}",
+            ]
+        )
+        + r" \\"
+        for r, src in zip(df.to_dict("records"), ENCODER_PROVENANCE, strict=True)
+    )
+    head = " & ".join(rf"\textbf{{{esc(c)}}}" for c in df.columns) + r" \\"
+    text = (
+        "\\begin{tabular}{p{2.6cm}p{1.9cm}p{4.2cm}p{4.4cm}p{3.2cm}}\n\\toprule\n"
+        f"{head}\n\\midrule\n{body}\n\\bottomrule\n\\end{{tabular}}\n"
+    )
+    write(
+        "t6-encoder-provenance",
+        text,
+        "encoder_provenance.csv (ENCODER_PROVENANCE in notes_tex_tables.py, curated "
+        "metadata; the linked works are not in the library mirror)",
+    )
+
+
+def t7_chemistry_vs_response() -> None:
+    """Per encoder and Hillenmeyer arm, chemical similarity against response similarity."""
+    s = pd.read_csv(osp.join(RESULTS, "chemical_similarity_summary.csv"))
+    s = s.sort_values(["partner", "encoder"])
+    rows = [
+        {
+            "encoder": r["encoder"],
+            "partner": r["partner"].upper(),
+            "NN median": f"{r['nn_similarity_median']:.2f}",
+            r"$\rho$(chem, response)": f"{r['chem_vs_response_spearman']:.3f}",
+            "$p$": f"{r['chem_vs_response_p']:.1e}",
+            r"top-decile $\rho$": f"{r['top_decile_response_rho']:.3f}",
+            r"rest $\rho$": f"{r['rest_response_rho']:.3f}",
+        }
+        for _, r in s.iterrows()
+    ]
+    write(
+        "t7-chemistry-vs-response",
+        tex_table(pd.DataFrame(rows), align="llrrrrr", raw_header=True),
+        "chemical_similarity_summary.csv from chemical_similarity.py",
+    )
+
+
+def _fmt_values(values: str, frac: float) -> str:
+    """Render a field's stated values with the share of records stating one."""
+    vals = [v for v in str(values).split("|") if v and v != "nan"]
+    if not vals:
+        return "not stated"
+    numeric = all(v.replace(".", "", 1).isdigit() for v in vals)
+    if numeric:
+        vals = sorted(vals, key=float)
+    shown = ", ".join(
+        MEDIUM_LABEL.get(v, v[:-2] if v.endswith(".0") else v) for v in vals
+    )
+    if frac < 0.995:
+        return f"{shown} ({100 * frac:.0f}% stated)"
+    return shown
+
+
+def t8_physical_axis() -> None:
+    """The physical and medium fields per dataset: rows are fields, columns datasets."""
+    s = pd.read_csv(osp.join(RESULTS, "physical_axis_summary.csv")).set_index("dataset")
+    fields = [
+        ("media_base", "medium base"),
+        ("temperature_c", "temperature, C"),
+        ("aerobicity", "aerobicity"),
+        ("duration_hours", "duration, h"),
+        ("duration_generations", "duration, generations"),
+        ("ph", "pH"),
+        ("solvent", "solvent"),
+        ("measurement_type", "measurement"),
+        ("assay_type", "assay"),
+    ]
+    rows = []
+    for key, label in fields:
+        row: dict[str, object] = {"field": label}
+        for d in ORDER:
+            row[SHORT[d]] = _fmt_values(
+                s.loc[d, f"{key}_values"], float(s.loc[d, f"{key}_frac_stated"])
+            )
+        rows.append(row)
+    df = pd.DataFrame(rows)
+    for c in df.columns[1:]:
+        df[c] = df[c].str.replace("pooled_competitive_growth_barcode", "barcode pool")
+        df[c] = df[c].str.replace("liquid_od_growth", "liquid OD")
+        df[c] = df[c].str.replace("sensitivity_score", "sensitivity")
+        df[c] = df[c].str.replace("log2_ratio", "log2 ratio")
+        df[c] = df[c].str.replace("z_score", "z score")
+    write(
+        "t8-physical-axis",
+        tex_table(df, align="l" + "p{2.2cm}" * len(ORDER)),
+        "physical_axis_summary.csv from physical_axis_coverage.py",
+    )
+
+
+def t9_baselines() -> None:
+    """Best ridge and kNN per split and target beside the nulls, against the ceiling."""
+    s = pd.read_csv(osp.join(RESULTS, "baseline_ceilings_summary.csv"))
+    # a null that predicts a constant on the centered target has no correlation at all;
+    # those rows carry NaN and say nothing, so they are left out of the table
+    s = s[s["spearman_median"].notna()]
+    best = (
+        s.sort_values("spearman_median", ascending=False)
+        .groupby(["split", "target", "model"], sort=False)
+        .head(1)
+    )
+    best = best.sort_values(
+        ["split", "target", "spearman_median"], ascending=[True, True, False]
+    )
+    rows = [
+        {
+            "split": r["split"].replace("_", " "),
+            "target": r["target"],
+            "model": r["model"].replace("_", " "),
+            "features": r["features"].replace("_", " "),
+            "folds": int(r["folds"]),
+            "Spearman": f"{r['spearman_median']:.3f}",
+            "Pearson": f"{r['pearson_median']:.3f}",
+            "ceiling": f"{r['ceiling_median']:.3f}",
+            "of ceiling": f"{r['frac_of_ceiling']:.2f}",
+        }
+        for _, r in best.iterrows()
+    ]
+    write(
+        "t9-baselines",
+        tex_table(pd.DataFrame(rows), align="llllrrrrr"),
+        "baseline_ceilings_summary.csv from baseline_ceilings.py",
+    )
+
+
+def t10_reliability() -> None:
+    """Per dataset: raw replicate agreement, the served-error index, and its ceiling."""
+    noise = pd.read_csv(osp.join(RESULTS, "noise_summary.csv")).set_index("dataset")
+    rec = pd.read_csv(osp.join(RESULTS, "reliability_reconciliation.csv"))
+    agg = rec.groupby("dataset").agg(
+        rel_single_raw=("rel_single_raw", "median"),
+        k=("n_replicates", "median"),
+        predicted=("rel_mean_predicted", "median"),
+        residual=("index_minus_predicted", "median"),
+    )
+    rows = []
+    for d in noise.index:
+        n = noise.loc[d]
+        a = agg.loc[d]
+        rows.append(
+            {
+                "dataset": LABEL[d],
+                "conditions": int(n["conditions"]),
+                "replicate rho": f"{n['replicate_rho_median']:.2f}",
+                "rel. single": f"{a['rel_single_raw']:.2f}",
+                "k": f"{a['k']:.0f}",
+                "predicted": f"{a['predicted']:.2f}",
+                "index": f"{n['reliability_median']:.2f}",
+                "index minus predicted": f"{a['residual']:+.2f}",
+                "ceiling": f"{n['ceiling_r_truth_median']:.2f}",
+                "no signal": int(n["conditions_no_signal"]),
+            }
+        )
+    write(
+        "t10-reliability",
+        tex_table(pd.DataFrame(rows), align="lrrrrrrrrr"),
+        "noise_summary.csv and reliability_reconciliation.csv from "
+        "replicate_noise_and_ceilings.py and reliability_reconciliation.py",
+    )
+
+
 def main() -> None:
     t1_datasets()
     t2_chemical_space()
     t3_yeast9()
     t4_encoder_yeast9()
+    t5_encoder_coverage()
+    t6_encoder_provenance()
+    t7_chemistry_vs_response()
+    t8_physical_axis()
+    t9_baselines()
+    t10_reliability()
 
 
 if __name__ == "__main__":

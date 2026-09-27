@@ -1,0 +1,125 @@
+%% notes-tex/031-unified-representation/sections/9-model.tex
+
+\section{Where the channels enter the cell graph transformer\secstatus{todo}}
+\label{sec:model}
+
+The representation has to land in a model that already exists, and the model's own structure
+decides where each channel can go. This section states what the cell graph transformer does
+today, read from \file{torchcell/models/equivariant\_cell\_graph\_transformer.py}, and then
+places the genotype dose, the environment context and the dataset token in it. Anything not
+yet run is labeled as a hypothesis.
+
+\notesec{The stack as it stands}
+The encoder holds one token per gene, $N = 6{,}607$, plus a CLS token, $H^{(0)} \in
+\mathbb{R}^{(N+1) \times d_h}$, from a learnable table or from precomputed sequence
+embeddings. $L$ transformer layers follow, and in each layer every attention head is pulled
+toward one of the nine gene-gene graphs by a divergence penalty
+$\mathrm{KL}(A_g \,\Vert\, \alpha^{(\ell,k)})$ of weight $\lambda$, or restricted to that
+graph's edges by a hard mask. The perturbation then enters through a Type I operator,
+representation to representation: the perturbed genes' current embeddings are the keys and
+values of a cross-attention over every gene token,
+\[
+  H_{\mathrm{pert},i} \;=\; h_i \;+\; \sum_{j \in S} \alpha_{ij}\, W_V h_j ,
+\]
+so the output keeps its $[\,\text{batch}, N, d_h\,]$ shape and is equivariant over genes.
+The operator is neither a mask nor a divergence term. It is soft by construction, and every
+perturbation in it is a set membership, $j \in S$: the model knows which genes are perturbed
+and nothing about how much. Type II readouts then map $H_{\mathrm{pert}}$ to outputs, and
+the existing ones are the instruments the earlier experiments built: a pooled perturbation
+head for gene interaction (experiment 010), a global head for fitness, a per-gene head for
+expression and proteome that keeps the per-node structure and can emit distributional
+parameters (019), and a per-metabolite head that pools gene embeddings over the
+gene-reaction-metabolite incidence of Yeast9 (026 and 027), with a masked multitask loss
+that scores each head only on the records carrying its phenotype. Experiment 030 added a
+per-entry dataset token concatenated to the head input at the readout.
+
+\notesec{Genotype: the dose scales the operator}
+The operator's set membership generalizes to a scaled membership without changing its form.
+With $m_j = 1 - d_j$ the perturbation magnitude at gene $j$, one for a deletion and one half
+for a heterozygous deletion in a diploid,
+\[
+  H_{\mathrm{pert},i} \;=\; h_i \;+\; \sum_{j \in S} \gamma(m_j)\, \alpha_{ij}\, W_V h_j ,
+  \qquad \gamma(1) = 1 .
+\]
+The constraint $\gamma(1) = 1$ is what makes this the smaller of the two changes: every
+record in every current dataset is a deletion with $m_j = 1$, so every trained model and
+every earlier result is reproduced exactly, and the only new behavior is at $m_j =
+\tfrac{1}{2}$. Whether $\gamma$ is a fixed identity, $\gamma(m) = m$, or a learned scalar
+map is an arm, not a design choice; the 648{,}977 Hoepfner cells measured in both arms are
+the data that decide it, and they are the only such data. \textit{Hypothesis (untested):} a
+heterozygote attenuates the deletion response rather than producing a different one, which
+is what a scalar $\gamma$ can express and a separate feature would have to learn. The same
+$d_i$ replaces the presence bit the flux layer uses to zero a deleted gene's reactions, so
+the metabolic branch stops asserting a full knockout of a gene with a working copy.
+
+\notesec{Environment: nothing reaches the tensor layer today}
+The dataset-to-tensor processor reads exactly one field off every perturbation, the
+systematic gene name, and no environment field at all: no compound, no medium, no dose
+appears anywhere in \file{torchcell/data/graph\_processor.py}. Every chemogenomic record
+therefore looks to the current model like a deletion with no condition. The environment
+context $z_E$ of Section~\ref{sec:representation}, the pooled compound embeddings, the
+pooled medium embeddings, the dose-basis one-hot and the masked log molar value, has two
+possible entry points and they are the first two arms.
+
+The first is the readout: $z_E$ is concatenated to the Type II head input beside the
+dataset token, exactly as 030 concatenates the token. This is the smallest change and it
+leaves the encoder and the operator untouched, so the gene representation is condition-free
+and the head does all the conditioning. The second is the operator: the compound embeddings
+are projected to $d_h$ and appended as extra key-value rows of the cross-attention, so every
+gene token attends to the compound as it attends to the perturbed genes, and the compound
+shapes the perturbed representation itself. \textit{Hypothesis (untested):} the second arm is
+the one that can represent a gene-by-compound interaction, which the readout arm can only
+approximate through the pooled $z_S$, and it is where the 0.31-against-0.09 gap of
+Section~\ref{sec:established} says the signal lives; the first arm is the control that says
+how much the readout alone recovers.
+
+\notesec{One decoder over four response scales}
+The four kept datasets report a response on three scales, a log ratio, a z score and a
+sensitivity score, from two assays (Table~\ref{tab:physical}). Three decoder designs are
+available. Four heads, one per dataset, under the existing masked multitask loss: this is
+what the code does today for different phenotype types, and it shares nothing at the output.
+One head with a per-dataset output calibration, a learned affine map per source: it shares
+the head and lets each source have its scale. Or one head with the dataset token at the
+readout, the 030 mechanism: the token is projected and concatenated to the head input, so
+the head learns each source's scale and offset from the same weights.
+
+The third is the one taken here, for a measured reason and a structural one. The measured
+reason is the 030 smoke test on GilaHyper job 2867 (W\&B run \texttt{5xn8w427}): a synthetic
+per-source offset of 0.3 injected into twin copies of four Kuzmin sources was recovered as a
+prediction difference of 0.285 with standard deviation 0.053, so the token does carry a
+source's residual scale. The structural reason is Section~\ref{sec:datasets}: every physical
+field is constant within a dataset, so the token is also the only channel those fields need,
+and four heads would have to learn them four times. Each dataset's response is standardized
+to zero mean and unit variance within the training split before the loss, which the 030
+label-normalization transform already does per source, so the three scales meet the loss on
+one footing and the token explains what standardization cannot. \textit{Hypothesis
+(untested):} whether pooling under this decoder helps Vanacloig at all, against training on
+Vanacloig alone, is the first question the model phase answers, and the compound-cold split
+of Section~\ref{sec:established} with the reliability ceiling beside every compound is how it
+is scored.
+
+\notesec{Masking against the divergence prior}
+The 025 graph-regularization sweep ran the nine graphs into layer one under the divergence
+prior at seven weights and under the hard mask, three seeds each, on the 376{,}732 triples of
+experiment 010 (\texttt{notes-tex/025-graph-reg-sweep}). Read at a fixed epoch 29 the mask
+sat with no penalty, $0.421 \pm 0.003$ against $0.425 \pm 0.000$ held-out Pearson, and the
+prior rose with $\lambda$ without a peak inside the ladder, to $0.447 \pm 0.001$ at $\lambda
+= 1$. Read at each run's best epoch, all arms lay within 0.010 of one another, and what the
+prior bought at the fixed reading was mostly resistance to the decline the unpenalized model
+showed after epoch 16. That is the evidence behind the suspicion that the mask is imposed too
+hard and too early rather than being wrong: a mask that starts open and closes over training,
+or a prior whose $\lambda$ anneals upward, has not been run. \textit{Hypothesis (untested):}
+an annealed mask reaches the prior's fixed-epoch score. It is a cheap arm to add to the first
+round because it changes the schedule and nothing else. The default for this phase is the
+prior at $\lambda = 1$, because it is the measured best at the reading that matters for a
+model trained to a budget rather than to a peak.
+
+\notesec{What the other instruments contribute}
+The chemogenomic head is one more Type II instrument on the same $H_{\mathrm{pert}}$ that
+the expression, metabolite and gene-interaction heads read, so a model trained here can be
+trained jointly with those datasets under the masked loss, and the environment context is
+new to all of them: the 019 expression data and the 010 triples were measured in one
+condition each and have never had a condition channel. \textit{Hypothesis (untested):} joint
+training with the deletion-fitness and expression data supplies the gene prior that
+Section~\ref{sec:established} measured as the transferable part of the chemogenomic signal.
+That is a second-round question, after the single-task result exists.

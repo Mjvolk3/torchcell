@@ -1,0 +1,98 @@
+%% notes-tex/031-unified-representation/sections/10-representation.tex
+
+\section{The representation\secstatus{todo}}
+\label{sec:representation}
+
+Figure~\ref{fig:unified} is the input representation and the decoder the preceding sections
+argue for, drawn as the tensors each channel is. It has two per-record input channels and a
+per-record token, one shared molecule encoder, one operator and one decoder, and it carries
+its own limits.
+
+%% SOURCE: notes/experiments.031-env-chemgen-inhibitor-tolerance.mermaid.unified-input.md,
+%% rendered by notes/assets/publish/scripts/mermaid_pdf.sh through `make diagrams`.
+\tcfig{figures/unified_input.pdf}{One input representation and one decoder for the four kept
+datasets, in the notation of the cell graph transformer: $N$ genes, $d_h$ the hidden width,
+$S$ the perturbed set, $H_{\mathrm{pert}}$ the Type I output, $R_\phi$ a Type II readout.
+Gray is a served dataset, purple a per-record input channel, yellow the fixed embedding table,
+orange a computation, blue the optional metabolism branch, red what the representation drops
+or does not carry. The genotype is a per-gene functional dose whose background level is the
+ploidy, and it scales the perturbation operator through $\gamma(m_j)$. The environment is a
+compound set and a medium set through the shared molecule encoder, a dose-basis token and a
+masked log molar value, pooled into one context $z_E$. The dataset token $t$ carries the
+measurement scale and every physical field, because each of those is constant within a
+dataset. The decoder is one scalar head over the concatenation.}{fig:unified}
+
+\notesec{Genotype}
+A per-gene functional dose over the gene universe, $d \in \{0, \tfrac{1}{2}, 1\}^{N}$ with
+$d_i = c_i / r_i$, copies present over copies in the reference. Zero for a deletion, one half
+for a heterozygous deletion in a diploid, one for an unperturbed gene. Ploidy needs no
+separate feature because it is the background level. The perturbed set is $S = \{i : d_i <
+1\}$ and the magnitude $m_i = 1 - d_i$ is what scales the operator. This is lossless for these
+datasets and is validated by Hoepfner's 648{,}977 paired cells.
+
+\notesec{Environment}
+The set of dosed compounds as InChIKeys through the shared molecule encoder $f$, the medium
+components through the same encoder, a dose-basis one-hot over target inhibition, fixed
+concentration and unstated, and the log molar concentration where a record has one with a
+mask where it does not. The basis token is the honest encoding given Section~\ref{sec:dose}:
+a target-inhibition dose, a fixed molar dose and an unstated dose are three different
+statements, and a single number would assert a comparability that does not exist. The
+masked log molar value keeps the within-dataset dose variation that Hillenmeyer and Hoepfner
+do carry without pretending it compares across them. The four parts are concatenated into one
+context $z_E$, which enters at the readout in the first arm and as extra key-value rows of
+the operator in the second (Section~\ref{sec:model}).
+
+\notesec{Dataset token}
+A one-hot over the four sources, projected and concatenated at the readout. It carries the
+response scale, the assay, and every physical field, since temperature, aerobicity, duration,
+pH and solvent are constant inside each dataset (Table~\ref{tab:physical}). No separate
+physical channel exists for that reason; the fields stay in the record.
+
+\notesec{The encoder table}
+One embedding table, keyed by InChIKey, serves the dosed compounds, the medium components and
+the Yeast9 metabolites. It is precomputed by \file{embed\_compounds.py},
+\file{embed\_media\_components.py} and \file{yeast9\_molecule\_coverage.py} for all twelve
+encoders, so the encoder is an arm selected at data-loading time and never a training-time
+cost. FCFP4 count is the default because it is the measured best on the compound-cold target
+(Table~\ref{tab:baselines}); the transformers and MolE are the alternatives that a first
+round compares against it.
+
+\notesec{What it does not carry}
+The dose vector drops cassette identity, barcode and collection. Dose is never one number
+across datasets. Alleles off the dosage axis are out of scope for this phase. And 167 Yeast9
+species have no structure and need a non-molecular slot. Each of those is a measured limit
+rather than an anticipated one, and each bounds a specific later step: the dose limit bounds
+any cross-dataset dose-response claim, and the structureless species bound the metabolic
+branch.
+
+\notesec{Implementation, in order}
+\begin{enumerate}
+\item The dataset-to-tensor processor emits, beside the perturbed gene indices, a per-index
+  magnitude $m_j$ computed from the perturbation's copy number and reference copy number, and
+  the reference genome's ploidy; a deletion emits one. Every existing dataset produces the
+  same tensors as today plus a vector of ones.
+\item The perturbation operator takes the magnitude and scales each key-value row by
+  $\gamma(m_j)$ with $\gamma(1) = 1$, first as the fixed identity $\gamma(m) = m$ and then as
+  a learned scalar map; the flux layer reads $d_i$ in place of its presence bit.
+\item The processor emits the environment context from the served record: the compound
+  InChIKeys and medium component keys resolved against the precomputed embedding table, the
+  dose basis as a one-hot, and the log molar value with its mask. A record whose compound has
+  no vector in the table raises rather than receiving zeros.
+\item The processor emits the dataset index over a fixed vocabulary of the four sources, and
+  the label transform standardizes each source's response within the training split.
+\item The head takes the concatenation of the CLS embedding, the pooled perturbed-gene
+  summary, the environment context and the projected dataset token, as one scalar head under
+  the masked loss.
+\item The evaluation is fixed before the first run: compound-cold within Vanacloig, 41 folds,
+  scored on the centered and the raw target with the reliability ceiling beside every
+  compound, and a Vanacloig-only training arm as the control for pooling.
+\end{enumerate}
+
+\notesec{First round}
+Four arms on the fixed evaluation, three seeds each: Vanacloig alone; the four datasets with
+$z_E$ at the readout; the four datasets with $z_E$ in the operator; and the operator arm with
+the learned $\gamma$. The first two answer whether pooling helps at all, the third whether the
+gene-by-compound interaction needs the operator, and the fourth whether heterozygosity is an
+attenuation. The graph prior runs at $\lambda = 1$ throughout, and the annealed mask is a
+fifth arm if the round has budget for it. Every score is reported against the ceiling of its
+compound, and a partial run is a partial run.

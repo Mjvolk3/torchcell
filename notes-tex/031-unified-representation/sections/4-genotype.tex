@@ -42,16 +42,21 @@ two, so the two remain distinguishable. It is a strict generalization of the pre
 boolean, since every current dataset emits zero for a deletion and reproduces current
 behavior exactly.
 
-Four things the channel does not carry, all measured rather than supposed. Cassette identity
+Three things the channel does not carry, all measured rather than supposed. Cassette identity
 is lost, and this is not a detail: a KanMX replacement inserts a heterologous gene that is
 not in the S288C universe, so no vector over yeast genes can hold it. Barcode and collection
-are lost, and they are the readout identity in a pooled assay. Allele classes off the dosage
-axis are lost, which is the hard limit for joining this work to the trigenic datasets, since
-a temperature-sensitive or DAmP allele sits at full copy number and is functionally
-compromised. And perturbation cardinality becomes a strain property rather than a constant,
-since Vanacloig contributes four indices per record against one for the others.
+are lost, and they are the readout identity in a pooled assay. And perturbation cardinality
+becomes a strain property rather than a constant, since Vanacloig contributes four indices per
+record against one for the others. Allele classes off the dosage axis, temperature-sensitive,
+DAmP and CRISPR interference, sit at full copy number and are functionally compromised, so a
+dose vector cannot hold them either; none of the four datasets contains one, and they are out
+of scope for this phase (Section~\ref{sec:question}). When they are needed the natural
+extension is a second per-gene channel for the expression-modulation axis the schema already
+distinguishes from the dosage axis.
 
 \notesec{A flagged risk for the metabolic module}
 The flux layer hard-zeros a deleted gene's slot in the genome-scale model. A heterozygous
 deletion is not a zero there, so admitting heterozygous data without changing that step
-asserts a full knockout of a gene that still has a working copy.
+asserts a full knockout of a gene that still has a working copy. The fix is the same quantity
+the operator uses: the layer reads the functional dose $d_i$ rather than a presence bit
+(Section~\ref{sec:model}).

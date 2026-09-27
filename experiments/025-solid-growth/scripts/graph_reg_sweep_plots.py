@@ -58,6 +58,7 @@ from torchcell.timestamp import timestamp
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
     mm_to_in,
     panel_label,
     savefig_true_size_svg,
@@ -70,6 +71,27 @@ RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "025-solid-growth", "results")
 IMG_DIR = osp.join(ASSET_IMAGES_DIR, "025-solid-growth")
 
 ORANGE, RED, PURPLE, YELLOW, BLUE, GRAY = PLOT_PALETTE[:6]
+TERRACOTTA, SAND, SLATE = PLOT_PALETTE[12], PLOT_PALETTE[15], PLOT_PALETTE[16]
+# Palette index of each arm's color; the light shade is that index's fill companion and
+# the dark shade a uniform 0.73 of the color (the palette's own dark-tier rule).
+ARM_INDEX = {
+    "kl_0": 5,  # gray
+    "kl_1e-05": 15,  # sand
+    "kl_0.0001": 16,  # slate
+    "kl_0.001": 0,  # amber
+    "kl_0.01": 12,  # terracotta
+    "kl_0.1": 3,  # wheat
+    "kl_1": 4,  # steel blue
+    "mask": 1,  # brick
+    "random_0.001": 2,  # lilac
+}
+
+
+def _shade(hex_color: str, factor: float) -> str:
+    r, g, b = (int(hex_color[k : k + 2], 16) for k in (1, 3, 5))
+    return "#{:02X}{:02X}{:02X}".format(*(round(v * factor) for v in (r, g, b)))
+
+
 GRID_COLOR, GRID_LW = "#E3E3E3", 0.3
 plt.rcParams.update(
     {
@@ -110,17 +132,9 @@ LADDER_TICKS = [
     "random",
 ]
 XPOS = {arm: i for i, arm in enumerate(LADDER)}
-ARM_COLOR = {
-    "kl_0": GRAY,
-    "kl_1e-05": ORANGE,
-    "kl_0.0001": ORANGE,
-    "kl_0.001": ORANGE,
-    "kl_0.01": ORANGE,
-    "kl_0.1": YELLOW,
-    "kl_1": BLUE,
-    "mask": RED,
-    RANDOM: PURPLE,
-}
+ARM_COLOR = {arm: PLOT_PALETTE[k] for arm, k in ARM_INDEX.items()}
+ARM_LIGHT = {arm: PLOT_PALETTE_FILL[k] for arm, k in ARM_INDEX.items()}
+ARM_DARK = {arm: _shade(PLOT_PALETTE[k], 0.73) for arm, k in ARM_INDEX.items()}
 ARM_SHORT = {
     "kl_1e-05": "1e-5",
     "kl_0.0001": "1e-4",
@@ -132,19 +146,22 @@ ARM_SHORT = {
 }
 # Drawn back to front, so no penalty (gray) is on top and never hidden.
 CURVE_ARMS = [
-    (RANDOM, "KL λ = 0.001, random graphs", PURPLE, "--"),
-    ("kl_1", "KL λ = 1", BLUE, "-"),
-    ("kl_0.1", "KL λ = 0.1", YELLOW, "-"),
-    ("kl_0.001", "KL λ = 0.001", ORANGE, "-"),
-    ("mask", "hard mask", RED, "-"),
-    ("kl_0", "no penalty", GRAY, "-"),
+    (RANDOM, "KL λ = 0.001, random graphs", ARM_COLOR[RANDOM], "--"),
+    ("kl_1", "KL λ = 1", ARM_COLOR["kl_1"], "-"),
+    ("kl_0.1", "KL λ = 0.1", ARM_COLOR["kl_0.1"], "-"),
+    ("kl_0.001", "KL λ = 0.001", ARM_COLOR["kl_0.001"], "-"),
+    ("mask", "hard mask", ARM_COLOR["mask"], "-"),
+    ("kl_0", "no penalty", ARM_COLOR["kl_0"], "-"),
 ]
-# Reading -> (marker, x offset inside the arm's column, column of the runs table)
+# Reading -> (shade of the arm color, x offset inside the arm's column, runs-table column).
+# Lightness is the within-series axis of the palette (its fill tier is the lighter member
+# of a pair), so the three readings of one arm are three shades of that arm's color.
 READINGS = {
-    "fixed": ("o", -0.27, "val_pearson_fixed"),
-    "max": ("^", 0.0, "val_pearson_max"),
-    "min_loss": ("s", 0.27, "val_pearson_at_min_loss"),
+    "fixed": ("color", -0.27, "val_pearson_fixed"),
+    "max": ("dark", 0.0, "val_pearson_max"),
+    "min_loss": ("light", 0.27, "val_pearson_at_min_loss"),
 }
+SHADE = {"color": ARM_COLOR, "dark": ARM_DARK, "light": ARM_LIGHT}
 PROBE_EPOCHS = [0, 1, 2, 5, 10, 20]
 X_LABEL = "λ (graph prior weight)"
 
@@ -259,20 +276,18 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
         for p in summary["paired_vs_no_penalty"]
     }
 
-    # a: three readings of held-out Pearson per seed
+    # a: three readings of held-out Pearson per seed, as three shades of the arm color
     a = ax[0]
     for arm in LADDER:
-        for reading, (marker, dx, col) in READINGS.items():
+        for reading, (shade, dx, col) in READINGS.items():
             pool = runs if reading == "max" else done
             vals = pool[pool.arm == arm][col].dropna().to_numpy()
             if len(vals):
-                _points(
-                    a, XPOS[arm] + dx, vals, ARM_COLOR[arm], marker=marker, jitter=0.05
-                )
+                _points(a, XPOS[arm] + dx, vals, SHADE[shade][arm], jitter=0.05)
         star = _stars(pvals.get((arm, "fixed")))
         if star:
-            a.text(XPOS[arm], 0.4615, star, ha="center", va="center", fontsize=6)
-    a.set_ylim(0.385, 0.466)
+            a.text(XPOS[arm] - 0.27, 0.4635, star, ha="center", va="center", fontsize=6)
+    a.set_ylim(0.372, 0.468)
     a.set_ylabel("Held-out Pearson, gene interaction")
     a.set_title("Prior gains at epoch 29, little at the peak")
     _pearson_grid(a)
@@ -286,13 +301,20 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             [],
             [],
             s=9,
-            marker=READINGS[reading][0],
-            facecolor="white",
+            facecolor=SHADE[READINGS[reading][0]]["kl_0"],
             edgecolor="black",
             linewidth=0.4,
             label=label,
         )
-    a.legend(loc="lower left", frameon=False, handletextpad=0.3, borderpad=0.2)
+    a.plot([], [], color="black", lw=0.7, label="arm mean")
+    a.scatter([], [], s=0, label="* epoch 29 vs no penalty, paired t")
+    a.legend(
+        loc="lower left",
+        frameon=False,
+        handletextpad=0.3,
+        borderpad=0.2,
+        labelspacing=0.25,
+    )
 
     # b: held-out point loss, at epoch 29 and at its minimum
     b = ax[1]
@@ -305,15 +327,13 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             XPOS[arm] - 0.18,
             sub.val_point_loss_fixed.to_numpy(),
             ARM_COLOR[arm],
-            marker="o",
             jitter=0.05,
         )
         _points(
             b,
             XPOS[arm] + 0.18,
             sub.val_point_loss_min.to_numpy(),
-            ARM_COLOR[arm],
-            marker="s",
+            ARM_LIGHT[arm],
             jitter=0.05,
         )
     b.set_ylabel("Held-out point loss (z-scored MSE)")
@@ -321,21 +341,13 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
     b.yaxis.set_major_locator(MultipleLocator(0.02))
     _ladder_axis(b)
     b.scatter(
-        [],
-        [],
-        s=9,
-        marker="o",
-        facecolor="white",
-        edgecolor="black",
-        linewidth=0.4,
-        label="epoch 29",
+        [], [], s=9, facecolor=GRAY, edgecolor="black", linewidth=0.4, label="epoch 29"
     )
     b.scatter(
         [],
         [],
         s=9,
-        marker="s",
-        facecolor="white",
+        facecolor=ARM_LIGHT["kl_0"],
         edgecolor="black",
         linewidth=0.4,
         label="minimum over epochs",
@@ -390,8 +402,8 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             _points(d, XPOS[arm], vals, ARM_COLOR[arm])
     d.set_yscale("log")
     d.set_ylim(2e2, 3e3)
-    _not_logged(d, XPOS["kl_0"], 2.3e2, GRAY)
-    _not_logged(d, XPOS["mask"], 2.3e2, RED)
+    _not_logged(d, XPOS["kl_0"], 2.3e2, ARM_COLOR["kl_0"])
+    _not_logged(d, XPOS["mask"], 2.3e2, ARM_COLOR["mask"])
     d.text(
         XPOS[RANDOM],
         1.25e3,
@@ -452,8 +464,8 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             color=ARM_COLOR[arm],
         )
     e.axhline(1.0, color="black", lw=0.5, ls="--")
-    _not_logged(e, 0, 1.4e-3, GRAY)
-    _not_logged(e, 0, 1.4e-3, RED)
+    _not_logged(e, 0, 1.4e-3, ARM_COLOR["kl_0"])
+    _not_logged(e, 0, 1.4e-3, ARM_COLOR["mask"])
     e.text(0.35, 1.4e-3, "none, mask: 0", va="center", fontsize=5, color="black")
     e.set_yscale("log")
     e.set_ylim(1e-3, 5e3)
@@ -489,7 +501,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
                 i + np.linspace(-0.12, 0.12, len(sub)),
                 sub.val_pearson_fixed.to_numpy(),
                 s=9,
-                facecolor="white",
+                facecolor="black",
                 edgecolor="black",
                 linewidth=0.4,
                 zorder=4,

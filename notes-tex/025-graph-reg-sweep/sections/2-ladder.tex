@@ -5,17 +5,20 @@
 
 \tcfig{figures/graph_reg_sweep.pdf}{The sweep at three seeds per arm, read
 from W\&B by \file{experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py} and
-drawn by \file{experiments/025-solid-growth/scripts/graph_reg_sweep_plots.py}. Colors
-name arms throughout: gray no penalty, orange the prior toward the biological graphs at
-$\lambda \leq 10^{-2}$, yellow $\lambda = 10^{-1}$, blue $\lambda = 1$, red the hard
-mask, purple the prior toward degree-matched random graphs at $10^{-3}$. Every point is
-one seed, filled in its arm's color with a black edge; a short black bar is the arm
-mean; a cross marks a quantity the model does not compute. (a) Held-out Pearson on the
-37{,}673 validation triples at three readings per seed: epoch 29 (circle), max over
-epochs (triangle, every run) and at the epoch of minimum validation point loss (square).
-Stars are the paired $t$ of the epoch-29 reading against no penalty on the same seeds
-(** $p < 0.01$; none reaches $p < 0.001$). (b) Held-out point loss at epoch 29 (circle)
-and at its minimum over epochs (square). (c) Edge recall at degree at epoch 29, mean over
+drawn by \file{experiments/025-solid-growth/scripts/graph_reg_sweep_plots.py}. One palette
+color per arm, kept in every panel: gray no penalty, sand $\lambda = 10^{-5}$, slate
+$10^{-4}$, amber $10^{-3}$, terracotta $10^{-2}$, wheat $10^{-1}$, steel blue 1, brick
+the hard mask, lilac the prior toward degree-matched random graphs at $10^{-3}$. Every
+point is one seed, filled in its arm's color with a black edge; a short black bar is the
+arm mean; a cross marks a quantity the model does not compute. Where one arm carries
+several readings, the readings are shades of the arm's color: the color itself, its dark
+shade, its light fill. (a) Held-out Pearson on the
+37{,}673 validation triples at three readings per seed: epoch 29 (the arm's color, left),
+max over epochs (dark shade, middle, every run) and at the epoch of minimum validation
+point loss (light shade, right). Stars above the epoch-29 column are the paired $t$ of
+that reading against no penalty on the same seeds (** $p < 0.01$; none reaches $p <
+0.001$; the other readings' tests are in Table~\ref{tab:paired}). (b) Held-out point loss
+at epoch 29 (the arm's color) and at its minimum over epochs (light shade). (c) Edge recall at degree at epoch 29, mean over
 the nine heads, each arm against its own target: the random arm is scored against the
 rewired graphs it was trained toward, the mask is 1 by construction. (d) Divergence of
 layer-1 attention from the target graphs at epoch 29, validation pass, log scale; not

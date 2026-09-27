@@ -31,8 +31,10 @@ mean and sd over seeds of each.
 Writes, all under experiments/025-solid-growth/results/:
   graph_reg_sweep_runs.csv       one row per run
   graph_reg_sweep_history.csv    long table: run_id, arm, seed, epoch, key, value
-  graph_reg_sweep_summary.json   arm-level means, the run list, and the pull time
-and the LaTeX tables of notes-tex/025-graph-reg-sweep/tables/ (t1-arms, t2-runs).
+  graph_reg_sweep_summary.json   arm-level means, paired differences against no penalty
+                                 by seed (both readings, paired t), the run list, the pull time
+and the LaTeX tables of notes-tex/025-graph-reg-sweep/tables/ (t1-arms with an arrow where
+every seed of an arm is above or below no penalty, t2-runs, t3-paired).
 
     python experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py
     python experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py --offline
@@ -450,6 +452,84 @@ def summarize(runs: pd.DataFrame) -> dict[str, Any]:
     return arms
 
 
+REFERENCE = "kl_0"
+
+
+class PairedRow(BaseModel):
+    """One arm against no penalty, paired by seed."""
+
+    arm: str
+    reading: str
+    seeds: list[int]
+    diffs: list[float]
+    mean_diff: float
+    sd_diff: float | None
+    t: float | None
+    p_two_sided: float | None
+    direction: (
+        str  # "up" if every seed is above the reference, "down" if below, else "mixed"
+    )
+
+
+def paired(runs: pd.DataFrame) -> list[PairedRow]:
+    """Per-seed differences of each arm against no penalty, both readings.
+
+    The split is pinned and the seed fixes the initialization and the batch order for
+    every arm alike, so seeds pair. The fixed reading uses complete runs only; the max
+    reading uses every run (a partial run's max is a lower bound on its final max, so
+    it is kept and the run is marked in the run table). t is the paired t statistic with
+    n - 1 degrees of freedom; with three seeds it is reported, not leaned on.
+    """
+    from scipy import stats
+
+    out = []
+    for reading, col, pool in (
+        ("fixed", "val_pearson_fixed", runs[runs.complete]),
+        ("max", "val_pearson_max", runs),
+    ):
+        ref = pool[pool.arm == REFERENCE].set_index("seed")[col]
+        for arm in ARM_ORDER:
+            if arm == REFERENCE:
+                continue
+            sub = pool[pool.arm == arm].set_index("seed")[col]
+            seeds = sorted(set(sub.index) & set(ref.index))
+            if not seeds:
+                continue
+            diffs = [float(sub[s_] - ref[s_]) for s_ in seeds]
+            mean = statistics.fmean(diffs)
+            sd = statistics.stdev(diffs) if len(diffs) > 1 else None
+            t = mean / (sd / math.sqrt(len(diffs))) if sd else None
+            p = (
+                float(2 * stats.t.sf(abs(t), df=len(diffs) - 1))
+                if t is not None
+                else None
+            )
+            direction = (
+                "up"
+                if all(d > 0 for d in diffs)
+                else "down"
+                if all(d < 0 for d in diffs)
+                else "mixed"
+            )
+            out.append(
+                PairedRow(
+                    arm=arm,
+                    reading=reading,
+                    seeds=[int(x) for x in seeds],
+                    diffs=diffs,
+                    mean_diff=mean,
+                    sd_diff=sd,
+                    t=t,
+                    p_two_sided=p,
+                    direction=direction,
+                )
+            )
+    return out
+
+
+ARROW = {"up": " $\\uparrow$", "down": " $\\downarrow$", "mixed": ""}
+
+
 def _fmt(m: float | None, s: float | None, nd: int = 3, bold: bool = False) -> str:
     if m is None:
         return "--"
@@ -457,9 +537,12 @@ def _fmt(m: float | None, s: float | None, nd: int = 3, bold: bool = False) -> s
     return f"\\textbf{{{txt}}}" if bold else txt
 
 
-def write_tables(arms: dict[str, Any], runs: pd.DataFrame, pulled_at: str) -> None:
-    """t1-arms (one row per arm) and t2-runs (one row per run)."""
+def write_tables(
+    arms: dict[str, Any], runs: pd.DataFrame, pulled_at: str, pairs: list[PairedRow]
+) -> None:
+    """t1-arms (one row per arm), t2-runs (one row per run), t3-paired (arm minus no penalty by seed)."""
     os.makedirs(TABLES_DIR, exist_ok=True)
+    arrow = {(p.arm, p.reading): ARROW[p.direction] for p in pairs}
     src = (
         "%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py "
         f"(W&B {PROJECT}, pulled {pulled_at}) -- GENERATED, do not edit\n"
@@ -496,8 +579,8 @@ def write_tables(arms: dict[str, Any], runs: pd.DataFrame, pulled_at: str) -> No
         mx = a["val_pearson_max"]
         lines.append(
             f"{ARM_LABEL[arm]} & {n_txt} & "
-            f"{_fmt(f['mean'], f['sd'], bold=f['mean'] is not None and f['mean'] == best_fixed)} & "
-            f"{_fmt(mx['mean'], mx['sd'], bold=mx['mean'] == best_max)} & "
+            f"{_fmt(f['mean'], f['sd'], bold=f['mean'] is not None and f['mean'] == best_fixed)}{arrow.get((arm, 'fixed'), '')} & "
+            f"{_fmt(mx['mean'], mx['sd'], bold=mx['mean'] == best_max)}{arrow.get((arm, 'max'), '')} & "
             f"{_fmt(a['val_point_loss_fixed']['mean'], a['val_point_loss_fixed']['sd'])} & "
             f"{_fmt(a['train_pearson_fixed']['mean'], a['train_pearson_fixed']['sd'])} & "
             f"{_fmt(a['val_divergence_fixed']['mean'], None, nd=0)} & "
@@ -538,6 +621,25 @@ def write_tables(arms: dict[str, Any], runs: pd.DataFrame, pulled_at: str) -> No
     with open(osp.join(TABLES_DIR, "t2-runs.tex"), "w") as fh:
         fh.write("\n".join(lines) + "\n")
 
+    lines = [
+        src,
+        "\\begin{tabular}{llrlrrr}",
+        "\\toprule",
+        "arm & reading & $n$ & difference by seed & mean & paired $t$ & $p$ \\\\",
+        "\\midrule",
+    ]
+    for p_ in pairs:
+        diffs = ", ".join(f"{d:+.3f}" for d in p_.diffs)
+        t_txt = "--" if p_.t is None else f"{p_.t:.1f}"
+        p_txt = "--" if p_.p_two_sided is None else f"{p_.p_two_sided:.3f}"
+        lines.append(
+            f"{ARM_LABEL[p_.arm]} & {'epoch 29' if p_.reading == 'fixed' else 'max over epochs'} & {len(p_.diffs)} & "
+            f"{diffs} & {p_.mean_diff:+.4f}{ARROW[p_.direction]} & {t_txt} & {p_txt} \\\\"
+        )
+    lines += ["\\bottomrule", "\\end{tabular}"]
+    with open(osp.join(TABLES_DIR, "t3-paired.tex"), "w") as fh:
+        fh.write("\n".join(lines) + "\n")
+
 
 def main() -> None:
     """Pull, summarize, write."""
@@ -568,6 +670,7 @@ def main() -> None:
         runs.to_csv(runs_csv, index=False)
         pd.DataFrame(hist).to_csv(hist_csv, index=False)
     arms = summarize(runs)
+    pairs = paired(runs)
     summary = {
         "project": PROJECT,
         "select_tags": SELECT_TAGS,
@@ -578,10 +681,16 @@ def main() -> None:
         "n_runs": int(len(runs)),
         "excluded": excluded,
         "arms": arms,
+        "paired_vs_no_penalty": [p_.model_dump() for p_ in pairs],
     }
     with open(summary_json, "w") as fh:
         json.dump(summary, fh, indent=1)
-    write_tables(arms, runs, pulled_at)
+    write_tables(arms, runs, pulled_at, pairs)
+    print()
+    for p_ in pairs:
+        print(
+            f"paired {p_.reading:5s} {p_.arm:14s} n={len(p_.diffs)} mean {p_.mean_diff:+.4f} {p_.direction:5s} t={p_.t if p_.t is None else round(p_.t, 1)} p={p_.p_two_sided if p_.p_two_sided is None else round(p_.p_two_sided, 4)}"
+        )
     print()
     print(
         f"{'arm':14s} {'n':>6s} {'fixed (ep 29)':>22s} {'max':>22s} {'train P':>10s} {'divergence':>12s}"

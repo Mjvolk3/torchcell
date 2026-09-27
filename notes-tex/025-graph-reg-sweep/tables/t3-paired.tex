@@ -1,0 +1,24 @@
+%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py (W&B zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer, pulled 2026-09-27 02:25 UTC) -- GENERATED, do not edit
+
+\begin{tabular}{llrlrrr}
+\toprule
+arm & reading & $n$ & difference by seed & mean & paired $t$ & $p$ \\
+\midrule
+KL $\lambda = 10^{-5}$ & epoch 29 & 2 & -0.003, -0.007 & -0.0051 $\downarrow$ & -2.4 & 0.252 \\
+KL $\lambda = 10^{-4}$ & epoch 29 & 3 & -0.005, +0.005, -0.016 & -0.0054 & -0.9 & 0.459 \\
+KL $\lambda = 10^{-3}$ (control) & epoch 29 & 3 & +0.005, +0.013, +0.005 & +0.0077 $\uparrow$ & 2.9 & 0.103 \\
+KL $\lambda = 10^{-2}$ & epoch 29 & 3 & +0.011, +0.014, +0.013 & +0.0129 $\uparrow$ & 17.7 & 0.003 \\
+KL $\lambda = 10^{-1}$ & epoch 29 & 3 & +0.029, +0.023, +0.010 & +0.0202 $\uparrow$ & 3.6 & 0.068 \\
+KL $\lambda = 1$ & epoch 29 & 3 & +0.021, +0.023, +0.021 & +0.0218 $\uparrow$ & 30.0 & 0.001 \\
+hard mask, layer 1 & epoch 29 & 3 & -0.001, -0.007, -0.003 & -0.0036 $\downarrow$ & -2.2 & 0.160 \\
+KL $\lambda = 10^{-3}$, random graphs & epoch 29 & 2 & -0.007, +0.008 & +0.0003 & 0.0 & 0.972 \\
+KL $\lambda = 10^{-5}$ & max over epochs & 2 & -0.002, -0.007 & -0.0044 $\downarrow$ & -1.9 & 0.313 \\
+KL $\lambda = 10^{-4}$ & max over epochs & 3 & -0.000, +0.003, -0.006 & -0.0013 & -0.5 & 0.659 \\
+KL $\lambda = 10^{-3}$ (control) & max over epochs & 3 & +0.002, +0.001, +0.006 & +0.0029 $\uparrow$ & 2.2 & 0.163 \\
+KL $\lambda = 10^{-2}$ & max over epochs & 3 & +0.005, +0.005, +0.005 & +0.0049 $\uparrow$ & 81.1 & 0.000 \\
+KL $\lambda = 10^{-1}$ & max over epochs & 3 & +0.011, +0.008, -0.001 & +0.0060 & 1.6 & 0.260 \\
+KL $\lambda = 1$ & max over epochs & 3 & +0.007, +0.003, +0.003 & +0.0041 $\uparrow$ & 3.0 & 0.094 \\
+hard mask, layer 1 & max over epochs & 3 & -0.005, +0.003, -0.003 & -0.0017 & -0.7 & 0.557 \\
+KL $\lambda = 10^{-3}$, random graphs & max over epochs & 3 & -0.002, +0.004, -0.004 & -0.0005 & -0.2 & 0.857 \\
+\bottomrule
+\end{tabular}

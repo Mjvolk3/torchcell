@@ -1,24 +1,29 @@
 # experiments/025-solid-growth/scripts/graph_reg_sweep_plots.py
 # [[experiments.025-solid-growth.scripts.graph_reg_sweep_plots]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/025-solid-growth/scripts/graph_reg_sweep_plots
-"""Figures of the graph-regularization sweep, from the readout's CSVs.
+"""The figure of the graph-regularization sweep, from the readout's CSVs.
 
 Reads experiments/025-solid-growth/results/graph_reg_sweep_runs.csv and
-graph_reg_sweep_history.csv (written by graph_reg_sweep_readout.py) and writes three
-figures to $ASSET_IMAGES_DIR/025-solid-growth/, each a full-width row of panels at Nature
-print size (true-size SVG plus PNG; timestamped copies for the iteration history):
+graph_reg_sweep_history.csv (written by graph_reg_sweep_readout.py) and writes ONE
+full-width 3 x 3 figure, graph_reg_sweep, to $ASSET_IMAGES_DIR/025-solid-growth/ (true-size
+SVG plus PNG; a timestamped SVG copy for the iteration history):
 
-- graph_reg_sweep_ladder    (a) held-out Pearson across the ladder, no penalty and the
-                            hard mask at the ends, the random-graph control beside the
-                            control's lambda; (b) how much of each regularized head's
-                            attention sits on its graph (edge recall at degree); (c) the
-                            divergence of the attention from the graph; (d) the gradient
-                            budget: penalty gradient over point-loss gradient on the
-                            probe batch at epochs 0 and 20
-- graph_reg_sweep_curves    validation Pearson, training Pearson and validation point
-                            loss by epoch, mean over seeds, for the arms that separate
-- graph_reg_sweep_control   the random-graph control against the biological graphs and
-                            no penalty at the control's lambda, seeds as points
+  a  held-out Pearson at epoch 29 across the ladder (no penalty, the KL ladder, the hard
+     mask, the random-graph control), seeds as points and the arm mean as a bar
+  b  the same at each run's max over epochs
+  c  edge recall at degree at epoch 29, mean over the nine regularized heads
+  d  divergence of layer-1 attention from the nine graphs at epoch 29 (validation pass)
+  e  gradient-norm ratio, penalty over point loss, on the probe batch at epochs 0 and 20
+  f  the random-graph control at lambda 1e-3 against the biological graphs and no penalty
+  g  validation Pearson by epoch, mean over complete seeds with a +- sd band
+  h  training Pearson by epoch
+  i  validation point loss by epoch
+
+Colors: one palette color per arm that is drawn as a curve (no penalty gray, hard mask
+red, KL 1e-3 orange, KL 1e-1 yellow, KL 1 blue, random graphs purple); the rest of the
+ladder is orange. Curves use complete (30-epoch) runs only, so no arm ends early because
+one seed is still running. Tick labels are standalone mathtext; prose labels spell lambda
+in decimals because Arial has no superscript minus or nabla glyph.
 
 Repo figure standards: Arial 6 pt, boxed axes, palette from torchcell.utils, tenth
 gridlines on the Pearson axes, panel letters outside the axes, no bbox_inches="tight".
@@ -58,7 +63,6 @@ RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "025-solid-growth", "results")
 IMG_DIR = osp.join(ASSET_IMAGES_DIR, "025-solid-growth")
 
 ORANGE, RED, PURPLE, YELLOW, BLUE, GRAY = PLOT_PALETTE[:6]
-DARK_ORANGE, TERRACOTTA = PLOT_PALETTE[6], PLOT_PALETTE[12]
 plt.rcParams.update(
     {
         "font.family": "Arial",
@@ -74,10 +78,7 @@ plt.rcParams.update(
 )
 TS = timestamp()
 
-# The ladder as drawn: no penalty at the left, the mask at the right, KL between.
 RANDOM = "random_0.001"
-# Tick labels are standalone mathtext (nothing adjoins them, so the PDF conversion cannot
-# drop a space); prose labels spell lambda in decimals because Arial has no superscript minus.
 LADDER = [
     "kl_0",
     "kl_1e-05",
@@ -98,7 +99,7 @@ LADDER_TICKS = [
     "$10^{-1}$",
     "1",
     "mask",
-    "random",
+    "rand",
 ]
 ARM_COLOR = {
     "kl_0": GRAY,
@@ -106,19 +107,21 @@ ARM_COLOR = {
     "kl_0.0001": ORANGE,
     "kl_0.001": ORANGE,
     "kl_0.01": ORANGE,
-    "kl_0.1": DARK_ORANGE,
-    "kl_1": TERRACOTTA,
+    "kl_0.1": YELLOW,
+    "kl_1": BLUE,
     "mask": RED,
     RANDOM: PURPLE,
 }
+# Drawn back to front, so no penalty (gray) is on top and never hidden.
 CURVE_ARMS = [
-    ("kl_0", "no penalty", GRAY, "-"),
-    ("mask", "hard mask", RED, "-"),
-    ("kl_0.001", "KL λ = 0.001", ORANGE, "-"),
-    ("kl_0.1", "KL λ = 0.1", DARK_ORANGE, "-"),
-    ("kl_1", "KL λ = 1", TERRACOTTA, "-"),
     (RANDOM, "KL λ = 0.001, random graphs", PURPLE, "--"),
+    ("kl_1", "KL λ = 1", BLUE, "-"),
+    ("kl_0.1", "KL λ = 0.1", YELLOW, "-"),
+    ("kl_0.001", "KL λ = 0.001", ORANGE, "-"),
+    ("mask", "hard mask", RED, "-"),
+    ("kl_0", "no penalty", GRAY, "-"),
 ]
+X_LABEL = "λ (graph prior weight)"
 
 
 def _box(ax: Axes) -> None:
@@ -149,13 +152,13 @@ def _seed_points(
     vals: NDArray[Any],
     color: str,
     filled: bool,
-    jitter: float = 0.08,
+    jitter: float = 0.1,
 ) -> None:
     xs = x + np.linspace(-jitter, jitter, len(vals)) if len(vals) > 1 else np.array([x])
     ax.scatter(
         xs,
         vals,
-        s=6,
+        s=7,
         facecolor=color if filled else "white",
         edgecolor=color,
         linewidth=0.5,
@@ -171,172 +174,46 @@ def _ladder_axis(ax: Axes, xlabel: str) -> None:
     _box(ax)
 
 
-def fig_ladder(runs: pd.DataFrame) -> None:
-    """(a) accuracy, (b) edge recall, (c) divergence, (d) gradient budget, across the ladder."""
-    fig, axes = plt.subplots(
-        2, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(105))
-    )
-    fig.subplots_adjust(
-        left=0.06, right=0.99, bottom=0.09, top=0.93, wspace=0.22, hspace=0.42
-    )
-    axes = axes.ravel()
+def _ladder_points(ax: Axes, runs: pd.DataFrame, col: str, filled: bool = True) -> None:
+    """Seed points, arm-mean bars, and a line through the KL ladder's means."""
     xpos = {arm: i for i, arm in enumerate(LADDER)}
-    done = runs[runs.complete]
-
-    # (a) held-out Pearson: epoch 29 (filled, line through the KL means) and max over
-    # epochs (hollow), seeds as points.
-    ax = axes[0]
-    means_fixed = []
+    means = []
     for arm in LADDER:
-        sub = done[done.arm == arm]
-        allruns = runs[runs.arm == arm]
+        vals = runs[runs.arm == arm][col].dropna().to_numpy()
+        if not len(vals):
+            continue
         c = ARM_COLOR[arm]
-        if len(sub):
-            _seed_points(
-                ax, xpos[arm] - 0.15, sub.val_pearson_fixed.to_numpy(), c, True
-            )
-            means_fixed.append((xpos[arm], sub.val_pearson_fixed.mean()))
-        if len(allruns):
-            _seed_points(
-                ax, xpos[arm] + 0.15, allruns.val_pearson_max.to_numpy(), c, False
-            )
-    kl = [
-        (x, m)
-        for x, m in means_fixed
-        if LADDER[x].startswith("kl_") and LADDER[x] != "kl_0"
-    ]
-    ax.plot([x for x, _ in kl], [m for _, m in kl], color=ORANGE, lw=0.8, zorder=2)
-    for x, m in means_fixed:
+        _seed_points(ax, xpos[arm], vals, c, filled)
         ax.plot(
-            [x - 0.3, x + 0.3], [m, m], color=ARM_COLOR[LADDER[x]], lw=1.0, zorder=2
+            [xpos[arm] - 0.3, xpos[arm] + 0.3],
+            [vals.mean()] * 2,
+            color=c,
+            lw=1.0,
+            zorder=2,
         )
-    ax.set_ylabel("Held-out Pearson, gene interaction")
-    ax.set_title("Accuracy across the ladder")
-    ax.set_ylim(0.405, 0.474)
-    _tenths(ax)
-    _ladder_axis(
-        ax,
-        "λ (graph prior weight); mask = hard mask, layer 1; random = KL at λ = 0.001 toward rewired graphs",
-    )
-    ax.scatter(
-        [],
-        [],
-        s=6,
-        facecolor=ORANGE,
-        edgecolor=ORANGE,
-        linewidth=0.5,
-        label="epoch 29, per seed",
-    )
-    ax.scatter(
-        [],
-        [],
-        s=6,
-        facecolor="white",
-        edgecolor=ORANGE,
-        linewidth=0.5,
-        label="max over epochs, per seed",
-    )
-    ax.legend(loc="upper left", frameon=False, handletextpad=0.3, borderpad=0.2, ncol=2)
-
-    # (b) support contraction: edge recall at degree, mean over the nine heads, epoch 29.
-    ax = axes[1]
-    for arm in LADDER:
-        sub = done[done.arm == arm]
-        rec = sub.edge_recall_fixed.dropna().to_numpy()
-        if len(rec):
-            _seed_points(ax, xpos[arm], rec, ARM_COLOR[arm], True)
-            ax.plot(
-                [xpos[arm] - 0.3, xpos[arm] + 0.3],
-                [rec.mean()] * 2,
-                color=ARM_COLOR[arm],
-                lw=1.0,
-            )
-    ax.text(
-        xpos["mask"],
-        0.985,
-        "1 by construction",
-        ha="center",
-        va="top",
-        fontsize=6,
-        color=RED,
-    )
-    ax.set_ylim(0, 1.0)
-    ax.yaxis.set_major_locator(MultipleLocator(0.2))
-    ax.set_ylabel("Edge recall at degree, mean of nine heads")
-    ax.set_title("Attention sits on the graph")
-    _ladder_axis(ax, "λ (graph prior weight)")
-
-    # (c) divergence of layer-1 attention from the nine normalized adjacencies, epoch 29,
-    # validation batch; the penalty divided by lambda, so comparable across the ladder.
-    ax = axes[2]
-    for arm in LADDER:
-        sub = done[done.arm == arm]
-        div = sub.val_divergence_fixed.dropna().to_numpy()
-        if len(div):
-            _seed_points(ax, xpos[arm], div, ARM_COLOR[arm], True)
-            ax.plot(
-                [xpos[arm] - 0.3, xpos[arm] + 0.3],
-                [div.mean()] * 2,
-                color=ARM_COLOR[arm],
-                lw=1.0,
-            )
-    ax.set_yscale("log")
-    ax.set_ylim(2e2, 3e3)
-    ax.text(xpos["kl_0"], 2.2e2, "not logged", ha="center", fontsize=6, color=GRAY)
-    ax.text(xpos["mask"], 2.2e2, "not logged", ha="center", fontsize=6, color=RED)
-    ax.set_ylabel("Divergence to the graphs, epoch 29")
-    ax.set_title("How close the attention gets")
-    _ladder_axis(ax, "λ (graph prior weight)")
-
-    # (d) gradient budget on the probe batch: penalty over point-loss gradient norm.
-    ax = axes[3]
-    for arm in LADDER:
-        sub = runs[runs.arm == arm]
-        c = ARM_COLOR[arm]
-        r0 = sub.probe_ratio_epoch0.dropna().to_numpy()
-        r20 = sub.probe_ratio_epoch20.dropna().to_numpy()
-        if len(r0) and r0.max() > 0:
-            _seed_points(ax, xpos[arm] - 0.15, r0, c, True)
-        if len(r20) and r20.max() > 0:
-            _seed_points(ax, xpos[arm] + 0.15, r20, c, False)
-    ax.axhline(1.0, color="black", lw=0.5, ls="--")
-    ax.text(xpos["kl_0"], 1.3e-3, "0", ha="center", fontsize=6, color=GRAY)
-    ax.text(xpos["mask"], 1.3e-3, "0", ha="center", fontsize=6, color=RED)
-    ax.set_yscale("log")
-    ax.set_ylim(1e-3, 3e3)
-    ax.set_ylabel("Gradient norm ratio, penalty over point loss")
-    ax.set_title("Where the gradient comes from")
-    ax.scatter(
-        [], [], s=6, facecolor=ORANGE, edgecolor=ORANGE, linewidth=0.5, label="epoch 0"
-    )
-    ax.scatter(
-        [],
-        [],
-        s=6,
-        facecolor="white",
-        edgecolor=ORANGE,
-        linewidth=0.5,
-        label="epoch 20",
-    )
-    ax.legend(loc="upper left", frameon=False, handletextpad=0.3, borderpad=0.2)
-    _ladder_axis(ax, "λ (graph prior weight)")
-
-    for ax, letter in zip(axes, "abcd"):
-        panel_label(ax, letter)
-    _save(fig, "graph_reg_sweep_ladder")
+        means.append((xpos[arm], vals.mean(), arm))
+    kl = [(x, m) for x, m, arm in means if arm.startswith("kl_") and arm != "kl_0"]
+    ax.plot([x for x, _ in kl], [m for _, m in kl], color=ORANGE, lw=0.8, zorder=1)
 
 
 def _curve(
-    ax: Axes, hist: pd.DataFrame, arm: str, key: str, color: str, ls: str, label: str
+    ax: Axes,
+    hist: pd.DataFrame,
+    arm: str,
+    key: str,
+    color: str,
+    ls: str,
+    label: str,
+    z: int,
 ) -> None:
     sub = hist[(hist.arm == arm) & (hist.key == key)]
     if sub.empty:
         return
     g = sub.groupby("epoch")["value"]
-    n = g.count()
-    mean = g.mean()[n == n.max()]  # epochs every seed reached
-    sd = g.std()[n == n.max()]
-    ax.plot(mean.index, mean.to_numpy(), color=color, lw=0.9, ls=ls, label=label)
+    mean, sd, n = g.mean(), g.std(), g.count()
+    ax.plot(
+        mean.index, mean.to_numpy(), color=color, lw=0.9, ls=ls, label=label, zorder=z
+    )
     if (n.max() > 1) and sd.notna().any():
         ax.fill_between(
             mean.index,
@@ -345,15 +222,141 @@ def _curve(
             color=color,
             alpha=0.15,
             lw=0,
+            zorder=z - 10,
         )
 
 
-def fig_curves(hist: pd.DataFrame) -> None:
-    """Validation Pearson, training Pearson and validation point loss by epoch."""
+def figure(runs: pd.DataFrame, hist: pd.DataFrame) -> None:
+    """The 3 x 3 figure."""
     fig, axes = plt.subplots(
-        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(55))
+        3, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(160))
     )
-    fig.subplots_adjust(left=0.06, right=0.99, bottom=0.17, top=0.86, wspace=0.3)
+    fig.subplots_adjust(
+        left=0.055, right=0.99, bottom=0.05, top=0.955, wspace=0.28, hspace=0.5
+    )
+    ax = axes.ravel()
+    done = runs[runs.complete]
+    xpos = {arm: i for i, arm in enumerate(LADDER)}
+
+    # a: fixed-epoch reading; b: max over epochs
+    _ladder_points(ax[0], done, "val_pearson_fixed")
+    ax[0].set_ylabel("Held-out Pearson, epoch 29")
+    ax[0].set_title("Accuracy at the fixed epoch")
+    ax[0].set_ylim(0.405, 0.465)
+    _tenths(ax[0])
+    _ladder_axis(ax[0], X_LABEL)
+    _ladder_points(ax[1], runs, "val_pearson_max", filled=False)
+    ax[1].set_ylabel("Held-out Pearson, max over epochs")
+    ax[1].set_title("Accuracy at each run's best epoch")
+    ax[1].set_ylim(0.405, 0.465)
+    _tenths(ax[1])
+    _ladder_axis(ax[1], X_LABEL)
+
+    # c: edge recall at degree
+    _ladder_points(ax[2], done, "edge_recall_fixed")
+    ax[2].text(
+        xpos["mask"],
+        0.985,
+        "1 by construction",
+        ha="center",
+        va="top",
+        fontsize=6,
+        color=RED,
+    )
+    ax[2].set_ylim(0, 1.0)
+    ax[2].yaxis.set_major_locator(MultipleLocator(0.2))
+    ax[2].set_ylabel("Edge recall at degree, mean of nine heads")
+    ax[2].set_title("Attention sits on the graph")
+    _ladder_axis(ax[2], "λ (graph prior weight)")
+
+    # d: divergence
+    _ladder_points(ax[3], done, "val_divergence_fixed")
+    ax[3].set_yscale("log")
+    ax[3].set_ylim(2e2, 3e3)
+    ax[3].text(xpos["kl_0"], 2.2e2, "not logged", ha="center", fontsize=6, color=GRAY)
+    ax[3].text(xpos["mask"], 2.2e2, "not logged", ha="center", fontsize=6, color=RED)
+    ax[3].set_ylabel("Divergence to the graphs, epoch 29")
+    ax[3].set_title("How close the attention gets")
+    _ladder_axis(ax[3], "λ (graph prior weight)")
+
+    # e: gradient budget
+    for arm in LADDER:
+        sub = runs[runs.arm == arm]
+        c = ARM_COLOR[arm]
+        r0 = sub.probe_ratio_epoch0.dropna().to_numpy()
+        r20 = sub.probe_ratio_epoch20.dropna().to_numpy()
+        if len(r0) and r0.max() > 0:
+            _seed_points(ax[4], xpos[arm] - 0.15, r0, c, True, jitter=0.06)
+        if len(r20) and r20.max() > 0:
+            _seed_points(ax[4], xpos[arm] + 0.15, r20, c, False, jitter=0.06)
+    ax[4].axhline(1.0, color="black", lw=0.5, ls="--")
+    ax[4].text(xpos["kl_0"], 1.3e-3, "0", ha="center", fontsize=6, color=GRAY)
+    ax[4].text(xpos["mask"], 1.3e-3, "0", ha="center", fontsize=6, color=RED)
+    ax[4].set_yscale("log")
+    ax[4].set_ylim(1e-3, 3e3)
+    ax[4].set_ylabel("Gradient norm ratio, penalty over point loss")
+    ax[4].set_title("Where the gradient comes from")
+    ax[4].scatter(
+        [], [], s=7, facecolor=ORANGE, edgecolor=ORANGE, linewidth=0.5, label="epoch 0"
+    )
+    ax[4].scatter(
+        [],
+        [],
+        s=7,
+        facecolor="white",
+        edgecolor=ORANGE,
+        linewidth=0.5,
+        label="epoch 20",
+    )
+    ax[4].legend(loc="upper left", frameon=False, handletextpad=0.3, borderpad=0.2)
+    _ladder_axis(ax[4], "λ (graph prior weight)")
+
+    # f: the random-graph control at lambda 1e-3
+    arms = [
+        ("kl_0.001", "biological", ORANGE),
+        (RANDOM, "random,\ndegree-matched", PURPLE),
+        ("kl_0", "none (λ = 0)", GRAY),
+    ]
+    for i, (arm, _, color) in enumerate(arms):
+        sub = done[done.arm == arm]
+        part = runs[(runs.arm == arm) & ~runs.complete]
+        if len(sub):
+            ax[5].bar(
+                i,
+                sub.val_pearson_fixed.mean(),
+                width=0.6,
+                facecolor="white",
+                edgecolor=color,
+                linewidth=0.8,
+            )
+            _seed_points(
+                ax[5], i, sub.val_pearson_fixed.to_numpy(), color, True, jitter=0.12
+            )
+        for r in part.to_dict("records"):
+            vmax, ep = float(r["val_pearson_max"]), int(r["epochs_logged"]) - 1
+            ax[5].scatter(
+                [i + 0.22], [vmax], s=9, marker="x", color=color, linewidth=0.6
+            )
+            ax[5].text(
+                i + 0.22,
+                vmax + 0.003,
+                f"seed {int(r['seed'])}, max at\nepoch {ep}, partial",
+                ha="center",
+                fontsize=5,
+                color=color,
+            )
+    ax[5].set_xticks(range(len(arms)))
+    ax[5].set_xticklabels([a[1] for a in arms])
+    ax[5].set_xlim(-0.6, len(arms) - 0.4)
+    ax[5].set_ylim(0.40, 0.46)
+    ax[5].set_ylabel("Held-out Pearson, epoch 29")
+    ax[5].set_title("Graph target of the KL at λ = 0.001")
+    _tenths(ax[5])
+    _box(ax[5])
+
+    # g, h, i: curves, complete runs only
+    complete_ids = set(done.run_id)
+    h = hist[hist.run_id.isin(complete_ids)]
     panels = [
         (
             "val/gene_interaction/Pearson",
@@ -371,109 +374,40 @@ def fig_curves(hist: pd.DataFrame) -> None:
             "Held-out loss by epoch",
         ),
     ]
-    for ax, (key, ylabel, title) in zip(axes, panels):
-        for arm, label, color, ls in CURVE_ARMS:
-            _curve(ax, hist, arm, key, color, ls, label)
-        ax.set_xlabel("Epoch")
-        ax.set_ylabel(ylabel)
-        ax.set_title(title)
-        ax.set_xlim(0, 29)
-        _box(ax)
-    _tenths(axes[0])
-    axes[0].legend(
+    for k, (key, ylabel, title) in enumerate(panels):
+        a = ax[6 + k]
+        for z, (arm, label, color, ls) in enumerate(CURVE_ARMS):
+            _curve(a, h, arm, key, color, ls, label, z=20 + z)
+        a.set_xlabel("Epoch")
+        a.set_ylabel(ylabel)
+        a.set_title(title)
+        a.set_xlim(0, 29)
+        _box(a)
+    _tenths(ax[6])
+    handles, labels = ax[6].get_legend_handles_labels()
+    ax[6].legend(
+        handles[::-1],
+        labels[::-1],
         loc="lower right",
         frameon=False,
         handlelength=1.6,
         handletextpad=0.4,
         borderpad=0.2,
     )
-    axes[1].yaxis.set_major_locator(MultipleLocator(0.1))
-    axes[1].grid(axis="y", color="#DDDDDD", linewidth=0.3)
-    for ax, letter in zip(axes, "abc"):
-        panel_label(ax, letter)
-    _save(fig, "graph_reg_sweep_curves")
+    ax[7].yaxis.set_major_locator(MultipleLocator(0.1))
+    ax[7].grid(axis="y", color="#DDDDDD", linewidth=0.3)
 
-
-def fig_control(runs: pd.DataFrame, hist: pd.DataFrame) -> None:
-    """The random-graph control: is it the biology or any target, at lambda 1e-3."""
-    fig, axes = plt.subplots(
-        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(55))
-    )
-    fig.subplots_adjust(left=0.13, right=0.98, bottom=0.2, top=0.86, wspace=0.4)
-    arms = [
-        ("kl_0.001", "biological", ORANGE),
-        (RANDOM, "random", PURPLE),
-        ("kl_0", "none", GRAY),
-    ]
-    ax = axes[0]
-    for i, (arm, label, color) in enumerate(arms):
-        sub = runs[(runs.arm == arm) & runs.complete]
-        part = runs[(runs.arm == arm) & ~runs.complete]
-        if len(sub):
-            m = sub.val_pearson_fixed.mean()
-            ax.bar(i, m, width=0.6, facecolor="white", edgecolor=color, linewidth=0.8)
-            _seed_points(
-                ax, i, sub.val_pearson_fixed.to_numpy(), color, True, jitter=0.12
-            )
-        for r in part.to_dict("records"):
-            vmax, ep = float(r["val_pearson_max"]), int(r["epochs_logged"]) - 1
-            ax.scatter([i + 0.22], [vmax], s=8, marker="x", color=color, linewidth=0.6)
-            ax.text(
-                i + 0.22,
-                vmax + 0.004,
-                f"ep {ep}\npartial",
-                ha="center",
-                fontsize=5,
-                color=color,
-            )
-    ax.set_xticks(range(len(arms)))
-    ax.set_xticklabels([a[1] for a in arms])
-    ax.set_ylim(0.40, 0.46)
-    ax.set_ylabel("Held-out Pearson, epoch 29")
-    ax.set_title("Graph target of the KL at λ = 0.001")
-    _tenths(ax)
-    _box(ax)
-    ax = axes[1]
-    for arm, label, color in arms:
-        _curve(
-            ax,
-            hist,
-            arm,
-            "val/gene_interaction/Pearson",
-            color,
-            "-" if arm != RANDOM else "--",
-            {
-                "biological": "biological graphs",
-                "random": "random, degree-matched",
-                "none": "none (λ = 0)",
-            }[label],
-        )
-    ax.set_xlim(0, 29)
-    ax.set_xlabel("Epoch")
-    ax.set_ylabel("Validation Pearson, gene interaction")
-    ax.set_title("Mean over seeds, ± sd")
-    ax.legend(
-        loc="lower right",
-        frameon=False,
-        handlelength=1.6,
-        handletextpad=0.4,
-        borderpad=0.2,
-    )
-    _tenths(ax)
-    _box(ax)
-    for ax, letter in zip(axes, "ab"):
-        panel_label(ax, letter)
-    _save(fig, "graph_reg_sweep_control")
+    for a, letter in zip(ax, "abcdefghi"):
+        panel_label(a, letter)
+    _save(fig, "graph_reg_sweep")
 
 
 def main() -> None:
-    """All three figures from the CSVs."""
+    """The figure from the CSVs."""
     runs = pd.read_csv(osp.join(RESULTS_DIR, "graph_reg_sweep_runs.csv"))
     hist = pd.read_csv(osp.join(RESULTS_DIR, "graph_reg_sweep_history.csv"))
-    fig_ladder(runs)
-    fig_curves(hist)
-    fig_control(runs, hist)
-    print("wrote", IMG_DIR)
+    figure(runs, hist)
+    print("wrote", osp.join(IMG_DIR, "graph_reg_sweep.svg"))
 
 
 if __name__ == "__main__":

@@ -35,15 +35,12 @@ What it says:
 - The max-over-epochs reading compresses everything to 0.444 to 0.454. The prior moves the peak by at most 0.006 and moves its timing: no penalty peaks at epochs 15 to 16 and declines to 0.425 by 29; lambda 1 peaks at 23 to 26 and holds. Most of the fixed-epoch gain is resistance to the late decline.
 - Support contraction is not what carries the accuracy: edge recall is 0.78 already at lambda 1e-5 and saturates at 0.915 from 1e-2, two decades below where accuracy is highest; the divergence floors at about 300 from 1e-2 up.
 - Gradient budget (probe batch, before clipping): the penalty is 1.1x the point-loss gradient at 1e-3 and 680 to 1550x at lambda 1 by epoch 20; the trainer clips the total at 10. Hypothesis (untested): AdamW's per-parameter normalization makes the uniform rescale nearly invisible and the penalty gradient lands in the layer-1 projections, which is consistent with train Pearson at lambda 1 matching no penalty (0.624 vs 0.624).
+- Paired by seed against no penalty (t3-paired, paired t on 2 df): KL 1 at epoch 29 +0.022 +- 0.001 (t 30, p 0.001), KL 1e-2 +0.013 +- 0.001 (p 0.003), KL 1e-1 +0.020 +- 0.010 (p 0.07), mask -0.004 +- 0.003 (p 0.16); at the best epoch only 1e-2 separates (+0.005, p 0.0002), KL 1 +0.004 +- 0.002 (p 0.09). The class has never crossed 0.46 on this split (010 cosine checkpoints 0.456 to 0.464; best single run here 0.459).
 - Random-graph control at 1e-3: 0.417 and 0.433 (seeds 1, 2) against 0.429 and 0.438 biological on the same seeds; the heads do learn the rewired graphs (recall 0.81, divergence 983). At 1e-3 the biological gain over no penalty is 0.005 to 0.013, inside two seeds' noise; the control has to be rerun at lambda 1 to decide biology vs conditioning.
 
 Verdict on the hypothesis: the mask half holds on both readings; the "optimize through the KL" half holds on the fixed-epoch reading (+0.02 at lambda 1) and only weakly at the best epoch (+0.003 to +0.007); whether it is the biology of the graphs is untested at the lambda that matters.
 
-![](./assets/images/025-solid-growth/graph_reg_sweep_ladder.svg)
-
-![](./assets/images/025-solid-growth/graph_reg_sweep_curves.svg)
-
-![](./assets/images/025-solid-growth/graph_reg_sweep_control.svg)
+![](./assets/images/025-solid-growth/graph_reg_sweep.svg)
 
 W&B group pages (runs regrouped by arm with `graph_reg_sweep_readout.py --regroup`; project `torchcell_025-solid-growth_equivariant_cell_graph_transformer`, Delta gpuA40x4, 4 x A40 per run):
 

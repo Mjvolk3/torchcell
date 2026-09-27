@@ -478,16 +478,20 @@ def main() -> None:
     }
 
     tag = f"seed{args.split_seed}" + ("_fold90" if args.fold_test_into_train else "")
+    # The directory is keyed by label as well as store: the morphology label lives on the
+    # same fig3_core store as expression, and before 2026-09-27 a `--label calmorph` run
+    # would have overwritten expression_baselines_split/seed<k>.json.
+    if args.require_labels:
+        family = f"baselines_split_{args.dataset_tag}_both_{args.label}"
+    elif args.label == "calmorph":
+        family = f"morphology_baselines_split_{args.dataset_tag}"
+    elif args.dataset_tag == DATASET_TAG:
+        family = "expression_baselines_split"
+    else:
+        family = f"baselines_split_{args.dataset_tag}"
     dst_dir = osp.join(
         experiment_results_dir("019-simb-multimodal", __file__),
-        (
-            f"baselines_split_{args.dataset_tag}_both_{args.label}"
-            if args.require_labels
-            else "expression_baselines_split"
-            if args.dataset_tag == DATASET_TAG
-            else f"baselines_split_{args.dataset_tag}"
-        )
-        + ("" if args.embedding_set == "gate" else f"_{args.embedding_set}"),
+        family + ("" if args.embedding_set == "gate" else f"_{args.embedding_set}"),
     )
     os.makedirs(dst_dir, exist_ok=True)
     dst = osp.join(dst_dir, f"{tag}.json")

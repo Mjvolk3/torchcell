@@ -120,7 +120,9 @@ def score_run_dir(
         core_s=float(phases.cpu_core_seconds.sum()),
         mem_peak_gb=float(phases.mem_peak_gb.max()),
         n_adapters=int(build.adapter.nunique()),
-        csv_rows=int(inventory.rows.sum() - len(inventory)),  # one header line per file
+        # Part files carry no header line (headers are separate *-header.csv files,
+        # which wc -l counts as 0 lines), so the data rows are the part files' lines.
+        csv_rows=int(inventory[inventory.file.str.contains("-part")].rows.sum()),
         csv_bytes=int((run_dir / "csv_total_bytes").read_text().strip()),
         wandb_url=urls.get(arm["job"])
         or urls.get(f"{arm['round']}/{arm['arm']}/{arm['commit']}", ""),

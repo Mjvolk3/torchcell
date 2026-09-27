@@ -1,6 +1,7 @@
 # tests/torchcell/losses/test_mle_dist_supcr.py
 """Tests for the MLE distance SupCR loss and its weighting components."""
 
+import pytest
 import torch
 
 from torchcell.losses.mle_dist_supcr import (
@@ -8,6 +9,7 @@ from torchcell.losses.mle_dist_supcr import (
     MleDistSupCR,
     TemperatureScheduler,
 )
+from torchcell.losses.multi_dim_nan_tolerant import WeightedSupCRCell
 
 
 def test_adaptive_weighting():
@@ -174,6 +176,40 @@ def test_mle_dist_supcr_adaptive_features():
 
     # Temperature should decrease over epochs
     assert loss_dict_early["temperature"] > loss_dict_late["temperature"]
+
+
+def test_unbuffered_supcr_runs_at_the_scheduled_temperature() -> None:
+    """Without a buffer the scheduled temperature is applied, not only logged.
+
+    The exponential schedule gives exactly ``init_temperature`` = 1.0 at epoch 0, so the
+    inner SupCR's temperature is overwritten from the constructor's 0.1 to 1.0 and the
+    reported SupCR value equals ``WeightedSupCRCell(temperature=1.0)`` on the same
+    inputs. Before the fix the value was the one at 0.1.
+    """
+    torch.manual_seed(0)
+    targets = torch.randn(16, 2)
+    predictions = targets + 1.0
+    z_p = torch.randn(16, 4)
+    loss = MleDistSupCR(
+        lambda_dist=0.0,
+        supcr_temperature=0.1,
+        use_buffer=False,
+        use_ddp_gather=False,
+        use_adaptive_weighting=False,
+        use_temp_scheduling=True,
+        init_temperature=1.0,
+        final_temperature=0.1,
+        max_epochs=100,
+    )
+    assert isinstance(loss.supcr_loss, WeightedSupCRCell)
+    assert loss.supcr_loss.supcr.temperature == 0.1
+    _, parts = loss(predictions, targets, z_p, epoch=0)
+    assert parts["temperature"] == 1.0
+    assert loss.supcr_loss.supcr.temperature == 1.0
+    at_one, _ = WeightedSupCRCell(temperature=1.0)(z_p, targets)
+    at_tenth, _ = WeightedSupCRCell(temperature=0.1)(z_p, targets)
+    assert parts["supcr_loss"] == pytest.approx(at_one.item(), rel=1e-6)
+    assert parts["supcr_loss"] != pytest.approx(at_tenth.item(), rel=1e-2)
 
 
 if __name__ == "__main__":

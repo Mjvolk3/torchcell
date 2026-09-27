@@ -134,3 +134,44 @@ the ceiling from Cooper's duplicate-strain agreement (absent where no duplicate 
 were measured). Written by \texttt{betaxanthin\_amino\_acid\_correlation.py}.}{fig:cross-target}
 
 \input{tables/betaxanthin_amino_acid_correlation}
+
+\subsection{The third endpoint: isobutanol\secstatus{todo}}
+\label{sec:isobutanol-cross}
+
+The same read on Montano Lopez 2024's isobutanol biosensor, over the 4,360 strains it
+shares with M\"ulleder (the screen holds 4,554), with the fold change read as log10 as
+its own reliability was: the pool predicts the endpoint where the annotation does not.
+Ridge from the nineteen concentrations reads the biosensor out of fold at 0.102, against
+0.017 from the deleted gene's GO multi-hot and 0.098 from the two together, with the
+five folds at 0.056 to 0.132 and permuted labels at $-0.003$. So the measured pool
+carries six times what the gene's annotation carries on this endpoint, and the
+annotation adds nothing beside it, the same ordering as on betaxanthin (0.226 against
+0.165, with the pool adding 0.072 there).
+
+One amino acid at a time the correlations are small and the branched-chain ones are not
+where they sit. The biosensor is a branched-chain reporter by construction, yet leucine
+reads $-0.029$, isoleucine $-0.026$ and valine $+0.004$, every interval covering zero;
+the largest is arginine at $+0.093$ (interval 0.063 to 0.124, top-5 enrichment 2.4),
+then glutamine at $-0.075$, aspartate $-0.051$, threonine $-0.044$ and proline
+$-0.042$. Seven of the nineteen intervals exclude zero. Against a mean ceiling of 0.24,
+set by the geometric mean of the screen's within-screen duplicate agreement (0.31 over
+190 repeated strains) and each amino acid's retest, the pool's 0.102 is about forty
+percent of what the noise allows and no single concentration reaches a fifth of it.
+
+Two readings follow, and only the first is measured. The signal the pool carries about
+the biosensor is spread over the profile rather than held by the amino acids the sensor
+reports, since no single concentration approaches the pool fit. Why the reported
+branched-chain pools are the uncorrelated ones is not established here; a biosensor
+responding to pathway flux rather than to the standing pool would produce it
+(hypothesis, untested), and so would the two screens' different media, M\"ulleder's
+prototroph on minimal medium against the screen's auxotroph on complete medium.
+
+\tcfigfit[1.0]{figures/isobutanol_amino_acid_correlation.pdf}{\textbf{The isobutanol
+biosensor against each amino-acid concentration, strain by strain.} Montano Lopez 2024's
+biosensor fold change (log10) against each of M\"ulleder 2016's nineteen concentrations
+over the 4,360 strains both screens hold, ordered by the correlation: the Spearman
+(bars) with a strain-bootstrap 95 percent interval (1,000 draws) and, as the rules above
+and below each bar, the ceiling a correlation could reach through both endpoints' noise,
+the geometric mean of the screen's within-screen duplicate agreement and the amino acid's
+log10 retest Spearman. Written by
+\texttt{isobutanol\_amino\_acid\_correlation.py}.}{fig:isobutanol-cross}

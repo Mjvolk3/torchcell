@@ -178,6 +178,8 @@ STORE_LABELS = {
     "gopfba_aapool": "HiGHS parsimonious store with GO and the measured pool appended",
     "aapool_pfba": "measured pool with the HiGHS parsimonious vector appended, on the pool's genes",
     "cooper_pool": "measured Cooper 2010 amino-acid peaks of the strain (17 relative columns)",
+    "graph_label": "the graphs' one-hop label propagation of the target (10 neighbor means and 10 counts)",
+    "aapool_graphlabel": "measured pool with the graphs' label propagation appended",
 }
 
 

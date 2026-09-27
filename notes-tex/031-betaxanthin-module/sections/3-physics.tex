@@ -471,4 +471,16 @@ pinned label read. It is queued alone through 256 on the pool's recipe (round 21
 appended to the pool (220), which pairs the profile against the graphs' own read of
 betaxanthin in one slot.
 
+On the ladder the same store is read by every model beside the pool
+(Table~\ref{tab:store-baselines}). The graphs' twenty columns alone read 0.219 by
+ridge, 0.224 by nearest neighbors and 0.254 by forest, with top-50 calls of 4.99, 5.39
+and 5.79: the highest ridge read of any representation by 0.06, the highest
+nearest-neighbor call, and a store that covers every pinned gene, so none of it is a
+coverage indicator. Appended to the pool, the forest reads 0.284 on all genes and 0.234
+on the 556 the pool covers against 0.280 and 0.226 for the pool alone, the highest
+forest read of the ladder; the nearest neighbors fall from 0.285 to 0.258 and the ridge
+from 0.149 to 0.143. So in a forest the profile and the graphs add, by 0.004 on all
+genes and 0.008 on the measured strains, and the question rounds 219 and 220 put to the
+transformer's slot is whether its hidden layer does the same.
+
 \input{tables/graph_homophily}

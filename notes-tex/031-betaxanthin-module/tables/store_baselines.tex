@@ -7,7 +7,7 @@
   \setlength{\tabcolsep}{2.5pt}
   \caption[CPU baselines over the store representations]{Each deleted gene represented by one row of a store ($\log(1+|v|)$ of the flux columns, standardized on the training genes; a gene the store does not cover reads the wild-type row), fit by the 027 ladder's ridge (rank-swept bilinear for the amino acids) and cosine nearest neighbors, every training row tied at the $k$-th similarity averaged in, and by a 300-tree random forest, the Flux Cone Learning form on one point. Selected on validation per-feature Pearson rounded to $10^{-6}$; the cell is the pinned-test Spearman and, after the slash, the top-50 enrichment. Written by \texttt{target\_notes\_tex\_tables.py} from \texttt{results/store\_baselines\_betaxanthin.json} (\texttt{target\_store\_baselines.py}).}
   \label{tab:store-baselines}
-  \begin{tabular}{@{}lrrrr@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{108.6mm}rrrr@{}}
     \hline
     representation & columns & ridge & kNN & forest \\
     \hline
@@ -31,6 +31,8 @@
     HiGHS parsimonious store with GO and the measured pool appended & 6558 & +0.156 / 3.19 & +0.195 / 4.19 & +0.247 / 6.19 \\
     measured pool with the HiGHS parsimonious vector appended, on the pool's genes & 4196 & +0.095 / 1.80 & +0.153 / 2.60 & +0.220 / 3.99 \\
     measured Cooper 2010 amino-acid peaks of the strain (17 relative columns) & 17 & -0.001 / 0.60 & +0.094 / 1.80 & +0.113 / 1.20 \\
+    the graphs' one-hop label propagation of the target (10 neighbor means and 10 counts) & 20 & +0.219 / 4.99 & +0.224 / 5.39 & +0.254 / 5.79 \\
+    measured pool with the graphs' label propagation appended & 39 & +0.143 / 5.59 & +0.258 / 4.39 & +0.284 / 4.79 \\
     ProtT5 (027's ladder) & 1024 & +0.082 / 3.00 & +0.144 / 4.59 & +0.143 / 4.39 \\
     GLPK store with ProtT5 & 9379 & +0.044 / 2.00 & +0.066 / 2.00 & +0.121 / 4.99 \\
     \hline

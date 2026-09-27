@@ -636,6 +636,37 @@ def pack_log(stem: str, seed: int, epoch: int, what: str):
     return run
 
 
+
+def ladder_read(rep: str, model: str, key: str = "mean_spearman", covered: bool = False):
+    """A betaxanthin ladder read (store_baselines_betaxanthin.json), on all pinned genes
+    or on the genes the store covers; ``key`` is ``mean_spearman`` or ``top50_enrichment``."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "store_baselines_betaxanthin.json")))
+        sel = d["representations"][rep][model]["selected_on_val"]
+        return float(sel["test_pinned_covered" if covered else "test_pinned"][key])
+
+    return run
+
+
+def ladder_rank(model: str, key: str, rep: str):
+    """1.0 when ``rep`` has the highest ``key`` of every representation under ``model``."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "store_baselines_betaxanthin.json")))
+        vals = {
+            r: (o[model]["selected_on_val"]["test_pinned"].get(key) or 0.0)
+            for r, o in d["representations"].items()
+        }
+        return 1.0 if max(vals, key=vals.get) == rep else 0.0
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:standing -- the comparators on the same split and the cross-target read.
     Check(
@@ -12997,6 +13028,114 @@ CHECKS: list[Check] = [
         claim="graph reg: w233 data term at epoch 40",
         stated=0.479,
         recompute=pack_log("w233_bxdelaapoolmlp256skl_h36l2p1_e200", 2700, 40, "data"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: graph label ridge",
+        stated=0.219,
+        recompute=ladder_read("graph_label", "ridge"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: graph label knn",
+        stated=0.224,
+        recompute=ladder_read("graph_label", "knn"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: graph label forest",
+        stated=0.254,
+        recompute=ladder_read("graph_label", "forest"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: graph label ridge top-50",
+        stated=4.99,
+        recompute=ladder_read("graph_label", "ridge", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="ladder: graph label knn top-50",
+        stated=5.39,
+        recompute=ladder_read("graph_label", "knn", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="ladder: graph label forest top-50",
+        stated=5.79,
+        recompute=ladder_read("graph_label", "forest", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="ladder: graph label is the highest ridge read",
+        stated=1,
+        recompute=ladder_rank("ridge", "mean_spearman", "graph_label"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="ladder: graph label is the highest knn call",
+        stated=1,
+        recompute=ladder_rank("knn", "top50_enrichment", "graph_label"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="ladder: graph label ridge lead over the next",
+        stated=0.06,
+        recompute=lambda: ladder_read("graph_label", "ridge")() - sorted((o["ridge"]["selected_on_val"]["test_pinned"]["mean_spearman"] for o in json.load(open(osp.join(RESULTS, "store_baselines_betaxanthin.json")))["representations"].values()), reverse=True)[1],
+        tolerance=0.006,
+    ),
+    Check(
+        claim="ladder: pool with graph label forest",
+        stated=0.284,
+        recompute=ladder_read("aapool_graphlabel", "forest"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: pool with graph label forest covered",
+        stated=0.234,
+        recompute=ladder_read("aapool_graphlabel", "forest", covered=True),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: pool forest",
+        stated=0.28,
+        recompute=ladder_read("aa_pool", "forest"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: pool forest covered",
+        stated=0.226,
+        recompute=ladder_read("aa_pool", "forest", covered=True),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: pool with graph label is the highest forest read",
+        stated=1,
+        recompute=ladder_rank("forest", "mean_spearman", "aapool_graphlabel"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="ladder: pool with graph label knn",
+        stated=0.258,
+        recompute=ladder_read("aapool_graphlabel", "knn"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: pool knn",
+        stated=0.285,
+        recompute=ladder_read("aa_pool", "knn"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: pool with graph label ridge",
+        stated=0.143,
+        recompute=ladder_read("aapool_graphlabel", "ridge"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: pool ridge",
+        stated=0.149,
+        recompute=ladder_read("aa_pool", "ridge"),
         tolerance=0.0006,
     ),
 ]

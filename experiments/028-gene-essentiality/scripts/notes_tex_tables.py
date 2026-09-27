@@ -3221,7 +3221,7 @@ def pattern_ladder() -> str | None:
             f"{a['max_graph_reg_loss']:.3g} \\\\"
         )
     for name in d["pending"]:
-        rows.append(f"    {name} & pending & & & & & & & \\\\")
+        rows.append(f"    {name} & pending & -- & -- & -- & -- & -- & -- & -- \\\\")
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
         "  \\caption[The layer-pattern ladder and the propagated label]{The layer-pattern "

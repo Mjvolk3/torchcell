@@ -368,6 +368,31 @@ def covered_read(name: str, arm: str, key: str):
     return run
 
 
+def pair_seed_subset(pair: str, side: str, seeds: tuple[int, ...], key: str):
+    """The mean (``key`` ``mean``) or sample sd (``sd``) of the spearman over the named
+    seeds of one side of a transfer-readout pair, or the standard error (``se``).
+    """
+
+    def run() -> float:
+        import json
+
+        import numpy as np
+
+        d = json.load(open(osp.join(RESULTS, "transfer_readout.json")))
+        p = next(q for q in d["pairs"] if q["name"] == pair)
+        v = np.array([c["spearman"] for c in p[side]["cells"] if c["seed"] in seeds])
+        assert len(v) == len(seeds), (len(v), seeds)
+        if key == "mean":
+            return float(v.mean())
+        if key == "sd":
+            return float(v.std(ddof=1))
+        if key == "se":
+            return float(v.std(ddof=1) / np.sqrt(len(v)))
+        raise KeyError(key)
+
+    return run
+
+
 def pool_mlp(hidden: int, arm: str, key: str, name: str | None = None):
     """A value of one arm of the CPU perceptron sweep over the measured pool
     (target_go_models.py --store YPD_bx_aapool --mlp-hidden <hidden>); ``name`` picks a
@@ -11883,6 +11908,246 @@ CHECKS: list[Check] = [
             "w223",
             "w223_bxdelgolinaapoolmlp256lr001_h12l1p1_e200",
             "mean_spearman_covered",
+        ),
+        tolerance=0.0006,
+    ),
+    # sec:rounds -- round 208, twelve seeds of the three families with two slots.
+    Check(
+        claim="round 208: second six",
+        stated=0.236,
+        recompute=pair_seed_subset(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "arm",
+            (2706, 2707, 2708, 2709, 2710, 2711),
+            "mean",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: second six sd",
+        stated=0.005,
+        recompute=pair_seed_subset(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "arm",
+            (2706, 2707, 2708, 2709, 2710, 2711),
+            "sd",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: first six",
+        stated=0.239,
+        recompute=pair_seed_subset(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "arm",
+            (2700, 2701, 2702, 2703, 2704, 2705),
+            "mean",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: twelve",
+        stated=0.237,
+        recompute=transfer(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: twelve sd",
+        stated=0.004,
+        recompute=transfer(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: twelve se",
+        stated=0.001,
+        recompute=pair_seed_subset(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "arm",
+            tuple(range(2700, 2712)),
+            "se",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: n",
+        stated=12,
+        recompute=transfer(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "n",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 208: seed min",
+        stated=0.23,
+        recompute=pair_cells(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "arm",
+            "spearman",
+            "min",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: seed max",
+        stated=0.243,
+        recompute=pair_cells(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "arm",
+            "spearman",
+            "max",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: select epoch min",
+        stated=6,
+        recompute=pair_cells(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "arm",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 208: select epoch max",
+        stated=14,
+        recompute=pair_cells(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 208: select val pearson min",
+        stated=0.27,
+        recompute=pair_cells(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "arm",
+            "select_val_pearson",
+            "min",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 208: select val pearson max",
+        stated=0.29,
+        recompute=pair_cells(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "arm",
+            "select_val_pearson",
+            "max",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 208: twelve-seed ensemble",
+        stated=0.24,
+        recompute=ensemble(
+            "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200", "spearman", "all_seeds"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: twelve-seed ensemble top-50",
+        stated=4.99,
+        recompute=ensemble(
+            "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200",
+            "top50_enrichment",
+            "all_seeds",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 208: over GO",
+        stated=0.035,
+        recompute=transfer(
+            "betaxanthin: three families with two slots against GO alone, twelve seeds",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: over GO seeds",
+        stated=12,
+        recompute=transfer(
+            "betaxanthin: three families with two slots against GO alone, twelve seeds",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 208: over GO with HiGHS",
+        stated=0.023,
+        recompute=transfer(
+            "betaxanthin: three families with two slots against the HiGHS store with GO, twelve seeds",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: over GO with HiGHS seeds",
+        stated=12,
+        recompute=transfer(
+            "betaxanthin: three families with two slots against the HiGHS store with GO, twelve seeds",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 208: under the pool",
+        stated=-0.041,
+        recompute=transfer(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: under the pool seeds above",
+        stated=0,
+        recompute=transfer(
+            "betaxanthin: three families with two slots against the pool alone through 256, twelve seeds",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 208: covered twelve",
+        stated=0.186,
+        recompute=coverage(
+            "w218_twelve",
+            "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200",
+            "mean_spearman_covered",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: pool covered twelve",
+        stated=0.206,
+        recompute=coverage(
+            "w218_twelve",
+            "w206_bxdelaapoolmlp256_h12l1p1_e200",
+            "mean_spearman_covered",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: GO covered twelve",
+        stated=0.142,
+        recompute=coverage(
+            "w218_twelve", "w167_bxdelgo_h12l1p1_e200", "mean_spearman_covered"
         ),
         tolerance=0.0006,
     ),

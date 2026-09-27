@@ -3456,6 +3456,65 @@ CHECKS: list[Check] = [
         recompute=ladder_pair("width 36, one block, against the width-12 incumbent", "max_graph_reg_loss", "arm"),
         tolerance=1e-09,
     ),
+    Check(
+        claim="pattern ladder: w135 arm",
+        stated=0.913,
+        recompute=ladder_pair("two unmasked blocks against one", "mean_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w135 arm sd",
+        stated=0.003,
+        recompute=ladder_pair("two unmasked blocks against one", "sd_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w135 control",
+        stated=0.913,
+        recompute=ladder_pair("two unmasked blocks against one", "mean_auroc", "control"),
+    ),
+    Check(
+        claim="pattern ladder: w135 paired",
+        stated=0.001,
+        recompute=ladder_pair("two unmasked blocks against one", "mean_difference"),
+    ),
+    Check(
+        claim="pattern ladder: w135 paired sd",
+        stated=0.006,
+        recompute=ladder_pair("two unmasked blocks against one", "sd_difference"),
+    ),
+    Check(
+        claim="pattern ladder: w135 seeds above",
+        stated=3,
+        recompute=ladder_pair("two unmasked blocks against one", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w135 parameters",
+        stated=99393,
+        recompute=ladder_pair("two unmasked blocks against one", "n_parameters", "arm"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w135 seed min",
+        stated=0.91,
+        recompute=ladder_pair("two unmasked blocks against one", "min_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w135 seed max",
+        stated=0.917,
+        recompute=ladder_pair("two unmasked blocks against one", "max_auroc", "arm"),
+    ),
+    Check(
+        claim="pattern ladder: w135 select epoch min",
+        stated=37,
+        recompute=ladder_pair("two unmasked blocks against one", "min_select_epoch", "arm"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="pattern ladder: w135 select epoch max",
+        stated=79,
+        recompute=ladder_pair("two unmasked blocks against one", "max_select_epoch", "arm"),
+        tolerance=0.5,
+    ),
 ]
 
 

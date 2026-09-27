@@ -87,3 +87,27 @@ deletion is not a zero there. Admitting HET or HIP data to the metabolic module 
 changing that line asserts a full knockout of a gene that still has one working copy.
 
 Result file: `experiments/031-env-chemgen-inhibitor-tolerance/results/ploidy_audit.csv`
+
+## 2026.09.27 - Hoepfner supplies 648,977 paired ploidy observations
+
+Measured after re-flattening Hoepfner with the served SMILES column. The functional-dose channel
+recommended above is not only expressible, it is learnable from data already in the store.
+
+| arm | records | genes | compounds | gene-by-compound cells |
+|---|---|---|---|---|
+| heterozygous, HIP | 1,759,255 | 5,808 | 148 | 850,575 |
+| homozygous, HOP | 1,365,064 | 4,919 | 147 | 660,190 |
+| shared | | 4,885 | 147 | **648,977** |
+
+**648,977 gene-by-compound cells are measured both heterozygous and homozygous**, against the
+same compound at the same dose basis in the same study design. Those pairs differ in exactly one
+thing, one surviving copy against none, which is precisely the quantity the proposed channel
+encodes. That makes Hoepfner the training and validation set for the channel rather than merely
+a dataset that needs it.
+
+It also sharpens why the current tensor layer is a correctness problem rather than a missed
+opportunity. Those 648,977 pairs currently produce byte-identical model input while carrying two
+different measured responses, so today they are pure label noise.
+
+All 148 Hoepfner compounds now carry a SMILES, up from 61, after the flattener began carrying the
+served structure.

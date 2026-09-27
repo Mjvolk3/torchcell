@@ -292,3 +292,4 @@ experiments/025-solid-growth/results/graph_regularization_how_not_what/
 experiments/031-env-chemgen-inhibitor-tolerance/results/records_*.parquet
 experiments/031-env-chemgen-inhibitor-tolerance/results/embeddings/*.npz
 experiments/031-env-chemgen-inhibitor-tolerance/results/embeddings_media/*.npz
+experiments/031-env-chemgen-inhibitor-tolerance/results/yeast9_embeddings/*.npz

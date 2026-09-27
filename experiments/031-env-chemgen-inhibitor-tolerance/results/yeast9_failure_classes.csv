@@ -1,0 +1,12 @@
+structure_class,n_species,n_compartment_copies,n_with_smiles,n_with_chebi,n_with_formation_dg,n_without_smiles
+specific_molecule,914,1742,858,885,837,56
+acyl_resolved_lipid,258,692,0,101,258,258
+trna,44,75,0,42,0,44
+inorganic_or_ion,31,125,28,31,20,3
+generic_r_group,29,42,5,28,1,24
+protein_species,24,33,2,17,0,22
+pooled_lipid_class,23,41,0,10,0,23
+kegg_glycan,22,22,0,4,2,22
+acp_thioester,16,16,0,14,0,16
+pseudo_metabolite,11,12,0,3,0,11
+no_formula_other,6,6,1,5,0,5

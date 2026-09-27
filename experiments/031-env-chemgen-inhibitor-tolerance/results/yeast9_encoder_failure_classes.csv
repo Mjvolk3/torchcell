@@ -1,0 +1,4 @@
+encoder,reason,structure_class,n
+unimol_v1,etkdg_failed_2d_only,inorganic_or_ion,6
+unimol_v1,etkdg_failed_2d_only,specific_molecule,41
+unimol_v1,no_3d_conformer_zero_coordinates,inorganic_or_ion,11

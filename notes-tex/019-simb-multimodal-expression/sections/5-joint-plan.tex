@@ -1,0 +1,170 @@
+%% notes-tex/019-simb-multimodal-expression/sections/5-joint-plan.tex
+%% SOURCE: the five reviewer reports and the coordinator's addendum of 2026-09-27 under
+%% review/2026-09-27-joint-review/ (01 data ceilings, 02 trunk and collapse, 03 joint
+%% evidence, 04 statistics and design, 05 literature and designs, 05a the mRNA-protein
+%% survey, launch_census.json), each of which names the W&B run, results file or mirror
+%% paper behind every number; the v16 readouts results/v16_joint_readout.json and
+%% v16_joint_expr_readout.json; the weekly note 2026.09.27.
+
+\section{Joint proteome and expression training: what is established, what the data permits, and the rounds that follow\secstatus{todo}}
+\label{sec:joint-plan}
+
+The question, as posed on 2026-09-25: can training one trunk on the knockout proteome and
+the knockout transcriptome be shown to help each label's own prediction, with a statement
+that survives review, inside two weeks of compute on the IGB \file{gpu} and \file{cabbi}
+partitions. Five independent reviews of the campaign's runs, code and the literature were
+run on 2026-09-27 and are filed under \file{review/2026-09-27-joint-review/}; this section
+is their synthesis. Every number is measured unless it is marked as a hypothesis.
+
+\pfstep{What v16 measured, read again} On the proteome head the joint arm against the
+proteome-only arm is $-0.008$ at the fixed window ($t = -1.4$, three of six pairs positive),
+$-0.016$ on the rolling maximum (none of six), $+0.005$ on the held-out test set at the
+best-validation checkpoint (four of six), and $-0.095$ on the training fit at epoch 499
+(none of six, $t = -15$). The joint arm's proteome head launches later than the
+proteome-only head in every pair (epochs 95 to 144 against 44 to 61). The proteome-only arm
+at 500 epochs reproduces v14's reference at 1,353 to 1,960 epochs to within $0.005$ on all
+six split-and-seed pairs, so the proteome head is budget-saturated at 500 and a longer budget
+cannot move that contrast. On the expression head the published $+0.060$ is a comparison
+against a control that never trained (\cref{sec:split-rounds}); on the two clean pairs it is
+$+0.007$ on validation and $-0.067$ on test. A properly trained expression-only model from
+v13, cut at epoch 500, scores in the same band as the joint arm's expression head at 500
+(rolling maxima $0.064$ to $0.124$ against $0.082$ to $0.118$), so the joint head sits on the
+single-head curve rather than ahead of it. One result the readouts do not report: with ten
+proteins revealed through the masked-conditioning channel the joint arm's proteome head beats
+the proteome-only arm by $+0.090$ in six of six pairs ($t = 20$), and with 1,000 revealed it
+loses by $0.036$ in six of six. That is a conditioning result and it rides on the objective
+that is being dropped. Nothing measured supports the target claim, and the proteome side is
+directionally against it.
+\src{review/2026-09-27-joint-review/03_joint_evidence.md, 02_trunk_collapse.md}
+
+\pfstep{Why the single-head control died, and how to keep it alive} After per-gene
+standardization, predicting each gene's marginal quantile is an exact strain-blind stationary
+point of the pinball loss, reachable from the strain-invariant gene state alone, and it sits
+only about $3\,\%$ above the working model in loss ($0.239$ against $0.231$ on one card).
+Whether a head leaves that point is a signal-to-noise race in the number of labeled rows per
+optimizer step, and the pinball gradient carries no residual magnitude to help it. Across 95
+launched expression runs on the undiluted stores the launch epoch never exceeded 314 and its
+90th percentile is at most 115; the v16 expression-only arm, at eleven labeled rows per batch,
+launched twice, at epochs 138 and 195, and four times never. A resumed checkpoint does not
+escape: the continuation of \texttt{hyasw3nx} is still at zero at epoch 555. A detector on the
+logged prediction spread (below $0.05$ by epoch 200) catches every never-launched run with no
+false positive in 110 healthy runs, and a run that has trained for a thousand epochs can fall
+back into the same state (\texttt{p204pwqb}), so the detector runs for the whole run. Not
+implicated on the evidence: gradient clipping (never binds), the scheduler (none exists), the
+zero-gated pathways (every gate in these rounds is forced open), co-residency, DDP, the
+missing-value masking. Warmup and the ReZero residual have never been measured; the only four
+runs that carried them died inside the pre-launch plateau in July.
+\src{review/2026-09-27-joint-review/02_trunk_collapse.md, launch_census.json}
+
+\pfstep{What the data permits a shared trunk to transfer} On the 1,349 strains carrying both
+labels, a plain ridge from the observed proteome predicts held-out expression at per-feature
+Pearson $0.226$, against $0.101$ from the deleted gene's ProtT5 embedding; the reverse reads
+$0.218$ against $0.056$. The two channels barely overlap: adding the genotype to the observed
+proteome buys $+0.009$. A trunk that sees only the genotype at scoring time cannot collect that
+channel. What it can collect is a shared genotype representation, and the linear measurement of
+that channel is $+0.005$ to $+0.006$ on the proteome head (the expression task's top-128 and
+top-256 ridge directions beat the proteome's own) and at or below zero on the expression head
+(the proteome's top-8 directions deliver $0.044$ against $0.110$ from expression's own, with a
+random floor of $0.030$). The two tasks share three to thirteen times more genotype directions
+than chance and keep 63 to 90 percent of each subspace private. Per-deletion agreement between
+the two modalities, $0.036$, equals the agreement between duplicate Messner strains of the
+same deletion, $0.03$, so it carries no information; the per-gene agreement, $0.075$
+(disattenuated $0.15$ to $0.21$), and the gene-pair co-variation agreement of $0.31$ are the
+transferable structure. The proteome is the noisier label: 28 percent of the 1,850 proteins
+have knockout variance at or below the replicate variance, and per-feature standardization
+gives those columns full weight in both the loss and the metric. Detecting $+0.005$ at 80
+percent power needs 61 to 88 pairs at the measured paired sd of $0.0167$; no fourteen-day
+design reaches that.
+\src{review/2026-09-27-joint-review/01_data_ceilings.md, 05a_literature_helper_mrna_protein.md}
+
+\pfstep{What the field has shown} The one same-model joint-against-single test in the
+multimodal literature, totalVI against scVI on held-out RNA from the same cells, is null. The
+one measured pairing ladder (Ryu et al., paired RNA and protein in the same T cells) values the
+per-sample pairing at about $0.028$ Pearson even with a perfect pairing. The sign of a
+multi-task result flips on the capacity control (Standley et al.: worse at equal per-task
+capacity, better at equal total compute), so the control has to be declared before the round.
+The field's one consistent positive for perturbation prediction is a linear model with a
+perturbation embedding pretrained on other perturbation data (Ahlmann-Eltze et al.), a transfer
+design. The Messner-against-Kemmeren per-deletion comparison has never been published; the
+closest is a strain-level $R = 0.51$ in fission yeast on 94 paired knockouts.
+\src{review/2026-09-27-joint-review/05_literature_designs.md}
+
+\pfstep{The statistic that can carry a conjunction} A claim that joint training helps both
+heads is an intersection-union test: reject only when both one-sided tests reject, which holds
+level $\alpha$ with no multiplicity correction. Its price is power: if the true proteome
+effect is exactly zero, a superiority-and-superiority rule has five percent power at any
+sample size. The defensible form is superiority on the expression head and non-inferiority on
+the proteome head at a margin fixed before launch; $0.015$ sits above the between-partition sd
+of the proteome score and below the single-partition bootstrap sd of $0.026$. At the v16 point
+estimate of $-0.008$, non-inferiority at margin $0.010$ needs 275 pairs, at $0.015$ needs 24,
+at $0.020$ needs 10. Two more measured facts shape the design. The arm effect clusters by
+partition (intraclass correlation $0.50$ to $0.72$ on two contrasts), so the paired $t$ over
+twelve split-by-seed cells understates its standard error by 1.5 to 1.7 times, and a
+partition-level sign-flip test has an attainable minimum $p$ of $2/2^P$, which four partitions
+can never bring under $0.05$; at a fixed run count more partitions always beat more seeds, and
+36 runs as twelve partitions with one seed each give a standard error of $0.0070$ against
+$0.0098$ for four by three. And the committed readout applies its plateau rule to the rolling
+maximum rather than to the registered window, which is the one line that decides whether v17's
+propagation contrast reads $+0.012$ ($p = 0.23$) or $+0.020$ on eleven pairs ($p = 0.004$);
+it is reported here as found, not changed, because changing a registered rule after the fact
+is the error the rule exists to prevent.
+\src{review/2026-09-27-joint-review/04_statistics_design.md}
+
+\pfstep{What is provable in two weeks, and what is not} Superiority of the joint trunk on
+both heads is not, unless the effect is larger than anything this trunk has shown: the linear
+transfer bound is $+0.006$ on one head and zero on the other, the minimum detectable effect at
+twelve pairs is $0.013$ to $0.019$, and the external priors are against it. Three statements
+are within reach. First, that joint training costs neither head more than a pre-registered
+margin while one model serves both labels, which twelve to eighteen clean pairs settle.
+Second, that a model given a strain's proteome predicts its transcriptome far better than a
+model given the genotype alone, and the reverse, an effect of $+0.11$ to $+0.16$ that six
+pairs establish beyond doubt; this is a conditioning claim about a multimodal model, not a
+shared-trunk synergy claim, and it has to be labeled as such. Third, a clean answer to the
+synergy question at a resolution of $0.013$, with a permutation control that says whether any
+gain uses the paired labels or only their marginal structure, and with the single-head
+controls kept alive; a null there is a measurement with a stated resolution, not a failure.
+
+\pfstep{The rounds} Zero-GPU work first, one to two days, all of it prerequisite: a launch
+guard callback that kills a run whose prediction spread has not passed $0.05$ by epoch 200 and
+relaunches it from a new initialization inside the same cell, recording the relaunch; a test
+pass per head at that head's own best-validation checkpoint (the joint arm's expression test
+number is currently read at the proteome's checkpoint, $0.032$ low on average); a
+label-permutation option for one head across training strains; gradient-cosine logging between
+the two heads on the shared trunk; the gene-disjoint expression subset and a
+reliability-weighted proteome Pearson as logged metrics; and the pre-registration written into
+the round's config header. Then two rounds, launchable together.
+
+\begin{itemize}
+\item \textbf{v19, the deconfounded joint round.} Store \file{fig3_proteome} restricted to the
+  strains carrying both labels (about 1,100 training rows per partition, 35 steps per epoch,
+  three times cheaper than the union), so every arm sees identical rows and steps. Four arms on
+  one card, derived from one configuration by loss weights alone: proteome head only,
+  expression head only, both heads, and both heads with the expression labels permuted across
+  training strains. Every head in the unmasked form the joint arm's auxiliary head uses; the
+  masked objective off in every arm, by the decision of 2026-09-25, with its measured cost of
+  $0.012$ borne equally. Twelve split seeds, one initialization seed each, 1,200 epochs,
+  per-head windows declared from v14 and v16 (proteome epochs 200 to 400, expression 1,000 to
+  1,200). Primary test: expression superiority and proteome non-inferiority at margin $0.015$,
+  one-sided $0.05$ each, paired over the twelve partitions; secondary: the interaction with the
+  permuted arm on both heads, the partition-level sign-flip $p$, intent-to-treat beside the
+  guarded analysis, the test read per head. Twelve tasks of four runs at about 32 hours each
+  (v13 ran four per A40 at 40 steps per epoch, 1,200 epochs in about 32 hours): on three
+  \file{gpu} cards under the \texttt{\%3} rule plus two \file{cabbi} cards, three waves, about
+  five days, two more for relaunches, every job inside the five-day limit.
+\item \textbf{v20, the conditioned cross-modal round.} Same store. Expression head from the
+  genotype alone against the same head with the strain's observed proteome revealed through the
+  existing conditioning channel and scored with it revealed; the mirror pair predicting the
+  proteome with expression revealed. Three split seeds, two initialization seeds, six pairs per
+  direction, 600 epochs, three per card, eight tasks of about 20 hours; on \file{cabbi} about
+  three days. Expected effect $+0.11$ and $+0.16$ against a minimum detectable $0.019$. Needs
+  one metric change, logging the auxiliary head with the other modality revealed.
+\end{itemize}
+
+Two decisions are the author's. Whether v19 runs on the both-label intersection, which makes
+the contrast clean and cheap, or on the union, where the joint arm also gains 2.5 times more
+strains and the claim becomes ``joint training on the union helps'' with the data-quantity term
+inside it; a fifth arm on a subset of partitions can price that term. And what to do with the
+v16 continuation (IGB 2410399, split 0 at epoch about 600, four tasks pending): it extends the
+confounded control and cannot move the proteome contrast, so canceling the pending tasks frees
+the \file{gpu} cards for v19 as soon as the prerequisites land.
+\src{review/2026-09-27-joint-review/04_statistics_design.md, 03_joint_evidence.md, 01_data_ceilings.md, 05_literature_designs.md}

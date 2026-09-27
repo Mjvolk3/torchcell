@@ -1,0 +1,34 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_emb_w360_041.yaml
+#
+# THE COMPOSITE EMBEDDING AT TWICE THE WIDTH. cgt_s0_r_kl_emb_040 with hidden_channels 360
+# (nine heads of 40 instead of 20) and the preprocessor re-matched to the learnable table
+# at that width: a 6,607 x 360 table is 2,378,520 parameters; a two-layer preprocessor
+# 3,328 -> h -> 360 with LayerNorms is 3,691 h + 1,080, so h = 644 gives 2,378,084.
+# The table-at-360 partner is ctrl_013 with model.hidden_channels=360, whose table then
+# has the 2,378,520 this matches.
+#
+# Width was inherited from 010 at 180 and never swept on this task. At 360 the transformer
+# goes from 3.1 M to about 12.5 M parameters; the attention matrices of the regularized
+# layer do not grow, so memory stays near the 6 GB of the 180 arms, but the epoch should
+# take 1.5 to 2.5 times as long, which is the 48 h clock. That estimate is what the first
+# seed measures.
+#
+#   sbatch --account=bfjt-delta-gpu --time=48:00:00 -J 025-r3-emb360-l1-s1 \
+#     experiments/025-solid-growth/scripts/delta_cgt.slurm cgt_s0_r_kl_emb_w360_041 \
+#     model.graph_regularization.graph_reg_lambda=1 +seed=1
+defaults:
+  - cgt_s0_r_kl_emb_040
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_reg_kl, seq_embedding, full_gene_composite, param_matched, width_360, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, graph_reg_round3]
+
+model:
+  hidden_channels: 360
+  learnable_embedding:
+    enabled: false
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      hidden_dim: 644
+      dropout: 0.1

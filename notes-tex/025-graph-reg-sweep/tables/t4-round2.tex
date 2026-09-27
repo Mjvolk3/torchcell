@@ -9,8 +9,8 @@ round & question & arm & change on \texttt{ctrl\_013} & code & seeds & epochs & 
  &  & KL 100 & \texttt{graph\_reg\_lambda=100} & none & 3 & 30 & 162 \\
  & completion & KL 1e-5, seed 2 & \texttt{graph\_reg\_lambda=1e-5}, \texttt{seed=2} & none & 1 & 30 & 54 \\
 \midrule
-2 & reach & mask, 2-hop & \texttt{attention\_mask} \texttt{hops=2} & k-hop support: reachability within k steps, self-loops kept & 3 & 30 & 162 \\
- &  & mask, 3-hop & \texttt{attention\_mask} \texttt{hops=3} & same & 3 & 30 & 162 \\
+2 & reach & mask, 2-hop, directed & \texttt{attention\_mask} \texttt{hops=2}, \texttt{symmetric=false} & k-hop support: reachability within k steps, self-loops kept & 3 & 30 & 162 \\
+ &  & mask, 3-hop, directed & \texttt{attention\_mask} \texttt{hops=3}, \texttt{symmetric=false} & same & 3 & 30 & 162 \\
  &  & KL 1, 2-hop target & \texttt{graph\_regularization} \texttt{hops=2} & k-hop target: row-normalized k-hop indicator & 3 & 30 & 162 \\
  &  & KL 1, 3-hop target & \texttt{graph\_regularization} \texttt{hops=3} & same & 3 & 30 & 162 \\
  & direction & KL 1, symmetric targets & \texttt{graph\_regularization} \texttt{symmetrize=true} & symmetrize A for the directed graphs before row normalization & 3 & 30 & 162 \\
@@ -25,12 +25,12 @@ round & question & arm & change on \texttt{ctrl\_013} & code & seeds & epochs & 
  & budget & no penalty, 60 epochs & \texttt{graph\_reg\_lambda=0}, \texttt{max\_epochs=60} & none & 3 & 60 & 324 \\
  &  & mask, 60 epochs & \texttt{mask\_028}, \texttt{max\_epochs=60} & none & 3 & 60 & 324 \\
  &  & KL 1, 60 epochs & \texttt{graph\_reg\_lambda=1}, \texttt{max\_epochs=60} & none & 3 & 60 & 324 \\
- & representation & composite embedding, no penalty & \texttt{embfit\_035} \texttt{(no} \texttt{fitness} \texttt{head)}, \texttt{graph\_reg\_lambda=0} & none & 3 & 30 & 162 \\
- &  & composite embedding, KL 1 & \texttt{embfit\_035} \texttt{(no} \texttt{fitness} \texttt{head)}, \texttt{graph\_reg\_lambda=1} & none & 3 & 30 & 162 \\
+ & representation & composite embedding, no penalty & \texttt{emb\_040}, \texttt{graph\_reg\_lambda=0} & none & 3 & 30 & 162 \\
+ &  & composite embedding, KL 1 & \texttt{emb\_040}, \texttt{graph\_reg\_lambda=1} & none & 3 & 30 & 162 \\
  & width & hidden 360, table, no penalty & \texttt{hidden\_channels=360}, \texttt{graph\_reg\_lambda=0} & none & 3 & 30 & 162 \\
  &  & hidden 360, table, KL 1 & \texttt{hidden\_channels=360}, \texttt{graph\_reg\_lambda=1} & none & 3 & 30 & 162 \\
- &  & hidden 360, composite, no penalty & \texttt{hidden\_channels=360}, \texttt{embfit\_035} \texttt{(no} \texttt{fitness} \texttt{head)}, \texttt{graph\_reg\_lambda=0} & re-match preprocessor width & 3 & 30 & 162 \\
- &  & hidden 360, composite, KL 1 & \texttt{hidden\_channels=360}, \texttt{embfit\_035} \texttt{(no} \texttt{fitness} \texttt{head)}, \texttt{graph\_reg\_lambda=1} & re-match preprocessor width & 3 & 30 & 162 \\
+ &  & hidden 360, composite, no penalty & \texttt{emb\_w360\_041}, \texttt{graph\_reg\_lambda=0} & preprocessor re-matched (h = 644) & 3 & 30 & 162 \\
+ &  & hidden 360, composite, KL 1 & \texttt{emb\_w360\_041}, \texttt{graph\_reg\_lambda=1} & preprocessor re-matched (h = 644) & 3 & 30 & 162 \\
 \midrule
 total & & & & 80 & & 4,806 \\
 \bottomrule

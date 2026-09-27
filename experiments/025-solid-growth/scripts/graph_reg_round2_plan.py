@@ -81,6 +81,14 @@ class Arm(BaseModel):
     seeds: int
     epochs: int = 30
     figure: str  # which planned figure and panel reads it
+    config: str = "cgt_s0_r_kl_ctrl_013"  # Hydra config name the launcher loads
+    overrides: list[str] = []  # Hydra overrides; new keys carry a leading +
+    hours: int = 24  # Delta wall clock
+
+    @property
+    def slug(self) -> str:
+        """Job-name stem: lowercase, words joined by hyphens, punctuation dropped."""
+        return re.sub(r"[^a-z0-9]+", "-", self.name.lower()).strip("-")
 
     @property
     def wall_h(self) -> float:
@@ -94,12 +102,14 @@ class Arm(BaseModel):
 
 
 ARMS: list[Arm] = [
-    # Round 1b finishes the current figure and answers its two questions where the effect is:
-    # is the prior better than the mask (the ladder top), do the graphs help (the random
-    # control at the lambda that separates). The random arms carry five seeds: each seed is
-    # a different rewiring as well as a different initialization, so their spread is the
-    # widest in the study (0.011 at n = 2) and the effect they must resolve is 0.02. The
-    # round-1 random arm ran the full 30-epoch protocol on both complete seeds.
+    # Round 1b finishes the current figure: prior vs mask at the ladder top, do the graphs
+    # help at the lambda that separates (five seeds: each seed is a new rewiring and a new
+    # initialization). Round 2: reach (2- and 3-hop, identical supports for mask and prior)
+    # and direction. The reach masks are DIRECTED: undirected two hops of physical,
+    # coexpression or experimental already covers 60 to 70 percent of all gene pairs
+    # (graph_reg_khop_density.py), so a symmetric k-hop mask is no mask; the directed
+    # one-hop mask is their one-hop anchor. Round 3: placement (optional), budget,
+    # representation, width.
     Arm(
         round="1b",
         group="do graphs help",
@@ -107,7 +117,11 @@ ARMS: list[Arm] = [
         change="rand_031, graph_reg_lambda=1",
         needs_code="",
         seeds=5,
+        epochs=30,
         figure="F1 a-c, f",
+        config="cgt_s0_r_kl_rand_031",
+        overrides=["model.graph_regularization.graph_reg_lambda=1"],
+        hours=24,
     ),
     Arm(
         round="1b",
@@ -116,7 +130,11 @@ ARMS: list[Arm] = [
         change="rand_031, graph_reg_lambda=0.1",
         needs_code="",
         seeds=5,
+        epochs=30,
         figure="F1 a-c, f",
+        config="cgt_s0_r_kl_rand_031",
+        overrides=["model.graph_regularization.graph_reg_lambda=0.1"],
+        hours=24,
     ),
     Arm(
         round="1b",
@@ -125,7 +143,11 @@ ARMS: list[Arm] = [
         change="graph_reg_lambda=10",
         needs_code="",
         seeds=3,
+        epochs=30,
         figure="F1 a-e",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=["model.graph_regularization.graph_reg_lambda=10"],
+        hours=24,
     ),
     Arm(
         round="1b",
@@ -134,7 +156,11 @@ ARMS: list[Arm] = [
         change="graph_reg_lambda=100",
         needs_code="",
         seeds=3,
+        epochs=30,
         figure="F1 a-e",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=["model.graph_regularization.graph_reg_lambda=100"],
+        hours=24,
     ),
     Arm(
         round="1b",
@@ -143,28 +169,43 @@ ARMS: list[Arm] = [
         change="graph_reg_lambda=1e-5, seed=2",
         needs_code="",
         seeds=1,
+        epochs=30,
         figure="F1 a-e",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=["model.graph_regularization.graph_reg_lambda=1e-5"],
+        hours=24,
     ),
-    # Round 2: reach and direction, for both mechanisms. The k-hop target of the prior is the
-    # row-normalized indicator of the k-hop neighborhood (self-loops kept), the same support
-    # the k-hop mask uses, so the two mechanisms are compared on identical targets.
     Arm(
         round="2",
         group="reach",
-        name="mask, 2-hop",
-        change="attention_mask hops=2",
+        name="mask, 2-hop, directed",
+        change="attention_mask hops=2, symmetric=false",
         needs_code="k-hop support: reachability within k steps, self-loops kept",
         seeds=3,
+        epochs=30,
         figure="F2 a-f",
+        config="cgt_s0_r_mask_028",
+        overrides=[
+            "+model.attention_mask.hops=2",
+            "+model.attention_mask.symmetric=false",
+        ],
+        hours=24,
     ),
     Arm(
         round="2",
         group="reach",
-        name="mask, 3-hop",
-        change="attention_mask hops=3",
+        name="mask, 3-hop, directed",
+        change="attention_mask hops=3, symmetric=false",
         needs_code="same",
         seeds=3,
+        epochs=30,
         figure="F2 a-f",
+        config="cgt_s0_r_mask_028",
+        overrides=[
+            "+model.attention_mask.hops=3",
+            "+model.attention_mask.symmetric=false",
+        ],
+        hours=24,
     ),
     Arm(
         round="2",
@@ -173,7 +214,14 @@ ARMS: list[Arm] = [
         change="graph_regularization hops=2",
         needs_code="k-hop target: row-normalized k-hop indicator",
         seeds=3,
+        epochs=30,
         figure="F2 a-f",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=[
+            "model.graph_regularization.graph_reg_lambda=1",
+            "+model.graph_regularization.hops=2",
+        ],
+        hours=24,
     ),
     Arm(
         round="2",
@@ -182,7 +230,14 @@ ARMS: list[Arm] = [
         change="graph_regularization hops=3",
         needs_code="same",
         seeds=3,
+        epochs=30,
         figure="F2 a-f",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=[
+            "model.graph_regularization.graph_reg_lambda=1",
+            "+model.graph_regularization.hops=3",
+        ],
+        hours=24,
     ),
     Arm(
         round="2",
@@ -191,7 +246,14 @@ ARMS: list[Arm] = [
         change="graph_regularization symmetrize=true",
         needs_code="symmetrize A for the directed graphs before row normalization",
         seeds=3,
+        epochs=30,
         figure="F2 a-c",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=[
+            "model.graph_regularization.graph_reg_lambda=1",
+            "+model.graph_regularization.symmetrize=true",
+        ],
+        hours=24,
     ),
     Arm(
         round="2",
@@ -200,9 +262,12 @@ ARMS: list[Arm] = [
         change="attention_mask symmetric=false",
         needs_code="drop the transpose write in the mask builder",
         seeds=3,
+        epochs=30,
         figure="F2 a-c",
+        config="cgt_s0_r_mask_028",
+        overrides=["+model.attention_mask.symmetric=false"],
+        hours=24,
     ),
-    # Round 3: placement (optional), budget, representation, width
     Arm(
         round="3",
         group="placement (optional)",
@@ -210,7 +275,11 @@ ARMS: list[Arm] = [
         change="attention_mask layers=[1,2]",
         needs_code="",
         seeds=3,
+        epochs=30,
         figure="F3 a-c",
+        config="cgt_s0_r_mask_028",
+        overrides=["model.attention_mask.layers=[1,2]"],
+        hours=24,
     ),
     Arm(
         round="3",
@@ -219,7 +288,11 @@ ARMS: list[Arm] = [
         change="attention_mask layers=[3,4]",
         needs_code="",
         seeds=3,
+        epochs=30,
         figure="F3 a-c",
+        config="cgt_s0_r_mask_028",
+        overrides=["model.attention_mask.layers=[3,4]"],
+        hours=24,
     ),
     Arm(
         round="3",
@@ -228,7 +301,11 @@ ARMS: list[Arm] = [
         change="attention_mask layers=[1,2,3,4]",
         needs_code="",
         seeds=3,
+        epochs=30,
         figure="F3 a-c",
+        config="cgt_s0_r_mask_028",
+        overrides=["model.attention_mask.layers=[1,2,3,4]"],
+        hours=24,
     ),
     Arm(
         round="3",
@@ -237,7 +314,14 @@ ARMS: list[Arm] = [
         change="graph_reg_lambda=1, graph_reg_layer=[1,2]",
         needs_code="",
         seeds=3,
+        epochs=30,
         figure="F3 a-c",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=[
+            "model.graph_regularization.graph_reg_lambda=1",
+            "model.graph_regularization.graph_reg_layer=[1,2]",
+        ],
+        hours=24,
     ),
     Arm(
         round="3",
@@ -246,7 +330,14 @@ ARMS: list[Arm] = [
         change="graph_reg_lambda=1, graph_reg_layer=[3,4]",
         needs_code="",
         seeds=3,
+        epochs=30,
         figure="F3 a-c",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=[
+            "model.graph_regularization.graph_reg_lambda=1",
+            "model.graph_regularization.graph_reg_layer=[3,4]",
+        ],
+        hours=24,
     ),
     Arm(
         round="3",
@@ -255,7 +346,14 @@ ARMS: list[Arm] = [
         change="graph_reg_lambda=1, graph_reg_layer=[1,2,3,4]",
         needs_code="",
         seeds=3,
+        epochs=30,
         figure="F3 a-c",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=[
+            "model.graph_regularization.graph_reg_lambda=1",
+            "model.graph_regularization.graph_reg_layer=[1,2,3,4]",
+        ],
+        hours=24,
     ),
     Arm(
         round="3",
@@ -266,6 +364,12 @@ ARMS: list[Arm] = [
         seeds=3,
         epochs=60,
         figure="F3 d-e",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=[
+            "model.graph_regularization.graph_reg_lambda=0",
+            "trainer.max_epochs=60",
+        ],
+        hours=48,
     ),
     Arm(
         round="3",
@@ -276,6 +380,9 @@ ARMS: list[Arm] = [
         seeds=3,
         epochs=60,
         figure="F3 d-e",
+        config="cgt_s0_r_mask_028",
+        overrides=["trainer.max_epochs=60"],
+        hours=48,
     ),
     Arm(
         round="3",
@@ -286,24 +393,38 @@ ARMS: list[Arm] = [
         seeds=3,
         epochs=60,
         figure="F3 d-e",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=[
+            "model.graph_regularization.graph_reg_lambda=1",
+            "trainer.max_epochs=60",
+        ],
+        hours=48,
     ),
     Arm(
         round="3",
         group="representation",
         name="composite embedding, no penalty",
-        change="embfit_035 (no fitness head), graph_reg_lambda=0",
+        change="emb_040, graph_reg_lambda=0",
         needs_code="",
         seeds=3,
+        epochs=30,
         figure="F3 f",
+        config="cgt_s0_r_kl_emb_040",
+        overrides=["model.graph_regularization.graph_reg_lambda=0"],
+        hours=24,
     ),
     Arm(
         round="3",
         group="representation",
         name="composite embedding, KL 1",
-        change="embfit_035 (no fitness head), graph_reg_lambda=1",
+        change="emb_040, graph_reg_lambda=1",
         needs_code="",
         seeds=3,
+        epochs=30,
         figure="F3 f",
+        config="cgt_s0_r_kl_emb_040",
+        overrides=["model.graph_regularization.graph_reg_lambda=1"],
+        hours=24,
     ),
     Arm(
         round="3",
@@ -314,6 +435,12 @@ ARMS: list[Arm] = [
         seeds=3,
         epochs=30,
         figure="F3 f",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=[
+            "model.hidden_channels=360",
+            "model.graph_regularization.graph_reg_lambda=0",
+        ],
+        hours=48,
     ),
     Arm(
         round="3",
@@ -324,26 +451,38 @@ ARMS: list[Arm] = [
         seeds=3,
         epochs=30,
         figure="F3 f",
+        config="cgt_s0_r_kl_ctrl_013",
+        overrides=[
+            "model.hidden_channels=360",
+            "model.graph_regularization.graph_reg_lambda=1",
+        ],
+        hours=48,
     ),
     Arm(
         round="3",
         group="width",
         name="hidden 360, composite, no penalty",
-        change="hidden_channels=360, embfit_035 (no fitness head), graph_reg_lambda=0",
-        needs_code="re-match preprocessor width",
+        change="emb_w360_041, graph_reg_lambda=0",
+        needs_code="preprocessor re-matched (h = 644)",
         seeds=3,
         epochs=30,
         figure="F3 f",
+        config="cgt_s0_r_kl_emb_w360_041",
+        overrides=["model.graph_regularization.graph_reg_lambda=0"],
+        hours=48,
     ),
     Arm(
         round="3",
         group="width",
         name="hidden 360, composite, KL 1",
-        change="hidden_channels=360, embfit_035 (no fitness head), graph_reg_lambda=1",
-        needs_code="re-match preprocessor width",
+        change="emb_w360_041, graph_reg_lambda=1",
+        needs_code="preprocessor re-matched (h = 644)",
         seeds=3,
         epochs=30,
         figure="F3 f",
+        config="cgt_s0_r_kl_emb_w360_041",
+        overrides=["model.graph_regularization.graph_reg_lambda=1"],
+        hours=48,
     ),
 ]
 
@@ -565,6 +704,67 @@ def wireframe() -> None:
     plt.close(fig)
 
 
+SUBMITTER = osp.join(
+    EXPERIMENT_ROOT, "025-solid-growth", "scripts", "delta_submit_round2.sh"
+)
+LANES = 6
+
+
+def write_submitter(arms: list[Arm]) -> None:
+    """The Delta submitter, one sbatch per run, in `LANES` dependency chains.
+
+    Runs are laid out in table order (round 1b first) and dealt round-robin into lanes,
+    so the six lanes each hold a slice of every round and round 1b's runs are the first
+    to start in every lane. Each lane is chained `after:<prev>+30` (not afterok, so one
+    failed job does not strand the lane). The seed-2 completion run has one seed; the
+    others count from 1. ROUNDS filters (default all), DRY=1 prints only.
+    """
+    runs: list[tuple[Arm, int]] = [
+        (a, sd) for a in arms for sd in ([2] if a.seeds == 1 else range(1, a.seeds + 1))
+    ]
+    lines = [
+        "#!/bin/bash",
+        "# experiments/025-solid-growth/scripts/delta_submit_round2.sh",
+        "# [[experiments.025-solid-growth.scripts.graph_reg_round2_plan]]",
+        "#",
+        "# GENERATED by experiments/025-solid-growth/scripts/graph_reg_round2_plan.py -- do not edit.",
+        "# Submits the next rounds of the graph-regularization study on Delta as",
+        f"# {LANES} dependency chains. RUN ON A DELTA LOGIN NODE FROM THE WORKTREE ROOT, after",
+        "# delta_preflight_025.sh, from a worktree checked out at the commit that carries the",
+        "# k-hop, symmetrize and directed-mask flags (never advance a worktree under a running job).",
+        "#",
+        "#   DRY=1 bash experiments/025-solid-growth/scripts/delta_submit_round2.sh        # print only",
+        "#   ROUNDS=1b bash experiments/025-solid-growth/scripts/delta_submit_round2.sh    # one round",
+        "#         bash experiments/025-solid-growth/scripts/delta_submit_round2.sh        # everything",
+        "set -euo pipefail",
+        'ACCOUNT="${ACCOUNT:-bfjt-delta-gpu}"',
+        'LAUNCHER="experiments/025-solid-growth/scripts/delta_cgt.slurm"',
+        'ROUNDS="${ROUNDS:-1b 2 3}"',
+        'DRY="${DRY:-0}"',
+        '[[ -f "$LAUNCHER" ]] || { echo "run from the worktree root: $LAUNCHER not found" >&2; exit 2; }',
+        f"declare -a PREV=({' '.join(['""'] * LANES)})",
+        "submit() {  # submit <lane> <round> <job-name> <hours> <config> [overrides...]",
+        '  local lane="$1" round="$2" name="$3" hours="$4" cfg="$5"; shift 5',
+        '  [[ " $ROUNDS " == *" $round "* ]] || return 0',
+        '  local cmd=(sbatch --parsable --account="$ACCOUNT" --time="${hours}:00:00" -J "$name")',
+        '  [[ -n "${PREV[$lane]}" ]] && cmd+=(--dependency="after:${PREV[$lane]}+30")',
+        '  cmd+=("$LAUNCHER" "$cfg" "$@")',
+        '  echo "${cmd[*]}"',
+        '  if [[ "$DRY" == "1" ]]; then PREV[$lane]="DRY-$name"; else PREV[$lane]=$("${cmd[@]}"); echo "  -> ${PREV[$lane]}"; fi',
+        "}",
+        "",
+    ]
+    for k, (a, sd) in enumerate(runs):
+        lane = k % LANES
+        name = f"025-r{a.round}-{a.slug}-s{sd}"
+        ov = " ".join(a.overrides + [f"+seed={sd}"])
+        lines.append(f'submit {lane} {a.round} "{name}" {a.hours} {a.config} {ov}')
+    lines += ["", 'echo "lane tails: ${PREV[*]}"']
+    with open(SUBMITTER, "w") as fh:
+        fh.write("\n".join(lines) + "\n")
+    os.chmod(SUBMITTER, 0o755)
+
+
 def main() -> None:
     os.makedirs(RESULTS_DIR, exist_ok=True)
     plan = {
@@ -580,10 +780,12 @@ def main() -> None:
         },
         "total_gpu_h": round(sum(a.gpu_h for a in ARMS)),
         "code_changes": sorted({a.needs_code for a in ARMS if a.needs_code}),
+        "submitter": SUBMITTER,
     }
     with open(osp.join(RESULTS_DIR, "graph_reg_round2_plan.json"), "w") as fh:
         json.dump(plan, fh, indent=1)
     write_table(ARMS)
+    write_submitter(ARMS)
     wireframe()
     print(
         f"{plan['total_runs']} runs, {plan['total_gpu_h']:,} GPU-h; code changes: {plan['code_changes']}"

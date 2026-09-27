@@ -1013,4 +1013,18 @@ carries, which matches the ladder over the same columns (forest 0.113 against 0.
 Cooper's own duplicate agreement of 0.06 against M\"ulleder's retest of 0.20: the
 screen's own reliability bounds what its columns can lend.
 
+Round 212 is read (job 2898, 3 h 03 min): the pool through 256 on a one-block backbone
+of width 36 with nine heads, 84,907 parameters against the width-12 cell's 24,283, the
+width control for the layer-pattern ladder (the mask and the regularizer map the nine
+relations onto nine heads, so the ladder runs at nine). It reads 0.291 (sd 0.023)
+against width 12's 0.279 ($+0.012$ paired, sd 0.032, four of six), top-50 5.26 against
+4.69, ensembled 0.309 with a top-50 of 5.59, the highest ensemble of the study at any
+seed count; the seeds read 0.261 to 0.310 and select at epochs 24 to 95 on validation
+Pearson 0.37 to 0.39. On the covered genes it reads 0.214 against width 12's 0.212, so
+the wider backbone is worth nothing on the strains with a measured profile and the whole
+gain is in ranking the 73 strains without one, 0.142 against 0.095. The regularizer's
+loss is 0.0 at every epoch here too, since one block carries no regularized head: this
+cell is graph-free by construction and is the control the three graph patterns are read
+against (213 to 216).
+
 \input{tables/target_transfer}

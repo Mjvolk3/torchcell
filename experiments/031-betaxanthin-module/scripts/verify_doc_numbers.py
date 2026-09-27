@@ -12547,6 +12547,229 @@ CHECKS: list[Check] = [
         recompute=store_baseline("betaxanthin", "aa_pool", "forest", "mean_spearman"),
         tolerance=0.0006,
     ),
+    # sec:rounds -- round 212, the width control for the layer-pattern ladder.
+    Check(
+        claim="round 212: arm",
+        stated=0.291,
+        recompute=transfer(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: arm sd",
+        stated=0.023,
+        recompute=transfer(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "sd_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: width 12",
+        stated=0.279,
+        recompute=transfer(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: paired",
+        stated=0.012,
+        recompute=transfer(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "mean_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: paired sd",
+        stated=0.032,
+        recompute=transfer(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "sd_difference",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: seeds above",
+        stated=4,
+        recompute=transfer(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 212: arm top-50",
+        stated=5.26,
+        recompute=transfer(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 212: width 12 top-50",
+        stated=4.69,
+        recompute=transfer(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "mean_top50_enrichment",
+            "control",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 212: ensemble",
+        stated=0.309,
+        recompute=ensemble("w231_bxdelaapoolmlp256w36_h36l1p1_e200", "spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: ensemble top-50",
+        stated=5.59,
+        recompute=ensemble(
+            "w231_bxdelaapoolmlp256w36_h36l1p1_e200", "top50_enrichment"
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 212: seed min",
+        stated=0.261,
+        recompute=pair_cells(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "arm",
+            "spearman",
+            "min",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: seed max",
+        stated=0.31,
+        recompute=pair_cells(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "arm",
+            "spearman",
+            "max",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: select epoch min",
+        stated=24,
+        recompute=pair_cells(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "arm",
+            "select_epoch",
+            "min",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 212: select epoch max",
+        stated=95,
+        recompute=pair_cells(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "arm",
+            "select_epoch",
+            "max",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 212: select val pearson min",
+        stated=0.37,
+        recompute=pair_cells(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "arm",
+            "select_val_pearson",
+            "min",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 212: select val pearson max",
+        stated=0.39,
+        recompute=pair_cells(
+            "betaxanthin: pool through 256 on a one-block backbone of width 36 with nine heads against width 12 with four",
+            "arm",
+            "select_val_pearson",
+            "max",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round 212: covered",
+        stated=0.214,
+        recompute=coverage(
+            "w231", "w231_bxdelaapoolmlp256w36_h36l1p1_e200", "mean_spearman_covered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: uncovered",
+        stated=0.142,
+        recompute=coverage(
+            "w231", "w231_bxdelaapoolmlp256w36_h36l1p1_e200", "mean_spearman_uncovered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: width 12 uncovered (reference)",
+        stated=0.095,
+        recompute=coverage(
+            "aapool", "w206_bxdelaapoolmlp256_h12l1p1_e200", "mean_spearman_uncovered"
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 212: parameters",
+        stated=84907,
+        recompute=lambda: float(
+            json.load(
+                open(
+                    osp.join(
+                        RESULTS, "w231_bxdelaapoolmlp256w36_h36l1p1_e200_s2700.json"
+                    )
+                )
+            )["n_parameters"]["total"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 212: width 12 parameters",
+        stated=24283,
+        recompute=lambda: float(
+            json.load(
+                open(
+                    osp.join(RESULTS, "w206_bxdelaapoolmlp256_h12l1p1_e200_s2700.json")
+                )
+            )["n_parameters"]["total"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 212: graph_reg_loss is zero",
+        stated=0.0,
+        recompute=lambda: max(
+            x["graph_reg_loss"]
+            for x in json.load(
+                open(
+                    osp.join(
+                        RESULTS, "w231_bxdelaapoolmlp256w36_h36l1p1_e200_s2700.json"
+                    )
+                )
+            )["history"]
+        ),
+        tolerance=1e-09,
+    ),
 ]
 
 

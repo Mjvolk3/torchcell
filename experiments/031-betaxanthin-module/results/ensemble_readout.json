@@ -5535,6 +5535,86 @@
         "top50_hits": 18.0
       },
       "n_seeds": 6
+    },
+    {
+      "stem": "w231_bxdelaapoolmlp256w36_h36l1p1_e200",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.30310148504228684,
+          "top50_enrichment": 5.79079365079365,
+          "top50_hits": 29.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.26062475256930107,
+          "top50_enrichment": 5.9904761904761905,
+          "top50_hits": 30.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.3101246243181814,
+          "top50_enrichment": 5.79079365079365,
+          "top50_hits": 29.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.3050558078283818,
+          "top50_enrichment": 5.79079365079365,
+          "top50_hits": 29.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.26198490474753233,
+          "top50_enrichment": 3.793968253968254,
+          "top50_hits": 19.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.3051412292460204,
+          "top50_enrichment": 4.393015873015873,
+          "top50_hits": 22.0
+        }
+      ],
+      "mean_single_spearman": 0.29100546729195065,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.2930984134056446,
+          "top50_enrichment": 5.79079365079365,
+          "top50_hits": 29.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.29966539895352184,
+          "top50_enrichment": 5.79079365079365,
+          "top50_hits": 29.0
+        }
+      ],
+      "mean_triple_spearman": 0.2963819061795832,
+      "first_six": {
+        "n": 629,
+        "spearman": 0.3091015438711205,
+        "top50_enrichment": 5.591111111111111,
+        "top50_hits": 28.0
+      },
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.3091015438711205,
+        "top50_enrichment": 5.591111111111111,
+        "top50_hits": 28.0
+      },
+      "n_seeds": 6
     }
   ],
   "note": "Mean prediction over seeds on the pinned records, scored as the cells are; every dump resolved through its result file and checked against it."

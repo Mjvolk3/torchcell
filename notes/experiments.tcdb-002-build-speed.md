@@ -205,3 +205,22 @@ Full 51-dataset generation with the r5 settings submitted as job 2884
 (`KG_CONFIG=kg_uncapped`, same overrides, 32 CPUs / 128 GB, CSVs removed at the end,
 per-label row counts kept). The comparison target is job 2032: 28 h 15 min,
 472,298,282 node rows and 525,064,964 edge rows before BioCypher's dedup.
+
+## 2026.09.27 - r5 at 48 CPUs; full build launched
+
+The two 48-CPU r5 arms ran once two packs finished: job 2881 `fast-writer` 591 s, peak
+114.7 GB; job 2882 `fast-writer-io0.02` 596 s, peak 123.8 GB. The loader-child ratio no
+longer matters once the writer is off the critical path. Same 29,736,977 rows.
+
+<https://wandb.ai/zhao-group/tcdb/runs/br8dmxqf>
+<https://wandb.ai/zhao-group/tcdb/runs/vkyg85je>
+
+Ladder wall on 48 CPUs / 192 GB by round: r0 5,496 s, r1 4,508 s, r2 3,066 s,
+r3 1,489 s, r5 591 s, 9.3x. Per adapter, baseline to r5: Costanzo 2M 2,605 to 413 s,
+DmfKuzmin2018 2,612 to 64 s, TmiKuzmin2020 2,356 to 61 s, the five small datasets
+986 s to 48 s in total.
+
+Full 51-dataset generation resubmitted as job 2889 after job 2884 failed on the
+overrides (the production config does not declare the three knobs, so they take
+hydra's `+` prefix there): `KG_CONFIG=kg_uncapped`, `+adapters.inprocess_max_records=25000
++adapters.single_pass=true +adapters.fast_writer=true`, 32 CPUs / 128 GB.

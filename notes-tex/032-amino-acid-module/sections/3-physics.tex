@@ -153,7 +153,13 @@ database channel 0.027. So the amino-acid profile is a quarter as smooth on the 
 as betaxanthin is (0.06 against 0.24 on the one graph that carries either), close to the
 ratio of the two screens' reliabilities (0.20 against 0.84), and the graphs' own read of
 the profile sits at the level of the annotation (GO 0.058) and of the transformer's
-control (0.049), under the forest over Cooper's peaks (0.093).
+control (0.049), under the forest over Cooper's peaks (0.093). Written as a store
+(\texttt{target\_graph\_label\_store.py}: per graph the nineteen labeled-neighbor
+means, shifted nonnegative, and $\log(1 + n)$ of the count, 200 columns over every
+gene) and read on the ladder (Table~\ref{tab:store-baselines}), it reads 0.020 by
+ridge, 0.002 by nearest neighbors and 0.054 by forest, under the annotation by every
+model and under the one coexpression mean it was built from: two hundred columns
+give the forest nothing the single graph's mean did not carry.
 
 \input{tables/graph_homophily}
 

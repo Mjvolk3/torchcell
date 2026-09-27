@@ -240,7 +240,16 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         },
     },
 }
-REPRESENTATIONS["cooper"] = REPRESENTATIONS["amino_acids"]
+REPRESENTATIONS["cooper"] = dict(REPRESENTATIONS["amino_acids"])
+# The graphs' one-hop label propagation of the Mulleder profile
+# (target_graph_label_store.py --target amino_acids, 2026-09-27): per graph the nineteen
+# labeled-neighbor means shifted nonnegative and log1p of the count, 200 columns. Read
+# on the Mulleder target only; the Cooper ladder keeps its own representation set.
+REPRESENTATIONS["amino_acids"]["graph_label"] = {
+    "store": "SM_aa_graphlabel",
+    "block": "v_deletion",
+    "flux": True,
+}
 PRIMARY_STORE = {
     "betaxanthin": "pfba_glpk_full",
     "amino_acids": "pfba_highs",

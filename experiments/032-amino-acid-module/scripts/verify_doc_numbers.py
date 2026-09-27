@@ -5046,6 +5046,36 @@ CHECKS: list[Check] = [
         recompute=homophily("cooper", "string12_0_database", 1, "spearman_covered"),
         tolerance=0.0006,
     ),
+    Check(
+        claim="ladder: graph label ridge",
+        stated=0.02,
+        recompute=lambda m="ridge": float(
+            json.load(open(osp.join(RESULTS, "store_baselines_amino_acids.json")))[
+                "representations"
+            ]["graph_label"][m]["selected_on_val"]["test_pinned"]["mean_spearman"]
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: graph label knn",
+        stated=0.002,
+        recompute=lambda m="knn": float(
+            json.load(open(osp.join(RESULTS, "store_baselines_amino_acids.json")))[
+                "representations"
+            ]["graph_label"][m]["selected_on_val"]["test_pinned"]["mean_spearman"]
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="ladder: graph label forest",
+        stated=0.054,
+        recompute=lambda m="forest": float(
+            json.load(open(osp.join(RESULTS, "store_baselines_amino_acids.json")))[
+                "representations"
+            ]["graph_label"][m]["selected_on_val"]["test_pinned"]["mean_spearman"]
+        ),
+        tolerance=0.0006,
+    ),
 ]
 
 

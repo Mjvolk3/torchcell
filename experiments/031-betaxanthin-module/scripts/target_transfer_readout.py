@@ -1009,6 +1009,42 @@ PAIRS = [
         "w206_bxdelaapoolmlp256_h12l1p1_e200",
     ),
     (
+        "amino acids: the betaxanthin score through a hidden layer of 256 against the score in the linear affine",
+        "mulleder19",
+        "w225_aadelbxscoremlp256_h12l1p1_e200",
+        "w203_aadelbxscore_h12l1p1_e200",
+    ),
+    (
+        "amino acids: the betaxanthin score through a hidden layer of 256 against GO alone",
+        "mulleder19",
+        "w225_aadelbxscoremlp256_h12l1p1_e200",
+        "w170_aadelgo_h12l1p1_e200",
+    ),
+    (
+        "amino acids: Cooper's peaks through a hidden layer of 256 against the same columns linear",
+        "mulleder19",
+        "w226_aadelcooperpoolmlp256_h12l1p1_e200",
+        "w227_aadelcooperpool_h12l1p1_e200",
+    ),
+    (
+        "amino acids: Cooper's peaks through a hidden layer of 256 against GO alone",
+        "mulleder19",
+        "w226_aadelcooperpoolmlp256_h12l1p1_e200",
+        "w170_aadelgo_h12l1p1_e200",
+    ),
+    (
+        "amino acids: Cooper's peaks in the linear affine against GO alone",
+        "mulleder19",
+        "w227_aadelcooperpool_h12l1p1_e200",
+        "w170_aadelgo_h12l1p1_e200",
+    ),
+    (
+        "amino acids: Cooper's peaks in the linear affine against the control",
+        "mulleder19",
+        "w227_aadelcooperpool_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
         "betaxanthin: measured amino-acid pool through a hidden layer of 256 under the release rule (the slot frozen until epoch 5 and validation Pearson 0.15) against the slot from epoch 0",
         "betaxanthin",
         "w229_bxdelaapoolmlp256rel_h12l1p1_e200",

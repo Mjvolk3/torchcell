@@ -226,6 +226,12 @@ def aa_seed_level(stem: str, which: str):
         d = json.load(open(osp.join(RESULTS, "ensemble_readout.json")))
         a = next(q for q in d["arms"] if q["stem"] == stem)
         v = np.array([x["spearman"] for x in a["single"]], dtype=float)
+        if which == "first6":
+            return float(v[:6].mean())
+        if which == "last6":
+            return float(v[6:].mean())
+        if which == "last6_sd":
+            return float(v[6:].std(ddof=1))
         if which == "mean":
             return float(v.mean())
         if which == "sd":
@@ -496,6 +502,43 @@ CHECKS: list[Check] = [
           recompute=lambda: float(min(r["select_epoch"] for r in next(a for a in json.load(open(osp.join(RESULTS, "go_models_amino_acids_bxscore_h1024_e400.json")))["arms"] if a["arm"] == "store_mlp")["seeds"])), tolerance=0.5),
     Check(claim="score mlp e400: score alone 1024 select epoch max", stated=384,
           recompute=lambda: float(max(r["select_epoch"] for r in next(a for a in json.load(open(osp.join(RESULTS, "go_models_amino_acids_bxscore_h1024_e400.json")))["arms"] if a["arm"] == "store_mlp")["seeds"])), tolerance=0.5),
+    # sec:rounds -- round 195, twelve seeds of the score alone.
+    Check(claim="round 195: score alone second six", stated=0.053,
+          recompute=aa_seed_level("w203_aadelbxscore_h12l1p1_e200", "last6"), tolerance=0.0006),
+    Check(claim="round 195: score alone second six sd", stated=0.006,
+          recompute=aa_seed_level("w203_aadelbxscore_h12l1p1_e200", "last6_sd"), tolerance=0.0006),
+    Check(claim="round 195: score alone first six", stated=0.060,
+          recompute=aa_seed_level("w203_aadelbxscore_h12l1p1_e200", "first6"), tolerance=0.0006),
+    Check(claim="round 195: score alone twelve seeds", stated=0.056,
+          recompute=aa_seed_level("w203_aadelbxscore_h12l1p1_e200", "mean"), tolerance=0.0006),
+    Check(claim="round 195: score alone twelve-seed sd", stated=0.012,
+          recompute=aa_seed_level("w203_aadelbxscore_h12l1p1_e200", "sd"), tolerance=0.0006),
+    Check(claim="round 195: twelve-seed min", stated=0.036,
+          recompute=aa_seed_level("w203_aadelbxscore_h12l1p1_e200", "min"), tolerance=0.0006),
+    Check(claim="round 195: twelve-seed max", stated=0.080,
+          recompute=aa_seed_level("w203_aadelbxscore_h12l1p1_e200", "max"), tolerance=0.0006),
+    Check(claim="round 195: vs GO alone twelve seeds", stated=-0.001,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone, twelve seeds", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 195: vs GO alone twelve seeds sd", stated=0.011,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone, twelve seeds", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 195: vs GO alone twelve seeds above", stated=4,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone, twelve seeds", "n_positive"), tolerance=0.5),
+    Check(claim="round 195: GO alone twelve-seed level (pair)", stated=0.057,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against GO alone, twelve seeds", "mean_spearman", "control"), tolerance=0.0006),
+    Check(claim="round 195: vs control twelve seeds", stated=0.008,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the control, twelve seeds", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 195: vs control twelve seeds sd", stated=0.017,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the control, twelve seeds", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 195: vs control twelve seeds above", stated=7,
+          recompute=transfer("amino acids: measured betaxanthin score alone in the affine against the control, twelve seeds", "n_positive"), tolerance=0.5),
+    Check(claim="round 195: twelve-seed ensemble", stated=0.072,
+          recompute=ensemble("w203_aadelbxscore_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
+    Check(claim="round 195: control twelve-seed ensemble", stated=0.067,
+          recompute=ensemble("w141_aadel_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
+    Check(claim="round 195: GO twelve-seed ensemble", stated=0.058,
+          recompute=ensemble("w170_aadelgo_h12l1p1_e200", "spearman", "all_seeds"), tolerance=0.0006),
+    Check(claim="round 195: spread ratio to GO alone (six times)", stated=6,
+          recompute=lambda: transfer("amino acids: measured betaxanthin score alone in the affine against GO alone, twelve seeds", "sd_spearman", "arm")() / transfer("amino acids: measured betaxanthin score alone in the affine against GO alone, twelve seeds", "sd_spearman", "control")(), tolerance=0.6),
     # sec:concordance -- the strain's betaxanthin score as an input (2026-09-25).
     Check(claim="ladder: betaxanthin score ridge", stated=0.034,
           recompute=store_baseline("amino_acids", "bx_score", "ridge", "mean_spearman"), tolerance=0.0006),

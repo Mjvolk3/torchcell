@@ -124,5 +124,9 @@ the head it enters. The perceptron with two slots, GO linear beside the pool's h
 layer, reads 0.265, above the shared layer (0.240) and the pool alone (0.236) at every
 width, and holds under depth where the pool alone falls to 0.19: the annotation adds
 to the pool when the two do not share a hidden unit. That two-slot head inside the
-transformer is the next arm. Cells queued: the pool through 512 (192) and 128 (194),
-six more seeds of 256 (193), 256 with a 400-epoch budget (196).
+transformer is the arm in flight. The width curve of the pool's hidden read is 0.240,
+0.262, 0.279 and 0.243 at 64, 128, 256 and 512 on the same seeds (192, 194): a
+maximum at 256, which twelve seeds hold at 0.278 with a standard error of 0.007,
+$+0.075$ over GO alone on twelve of twelve, with a twelve-seed ensemble of 0.296 (193).
+Cells queued: 256 with a 400-epoch budget (196), the two-slot head at 64, 256 and 128
+(197, 198, 200), the three families with two slots (199).

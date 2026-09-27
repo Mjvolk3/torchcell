@@ -4101,7 +4101,13 @@
         2702,
         2703,
         2704,
-        2705
+        2705,
+        2706,
+        2707,
+        2708,
+        2709,
+        2710,
+        2711
       ],
       "single": [
         {
@@ -4139,9 +4145,45 @@
           "spearman": 0.2422963430784074,
           "top50_enrichment": 4.393015873015873,
           "top50_hits": 22.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2716258889076807,
+          "top50_enrichment": 4.193333333333333,
+          "top50_hits": 21.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.26783698078168056,
+          "top50_enrichment": 4.193333333333333,
+          "top50_hits": 21.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.31304305098772844,
+          "top50_enrichment": 5.591111111111111,
+          "top50_hits": 28.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.3107393482440316,
+          "top50_enrichment": 5.79079365079365,
+          "top50_hits": 29.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.24070757585182465,
+          "top50_enrichment": 3.3946031746031746,
+          "top50_hits": 17.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.26010320120473734,
+          "top50_enrichment": 3.9936507936507937,
+          "top50_hits": 20.0
         }
       ],
-      "mean_single_spearman": 0.2787841560908072,
+      "mean_single_spearman": 0.27806341521021055,
       "n_constant": 0,
       "triples": [
         {
@@ -4166,11 +4208,11 @@
       },
       "all_seeds": {
         "n": 629,
-        "spearman": 0.28745557096999586,
+        "spearman": 0.295999832193163,
         "top50_enrichment": 5.191746031746032,
         "top50_hits": 26.0
       },
-      "n_seeds": 6
+      "n_seeds": 12
     },
     {
       "stem": "w207_bxdelgopfbamomaaapoolmlp_h12l1p1_e200",
@@ -4409,6 +4451,166 @@
         "spearman": 0.2065814034341573,
         "top50_enrichment": 4.592698412698413,
         "top50_hits": 23.0
+      },
+      "n_seeds": 6
+    },
+    {
+      "stem": "w211_bxdelaapoolmlp512_h12l1p1_e200",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.18072145584873678,
+          "top50_enrichment": 1.5974603174603175,
+          "top50_hits": 8.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2527203360617154,
+          "top50_enrichment": 3.3946031746031746,
+          "top50_hits": 17.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2814644811272762,
+          "top50_enrichment": 5.9904761904761905,
+          "top50_hits": 30.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.18595943800140127,
+          "top50_enrichment": 5.3914285714285715,
+          "top50_hits": 27.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2650866531799093,
+          "top50_enrichment": 3.9936507936507937,
+          "top50_hits": 20.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2891818596951605,
+          "top50_enrichment": 5.79079365079365,
+          "top50_hits": 29.0
+        }
+      ],
+      "mean_single_spearman": 0.24252237065236656,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.2821354673733842,
+          "top50_enrichment": 5.591111111111111,
+          "top50_hits": 28.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.267577549181146,
+          "top50_enrichment": 5.79079365079365,
+          "top50_hits": 29.0
+        }
+      ],
+      "mean_triple_spearman": 0.2748565082772651,
+      "first_six": {
+        "n": 629,
+        "spearman": 0.27826901461221426,
+        "top50_enrichment": 5.591111111111111,
+        "top50_hits": 28.0
+      },
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.27826901461221426,
+        "top50_enrichment": 5.591111111111111,
+        "top50_hits": 28.0
+      },
+      "n_seeds": 6
+    },
+    {
+      "stem": "w213_bxdelaapoolmlp128_h12l1p1_e200",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.2555025101207432,
+          "top50_enrichment": 3.594285714285714,
+          "top50_hits": 18.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.27873834333182396,
+          "top50_enrichment": 5.3914285714285715,
+          "top50_hits": 27.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.29002875379795573,
+          "top50_enrichment": 4.992063492063492,
+          "top50_hits": 25.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2140395975914897,
+          "top50_enrichment": 3.9936507936507937,
+          "top50_hits": 20.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.250927042752713,
+          "top50_enrichment": 3.594285714285714,
+          "top50_hits": 18.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.28403486717461984,
+          "top50_enrichment": 5.591111111111111,
+          "top50_hits": 28.0
+        }
+      ],
+      "mean_single_spearman": 0.2622118524615576,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.2876204845856401,
+          "top50_enrichment": 5.191746031746032,
+          "top50_hits": 26.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.2665558562898391,
+          "top50_enrichment": 4.792380952380952,
+          "top50_hits": 24.0
+        }
+      ],
+      "mean_triple_spearman": 0.2770881704377396,
+      "first_six": {
+        "n": 629,
+        "spearman": 0.2786601781356371,
+        "top50_enrichment": 5.191746031746032,
+        "top50_hits": 26.0
+      },
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.2786601781356371,
+        "top50_enrichment": 5.191746031746032,
+        "top50_hits": 26.0
       },
       "n_seeds": 6
     }

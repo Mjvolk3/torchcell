@@ -534,9 +534,9 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
-| B55 | 192 | w211 | del + the pool through 512 | job 2868, running |
-| B56 | 193 | w212 | w206 seeds 2706 to 2711 | job 2869, running |
-| B57 | 194 | w213 | del + the pool through 128 | job 2870, running |
+| B55 | 192 | w211 | del + the pool through 512 | 0.243 (sd 0.048); vs 256 -0.036 (1/6); vs 64 +0.003 (3/6); ens 0.278 / 5.59 |
+| B56 | 193 | w212 | w206 seeds 2706 to 2711 | second six 0.277; twelve 0.278 (sem 0.007); vs GO +0.075 (12/12); ens 0.296 / 5.19 |
+| B57 | 194 | w213 | del + the pool through 128 | 0.262 (sd 0.028); vs 64 +0.022 (4/6); vs 256 -0.017 (1/6); ens 0.279 / 5.19 |
 | B59 | 196 | w215 | del + the pool through 256, 400 epochs | job 2873, pending |
 
 ## 2026.09.26 - The pool through a perceptron on CPU: the width sweep
@@ -556,3 +556,15 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 |---|---|---|---|---|
 | B60 | 197 | w216 | del + two slots: GO linear, pool through 64 | job 2877, pending |
 | B61 | 198 | w217 | del + two slots: GO linear, pool through 256 | job 2878, pending |
+
+## 2026.09.26 - B55 to B57 read: the width curve peaks at 256; B62, B63 queued
+
+- B55 (w211, 512, job 2868, 3 h 35 min): 0.243 (sd 0.048) vs 256 -0.036 (1/6), vs 64 +0.003 (3/6); ensemble 0.278 / 5.59; seeds 0.181 to 0.289, epochs 2 to 91. Round 192.
+- B56 (w212 = w206 seeds 2706 to 2711, job 2869, 3 h 34 min): second six 0.277 (sd 0.029); twelve 0.278 (sd 0.025, sem 0.007), seeds 0.241 to 0.313, epochs 29 to 141; twelve-seed ensemble 0.296 / 5.19; paired +0.024 vs 64 (9/12), +0.075 vs GO alone (12/12), +0.202 vs the control (12/12); top-50 4.61 vs GO's 4.99. Round 193.
+- B57 (w213, 128, job 2870, 3 h 34 min): 0.262 (sd 0.028) vs 64 +0.022 (4/6), vs 256 -0.017 (1/6); ensemble 0.279 / 5.19; seeds 0.214 to 0.290, epochs 21 to 51. Round 194. Width curve on the same six seeds: 0.240 / 0.262 / 0.279 / 0.243 at 64 / 128 / 256 / 512, ensembles 0.292 / 0.279 / 0.288 / 0.278.
+- Queued (user, 16:xx: "we only now have 3 gpu up"): B62 = w218 the three families with two slots (GO + both flux programs, 10,716 columns linear; the pool through 256; store YPD_bx_gopfbamomaaapool; job 2879; vs w197, w207, w217, w206) and B63 = w219 the two-slot head at 128 (job 2880; vs w213, w216, w217).
+
+| round | 028 | pack | arm | result |
+|---|---|---|---|---|
+| B62 | 199 | w218 | del + two slots: GO and both flux programs linear, pool through 256 | job 2879, running |
+| B63 | 200 | w219 | del + two slots: GO linear, pool through 128 | job 2880, pending |

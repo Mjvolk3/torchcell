@@ -955,6 +955,48 @@ PAIRS = [
         "w167_bxdelgo_h12l1p1_e200",
     ),
     (
+        "betaxanthin: three families with two slots, GO and both flux programs linear beside the pool through 256, against the same columns in the linear affine",
+        "betaxanthin",
+        "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200",
+        "w197_bxdelgopfbamomaaapool_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: three families with two slots against the same columns through one shared layer of 64",
+        "betaxanthin",
+        "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200",
+        "w207_bxdelgopfbamomaaapoolmlp_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: three families with two slots against GO linear beside the pool through 256",
+        "betaxanthin",
+        "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200",
+        "w217_bxdelgolinaapoolmlp256_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: three families with two slots against the pool alone through 256",
+        "betaxanthin",
+        "w218_bxdelgopfbamomalinaapoolmlp256_h12l1p1_e200",
+        "w206_bxdelaapoolmlp256_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head, GO linear beside the pool through 128, against the pool alone through 128",
+        "betaxanthin",
+        "w219_bxdelgolinaapoolmlp128_h12l1p1_e200",
+        "w213_bxdelaapoolmlp128_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 64",
+        "betaxanthin",
+        "w219_bxdelgolinaapoolmlp128_h12l1p1_e200",
+        "w216_bxdelgolinaapoolmlp_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: two-slot head, GO linear beside the pool through 128, against the two slots at 256",
+        "betaxanthin",
+        "w219_bxdelgolinaapoolmlp128_h12l1p1_e200",
+        "w217_bxdelgolinaapoolmlp256_h12l1p1_e200",
+    ),
+    (
         "amino acids: measured betaxanthin score alone in the affine against GO alone, twelve seeds",
         "mulleder19",
         "w203_aadelbxscore_h12l1p1_e200",

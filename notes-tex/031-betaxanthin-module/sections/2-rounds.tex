@@ -835,4 +835,30 @@ first 200 epochs' peak in the second 200, on the seed that selected at 197 as on
 others. So round 180's level was not a lower bound set by the budget, and the
 selection at 197 was a peak, not a truncation.
 
+Round 192 is read (job 2868, 3 h 35 min): the pool through a hidden layer of 512. It
+reads 0.243 (sd 0.048) against the layer of 256 at 0.279 ($-0.036$ paired, sd 0.059,
+one of six) and against the layer of 64 at 0.240 ($+0.003$, sd 0.072, three of six),
+top-50 4.36, ensembled 0.278 with a top-50 of 5.59; the seeds read 0.181 to 0.289 and
+select at epochs 2 to 91 on validation Pearson 0.36 to 0.39. The width past 256 gives
+back what 256 gained and brings the layer of 64's seed spread with it.
+
+Round 193 is read (job 2869, 3 h 34 min): six more seeds of the pool through 256. The
+second six read 0.277 (sd 0.029) against the first six's 0.279, and over twelve the arm
+reads 0.278 (sd 0.025, standard error 0.007), seeds 0.241 to 0.313, selecting at
+epochs 29 to 141; the twelve-seed ensemble reads 0.296 with a top-50 of 5.19. Paired
+over the same twelve seeds the arm is $+0.024$ over the layer of 64 on nine of twelve,
+$+0.075$ over GO alone on twelve of twelve and $+0.202$ over the affine-free control on
+twelve of twelve, with a top-50 of 4.61 against the annotation's 4.99. The level holds
+at its second size with a band half the layer of 64's.
+
+Round 194 is read (job 2870, 3 h 34 min): the pool through a hidden layer of 128. It
+reads 0.262 (sd 0.028) against the layer of 64 at 0.240 ($+0.022$ paired, sd 0.069,
+four of six) and against 256 at 0.279 ($-0.017$, sd 0.042, one of six), top-50 4.53,
+ensembled 0.279 with a top-50 of 5.19; the seeds read 0.214 to 0.290 and select at
+epochs 21 to 51 on validation Pearson 0.36 to 0.41. So the width curve of the pool's
+hidden read is 0.240, 0.262, 0.279, 0.243 at 64, 128, 256 and 512 on the same six
+seeds: a maximum at 256, which twelve seeds hold at 0.278, and the ensembles 0.292,
+0.279, 0.288 and 0.278 within 0.015 of one another at every width, so the width sets
+the single-seed level and its spread more than what six seeds averaged read.
+
 \input{tables/target_transfer}

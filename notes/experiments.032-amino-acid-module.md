@@ -303,9 +303,10 @@ Script `experiments/032-amino-acid-module/scripts/betaxanthin_amino_acid_correla
 
 | round | 028 | pack | arm | result |
 |---|---|---|---|---|
-| A25 | 195 | w214 | w203 seeds 2706 to 2711 | job 2871, pending |
+| A25 | 195 | w214 | w203 seeds 2706 to 2711 | second six 0.053; twelve 0.056 (sd 0.012); vs GO -0.001 (4/12); twelve-seed ens 0.072 |
 
 ## 2026.09.26 - The betaxanthin score through a perceptron on CPU
 
 - MEASURED (`slurm/output/032-scoremlp_direct.out`, `results/go_models_amino_acids_bxscore_h{16,256,1024}.json`, seconds a seed, run directly on 8 threads): the score alone through one ReLU hidden layer reads 0.050 / 0.054 / 0.055 at widths 16 / 256 / 1024 (the two wider select at epoch 198, peaks not established); GO + score reads 0.056 / 0.064 / 0.066 (sd 0.002 at 1024, ensemble 0.066, epochs 10 to 11). Against the GO perceptron alone (0.054) the score adds 0.012 at 1024, the forest's direction (+0.015), where the transformer's affine gave +0.001 beside GO under one encoding (round 189). The forest over GO + score (0.078) remains the highest read on the target. New table `tables/score_mlp_sweep.tex` (`score_mlp_sweep()` in `target_notes_tex_tables.py`), verifier helper `score_mlp()` (429 checks). Written into the 032 document (section 3).
 - MEASURED, the score perceptron at 400 epochs (`slurm/output/032-scoremlp_e400_direct.out`, `results/go_models_amino_acids_bxscore_h{256,1024}_e400.json`): score alone 0.055 (256, selects at 398) and 0.053 (1024, selects at 321 to 384); GO + score unchanged (0.064, 0.066). The longer budget finds no higher peak. Written into the 032 document (section 3).
+- A25 read (w214 = w203 seeds 2706 to 2711, job 2871, 3 h 30 min): second six 0.053 (sd 0.006) vs the first six's 0.060; twelve 0.056 (sd 0.012), seeds 0.036 to 0.080; paired over twelve -0.001 vs GO alone (4/12), +0.008 vs the control (7/12); twelve-seed ensemble 0.072 (control 0.067, GO 0.058). The score alone holds the annotation's single-seed level with six times its spread; its ensemble stays the highest on the target. Written as round 195.

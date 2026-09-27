@@ -109,15 +109,42 @@ stitches each continuation onto its source. The continuation started on 2026-09-
 read when it finishes.
 \src{experiments/019-simb-multimodal/results/v16_joint_readout.json, v16_joint_expr_readout.json, v16_resume_map.tsv}
 
-\pfstep{Collapse is the recurring phenomenon, and it decides calls} A run whose validation
-Pearson decays to near zero and stays there: one of 24 in v13, four of six expression-only
-runs in v16, two of 36 in v17 (\texttt{tnv3dbe4}, self indicator, split 1 seed 0, and
-\texttt{sylu3gsw}), none of 36 in v18 so far, none of the 24 joint or proteome-only runs in
-v16. Which arm collapses shows no pattern across rounds, and a single collapsed pair moved
-v17's twelve-pair contrast from above the bar to below it. Any claim built on a paired
-contrast has to state in advance how a collapsed run is scored; the template currently
-scores it as it stands. What causes the collapse is not measured.
-\src{experiments/019-simb-multimodal/results/v13_split_readout.json, v16_joint_expr_readout.json, v17_locality_readout.json, v18_hygiene_readout.json}
+\pfstep{Collapse is two phenomena, and one collapsed pair decides a call} Read from the
+prediction spread of every run (\file{val/<head>/pred_sd_ratio}, the sd of the predictions
+over that of the targets) and its training Pearson, the 114 first-segment runs of v13, v16,
+v17 and v18 hold seven failures of two kinds. Four runs never launched: the spread stays at
+zero from epoch 5, the head predicts each gene's median, the validation loss sits at the
+pinball floor of $0.2525$ to $0.258$ and the gradient norm decays (\texttt{825on260} in v13;
+\texttt{hyasw3nx}, \texttt{c1n1jmp3}, \texttt{o3zk5y0i} in v16). Three launched and then
+decayed while their training Pearson kept rising (\texttt{m13meldl} in v16, peak $0.051$;
+\texttt{sylu3gsw} in v17, training Pearson $0.22$ at epoch 900 with validation at $0.009$;
+\texttt{p204pwqb}, the no-mask arm on split 3 seed 0 of v18, $0.135$ to $0.036$, which is
+that partition's $-0.028$). The self-indicator run \texttt{tnv3dbe4} is neither: it launched
+late, spread $0.02$ until epoch 250, and ended at $0.115$. None of the twelve joint or
+proteome-only heads of v16 failed. A spread below $0.01$ at epoch 200 flags every
+never-launched run and no other run among these. A single failed pair moved v17's
+twelve-pair contrast from above the bar to below it, so a claim built on a paired contrast
+has to state in advance how a failed run is scored; the template scores it as it stands.
+What causes either failure is not measured.
+\src{experiments/019-simb-multimodal/results/v13_split_readout.json, v16_joint_expr_readout.json, v17_locality_readout.json, v18_hygiene_readout.json; W\&B histories read 2026-09-27}
+
+\pfstep{The v16 expression-only arm is not the expression reference it was meant to be}
+Its configuration equals v17's reference except for the store (\file{fig3_proteome} with
+\file{require_modalities} empty) and an inactive auxiliary head, and it trains on the same
+1{,}244 expression strains; but with the filter off it iterates the whole union of 3{,}726
+genotypes, 117 optimizer steps per epoch (global step 58{,}500 at epoch 500) against 40 in
+v17, so about eleven rows of every batch of 32 carry an expression label and the rest are
+masked out of the loss. In that regime it failed four of six against three of 108
+expression-only runs elsewhere (Fisher exact $p = 8 \times 10^{-5}$). The joint arm's
+expression head, the unmasked \texttt{per\_gene\_aux}, sees the same eleven labeled rows
+per step and the proteome loss on about 31, and launched six of six ($p = 0.061$ against
+the expression-only arm). So v16 measures that the proteome loss keeps the trunk training
+at a labeled batch of eleven; it does not measure joint training against an expression
+model trained the way v13 and v17 were. The configuration note records the choice as
+``differ in nothing but the active heads''; its consequence for the optimizer was not
+anticipated. The two expression heads also differ in the reveal schedule, the single-head
+one masked and the joint one not.
+\src{W\&B configs and summaries of torchcell_019_prot_v16 (m13meldl, jpac6vp7, 2pyzsr5m) and torchcell_019_expr_v17 (ku0hycxr), read 2026-09-27}
 
 \pfstep{Cluster rules that shaped these rounds} Every \file{cabbi} submission carries a
 walltime of at most five days; the scheduler accepted a ten-day job and the rule is

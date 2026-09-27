@@ -49,6 +49,11 @@ memory reduction factor in its adapter config) got 12,500-record chunks on job 2
 30 workers plus their loader children took anonymous memory from 36 GB to 104 GB in
 20 s and the container was OOM-killed at 128 GB. The budget divides by the sampled
 resolved record size so a chunk of big records is proportionally shorter.
+
+r7: the budget is a per-adapter attribute (``single_pass_chunk_budget_bytes``) because
+48 MiB cut Costanzo dmf to 2,355-record chunks on job 2905 and its node pass took
+5,317 s against 2,794 s at 6,250 records on job 2889 (same code otherwise, same box):
+2.7x more chunks, and the pool is rebuilt every chunks_per_worker x workers of them.
 """
 SINGLE_PASS_MIN_CHUNK = 256
 """Phase names of the r3 single-pass traversals (one per adapter per kind)."""
@@ -114,6 +119,7 @@ class CellAdapter:
         # keeps the BioCypherNode/Edge objects flowing to bc.write_nodes/write_edges.
         self.row_specs: RowSpecs | None = None
         self.chunks_per_worker = CHUNKS_PER_WORKER
+        self.single_pass_chunk_budget_bytes = SINGLE_PASS_CHUNK_BUDGET_BYTES
         self.event = 0
         wandb.init()
         self.log_method_table()
@@ -363,7 +369,8 @@ class CellAdapter:
         if method_name in (SINGLE_PASS_NODES, SINGLE_PASS_EDGES):
             record_bytes = self._estimate_record_bytes()
             budget_chunk = max(
-                SINGLE_PASS_MIN_CHUNK, SINGLE_PASS_CHUNK_BUDGET_BYTES // record_bytes
+                SINGLE_PASS_MIN_CHUNK,
+                self.single_pass_chunk_budget_bytes // record_bytes,
             )
             if budget_chunk < chunk_size:
                 log.info(

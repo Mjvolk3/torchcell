@@ -16,6 +16,7 @@ import os
 import os.path as osp
 import sys
 
+import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -369,6 +370,107 @@ def t10_reliability() -> None:
     )
 
 
+def t11_unification() -> None:
+    """One row per dataset: what it measures, what it reports, how it is mapped."""
+    dist = pd.read_csv(osp.join(RESULTS, "dataset_distributions.csv")).set_index(
+        "dataset"
+    )
+    geno = pd.read_csv(osp.join(RESULTS, "genotype_overlap.csv")).set_index("dataset")
+    dose = pd.read_csv(osp.join(RESULTS, "dose_axis_summary.csv")).set_index("dataset")
+    rows = []
+    for name in ORDER:
+        d, g = dist.loc[name], geno.loc[name]
+        sick = int(d["sick_sign"])
+        rows.append(
+            {
+                "dataset": LABEL[name],
+                "genes x compounds": f"{int(g['genes']):,} x {int(g['compounds']):,}",
+                "cells": f"{int(g['cells']):,}",
+                "dose basis": str(dose.loc[name, "dose_bases"]).replace("|", ", ")
+                if isinstance(dose.loc[name, "dose_bases"], str)
+                else "none",
+                "reports": d["measurement_type"].replace("_", " "),
+                "sd": f"{d['sd']:.2f}",
+                "skew": f"{d['skew']:+.1f}",
+                "sick": "negative" if sick < 0 else "positive",
+                "orient": f"{sick:+d}",
+            }
+        )
+    write(
+        "t11-unification",
+        tex_table(pd.DataFrame(rows), align="lllllrrll"),
+        "dataset_distributions.csv, genotype_overlap.csv and dose_axis_summary.csv from "
+        "dataset_joinability.py, exploratory_overlap_panels.py and "
+        "environment_axis_coverage.py",
+    )
+
+
+def t12_cross_overlap() -> None:
+    """Pairwise shared cells, and agreement before and after orienting."""
+    ov = pd.read_csv(osp.join(RESULTS, "cross_dataset_pair_overlap.csv"))
+    ov = ov.sort_values("shared_cells", ascending=False)
+    rows = [
+        {
+            "pair": f"{LABEL[r['a']]} / {LABEL[r['b']]}",
+            "genes": f"{int(r['shared_genes']):,}",
+            "compounds": f"{int(r['shared_compounds']):,}",
+            "cells": f"{int(r['shared_cells']):,}",
+            r"$\rho$ as served": f"{r['spearman_raw']:+.3f}",
+            "sign predicted": f"{int(r['sign_predicted']):+d}",
+            r"$\rho$ oriented": f"{r['spearman_oriented']:.3f}",
+        }
+        for _, r in ov.iterrows()
+    ]
+    write(
+        "t12-cross-overlap",
+        tex_table(pd.DataFrame(rows), align="lrrrrrr", raw_header=True),
+        "cross_dataset_pair_overlap.csv from dataset_joinability.py",
+    )
+
+
+def t13_per_dataset_baselines() -> None:
+    """Best ridge and kNN per dataset on the centered target, against the null."""
+    path = osp.join(RESULTS, "per_dataset_baselines_summary.csv")
+    s = pd.read_csv(path)
+    s = s[(s["target"] == "centered") & s["spearman_median"].notna()]
+    rows = []
+    for name in ORDER:
+        d = s[s["dataset"] == name]
+        if d.empty:
+            continue
+        ridge = d[d["model"] == "ridge"]
+        knn = d[d["model"].str.startswith("knn")]
+        null = d[d["model"] == "random_neighbor"]
+        best = ridge.loc[ridge["spearman_median"].idxmax()]
+        cap = float(best["ceiling_median"])
+        rows.append(
+            {
+                "dataset": LABEL[name],
+                "scheme": "LOCO"
+                if "leave_one" in str(best["scheme"])
+                else str(best["scheme"]).split("_")[0],
+                "folds": int(best["folds"]),
+                "null": f"{null['spearman_median'].median():.3f}"
+                if not null.empty
+                else "",
+                "best kNN": f"{knn['spearman_median'].max():.3f}"
+                if not knn.empty
+                else "",
+                "best ridge": f"{best['spearman_median']:.3f}",
+                "encoder": str(best["features"]).replace("_", " "),
+                "ceiling": f"{cap:.2f}" if np.isfinite(cap) else "none served",
+                "of ceiling": f"{best['spearman_median'] / cap:.2f}"
+                if np.isfinite(cap)
+                else "",
+            }
+        )
+    write(
+        "t13-per-dataset-baselines",
+        tex_table(pd.DataFrame(rows), align="llrrrrlrr"),
+        "per_dataset_baselines_summary.csv from per_dataset_baselines.py",
+    )
+
+
 def main() -> None:
     t1_datasets()
     t2_chemical_space()
@@ -380,6 +482,9 @@ def main() -> None:
     t8_physical_axis()
     t9_baselines()
     t10_reliability()
+    t11_unification()
+    t12_cross_overlap()
+    t13_per_dataset_baselines()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,130 @@
+%% notes-tex/031-unified-representation/sections/3b-joinability.tex
+
+\section{Can these datasets be joined at all\secstatus{todo}}
+\label{sec:joinability}
+
+Pooling is an assertion about the LABEL, not only about the input. Two records that measure
+the same gene under the same compound have to mean the same thing before one loss can score
+them both. This section tests that assertion on the served records rather than assuming it,
+and the test changes what the pooled target has to look like.
+
+A cell here is one (gene, compound) pair. A record enters only if it doses exactly one
+compound carrying an InChIKey and perturbs exactly one gene, so nothing is averaged across
+combinations; Vanacloig's three host deletions are stripped first, leaving the queried gene.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/dataset_joinability.py ->
+%% results/dataset_distributions.csv and results/cross_dataset_pair_overlap.csv, rendered by
+%% notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{What each dataset measures and reports, and the sign its source declares for a sick
+strain. The standard deviation and skew are of the served response over its cells. The last
+column is the factor the orientation step applies.}
+\label{tab:unification}
+\input{tables/t11-unification}
+\end{table}
+
+\notesec{The scales differ by a factor of twenty}
+The served standard deviations run from 0.38 for Hillenmeyer HET to 7.50 for Wildenhain
+(Table~\ref{tab:unification}, Figure~\ref{fig:joinability}a and b). A pooled squared-error
+loss weights a record by the square of its residual in native units, so without a per-source
+scale the objective is dominated by Wildenhain and by the tail of Hillenmeyer HOM, whatever
+the record counts are. Standardizing each source by its own training-split statistics is
+therefore not a cosmetic step, and the statistics come from the training split alone so that
+no held-out value informs the scale.
+
+\notesec{The polarity is not shared, and this is the finding that matters}
+A more negative number does not mean a sicker strain in every dataset. Each loader records
+its source's own definition verbatim, and those definitions split the five into two groups.
+Vanacloig stores $\log_2(\text{inhibitor}/\text{control})$, so depletion is negative. Hoepfner
+stores an adjusted MADL sensitivity score whose definition reads ``negative = hypersensitive,
+positive = resistant''. Wildenhain stores a growth-inhibition z score where negative is
+inhibition. Both Hillenmeyer arms store a fitness-defect statistic whose definition reads
+``positive = fitness defect''.
+
+Two independent checks confirm the split rather than leaving it as a reading of the
+documentation. First, the heavy tail of each distribution falls on the side its source names:
+the three negative-is-sick datasets have skew $-2.6$, $-4.4$ and $-4.6$, and the two
+positive-is-sick arms have skew $+5.6$ and $+1.2$ (Figure~\ref{fig:joinability}c). Second,
+the declared polarities predict the SIGN of every pairwise correlation between datasets, and
+they get all ten right (Table~\ref{tab:crossoverlap}). Under a null in which the declared
+polarity says nothing about the data, ten correct signs out of ten has probability $0.002$.
+
+The consequence is concrete and large. As served, Hillenmeyer HOM and Hoepfner correlate at
+$-0.198$ over 100{,}276 shared cells, and Hillenmeyer HET and Hoepfner at $-0.118$ over
+170{,}837. Pooling without orienting trains a model on contradictory labels at that scale,
+and the contradiction is worst exactly where the overlap is largest.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/dataset_joinability.py ->
+%% results/cross_dataset_pair_overlap.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Every dataset pair: the genes, compounds and (gene, compound) cells both measure,
+the Spearman correlation on those cells as served, the sign predicted from the two declared
+polarities, and the correlation after orienting. The predicted sign is correct in all ten
+pairs.}
+\label{tab:crossoverlap}
+\input{tables/t12-cross-overlap}
+\end{table}
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/dataset_joinability.py ->
+%% dataset_joinability.svg, converted by `make plots`.
+\tcfig{figures/dataset_joinability.pdf}{Whether the five datasets can share one target.
+\textbf{(a)} Response density per dataset on a log scale, which is where the phenotype lives.
+\textbf{(b)} Standard deviation of the served response. \textbf{(c)} Skew beside the sign each
+source declares for a sick strain; hatching marks the two datasets whose sources use the
+opposite convention. \textbf{(d)} Shared (gene, compound) cells per pair, log color scale.
+\textbf{(e)} Spearman on those shared cells after orienting. \textbf{(f)} The same pairs as
+served against oriented, point area by shared cells; red points are pairs whose sources
+disagree about the sign.}{fig:joinability}
+
+\notesec{Agreement after orienting is real, positive, and small}
+Once oriented, every pair correlates positively, but weakly: the median over the ten pairs is
+$0.068$ and the largest is $0.198$, for Hillenmeyer HOM against Hoepfner over 100{,}276 cells
+(Table~\ref{tab:crossoverlap}, Figure~\ref{fig:joinability}e). The two Hillenmeyer arms, which
+share a laboratory, a medium and a readout family, reach $0.117$ over 407{,}072 cells. Against
+the application target the numbers are smaller still, because Vanacloig shares only two
+compounds with each of the Hillenmeyer arms and with Hoepfner, and ten with Wildenhain.
+
+That is the honest shape of the case for joining. These datasets agree about which genes are
+generally fragile far more than about how a particular gene answers a particular compound. So
+a shared SCALE is justified and a shared RESPONSE is not: pooling should be expected to buy a
+gene prior and a wider compound space, not more labels for the same task. Section~\ref{sec:model}
+turns that into a decoder that gives each source its own token, and Section~\ref{sec:established}
+already measured the alternative, which is that within one dataset, one medium and one dose
+basis, the same molecule features reach $0.31$ where they reach at most $0.09$ across
+datasets.
+
+%% SOURCE: notes/experiments.031-env-chemgen-inhibitor-tolerance.mermaid.dataset-unification.md,
+%% rendered by notes/assets/publish/scripts/mermaid_pdf.sh through `make diagrams`.
+\tcfig{figures/dataset_unification.pdf}{One row per kept dataset: what the record is, what the
+source reports, and the common form both are mapped into. The input tuple and the scalar
+target are identical for every row. The only per-source objects are the declared sick-sign
+$s_k$, the training-split scale $\mathrm{sd}_k$ and the source token $t$. The per-dataset
+counts are in Table~\ref{tab:unification}.}{fig:unification}
+
+\notesec{Where the datasets overlap on every other axis}
+Figure~\ref{fig:overlap} puts the same question to the genotype, chemistry and dose axes.
+Genes overlap heavily and compounds barely: 98 to 100 percent of Vanacloig's genes appear in
+each of the three genome-wide partners, while at most 24 percent of its compounds appear in
+any one of them. Wildenhain is the exception in both directions, covering 4 percent of the
+other gene universes and contributing by far the most chemistry. The chemical panels show why
+the compound gain is uneven: the partner libraries are drug-like at 20 to 40 heavy atoms, and
+the hydrolysate panel sits at 3 to 15, in a region where a substructure fingerprint is nearly
+empty. The dose panel repeats Section~\ref{sec:dose} visually, with Vanacloig carrying no
+convertible concentration at all.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/exploratory_overlap_panels.py ->
+%% exploratory_overlap.svg, converted by `make plots`.
+\tcfig{figures/exploratory_overlap.pdf}{Overlap on every axis a pooled model sees.
+\textbf{(a)} Share of the row dataset's genes that the column dataset also measures, with each
+dataset's gene count. \textbf{(b)} The same for compounds. \textbf{(c)} Molecular weight against
+calculated logP for every dosed compound, the Vanacloig panel outlined. \textbf{(d)} Heavy
+atom count; the shaded band is where a substructure fingerprint carries almost no bits.
+\textbf{(e)} Each Vanacloig compound's best non-exact Tanimoto in the partner union against its
+size. \textbf{(f)} The molar range each dataset spans, 1st to 99th percentile, with the share
+of records stating a convertible dose. \textbf{(g)} Distinct compounds against distinct genes,
+point area by measured cells. \textbf{(h)} Perturbation class by dataset.}{fig:overlap}
+

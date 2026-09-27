@@ -98,6 +98,40 @@ Vanacloig alone, is the first question the model phase answers, and the compound
 of Section~\ref{sec:established} with the reliability ceiling beside every compound is how it
 is scored.
 
+\notesec{The application target is 2 percent of the pool, so the run has to be able to see it}
+Vanacloig contributes 143{,}218 of the 6.39 million kept records, which is 2.2 percent. Every
+other dataset is between three and twenty times larger, and Section~\ref{sec:joinability}
+measured their agreement with Vanacloig at 0.013 to 0.078 on shared cells. A pooled objective
+therefore has both the size and the independence to let the application target drift while the
+total loss improves, and a single pooled validation number would not show it happening.
+
+Three provisions follow, and they are cheap enough to build before the first run rather than
+after a disappointing one.
+
+\begin{enumerate}
+\item \textbf{Log every metric per source, per epoch.} The correlation, the loss and the
+  record count are reported for each of the four sources separately at every validation step,
+  in addition to the pooled number. This is what makes drift visible as it happens rather than
+  at the end, and it is the only way to tell a pooled gain that lifts every source from one
+  that trades the small source for the large ones.
+\item \textbf{Report Vanacloig against its own ceiling, always.} The pooled metric has no
+  ceiling because the sources have different reliabilities. The application question is what
+  fraction of the 0.84 Vanacloig ceiling the model reaches on held-out compounds, so that
+  number is the headline and the pooled loss is diagnostic.
+\item \textbf{Keep a fine-tune stage in the plan from the start.} If the joint run does not
+  favor the application target, the remedy tested first is a short final stage on Vanacloig
+  alone at a reduced learning rate, starting from the pooled checkpoint. The per-source curves
+  say whether that stage is needed and the per-source metric at the end of it says whether it
+  worked. \textit{Hypothesis (untested):} the pooled run supplies a gene prior that a
+  Vanacloig-only run cannot, and a short fine-tune recovers the compound-specific fit the
+  pooled objective dilutes. Both halves of that are measurable against the
+  Vanacloig-only arm of the first round.
+\end{enumerate}
+
+Source reweighting in the loss is deliberately NOT part of the plan yet. It is a second lever
+on the same problem, and adding it before the per-source curves exist would make the first
+round unable to say which lever mattered.
+
 \notesec{Masking against the divergence prior}
 The 025 graph-regularization sweep ran the nine graphs into layer one under the divergence
 prior at seven weights and under the hard mask, three seeds each, on the 376{,}732 triples of

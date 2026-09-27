@@ -16,7 +16,8 @@ PLOT_SLUGS := 031-env-chemgen-inhibitor-tolerance
 
 include ../common/Makefile.common
 
-DIAGRAMS := experiments.031-env-chemgen-inhibitor-tolerance.mermaid.unified-input
+DIAGRAMS := experiments.031-env-chemgen-inhibitor-tolerance.mermaid.unified-input \
+            experiments.031-env-chemgen-inhibitor-tolerance.mermaid.dataset-unification
 PDF_OUT  := $(REPO)/notes/assets/pdf-output
 FIG_W_PT := 500
 
@@ -28,7 +29,7 @@ tables:
 diagrams:
 	@for d in $(DIAGRAMS); do \
 	  (cd $(REPO) && bash notes/assets/publish/scripts/mermaid_pdf.sh notes/$$d.md >/dev/null); \
-	  src=$(PDF_OUT)/$$d.pdf; dst=figures/unified_input.pdf; \
+	  src=$(PDF_OUT)/$$d.pdf; dst=figures/$$(echo $$d | sed 's/.*mermaid\.//; s/unified-input/unified_input/; s/dataset-unification/dataset_unification/').pdf; \
 	  w=$$(pdfinfo $$src | awk '/Page size/{print $$3}'); h=$$(pdfinfo $$src | awk '/Page size/{print $$5}'); \
 	  H=$$(awk -v w=$$w -v h=$$h -v W=$(FIG_W_PT) 'BEGIN{printf "%.2f", h*W/w}'); \
 	  gs -q -o $$dst -sDEVICE=pdfwrite -dFIXEDMEDIA -dPDFFitPage \

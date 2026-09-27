@@ -1,0 +1,69 @@
+%% notes-tex/025-graph-reg-sweep/sections/3-training.tex
+
+\section{What the prior does to training\secstatus{todo}}
+\label{sec:training}
+
+\tcfig{figures/graph_reg_sweep_curves.pdf}{Training curves, mean over seeds with a
+$\pm$ sd band, for the arms that separate: no penalty (gray), hard mask (red), the prior
+at $\lambda = 10^{-3}$, $10^{-1}$ and 1 (orange, darker with $\lambda$), and the prior
+toward random graphs at $10^{-3}$ (purple, dashed; two complete seeds, the third to
+epoch 16). (a) Validation Pearson. (b) Training Pearson, on the training triples of
+that epoch. (c) Validation point loss. From the per-epoch history in
+\file{experiments/025-solid-growth/results/graph_reg_sweep_history.csv}.}{fig:curves}
+
+\notesec{Support contraction happens at every $\lambda$, and saturates early}
+Without a penalty, layer-1 attention has nothing to do with the graphs: edge recall at
+degree is 0.006 at every diagnostic epoch, the value of attention unrelated to the
+adjacency (Figure~\ref{fig:ladder}b). The smallest weight tested already moves it to
+0.782 at epoch 29 (0.759 at epoch 9), $10^{-4}$ to 0.866, $10^{-3}$ to 0.906, and from
+$10^{-2}$ up it sits at 0.914 to 0.915 with no further change to $\lambda = 1$. The
+divergence tells the same story with more resolution (Figure~\ref{fig:ladder}c): from
+1{,}540 at $10^{-5}$ through 571 and 337 to about 300 at $10^{-2}$, $10^{-1}$ and 1
+(300, 297, 298), a floor the penalty cannot push below at any weight tested. Both
+diagnostics are flat from $10^{-2}$ to 1 while the fixed-epoch accuracy still rises from
+0.438 to 0.447. How close the attention sits to the graph is set by $\lambda = 10^{-2}$;
+what the two larger weights add is not more contraction.
+
+\notesec{The gradient budget}
+The gradient probe (Figure~\ref{fig:ladder}d) measures the norm of each loss term's
+gradient on one batch before clipping. The point-loss gradient at epoch 0 is a property
+of the seed, not the arm: 7.4, 32.3 and 2.8 for seeds 1, 2 and 3 in every arm that
+shares the initialization (the mask arm, with a different layer-1 kernel, reads 5.7,
+32.9 and 2.7). The penalty's gradient scales with $\lambda$ as it must, 1.1 at
+$10^{-3}$, 10.9 at $10^{-2}$, 109 at $10^{-1}$ and 1{,}097 at 1 in the seed mean at
+epoch 0, and grows over training while the point-loss gradient settles to 1.0 to 4.3:
+at epoch 20 the ratio is 1.1 to 1.5 at $10^{-3}$, 15 to 24 at $10^{-2}$, 86 to 146 at
+$10^{-1}$ and 680 to 1{,}550 at $\lambda = 1$. The two best arms of the ladder train
+under a total gradient that is almost entirely the penalty. The trainer clips the total
+gradient norm at 10, so at $\lambda \geq 10^{-1}$ every update is rescaled by two to
+three orders of magnitude before the optimizer sees it.
+
+Hypothesis (untested): AdamW normalizes each parameter's update by its running gradient
+scale, so a uniform rescaling of the whole gradient leaves the update nearly unchanged,
+and the penalty's gradient is concentrated in the parameters that shape layer-1
+attention (the layer-1 query and key projections and, through them, the gene table).
+Under that reading the arms at $\lambda \geq 10^{-1}$ train the rest of the network on
+the point loss much as the no-penalty arm does, which is consistent with their training
+Pearson matching it (0.625 and 0.624 against 0.624), while layer 1 is held on the graph
+for the whole run. The mechanism is not measured here; a per-parameter-group norm on
+the probe batch would measure it.
+
+\notesec{The prior is not a fit-reducing regularizer at the weights that help}
+Training Pearson at epoch 29 (Figure~\ref{fig:curves}b) is 0.624 with no penalty, 0.636
+at $10^{-3}$, 0.613 at $10^{-2}$, 0.625 at $10^{-1}$ and 0.624 at 1, so the arms that
+generalize best at epoch 29 fit the training triples as well as the arm that generalizes
+worst. The two smallest weights fit the training set better than any other arm, 0.657
+at $10^{-5}$ and 0.663 at $10^{-4}$, and generalize no better than no penalty. The
+validation point loss (Figure~\ref{fig:curves}c) reaches its minimum near epoch 13 in
+every arm (0.80 to 0.82) and then rises; at epoch 29 it is 0.867 with no penalty and
+0.869 under the mask against 0.826 and 0.825 at $\lambda = 10^{-1}$ and 1. The prior at
+high weight does not stop the model from fitting the training triples; it slows the
+growth of held-out error after the point-loss minimum.
+
+Hypothesis (untested): the late decline of the unpenalized model is layer-1 attention
+drifting away from any fixed structure as the gene table specializes to the training
+triples, and a prior strong enough to hold layer 1 in place removes that degree of
+freedom without touching the rest. The mask removes the same freedom in a different
+way, by fixing the support and leaving the weights free, and it declines exactly as no
+penalty does, so if this hypothesis is right the part of layer 1 that drifts is the
+weighting within the support, not the support.

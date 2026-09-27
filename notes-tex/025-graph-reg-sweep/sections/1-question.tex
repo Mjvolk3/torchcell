@@ -1,0 +1,109 @@
+%% notes-tex/025-graph-reg-sweep/sections/1-question.tex
+
+\section{The question\secstatus{todo}}
+\label{sec:question}
+
+The cell graph transformer of experiment 010 attends over all 6{,}607 genes in every
+layer. Nine gene-gene graphs, physical and regulatory interactions, TFLink, and the six
+STRING channels (neighborhood, fusion, co-occurrence, co-expression, experimental,
+database), are given to nine heads of layer 1, one graph per head. Two mechanisms can
+hand a graph to a head. The \term{soft prior} adds to the training loss, for each head
+$k$ with row-normalized adjacency $\tilde{A}_k$ and attention $\alpha_k$ on the
+wild-type graph,
+\begin{equation}
+  \lambda \sum_{k=1}^{9} \frac{N}{|E_k|}
+  \sum_{i} D_{\mathrm{KL}}\!\left(\tilde{A}_{k,i\cdot} \,\|\, \alpha_{k,i\cdot}\right),
+  \label{eq:kl}
+\end{equation}
+with $N$ the number of genes and $|E_k|$ the edge count of graph $k$, so a head is pulled
+toward spreading each gene's attention uniformly over that gene's neighbors and is free
+to put mass anywhere. The \term{hard mask} sets the attention logits of every
+non-edge (self-loops kept) to $-\infty$ before the softmax in layer 1, so a head can only
+attend along the graph and needs no penalty and no $\lambda$. The two are the ends of one
+axis: the mask is the $\lambda \to \infty$ limit of Eq.~\ref{eq:kl} on the support, but
+not in the weights, since the mask lets a head weight its neighbors as it likes while the
+prior pulls toward the uniform row of $\tilde{A}_k$.
+
+Earlier readings put the two mechanisms far apart. The 010 model at $\lambda = 10^{-3}$
+under a cosine schedule reached 0.456 to 0.464 held-out Pearson over three seeds, and on
+the 025 build the same configuration replicated at 0.446 (GilaHyper job 1598, W\&B
+\texttt{0yw7moue}), while the two hard-mask arms run then collapsed: 0.307 at epoch 1
+and then near 0 (\texttt{7f1yrsq9}), or near 0 for 17 epochs (\texttt{4qmgkcgn}). Those
+mask runs were under the cosine schedule with a different normalizer, so the collapse was
+not a controlled comparison. The hypothesis this sweep was designed to test is stated in
+the form it was proposed: \emph{the graphs help, but only when the model is optimized
+through the divergence; imposing them as a mask does not help}. A second question rides
+on the first: if the prior helps, is it the biology of the nine graphs or would any graph
+with the same degree sequence condition training the same way?
+
+\notesec{Design}
+Every arm is the constant-rate control \texttt{cgt\_s0\_r\_kl\_ctrl\_013} with one key
+changed (Table~\ref{tab:design}). The control is the 376{,}732 triples of experiment 010
+(subset S0 of the 025 build) on 010's pinned random split, 301{,}386 training and
+37{,}673 validation triples, a learnable 1{,}000-dimensional gene table, the label
+normalizer fit on the training split, AdamW at $2.5 \times 10^{-4}$ with no schedule,
+batch 256 over four GPUs, 30 epochs. The runs are Delta \texttt{gpuA40x4} jobs, one node
+and four A40s per run, 24 h clocks, the 554 GB LMDB staged onto node-local NVMe at the
+start of each job (\file{experiments/025-solid-growth/scripts/delta_cgt.slurm},
+\file{experiments/025-solid-growth/scripts/delta_submit_sweep.sh}; jobs 22055147 to
+22055169, 22056267 to 22056269, 22080055, 22080057 and 22107791). The prior arms peak at
+6.05 GB of allocated GPU memory per card, the mask at 2.76 GB, because only the
+penalized layer materializes its attention.
+
+%% SOURCE: hand-authored from experiments/025-solid-growth/scripts/delta_submit_sweep.sh and the
+%% configs cgt_s0_r_kl_ctrl_013, cgt_s0_r_mask_028, cgt_s0_r_kl_rand_031; seed counts from
+%% experiments/025-solid-growth/results/graph_reg_sweep_summary.json (graph_reg_sweep_readout.py).
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The arms. Every arm is \texttt{cgt\_s0\_r\_kl\_ctrl\_013} with the one change
+named; the control itself is the ladder's $\lambda = 10^{-3}$ point. Complete runs are
+those with 30 logged epochs on W\&B at the pull of 2026-09-27; a seed listed as partial
+was still running.}
+\label{tab:design}
+\begin{tabular}{llll}
+\toprule
+arm & change on the control & graph target & complete seeds \\
+\midrule
+no penalty & \texttt{graph\_reg\_lambda=0} & none & 1, 2, 3 \\
+prior ladder & \texttt{graph\_reg\_lambda} $\in \{10^{-5}, 10^{-4}, 10^{-2}, 10^{-1}, 1\}$ & nine biological graphs, layer 1 & 1, 2, 3 each; $10^{-5}$: 1, 3 \\
+control & none & nine biological graphs, layer 1, $\lambda = 10^{-3}$ & 1, 2, 3 \\
+hard mask & \texttt{cgt\_s0\_r\_mask\_028}: mask on, $\lambda = 0$ & nine biological graphs, layer 1 & 1, 2, 3 \\
+random graphs & \texttt{cgt\_s0\_r\_kl\_rand\_031}: rewiring on & nine rewired graphs, layer 1, $\lambda = 10^{-3}$ & 1, 2; 3 partial (epoch 16) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\notesec{Readings}
+Every run is read twice. The \term{fixed-epoch reading} is validation Pearson at epoch
+29, the protocol's last epoch, the same optimization state for every arm. The
+\term{max-over-epochs reading} is the largest validation Pearson over the 30 epochs, an
+upward-biased order statistic reported with the epoch at which it occurred; it is the
+number a best-checkpoint deployment would see. Arm values are the mean and sample
+standard deviation over seeds; a paired comparison is by seed, since the split is pinned
+and the seed sets the initialization and the batch order for every arm alike.
+
+\notesec{Vocabulary}
+Terms used in the figures and tables, in alphabetical order.
+
+%% SOURCE: hand-authored; definitions follow torchcell/models/equivariant_cell_graph_transformer.py
+%% (compute_graph_regularization_loss) and torchcell/trainers/int_transformer_cell.py (gradient probe,
+%% edge recovery).
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Controlled vocabulary.}
+\label{tab:vocab}
+\begin{tabular}{p{3.2cm}p{13.6cm}}
+\toprule
+term & meaning \\
+\midrule
+divergence & Eq.~\ref{eq:kl} without its $\lambda$: the logged penalty divided by $\lambda$, summed over the nine heads and normalized by edge count, computed on the wild-type graph. Comparable across the ladder; not logged at $\lambda = 0$ or under the mask, where the model skips the computation. Reported from the validation pass at epoch 29. \\
+edge recall at degree & For each gene $i$ of graph $k$ with degree $d_i$, the fraction of $i$'s neighbors among the $d_i$ largest entries of $\alpha_{k,i\cdot}$; averaged over genes, then over the nine heads. It is 1 by construction under the mask and near $1/N$ for attention unrelated to the graph. Logged at epochs 9, 19 and 29. \\
+gradient probe & On the first batch of epochs 0, 1, 2, 5, 10 and 20, one extra backward pass per loss term; the $\ell_2$ norm of the parameter gradient of the point loss and of the penalty, before clipping, and their ratio. \\
+point loss & Mean squared error of the prediction against the z-scored interaction label. \\
+random graphs, degree-matched & Each of the nine graphs rewired by seeded double-edge swaps (five swaps per edge) that keep every gene's degree, in and out for the directed graphs; the rewiring seed is the run seed. The prior and the edge diagnostics are computed against the rewired graphs. \\
+S0 & The 376{,}732 measured triples of experiment 010, as stored in the 025 build; the pool of every arm here. \\
+\bottomrule
+\end{tabular}
+\end{table}

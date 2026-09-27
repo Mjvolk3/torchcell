@@ -1,0 +1,44 @@
+%% notes-tex/025-graph-reg-sweep/sections/4-control.tex
+
+\section{The random-graph control: biology or any target\secstatus{todo}}
+\label{sec:control}
+
+\tcfig{figures/graph_reg_sweep_control.pdf}{The prior at $\lambda = 10^{-3}$ toward
+the nine biological graphs (orange, three seeds), toward degree-matched random
+rewirings of the same graphs (purple, two complete seeds; the cross is seed 3's max over
+epochs at epoch 16, partial), and no penalty (gray, three seeds). (a) Fixed-epoch
+reading with the arm mean as a bar. (b) Validation Pearson by epoch, mean over seeds
+with a $\pm$ sd band.}{fig:control}
+
+The control arm keeps everything of the $\lambda = 10^{-3}$ control except the graphs:
+each of the nine is rewired before the model sees it, by double-edge swaps that keep
+every gene's degree, five swaps per edge, seeded by the run seed
+(\texttt{cgt\_s0\_r\_kl\_rand\_031}, \texttt{torchcell.graph.rewire}). The prior pulls
+the heads toward the rewired graphs and the edge diagnostics are scored against them.
+The arm was written to run at the best $\lambda$ of the sweep; the sweep's best was not
+known at submission, so it ran at $10^{-3}$, the 010 operating point.
+
+\notesec{The heads learn the random graphs, less completely}
+Edge recall at degree against the rewired graphs reaches 0.814 at epoch 29 and the
+divergence 983 (Figure~\ref{fig:ladder}b, c), against 0.906 and 337 for the biological
+graphs at the same $\lambda$. A random graph of the same degree sequence is a target the
+attention can and does move toward, but it does not get as close in 30 epochs. Whether
+that is because the biological graphs are more compatible with the point loss, or
+because the rewired graphs are less clustered and so harder to represent with a
+low-rank attention, is not separated by anything logged.
+
+\notesec{At $\lambda = 10^{-3}$ the accuracy question is underpowered}
+On the fixed-epoch reading the two complete random-graph seeds give 0.417 and 0.433,
+against 0.429 and 0.438 for the biological graphs on the same seeds and 0.424 and 0.425
+with no penalty (Figure~\ref{fig:control}a). The biological graphs are above the random
+ones on both seeds, by 0.012 and 0.005; the random ones straddle no penalty. At the
+max-over-epochs reading the three arms are 0.451, 0.447 and 0.448. The effect being
+tested at this $\lambda$ is the 0.005 to 0.013 that the biological prior adds over no
+penalty at epoch 29, and two seeds of a control whose own seed spread is 0.011 cannot
+resolve it. The question the control was designed to answer, whether the biology or the
+conditioning carries the gain, is open, and it is answerable only where the gain is
+large: at $\lambda = 1$ the biological prior is 0.021 to 0.023 above no penalty on every
+seed, so three seeds of the rewired graphs at $\lambda = 1$ would separate a 0.02 effect
+from the 0.001 to 0.011 seed spread seen here. That arm is one override away
+(\texttt{model.graph\_regularization.graph\_reg\_lambda=1} on
+\texttt{cgt\_s0\_r\_kl\_rand\_031}) and has not been submitted.

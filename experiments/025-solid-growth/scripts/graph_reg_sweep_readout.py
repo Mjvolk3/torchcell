@@ -1,0 +1,608 @@
+# experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py
+# [[experiments.025-solid-growth.scripts.graph_reg_sweep_readout]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/025-solid-growth/scripts/graph_reg_sweep_readout
+"""Read the graph-regularization sweep (Delta, 025 S0, random split) out of W&B.
+
+The sweep is ``cgt_s0_r_kl_ctrl_013`` with one key changed per arm: the soft KL prior at
+lambda 0 (no penalty), 1e-5, 1e-4, 1e-3 (the control itself), 1e-2, 1e-1 and 1; the hard
+attention mask on layer 1 (``cgt_s0_r_mask_028``); and the KL at 1e-3 toward degree-matched
+random rewirings of the nine graphs (``cgt_s0_r_kl_rand_031``). Three seeds per arm,
+30 epochs, constant rate, four A40s per run (``delta_submit_sweep.sh``).
+
+Runs are selected by the tags the training script attaches, never by hand-typed ids, and
+classified by their own config: ``attention_mask.enabled`` is the mask arm,
+``random_graph.enabled`` the random-graph arm, otherwise ``graph_reg_lambda`` names the
+ladder point. Only Delta rank-0 runs (the run of a job that carries the validation
+history) in state ``finished`` or ``running`` are kept; a failed or crashed run is a
+launch that died (OOM on the old kernel path, a rank timeout) and never a measurement.
+A running run is kept and marked partial.
+
+Per run and per epoch: validation Pearson, validation and training point loss,
+training Pearson, the graph penalty as logged (lambda-weighted) and divided by lambda
+(the divergence of layer-1 attention from the nine normalized adjacencies, comparable
+across the ladder), edge recall at degree averaged over the nine regularized heads at
+the diagnostic epochs, and the gradient-probe norms of the point loss and the penalty on
+the first batch of epochs 0, 1, 2, 5, 10 and 20.
+
+Two readings per run, reported together: the value at epoch 29 (the protocol's fixed
+reading) and the max over epochs (an upward-biased order statistic). Arm rows carry the
+mean and sd over seeds of each.
+
+Writes, all under experiments/025-solid-growth/results/:
+  graph_reg_sweep_runs.csv       one row per run
+  graph_reg_sweep_history.csv    long table: run_id, arm, seed, epoch, key, value
+  graph_reg_sweep_summary.json   arm-level means, the run list, and the pull time
+and the LaTeX tables of notes-tex/025-graph-reg-sweep/tables/ (t1-arms, t2-runs).
+
+    python experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py
+    python experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py --offline
+        (rebuild the summary and tables from the CSVs without touching W&B)
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import os
+import os.path as osp
+import statistics
+from collections import defaultdict
+from datetime import UTC, datetime
+from typing import Any
+
+import pandas as pd
+from dotenv import load_dotenv
+from pydantic import BaseModel
+
+load_dotenv()
+EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
+RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "025-solid-growth", "results")
+TABLES_DIR = osp.join(
+    osp.dirname(EXPERIMENT_ROOT), "notes-tex", "025-graph-reg-sweep", "tables"
+)
+PROJECT = "zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer"
+SELECT_TAGS = ["graph_reg_sweep", "cgt_s0_r_kl_ctrl_013"]
+BUDGET = 30
+FIXED_EPOCH = BUDGET - 1
+WINDOW = (10, 29)
+
+# Epoch-level scalars (one value per epoch, logged at epoch end).
+EPOCH_KEYS = (
+    "val/gene_interaction/Pearson",
+    "val/gene_interaction/MSE",
+    "val/point_loss",
+    "val/graph_reg_loss",
+    "train/gene_interaction/Pearson",
+    "train/cuda_peak_allocated_gb",
+)
+# Step-level scalars: averaged over the steps of an epoch.
+STEP_KEYS = ("train/point_loss", "train/graph_reg_loss", "train/loss")
+PROBE_KEYS = (
+    "probe/grad_norm/point",
+    "probe/grad_norm/dist",
+    "probe/grad_norm/graph_reg",
+    "probe/grad_norm/total",
+    "probe/grad_ratio/graph_reg_to_point",
+)
+GRAPHS = (
+    "physical_L1_H0",
+    "regulatory_L1_H1",
+    "tflink_L1_H2",
+    "string12_0_neighborhood_L1_H3",
+    "string12_0_fusion_L1_H4",
+    "string12_0_cooccurence_L1_H5",
+    "string12_0_coexpression_L1_H6",
+    "string12_0_experimental_L1_H7",
+    "string12_0_database_L1_H8",
+)
+EDGE_KEYS = tuple(f"val_edge_recovery/{g}/recall_at_deg" for g in GRAPHS) + tuple(
+    f"val_edge_recovery/{g}/precision_k32" for g in GRAPHS
+)
+
+# Display order of the arms: the ladder from no penalty up, then the two controls.
+ARM_ORDER = [
+    "kl_0",
+    "kl_1e-05",
+    "kl_0.0001",
+    "kl_0.001",
+    "kl_0.01",
+    "kl_0.1",
+    "kl_1",
+    "mask",
+    "random_0.001",
+]
+ARM_LABEL = {
+    "kl_0": "no penalty ($\\lambda = 0$)",
+    "kl_1e-05": "KL $\\lambda = 10^{-5}$",
+    "kl_0.0001": "KL $\\lambda = 10^{-4}$",
+    "kl_0.001": "KL $\\lambda = 10^{-3}$ (control)",
+    "kl_0.01": "KL $\\lambda = 10^{-2}$",
+    "kl_0.1": "KL $\\lambda = 10^{-1}$",
+    "kl_1": "KL $\\lambda = 1$",
+    "mask": "hard mask, layer 1",
+    "random_0.001": "KL $\\lambda = 10^{-3}$, random graphs",
+}
+
+
+class RunRow(BaseModel):
+    """One rank-0 run of the sweep."""
+
+    run_id: str
+    run_url: str
+    run_name: str
+    arm: str
+    graph_reg_lambda: float
+    mask: bool
+    random_graph: bool
+    seed: int
+    state: str
+    host: str
+    slurm_job: str
+    epochs_logged: int
+    complete: bool
+    val_pearson_fixed: float | None
+    val_pearson_max: float
+    val_pearson_max_epoch: int
+    val_pearson_window_mean: float | None
+    val_pearson_window_sd: float | None
+    val_point_loss_fixed: float | None
+    train_pearson_fixed: float | None
+    train_point_loss_fixed: float | None
+    train_graph_reg_fixed: float | None
+    train_divergence_fixed: float | None
+    val_divergence_fixed: float | None
+    edge_recall_fixed: float | None
+    edge_precision_k32_fixed: float | None
+    probe_point_epoch0: float | None
+    probe_graph_reg_epoch0: float | None
+    probe_ratio_epoch0: float | None
+    probe_ratio_epoch20: float | None
+    cuda_peak_gb_max: float | None
+
+
+def classify(cfg: dict[str, Any]) -> tuple[str, float, bool, bool]:
+    """Arm name from the run's own config."""
+    model = cfg.get("model", {})
+    lam = float(model.get("graph_regularization", {}).get("graph_reg_lambda", 0.0))
+    mask = bool((model.get("attention_mask") or {}).get("enabled", False))
+    rand = bool((model.get("random_graph") or {}).get("enabled", False))
+    if mask:
+        assert lam == 0.0, "a mask arm with a KL lambda is not in the design"
+        return "mask", lam, mask, rand
+    if rand:
+        return f"random_{lam:g}", lam, mask, rand
+    return f"kl_{lam:g}", lam, mask, rand
+
+
+def pull_history(
+    run: Any,
+) -> tuple[dict[str, dict[int, float]], dict[str, dict[int, float]]]:
+    """Per-epoch series and per-probe-epoch series of one run."""
+    epoch_vals: dict[str, dict[int, float]] = defaultdict(dict)
+    step_acc: dict[str, dict[int, list[float]]] = defaultdict(lambda: defaultdict(list))
+    probe: dict[str, dict[int, float]] = defaultdict(dict)
+    for row in run.scan_history():
+        e = row.get("epoch")
+        pe = row.get("probe/epoch")
+        if pe is not None:
+            for k in PROBE_KEYS:
+                if row.get(k) is not None:
+                    probe[k][int(pe)] = float(row[k])
+        if e is None:
+            continue
+        e = int(e)
+        for k in EPOCH_KEYS + EDGE_KEYS:
+            if row.get(k) is not None:
+                epoch_vals[k][e] = float(row[k])
+        for k in STEP_KEYS:
+            if row.get(k) is not None:
+                step_acc[k][e].append(float(row[k]))
+    for k, per_epoch in step_acc.items():
+        for e, vals in per_epoch.items():
+            epoch_vals[k][e] = statistics.fmean(vals)
+    return epoch_vals, probe
+
+
+def mean_over_graphs(
+    epoch_vals: dict[str, dict[int, float]], stat: str
+) -> dict[int, float]:
+    """Edge-recovery statistic averaged over the nine regularized heads, per epoch."""
+    out: dict[int, list[float]] = defaultdict(list)
+    for g in GRAPHS:
+        for e, v in epoch_vals.get(f"val_edge_recovery/{g}/{stat}", {}).items():
+            out[e].append(v)
+    return {e: statistics.fmean(v) for e, v in out.items() if len(v) == len(GRAPHS)}
+
+
+def _at(d: dict[int, float], e: int) -> float | None:
+    return d.get(e)
+
+
+def _div(d: dict[int, float], lam: float) -> dict[int, float]:
+    """The logged penalty is lambda-weighted; dividing by lambda gives the divergence."""
+    if lam <= 0:
+        return {}
+    return {e: v / lam for e, v in d.items()}
+
+
+def build_row(
+    run: Any,
+    epoch_vals: dict[str, dict[int, float]],
+    probe: dict[str, dict[int, float]],
+) -> RunRow:
+    """Summarize one run."""
+    arm, lam, mask, rand = classify(run.config)
+    val = epoch_vals["val/gene_interaction/Pearson"]
+    best_epoch = max(val, key=lambda e: val[e])
+    window = [v for e, v in val.items() if WINDOW[0] <= e <= WINDOW[1]]
+    full_window = len(window) == WINDOW[1] - WINDOW[0] + 1
+    train_div = _div(epoch_vals.get("train/graph_reg_loss", {}), lam)
+    val_div = _div(epoch_vals.get("val/graph_reg_loss", {}), lam)
+    recall = mean_over_graphs(epoch_vals, "recall_at_deg")
+    prec = mean_over_graphs(epoch_vals, "precision_k32")
+    ratio = probe.get("probe/grad_ratio/graph_reg_to_point", {})
+    cuda = epoch_vals.get("train/cuda_peak_allocated_gb", {})
+    name = run.name
+    job = name.split("-")[-1].split("_")[0] if name.startswith("run_") else ""
+    return RunRow(
+        run_id=run.id,
+        run_url=run.url,
+        run_name=name,
+        arm=arm,
+        graph_reg_lambda=lam,
+        mask=mask,
+        random_graph=rand,
+        seed=int(run.config["seed"]),
+        state=run.state,
+        host=(run.metadata or {}).get("host", ""),
+        slurm_job=job,
+        epochs_logged=len(val),
+        complete=len(val) >= BUDGET,
+        val_pearson_fixed=_at(val, FIXED_EPOCH),
+        val_pearson_max=val[best_epoch],
+        val_pearson_max_epoch=best_epoch,
+        val_pearson_window_mean=statistics.fmean(window) if full_window else None,
+        val_pearson_window_sd=statistics.stdev(window) if full_window else None,
+        val_point_loss_fixed=_at(epoch_vals["val/point_loss"], FIXED_EPOCH),
+        train_pearson_fixed=_at(
+            epoch_vals["train/gene_interaction/Pearson"], FIXED_EPOCH
+        ),
+        train_point_loss_fixed=_at(epoch_vals["train/point_loss"], FIXED_EPOCH),
+        train_graph_reg_fixed=_at(
+            epoch_vals.get("train/graph_reg_loss", {}), FIXED_EPOCH
+        ),
+        train_divergence_fixed=_at(train_div, FIXED_EPOCH),
+        val_divergence_fixed=_at(val_div, FIXED_EPOCH),
+        edge_recall_fixed=_at(recall, FIXED_EPOCH),
+        edge_precision_k32_fixed=_at(prec, FIXED_EPOCH),
+        probe_point_epoch0=probe.get("probe/grad_norm/point", {}).get(0),
+        probe_graph_reg_epoch0=probe.get("probe/grad_norm/graph_reg", {}).get(0),
+        probe_ratio_epoch0=ratio.get(0),
+        probe_ratio_epoch20=ratio.get(20),
+        cuda_peak_gb_max=max(cuda.values()) if cuda else None,
+    )
+
+
+def history_records(
+    row: RunRow,
+    epoch_vals: dict[str, dict[int, float]],
+    probe: dict[str, dict[int, float]],
+) -> list[dict[str, Any]]:
+    """Long-format rows of every per-epoch series kept for the plots."""
+    series: dict[str, dict[int, float]] = {
+        k: epoch_vals[k] for k in EPOCH_KEYS + STEP_KEYS if k in epoch_vals
+    }
+    series["train/divergence"] = _div(
+        epoch_vals.get("train/graph_reg_loss", {}), row.graph_reg_lambda
+    )
+    series["val/divergence"] = _div(
+        epoch_vals.get("val/graph_reg_loss", {}), row.graph_reg_lambda
+    )
+    series["val_edge_recovery/mean/recall_at_deg"] = mean_over_graphs(
+        epoch_vals, "recall_at_deg"
+    )
+    series["val_edge_recovery/mean/precision_k32"] = mean_over_graphs(
+        epoch_vals, "precision_k32"
+    )
+    for k in PROBE_KEYS:
+        series[k] = probe.get(k, {})
+    out = []
+    for key, d in series.items():
+        for e, v in sorted(d.items()):
+            out.append(
+                {
+                    "run_id": row.run_id,
+                    "arm": row.arm,
+                    "seed": row.seed,
+                    "epoch": e,
+                    "key": key,
+                    "value": v,
+                }
+            )
+    return out
+
+
+# W&B group per arm. The ladder was launched as overrides of ctrl_013, whose config sets
+# the group, so every ladder point landed in `s0_control_30ep` and the random-graph jobs
+# in per-job groups; `--regroup` moves each run (every rank) to its arm's group so the
+# group page shows the arm's seeds together. The names already used by the launched
+# configs are kept.
+ARM_GROUP = {
+    "kl_0": "s0_lambda0_30ep",
+    "kl_1e-05": "s0_lambda1e-5_30ep",
+    "kl_0.0001": "s0_lambda1e-4_30ep",
+    "kl_0.001": "s0_control_30ep",
+    "kl_0.01": "s0_lambda1e-2_30ep",
+    "kl_0.1": "s0_lambda1e-1_30ep",
+    "kl_1": "s0_lambda1_30ep",
+    "mask": "s0_hardmask_30ep",
+    "random_0.001": "s0_random_30ep",
+}
+
+
+def pull(
+    regroup: bool = False,
+) -> tuple[list[RunRow], list[dict[str, Any]], list[dict[str, str]]]:
+    """Every selected run, with the reason for each exclusion."""
+    import wandb
+
+    api = wandb.Api(timeout=180)
+    rows, hist, excluded = [], [], []
+    seen: set[str] = set()
+    for run in api.runs(PROJECT, filters={"tags": {"$in": SELECT_TAGS}}, per_page=200):
+        if run.id in seen:
+            continue
+        seen.add(run.id)
+        host = (run.metadata or {}).get("host", "") or ""
+        if run.state not in ("finished", "running"):
+            excluded.append({"run_id": run.id, "reason": f"state {run.state}"})
+            continue
+        if "delta" not in host:
+            excluded.append(
+                {
+                    "run_id": run.id,
+                    "reason": f"host {host or 'unknown'}, not the Delta protocol",
+                }
+            )
+            continue
+        if regroup:
+            group = ARM_GROUP[classify(run.config)[0]]
+            if run.group != group:
+                run.group = group
+                run.update()
+                print(f"regrouped {run.id} -> {group}")
+        epoch_vals, probe = pull_history(run)
+        if not epoch_vals["val/gene_interaction/Pearson"]:
+            continue  # a non-zero rank of a job: no validation history, not a run of its own
+        row = build_row(run, epoch_vals, probe)
+        rows.append(row)
+        hist.extend(history_records(row, epoch_vals, probe))
+        print(
+            f"{row.arm:14s} seed {row.seed} {row.run_id} {row.state:8s} epochs {row.epochs_logged:2d} "
+            f"fixed {row.val_pearson_fixed if row.val_pearson_fixed is None else round(row.val_pearson_fixed, 4)} "
+            f"max {row.val_pearson_max:.4f}@{row.val_pearson_max_epoch}"
+        )
+    return rows, hist, excluded
+
+
+def _msd(vals: list[float]) -> tuple[float | None, float | None, int]:
+    vals = [
+        v
+        for v in vals
+        if v is not None and not (isinstance(v, float) and math.isnan(v))
+    ]
+    if not vals:
+        return None, None, 0
+    return (
+        statistics.fmean(vals),
+        (statistics.stdev(vals) if len(vals) > 1 else None),
+        len(vals),
+    )
+
+
+def summarize(runs: pd.DataFrame) -> dict[str, Any]:
+    """Arm-level means over seeds, complete runs only for the fixed reading."""
+    arms: dict[str, Any] = {}
+    for arm in ARM_ORDER:
+        sub = runs[runs.arm == arm]
+        if sub.empty:
+            arms[arm] = {"n": 0}
+            continue
+        done = sub[sub.complete]
+        entry: dict[str, Any] = {
+            "label": ARM_LABEL[arm],
+            "n": int(len(sub)),
+            "n_complete": int(len(done)),
+            "seeds": sorted(int(s) for s in sub.seed),
+            "run_ids": list(sub.sort_values("seed").run_id),
+            "run_urls": list(sub.sort_values("seed").run_url),
+            "group_url": f"https://wandb.ai/{PROJECT}/groups/{ARM_GROUP[arm]}",
+            "partial_epochs": {
+                str(int(r["seed"])): int(r["epochs_logged"])
+                for r in sub.to_dict("records")
+                if not r["complete"]
+            },
+        }
+        for col in (
+            "val_pearson_fixed",
+            "val_pearson_max",
+            "val_pearson_window_mean",
+            "val_point_loss_fixed",
+            "train_pearson_fixed",
+            "train_point_loss_fixed",
+            "train_divergence_fixed",
+            "val_divergence_fixed",
+            "edge_recall_fixed",
+            "edge_precision_k32_fixed",
+            "probe_ratio_epoch0",
+            "probe_ratio_epoch20",
+        ):
+            src = (
+                sub
+                if col
+                in ("val_pearson_max", "probe_ratio_epoch0", "probe_ratio_epoch20")
+                else done
+            )
+            m, s, n = _msd(list(src[col]))
+            entry[col] = {"mean": m, "sd": s, "n": n}
+        arms[arm] = entry
+    return arms
+
+
+def _fmt(m: float | None, s: float | None, nd: int = 3, bold: bool = False) -> str:
+    if m is None:
+        return "--"
+    txt = f"{m:.{nd}f}" if s is None else f"{m:.{nd}f} $\\pm$ {s:.{nd}f}"
+    return f"\\textbf{{{txt}}}" if bold else txt
+
+
+def write_tables(arms: dict[str, Any], runs: pd.DataFrame, pulled_at: str) -> None:
+    """t1-arms (one row per arm) and t2-runs (one row per run)."""
+    os.makedirs(TABLES_DIR, exist_ok=True)
+    src = (
+        "%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py "
+        f"(W&B {PROJECT}, pulled {pulled_at}) -- GENERATED, do not edit\n"
+    )
+    best_fixed = max(
+        (a["val_pearson_fixed"]["mean"] for a in arms.values() if a.get("n_complete")),
+        default=None,
+    )
+    best_max = max(
+        (a["val_pearson_max"]["mean"] for a in arms.values() if a.get("n")),
+        default=None,
+    )
+    lines = [
+        src,
+        "\\begin{tabular}{lrrrrrrr}",
+        "\\toprule",
+        "arm & $n$ & Pearson, ep 29 & Pearson, max & point loss & train $r$ & "
+        "diverg. & edge recall \\\\",
+        "\\midrule",
+    ]
+    for arm in ARM_ORDER:
+        a = arms[arm]
+        if not a.get("n"):
+            lines.append(
+                f"{ARM_LABEL[arm]} & 0 & \\multicolumn{{6}}{{l}}{{not run}} \\\\"
+            )
+            continue
+        n_txt = str(a["n_complete"]) + (
+            f" (+{a['n'] - a['n_complete']} partial)"
+            if a["n"] > a["n_complete"]
+            else ""
+        )
+        f = a["val_pearson_fixed"]
+        mx = a["val_pearson_max"]
+        lines.append(
+            f"{ARM_LABEL[arm]} & {n_txt} & "
+            f"{_fmt(f['mean'], f['sd'], bold=f['mean'] is not None and f['mean'] == best_fixed)} & "
+            f"{_fmt(mx['mean'], mx['sd'], bold=mx['mean'] == best_max)} & "
+            f"{_fmt(a['val_point_loss_fixed']['mean'], a['val_point_loss_fixed']['sd'])} & "
+            f"{_fmt(a['train_pearson_fixed']['mean'], a['train_pearson_fixed']['sd'])} & "
+            f"{_fmt(a['val_divergence_fixed']['mean'], None, nd=0)} & "
+            f"{_fmt(a['edge_recall_fixed']['mean'], a['edge_recall_fixed']['sd'])} \\\\"
+        )
+    lines += ["\\bottomrule", "\\end{tabular}"]
+    with open(osp.join(TABLES_DIR, "t1-arms.tex"), "w") as fh:
+        fh.write("\n".join(lines) + "\n")
+
+    lines = [
+        src,
+        "\\begin{tabular}{llrrrrl}",
+        "\\toprule",
+        "arm & seed & epochs & Pearson, ep 29 & max (epoch) & "
+        "gradient ratio, ep 0 & W\\&B run \\\\",
+        "\\midrule",
+    ]
+    for arm in ARM_ORDER:
+        sub = runs[runs.arm == arm].sort_values("seed")
+        for r in sub.to_dict("records"):
+            fixed = (
+                "--"
+                if pd.isna(r["val_pearson_fixed"])
+                else f"{float(r['val_pearson_fixed']):.4f}"
+            )
+            ratio = (
+                "--"
+                if pd.isna(r["probe_ratio_epoch0"])
+                else f"{float(r['probe_ratio_epoch0']):.2f}"
+            )
+            ep = f"{int(r['epochs_logged'])}" + ("" if r["complete"] else " (running)")
+            lines.append(
+                f"{ARM_LABEL[arm]} & {int(r['seed'])} & {ep} & {fixed} & "
+                f"{float(r['val_pearson_max']):.4f} ({int(r['val_pearson_max_epoch'])}) & "
+                f"{ratio} & \\texttt{{{r['run_id']}}} \\\\"
+            )
+    lines += ["\\bottomrule", "\\end{tabular}"]
+    with open(osp.join(TABLES_DIR, "t2-runs.tex"), "w") as fh:
+        fh.write("\n".join(lines) + "\n")
+
+
+def main() -> None:
+    """Pull, summarize, write."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="rebuild summary and tables from the CSVs",
+    )
+    parser.add_argument(
+        "--regroup",
+        action="store_true",
+        help="set each run's W&B group to its arm (ARM_GROUP)",
+    )
+    args = parser.parse_args()
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    runs_csv = osp.join(RESULTS_DIR, "graph_reg_sweep_runs.csv")
+    hist_csv = osp.join(RESULTS_DIR, "graph_reg_sweep_history.csv")
+    summary_json = osp.join(RESULTS_DIR, "graph_reg_sweep_summary.json")
+    if args.offline:
+        runs = pd.read_csv(runs_csv)
+        prev = json.load(open(summary_json))
+        pulled_at, excluded = prev["pulled_at"], prev["excluded"]
+    else:
+        rows, hist, excluded = pull(regroup=args.regroup)
+        pulled_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
+        runs = pd.DataFrame([r.model_dump() for r in rows])
+        runs.to_csv(runs_csv, index=False)
+        pd.DataFrame(hist).to_csv(hist_csv, index=False)
+    arms = summarize(runs)
+    summary = {
+        "project": PROJECT,
+        "select_tags": SELECT_TAGS,
+        "pulled_at": pulled_at,
+        "budget_epochs": BUDGET,
+        "fixed_epoch": FIXED_EPOCH,
+        "window": list(WINDOW),
+        "n_runs": int(len(runs)),
+        "excluded": excluded,
+        "arms": arms,
+    }
+    with open(summary_json, "w") as fh:
+        json.dump(summary, fh, indent=1)
+    write_tables(arms, runs, pulled_at)
+    print()
+    print(
+        f"{'arm':14s} {'n':>6s} {'fixed (ep 29)':>22s} {'max':>22s} {'train P':>10s} {'divergence':>12s}"
+    )
+    for arm in ARM_ORDER:
+        a = arms[arm]
+        if not a.get("n"):
+            print(f"{arm:14s} {'0':>6s}  not run")
+            continue
+        f, mx = a["val_pearson_fixed"], a["val_pearson_max"]
+        print(
+            f"{arm:14s} {a['n_complete']:>3d}+{a['n'] - a['n_complete']:<2d} "
+            f"{_fmt(f['mean'], f['sd']).replace('$\\pm$', '+-'):>22s} "
+            f"{_fmt(mx['mean'], mx['sd']).replace('$\\pm$', '+-'):>22s} "
+            f"{_fmt(a['train_pearson_fixed']['mean'], None):>10s} "
+            f"{_fmt(a['val_divergence_fixed']['mean'], None, nd=0):>12s}"
+        )
+    print(
+        f"\nexcluded {len(excluded)} runs; wrote {runs_csv}, {hist_csv}, {summary_json}, {TABLES_DIR}/t1-arms.tex, t2-runs.tex"
+    )
+
+
+if __name__ == "__main__":
+    main()

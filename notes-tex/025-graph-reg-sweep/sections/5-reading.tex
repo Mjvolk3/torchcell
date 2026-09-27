@@ -34,6 +34,25 @@ interaction, need the layer-1 attention of the saved checkpoints, which are on D
 logged quantity and is not the discovery statistic. Panel f, the random-graph control:
 measured at the wrong $\lambda$.
 
+\notesec{The panel titles, checked}
+Each title of Figure~\ref{fig:sweep} states a finding, which is a place for bias to
+enter, so each is set against the number it rests on. (a) ``Prior gains at epoch 29,
+little at the peak'': $+0.022$ at $\lambda = 1$ on the fixed reading against $+0.004$ on
+the max reading (Table~\ref{tab:paired}). (b) ``Held-out loss falls with $\lambda$ from
+0.001 up'': 0.859, 0.839, 0.826, 0.825 at $10^{-3}$ to 1 against 0.867 with no penalty;
+the two smallest weights are above no penalty (0.880, 0.878), which the title's ``from
+0.001 up'' carries (Table~\ref{tab:arms}). (c) ``Any $\lambda$ tested moves attention
+onto its target'': 0.782 at $10^{-5}$ against 0.006 at 0. (d) ``Divergence floors near
+300 from $\lambda = 0.01$'': 300, 297, 298. (e) ``Penalty dominates the gradient from
+$\lambda = 0.01$'': ratio 15 to 24 at $10^{-2}$ by epoch 20 against 1.1 to 1.5 at
+$10^{-3}$. (f) ``$\lambda = 0.001$: random target equals no penalty'': $0.425 \pm 0.011$
+against $0.425 \pm 0.000$, two seeds, and the biological graphs at $0.432 \pm 0.005$. (g)
+``Strong prior removes the decline after epoch 16'': seed-mean 0.441 to 0.425 with no
+penalty against 0.435 to 0.447 at $\lambda = 1$ and 0.441 to 0.445 at $10^{-1}$. (h)
+``Strong priors fit training like no penalty'': 0.625 and 0.624 against 0.624. (i)
+``Held-out loss rises less under a strong prior'': from the epoch-13 minimum, 0.801 to
+0.867 with no penalty against 0.803 to 0.825 at $\lambda = 1$.
+
 \notesec{Open items}
 \begin{enumerate}
 \item The random-graph arm at $\lambda = 1$, three seeds. The one run that decides

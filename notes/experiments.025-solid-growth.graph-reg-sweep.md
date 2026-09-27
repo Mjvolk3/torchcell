@@ -8,6 +8,8 @@ created: 1790475571429
 
 ## 2026.09.26 - Soft prior or hard mask: the sweep read at three seeds per arm
 
+Loss in every arm: MSE on the z-scored interaction (weight 1) + Sinkhorn-regularized Wasserstein on the batch label distribution (weight 0.1, blur 0.05, geomloss) + lambda x the layer-1 KL to the nine row-normalized adjacencies. The KL target is directed (A[source, target]); the hard mask is symmetrized in `_build_attention_mask`, so the mask discards direction on regulatory and TFLink and the prior keeps it.
+
 Typeset document: `notes-tex/025-graph-reg-sweep/` (`make refresh` pulls W&B, refills the tables, redraws the figures, rebuilds). Readout: [[experiments.025-solid-growth.scripts.graph_reg_sweep_readout]]; figures: [[experiments.025-solid-growth.scripts.graph_reg_sweep_plots]]; launch record: [[experiments.025-solid-growth.scripts.delta_cgt]]; design mock-up `notes/assets/drawio/FigS-graph-regularization-sweep.gen.py`.
 
 The hypothesis under test, as proposed: the graphs help, but only when the model is optimized through the KL divergence; imposing them as a hard mask does not help.
@@ -36,9 +38,12 @@ What it says:
 - Support contraction is not what carries the accuracy: edge recall is 0.78 already at lambda 1e-5 and saturates at 0.915 from 1e-2, two decades below where accuracy is highest; the divergence floors at about 300 from 1e-2 up.
 - Gradient budget (probe batch, before clipping): the penalty is 1.1x the point-loss gradient at 1e-3 and 680 to 1550x at lambda 1 by epoch 20; the trainer clips the total at 10. Hypothesis (untested): AdamW's per-parameter normalization makes the uniform rescale nearly invisible and the penalty gradient lands in the layer-1 projections, which is consistent with train Pearson at lambda 1 matching no penalty (0.624 vs 0.624).
 - Paired by seed against no penalty (t3-paired, paired t on 2 df): KL 1 at epoch 29 +0.022 +- 0.001 (t 30, p 0.001), KL 1e-2 +0.013 +- 0.001 (p 0.003), KL 1e-1 +0.020 +- 0.010 (p 0.07), mask -0.004 +- 0.003 (p 0.16); at the best epoch only 1e-2 separates (+0.005, p 0.0002), KL 1 +0.004 +- 0.002 (p 0.09). The class has never crossed 0.46 on this split (010 cosine checkpoints 0.456 to 0.464; best single run here 0.459).
+- Third reading, Pearson at the epoch of minimum validation point loss (what a loss-monitored checkpoint keeps): none 0.440 +- 0.005 (epoch 12), mask 0.442, KL 1e-1 0.453 +- 0.006 (epoch 17; +0.012 over no penalty on all three seeds, p 0.08), KL 1 0.443 +- 0.009 (epoch 19, its loss minimum lands late on a jagged curve). The stopping rule decides the reading: fixed budget favors the strongest prior, loss-selected favors 1e-1, Pearson-selected separates nothing.
 - Random-graph control at 1e-3: 0.417 and 0.433 (seeds 1, 2) against 0.429 and 0.438 biological on the same seeds; the heads do learn the rewired graphs (recall 0.81, divergence 983). At 1e-3 the biological gain over no penalty is 0.005 to 0.013, inside two seeds' noise; the control has to be rerun at lambda 1 to decide biology vs conditioning.
 
 Verdict on the hypothesis: the mask half holds on both readings; the "optimize through the KL" half holds on the fixed-epoch reading (+0.02 at lambda 1) and only weakly at the best epoch (+0.003 to +0.007); whether it is the biology of the graphs is untested at the lambda that matters.
+
+Figure (3 x 3, `graph_reg_sweep_plots.py`; revised 2026-09-26 evening: filled points with black edges, three readings by marker in a, held-out loss ladder in b, gradient ratio across probe epochs in e, filled bars in f, finding titles checked in the document's Section 5, stars = paired t of the epoch-29 reading vs no penalty):
 
 ![](./assets/images/025-solid-growth/graph_reg_sweep.svg)
 

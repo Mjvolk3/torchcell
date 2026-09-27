@@ -430,6 +430,9 @@ def summarize(runs: pd.DataFrame) -> dict[str, Any]:
             "val_pearson_fixed",
             "val_pearson_max",
             "val_pearson_window_mean",
+            "val_pearson_at_min_loss",
+            "val_point_loss_min",
+            "val_point_loss_min_epoch",
             "val_point_loss_fixed",
             "train_pearson_fixed",
             "train_point_loss_fixed",
@@ -453,6 +456,42 @@ def summarize(runs: pd.DataFrame) -> dict[str, Any]:
 
 
 REFERENCE = "kl_0"
+
+
+def derived_from_history(runs: pd.DataFrame, hist: pd.DataFrame) -> pd.DataFrame:
+    """Per-run readings that need the whole curve: the epoch of minimum validation point
+    loss, the loss there, and validation Pearson at that epoch (what a loss-monitored
+    checkpoint would deploy). Computed from the history CSV so ``--offline`` has them.
+    """
+    loss = hist[hist.key == "val/point_loss"].pivot_table(
+        index="run_id", columns="epoch", values="value"
+    )
+    pear = hist[hist.key == "val/gene_interaction/Pearson"].pivot_table(
+        index="run_id", columns="epoch", values="value"
+    )
+    rows = []
+    for rid in runs.run_id:
+        lo = loss.loc[rid].dropna()
+        e_min = int(lo.idxmin())
+        rows.append(
+            {
+                "run_id": rid,
+                "val_point_loss_min": float(lo.min()),
+                "val_point_loss_min_epoch": e_min,
+                "val_pearson_at_min_loss": float(pear.loc[rid, e_min]),
+            }
+        )
+    return runs.drop(
+        columns=[
+            c
+            for c in (
+                "val_point_loss_min",
+                "val_point_loss_min_epoch",
+                "val_pearson_at_min_loss",
+            )
+            if c in runs.columns
+        ]
+    ).merge(pd.DataFrame(rows), on="run_id")
 
 
 class PairedRow(BaseModel):
@@ -486,6 +525,7 @@ def paired(runs: pd.DataFrame) -> list[PairedRow]:
     for reading, col, pool in (
         ("fixed", "val_pearson_fixed", runs[runs.complete]),
         ("max", "val_pearson_max", runs),
+        ("min_loss", "val_pearson_at_min_loss", runs[runs.complete]),
     ):
         ref = pool[pool.arm == REFERENCE].set_index("seed")[col]
         for arm in ARM_ORDER:
@@ -527,6 +567,11 @@ def paired(runs: pd.DataFrame) -> list[PairedRow]:
     return out
 
 
+READING_LABEL = {
+    "fixed": "epoch 29",
+    "max": "max over epochs",
+    "min_loss": "at min val loss",
+}
 ARROW = {"up": " $\\uparrow$", "down": " $\\downarrow$", "mixed": ""}
 
 
@@ -555,19 +600,26 @@ def write_tables(
         (a["val_pearson_max"]["mean"] for a in arms.values() if a.get("n")),
         default=None,
     )
+    best_min = max(
+        (
+            a["val_pearson_at_min_loss"]["mean"]
+            for a in arms.values()
+            if a.get("n_complete")
+        ),
+        default=None,
+    )
     lines = [
         src,
-        "\\begin{tabular}{lrrrrrrr}",
+        "\\begin{tabular}{lrrrr}",
         "\\toprule",
-        "arm & $n$ & Pearson, ep 29 & Pearson, max & point loss & train $r$ & "
-        "diverg. & edge recall \\\\",
+        "arm & $n$ & Pearson, epoch 29 & Pearson, max over epochs & Pearson, at min val loss \\\\",
         "\\midrule",
     ]
     for arm in ARM_ORDER:
         a = arms[arm]
         if not a.get("n"):
             lines.append(
-                f"{ARM_LABEL[arm]} & 0 & \\multicolumn{{6}}{{l}}{{not run}} \\\\"
+                f"{ARM_LABEL[arm]} & 0 & \\multicolumn{{3}}{{l}}{{not run}} \\\\"
             )
             continue
         n_txt = str(a["n_complete"]) + (
@@ -577,17 +629,38 @@ def write_tables(
         )
         f = a["val_pearson_fixed"]
         mx = a["val_pearson_max"]
+        mn = a["val_pearson_at_min_loss"]
         lines.append(
             f"{ARM_LABEL[arm]} & {n_txt} & "
             f"{_fmt(f['mean'], f['sd'], bold=f['mean'] is not None and f['mean'] == best_fixed)}{arrow.get((arm, 'fixed'), '')} & "
             f"{_fmt(mx['mean'], mx['sd'], bold=mx['mean'] == best_max)}{arrow.get((arm, 'max'), '')} & "
+            f"{_fmt(mn['mean'], mn['sd'], bold=mn['mean'] == best_min)}{arrow.get((arm, 'min_loss'), '')} \\\\"
+        )
+    lines += ["\\bottomrule", "\\end{tabular}"]
+    with open(osp.join(TABLES_DIR, "t1-arms.tex"), "w") as fh:
+        fh.write("\n".join(lines) + "\n")
+
+    lines = [
+        src,
+        "\\begin{tabular}{lrrrrr}",
+        "\\toprule",
+        "arm & point loss, ep 29 & min point loss (epoch) & train Pearson, ep 29 & divergence & edge recall \\\\",
+        "\\midrule",
+    ]
+    for arm in ARM_ORDER:
+        a = arms[arm]
+        if not a.get("n_complete"):
+            continue
+        lines.append(
+            f"{ARM_LABEL[arm]} & "
             f"{_fmt(a['val_point_loss_fixed']['mean'], a['val_point_loss_fixed']['sd'])} & "
+            f"{_fmt(a['val_point_loss_min']['mean'], a['val_point_loss_min']['sd'])} ({a['val_point_loss_min_epoch']['mean']:.1f}) & "
             f"{_fmt(a['train_pearson_fixed']['mean'], a['train_pearson_fixed']['sd'])} & "
             f"{_fmt(a['val_divergence_fixed']['mean'], None, nd=0)} & "
             f"{_fmt(a['edge_recall_fixed']['mean'], a['edge_recall_fixed']['sd'])} \\\\"
         )
     lines += ["\\bottomrule", "\\end{tabular}"]
-    with open(osp.join(TABLES_DIR, "t1-arms.tex"), "w") as fh:
+    with open(osp.join(TABLES_DIR, "t1b-diagnostics.tex"), "w") as fh:
         fh.write("\n".join(lines) + "\n")
 
     lines = [
@@ -633,7 +706,7 @@ def write_tables(
         t_txt = "--" if p_.t is None else f"{p_.t:.1f}"
         p_txt = "--" if p_.p_two_sided is None else f"{p_.p_two_sided:.3f}"
         lines.append(
-            f"{ARM_LABEL[p_.arm]} & {'epoch 29' if p_.reading == 'fixed' else 'max over epochs'} & {len(p_.diffs)} & "
+            f"{ARM_LABEL[p_.arm]} & {READING_LABEL[p_.reading]} & {len(p_.diffs)} & "
             f"{diffs} & {p_.mean_diff:+.4f}{ARROW[p_.direction]} & {t_txt} & {p_txt} \\\\"
         )
     lines += ["\\bottomrule", "\\end{tabular}"]
@@ -667,8 +740,9 @@ def main() -> None:
         rows, hist, excluded = pull(regroup=args.regroup)
         pulled_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
         runs = pd.DataFrame([r.model_dump() for r in rows])
-        runs.to_csv(runs_csv, index=False)
         pd.DataFrame(hist).to_csv(hist_csv, index=False)
+    runs = derived_from_history(runs, pd.read_csv(hist_csv))
+    runs.to_csv(runs_csv, index=False)
     arms = summarize(runs)
     pairs = paired(runs)
     summary = {

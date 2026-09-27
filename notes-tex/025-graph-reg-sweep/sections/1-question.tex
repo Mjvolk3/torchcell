@@ -17,7 +17,12 @@ wild-type graph,
 \end{equation}
 with $N$ the number of genes and $|E_k|$ the edge count of graph $k$, so a head is pulled
 toward spreading each gene's attention uniformly over that gene's neighbors and is free
-to put mass anywhere. The \term{hard mask} sets the attention logits of every
+to put mass anywhere. The rest of the loss is the same in every arm: the mean squared
+error of the z-scored interaction (the point loss, weight 1) and a Sinkhorn-regularized
+Wasserstein distance between the batch's predicted and observed label distributions
+(weight 0.1, blur 0.05, 	exttt{geomloss}); the gradient probe shows the Wasserstein
+term at about a fifth of the point-loss gradient after epoch 0 and it is not varied
+here. The \term{hard mask} sets the attention logits of every
 non-edge (self-loops kept) to $-\infty$ before the softmax in layer 1, so a head can only
 attend along the graph and needs no penalty and no $\lambda$. The two are the ends of one
 axis: the mask is the $\lambda \to \infty$ limit of Eq.~\ref{eq:kl} on the support, but
@@ -74,13 +79,28 @@ random graphs & \texttt{cgt\_s0\_r\_kl\_rand\_031}: rewiring on & nine rewired g
 \end{tabular}
 \end{table}
 
+\tcfigfit[0.98]{figures/graph_reg_sweep_mockup.png}{The figure as it was designed
+before any run, drawn in draw.io from
+\file{notes/assets/drawio/FigS-graph-regularization-sweep.gen.py} before the sweep was submitted (week of 2026-09-08): sketched
+curves, not data. Panel a predicted contraction of attention onto the graph with
+$\lambda$; b an accuracy peak between no penalty and the mask; c the penalty carrying the
+gradient before the point loss can; d discovery of unseen edges from off-graph
+attention; e overruling of cataloged edges by the digenic interaction; f the
+degree-matched random-graph control at the best $\lambda$. The design strip below the
+panels lists the arms and the Delta budget under the cosine schedule that the
+constant-rate protocol later replaced. Figure~\ref{fig:sweep} is what was measured;
+Section~\ref{sec:reading} sets the two side by side.}{fig:mockup}
+
 \notesec{Readings}
-Every run is read twice. The \term{fixed-epoch reading} is validation Pearson at epoch
+Every run is read three times. The \term{fixed-epoch reading} is validation Pearson at epoch
 29, the protocol's last epoch, the same optimization state for every arm. The
 \term{max-over-epochs reading} is the largest validation Pearson over the 30 epochs, an
 upward-biased order statistic reported with the epoch at which it occurred; it is the
-number a best-checkpoint deployment would see. Arm values are the mean and sample
-standard deviation over seeds; a paired comparison is by seed, since the split is pinned
+number a best-checkpoint deployment would see. The \term{minimum-loss reading} is
+validation Pearson at the epoch of that run's lowest validation point loss, the epoch a
+loss-monitored checkpoint would keep; the loss curve is jagged after its minimum, so the
+epoch it picks varies by seed. Arm values are the mean and sample standard deviation
+over seeds; a paired comparison is by seed, since the split is pinned
 and the seed sets the initialization and the batch order for every arm alike.
 
 \notesec{Vocabulary}

@@ -3,34 +3,41 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/025-solid-growth/scripts/graph_reg_sweep_plots
 """The figure of the graph-regularization sweep, from the readout's CSVs.
 
-Reads experiments/025-solid-growth/results/graph_reg_sweep_runs.csv and
-graph_reg_sweep_history.csv (written by graph_reg_sweep_readout.py) and writes ONE
-full-width 3 x 3 figure, graph_reg_sweep, to $ASSET_IMAGES_DIR/025-solid-growth/ (true-size
-SVG plus PNG; a timestamped SVG copy for the iteration history):
+Reads experiments/025-solid-growth/results/graph_reg_sweep_runs.csv,
+graph_reg_sweep_history.csv and graph_reg_sweep_summary.json (written by
+graph_reg_sweep_readout.py) and writes ONE full-width 3 x 3 figure, graph_reg_sweep, to
+$ASSET_IMAGES_DIR/025-solid-growth/ (true-size SVG plus PNG; a timestamped SVG copy for
+the iteration history):
 
-  a  held-out Pearson at epoch 29 across the ladder (no penalty, the KL ladder, the hard
-     mask, the random-graph control), seeds as points and the arm mean as a bar
-  b  the same at each run's max over epochs
-  c  edge recall at degree at epoch 29, mean over the nine regularized heads
-  d  divergence of layer-1 attention from the nine graphs at epoch 29 (validation pass)
-  e  gradient-norm ratio, penalty over point loss, on the probe batch at epochs 0 and 20
+  a  held-out Pearson across the ladder at three readings per seed: epoch 29 (circle),
+     max over epochs (triangle), at the epoch of minimum validation point loss (square);
+     stars are the paired t of the epoch-29 reading against no penalty
+  b  held-out point loss (z-scored MSE) at epoch 29 and at its minimum
+  c  edge recall at degree at epoch 29 against each arm's own target graphs
+  d  divergence of layer-1 attention from the target graphs at epoch 29 (validation pass)
+  e  gradient-norm ratio, penalty over point loss, on the probe batch across the probe
+     epochs 0, 1, 2, 5, 10 and 20
   f  the random-graph control at lambda 1e-3 against the biological graphs and no penalty
   g  validation Pearson by epoch, mean over complete seeds with a +- sd band
   h  training Pearson by epoch
   i  validation point loss by epoch
 
-Colors: one palette color per arm that is drawn as a curve (no penalty gray, hard mask
-red, KL 1e-3 orange, KL 1e-1 yellow, KL 1 blue, random graphs purple); the rest of the
-ladder is orange. Curves use complete (30-epoch) runs only, so no arm ends early because
-one seed is still running. Tick labels are standalone mathtext; prose labels spell lambda
-in decimals because Arial has no superscript minus or nabla glyph.
+Marks follow the repo's dot plots: every seed point is filled with its arm's color and
+edged in black; arm means are short black bars; a quantity the model did not compute is
+an x at the bottom of the axis. One palette color per arm that is drawn as a curve (no
+penalty gray, hard mask red, KL 1e-3 orange, KL 1e-1 yellow, KL 1 blue, random graphs
+purple); the rest of the ladder is orange. Curves use complete (30-epoch) runs only.
+Every panel carries the same light horizontal grid. Panel titles state the finding the
+panel shows; each is checked against the summary numbers in the document's Section 2.
 
-Repo figure standards: Arial 6 pt, boxed axes, palette from torchcell.utils, tenth
-gridlines on the Pearson axes, panel letters outside the axes, no bbox_inches="tight".
+Repo figure standards: Arial 6 pt, boxed axes, palette from torchcell.utils, panel letters
+outside the axes, no bbox_inches="tight". Tick labels are standalone mathtext; prose
+labels spell lambda in decimals because Arial has no superscript minus or nabla glyph.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import os.path as osp
 from typing import Any
@@ -63,6 +70,7 @@ RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "025-solid-growth", "results")
 IMG_DIR = osp.join(ASSET_IMAGES_DIR, "025-solid-growth")
 
 ORANGE, RED, PURPLE, YELLOW, BLUE, GRAY = PLOT_PALETTE[:6]
+GRID_COLOR, GRID_LW = "#E3E3E3", 0.3
 plt.rcParams.update(
     {
         "font.family": "Arial",
@@ -91,16 +99,17 @@ LADDER = [
     RANDOM,
 ]
 LADDER_TICKS = [
-    "0",
+    "none",
     "$10^{-5}$",
     "$10^{-4}$",
     "$10^{-3}$",
     "$10^{-2}$",
     "$10^{-1}$",
-    "1",
+    "$1$",
     "mask",
-    "rand",
+    "random",
 ]
+XPOS = {arm: i for i, arm in enumerate(LADDER)}
 ARM_COLOR = {
     "kl_0": GRAY,
     "kl_1e-05": ORANGE,
@@ -112,6 +121,15 @@ ARM_COLOR = {
     "mask": RED,
     RANDOM: PURPLE,
 }
+ARM_SHORT = {
+    "kl_1e-05": "1e-5",
+    "kl_0.0001": "1e-4",
+    "kl_0.001": "1e-3",
+    "kl_0.01": "1e-2",
+    "kl_0.1": "0.1",
+    "kl_1": "1",
+    RANDOM: "random",
+}
 # Drawn back to front, so no penalty (gray) is on top and never hidden.
 CURVE_ARMS = [
     (RANDOM, "KL λ = 0.001, random graphs", PURPLE, "--"),
@@ -121,6 +139,13 @@ CURVE_ARMS = [
     ("mask", "hard mask", RED, "-"),
     ("kl_0", "no penalty", GRAY, "-"),
 ]
+# Reading -> (marker, x offset inside the arm's column, column of the runs table)
+READINGS = {
+    "fixed": ("o", -0.27, "val_pearson_fixed"),
+    "max": ("^", 0.0, "val_pearson_max"),
+    "min_loss": ("s", 0.27, "val_pearson_at_min_loss"),
+}
+PROBE_EPOCHS = [0, 1, 2, 5, 10, 20]
 X_LABEL = "λ (graph prior weight)"
 
 
@@ -129,12 +154,14 @@ def _box(ax: Axes) -> None:
         s.set_visible(True)
         s.set_linewidth(0.5)
     ax.tick_params(width=0.5, length=2)
+    ax.grid(axis="y", which="major", color=GRID_COLOR, linewidth=GRID_LW)
+    ax.set_axisbelow(True)
 
 
-def _tenths(ax: Axes) -> None:
+def _pearson_grid(ax: Axes) -> None:
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
     ax.yaxis.set_minor_locator(MultipleLocator(0.01))
-    ax.grid(axis="y", which="both", color="#DDDDDD", linewidth=0.3)
+    ax.grid(axis="y", which="minor", color=GRID_COLOR, linewidth=GRID_LW)
     ax.tick_params(axis="y", which="minor", length=0)
 
 
@@ -146,54 +173,45 @@ def _save(fig: Figure, name: str) -> None:
     plt.close(fig)
 
 
-def _seed_points(
+def _points(
     ax: Axes,
     x: float,
     vals: NDArray[Any],
     color: str,
-    filled: bool,
-    jitter: float = 0.1,
+    marker: str = "o",
+    jitter: float = 0.07,
 ) -> None:
+    """Seed points: arm color face, black edge; the arm mean as a short black bar."""
     xs = x + np.linspace(-jitter, jitter, len(vals)) if len(vals) > 1 else np.array([x])
     ax.scatter(
         xs,
         vals,
-        s=7,
-        facecolor=color if filled else "white",
-        edgecolor=color,
-        linewidth=0.5,
-        zorder=3,
+        s=9,
+        marker=marker,
+        facecolor=color,
+        edgecolor="black",
+        linewidth=0.4,
+        zorder=4,
     )
+    ax.plot([x - 0.14, x + 0.14], [vals.mean()] * 2, color="black", lw=0.7, zorder=3)
 
 
-def _ladder_axis(ax: Axes, xlabel: str) -> None:
+def _not_logged(ax: Axes, x: float, y: float, color: str) -> None:
+    ax.scatter([x], [y], s=12, marker="x", color=color, linewidth=0.6, zorder=4)
+
+
+def _ladder_axis(ax: Axes, xlabel: str = X_LABEL) -> None:
     ax.set_xticks(range(len(LADDER)))
-    ax.set_xticklabels(LADDER_TICKS)
+    ax.set_xticklabels(LADDER_TICKS, rotation=40, ha="right", rotation_mode="anchor")
     ax.set_xlim(-0.6, len(LADDER) - 0.4)
     ax.set_xlabel(xlabel)
     _box(ax)
 
 
-def _ladder_points(ax: Axes, runs: pd.DataFrame, col: str, filled: bool = True) -> None:
-    """Seed points, arm-mean bars, and a line through the KL ladder's means."""
-    xpos = {arm: i for i, arm in enumerate(LADDER)}
-    means = []
-    for arm in LADDER:
-        vals = runs[runs.arm == arm][col].dropna().to_numpy()
-        if not len(vals):
-            continue
-        c = ARM_COLOR[arm]
-        _seed_points(ax, xpos[arm], vals, c, filled)
-        ax.plot(
-            [xpos[arm] - 0.3, xpos[arm] + 0.3],
-            [vals.mean()] * 2,
-            color=c,
-            lw=1.0,
-            zorder=2,
-        )
-        means.append((xpos[arm], vals.mean(), arm))
-    kl = [(x, m) for x, m, arm in means if arm.startswith("kl_") and arm != "kl_0"]
-    ax.plot([x for x, _ in kl], [m for _, m in kl], color=ORANGE, lw=0.8, zorder=1)
+def _stars(p: float | None) -> str:
+    if p is None:
+        return ""
+    return "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else ""
 
 
 def _curve(
@@ -226,164 +244,322 @@ def _curve(
         )
 
 
-def figure(runs: pd.DataFrame, hist: pd.DataFrame) -> None:
+def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> None:
     """The 3 x 3 figure."""
     fig, axes = plt.subplots(
-        3, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(160))
+        3, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(165))
     )
     fig.subplots_adjust(
-        left=0.055, right=0.99, bottom=0.05, top=0.955, wspace=0.28, hspace=0.5
+        left=0.055, right=0.99, bottom=0.055, top=0.955, wspace=0.3, hspace=0.55
     )
     ax = axes.ravel()
     done = runs[runs.complete]
-    xpos = {arm: i for i, arm in enumerate(LADDER)}
+    pvals = {
+        (p["arm"], p["reading"]): p["p_two_sided"]
+        for p in summary["paired_vs_no_penalty"]
+    }
 
-    # a: fixed-epoch reading; b: max over epochs
-    _ladder_points(ax[0], done, "val_pearson_fixed")
-    ax[0].set_ylabel("Held-out Pearson, epoch 29")
-    ax[0].set_title("Accuracy at the fixed epoch")
-    ax[0].set_ylim(0.405, 0.465)
-    _tenths(ax[0])
-    _ladder_axis(ax[0], X_LABEL)
-    _ladder_points(ax[1], runs, "val_pearson_max", filled=False)
-    ax[1].set_ylabel("Held-out Pearson, max over epochs")
-    ax[1].set_title("Accuracy at each run's best epoch")
-    ax[1].set_ylim(0.405, 0.465)
-    _tenths(ax[1])
-    _ladder_axis(ax[1], X_LABEL)
+    # a: three readings of held-out Pearson per seed
+    a = ax[0]
+    for arm in LADDER:
+        for reading, (marker, dx, col) in READINGS.items():
+            pool = runs if reading == "max" else done
+            vals = pool[pool.arm == arm][col].dropna().to_numpy()
+            if len(vals):
+                _points(
+                    a, XPOS[arm] + dx, vals, ARM_COLOR[arm], marker=marker, jitter=0.05
+                )
+        star = _stars(pvals.get((arm, "fixed")))
+        if star:
+            a.text(XPOS[arm], 0.4615, star, ha="center", va="center", fontsize=6)
+    a.set_ylim(0.385, 0.466)
+    a.set_ylabel("Held-out Pearson, gene interaction")
+    a.set_title("Prior gains at epoch 29, little at the peak")
+    _pearson_grid(a)
+    _ladder_axis(a)
+    for reading, label in (
+        ("fixed", "epoch 29"),
+        ("max", "max over epochs"),
+        ("min_loss", "at min validation loss"),
+    ):
+        a.scatter(
+            [],
+            [],
+            s=9,
+            marker=READINGS[reading][0],
+            facecolor="white",
+            edgecolor="black",
+            linewidth=0.4,
+            label=label,
+        )
+    a.legend(loc="lower left", frameon=False, handletextpad=0.3, borderpad=0.2)
 
-    # c: edge recall at degree
-    _ladder_points(ax[2], done, "edge_recall_fixed")
-    ax[2].text(
-        xpos["mask"],
-        0.985,
-        "1 by construction",
+    # b: held-out point loss, at epoch 29 and at its minimum
+    b = ax[1]
+    for arm in LADDER:
+        sub = done[done.arm == arm]
+        if not len(sub):
+            continue
+        _points(
+            b,
+            XPOS[arm] - 0.18,
+            sub.val_point_loss_fixed.to_numpy(),
+            ARM_COLOR[arm],
+            marker="o",
+            jitter=0.05,
+        )
+        _points(
+            b,
+            XPOS[arm] + 0.18,
+            sub.val_point_loss_min.to_numpy(),
+            ARM_COLOR[arm],
+            marker="s",
+            jitter=0.05,
+        )
+    b.set_ylabel("Held-out point loss (z-scored MSE)")
+    b.set_title("Held-out loss falls with λ from 0.001 up")
+    b.yaxis.set_major_locator(MultipleLocator(0.02))
+    _ladder_axis(b)
+    b.scatter(
+        [],
+        [],
+        s=9,
+        marker="o",
+        facecolor="white",
+        edgecolor="black",
+        linewidth=0.4,
+        label="epoch 29",
+    )
+    b.scatter(
+        [],
+        [],
+        s=9,
+        marker="s",
+        facecolor="white",
+        edgecolor="black",
+        linewidth=0.4,
+        label="minimum over epochs",
+    )
+    b.legend(loc="upper right", frameon=False, handletextpad=0.3, borderpad=0.2)
+
+    # c: edge recall at degree against each arm's own target
+    c = ax[2]
+    for arm in LADDER:
+        vals = done[done.arm == arm].edge_recall_fixed.dropna().to_numpy()
+        if len(vals):
+            _points(c, XPOS[arm], vals, ARM_COLOR[arm])
+    c.scatter(
+        [XPOS["mask"]],
+        [1.0],
+        s=9,
+        marker="o",
+        facecolor=RED,
+        edgecolor="black",
+        linewidth=0.4,
+        zorder=4,
+    )
+    c.text(
+        XPOS["mask"],
+        0.94,
+        "by\nconstruction",
         ha="center",
         va="top",
-        fontsize=6,
+        fontsize=5,
         color=RED,
     )
-    ax[2].set_ylim(0, 1.0)
-    ax[2].yaxis.set_major_locator(MultipleLocator(0.2))
-    ax[2].set_ylabel("Edge recall at degree, mean of nine heads")
-    ax[2].set_title("Attention sits on the graph")
-    _ladder_axis(ax[2], "λ (graph prior weight)")
+    c.text(
+        XPOS[RANDOM],
+        0.75,
+        "vs its\nrewired\ntarget",
+        ha="center",
+        va="top",
+        fontsize=5,
+        color=PURPLE,
+    )
+    c.set_ylim(0, 1.04)
+    c.yaxis.set_major_locator(MultipleLocator(0.2))
+    c.set_ylabel("Edge recall at degree, mean of nine heads")
+    c.set_title("Any λ tested moves attention onto its target")
+    _ladder_axis(c)
 
-    # d: divergence
-    _ladder_points(ax[3], done, "val_divergence_fixed")
-    ax[3].set_yscale("log")
-    ax[3].set_ylim(2e2, 3e3)
-    ax[3].text(xpos["kl_0"], 2.2e2, "not logged", ha="center", fontsize=6, color=GRAY)
-    ax[3].text(xpos["mask"], 2.2e2, "not logged", ha="center", fontsize=6, color=RED)
-    ax[3].set_ylabel("Divergence to the graphs, epoch 29")
-    ax[3].set_title("How close the attention gets")
-    _ladder_axis(ax[3], "λ (graph prior weight)")
-
-    # e: gradient budget
+    # d: divergence to the target graphs
+    d = ax[3]
     for arm in LADDER:
-        sub = runs[runs.arm == arm]
-        c = ARM_COLOR[arm]
-        r0 = sub.probe_ratio_epoch0.dropna().to_numpy()
-        r20 = sub.probe_ratio_epoch20.dropna().to_numpy()
-        if len(r0) and r0.max() > 0:
-            _seed_points(ax[4], xpos[arm] - 0.15, r0, c, True, jitter=0.06)
-        if len(r20) and r20.max() > 0:
-            _seed_points(ax[4], xpos[arm] + 0.15, r20, c, False, jitter=0.06)
-    ax[4].axhline(1.0, color="black", lw=0.5, ls="--")
-    ax[4].text(xpos["kl_0"], 1.3e-3, "0", ha="center", fontsize=6, color=GRAY)
-    ax[4].text(xpos["mask"], 1.3e-3, "0", ha="center", fontsize=6, color=RED)
-    ax[4].set_yscale("log")
-    ax[4].set_ylim(1e-3, 3e3)
-    ax[4].set_ylabel("Gradient norm ratio, penalty over point loss")
-    ax[4].set_title("Where the gradient comes from")
-    ax[4].scatter(
-        [], [], s=7, facecolor=ORANGE, edgecolor=ORANGE, linewidth=0.5, label="epoch 0"
+        vals = done[done.arm == arm].val_divergence_fixed.dropna().to_numpy()
+        if len(vals):
+            _points(d, XPOS[arm], vals, ARM_COLOR[arm])
+    d.set_yscale("log")
+    d.set_ylim(2e2, 3e3)
+    _not_logged(d, XPOS["kl_0"], 2.3e2, GRAY)
+    _not_logged(d, XPOS["mask"], 2.3e2, RED)
+    d.text(
+        XPOS[RANDOM],
+        1.25e3,
+        "vs its\nrewired\ntarget",
+        ha="center",
+        va="bottom",
+        fontsize=5,
+        color=PURPLE,
     )
-    ax[4].scatter(
+    d.set_ylabel("Divergence to the target graphs, epoch 29")
+    d.set_title("Divergence floors near 300 from λ = 0.01")
+    _ladder_axis(d)
+    d.scatter(
         [],
         [],
-        s=7,
-        facecolor="white",
-        edgecolor=ORANGE,
-        linewidth=0.5,
-        label="epoch 20",
+        s=12,
+        marker="x",
+        color="black",
+        linewidth=0.6,
+        label="not computed by the model",
     )
-    ax[4].legend(loc="upper left", frameon=False, handletextpad=0.3, borderpad=0.2)
-    _ladder_axis(ax[4], "λ (graph prior weight)")
+    d.legend(loc="upper right", frameon=False, handletextpad=0.3, borderpad=0.2)
+
+    # e: gradient budget across the probe epochs
+    e = ax[4]
+    xs = np.arange(len(PROBE_EPOCHS))
+    for arm in LADDER:
+        if arm in ("kl_0", "mask"):
+            continue
+        sub = hist[
+            (hist.arm == arm)
+            & (hist.key == "probe/grad_ratio/graph_reg_to_point")
+            & hist.run_id.isin(done.run_id)
+        ]
+        if sub.empty:
+            continue
+        m = sub.groupby("epoch")["value"].mean().reindex(PROBE_EPOCHS)
+        ls = "--" if arm == RANDOM else "-"
+        e.plot(
+            xs,
+            m.to_numpy(),
+            color=ARM_COLOR[arm],
+            lw=0.9,
+            ls=ls,
+            marker="o",
+            ms=2.2,
+            mec="black",
+            mew=0.3,
+            zorder=3,
+        )
+        e.text(
+            xs[-1] + 0.12,
+            m.to_numpy()[-1],
+            ARM_SHORT[arm],
+            va="center",
+            ha="left",
+            fontsize=5,
+            color=ARM_COLOR[arm],
+        )
+    e.axhline(1.0, color="black", lw=0.5, ls="--")
+    _not_logged(e, 0, 1.4e-3, GRAY)
+    _not_logged(e, 0, 1.4e-3, RED)
+    e.text(0.35, 1.4e-3, "none, mask: 0", va="center", fontsize=5, color="black")
+    e.set_yscale("log")
+    e.set_ylim(1e-3, 5e3)
+    e.set_xticks(xs)
+    e.set_xticklabels([str(p) for p in PROBE_EPOCHS])
+    e.set_xlim(-0.4, len(PROBE_EPOCHS) - 0.2)
+    e.set_xlabel("Probe epoch")
+    e.set_ylabel("Gradient norm ratio, penalty over point loss")
+    e.set_title("Penalty dominates the gradient from λ = 0.01")
+    _box(e)
 
     # f: the random-graph control at lambda 1e-3
+    f = ax[5]
     arms = [
-        ("kl_0.001", "biological", ORANGE),
+        ("kl_0.001", "biological\ngraphs", ORANGE),
         (RANDOM, "random,\ndegree-matched", PURPLE),
-        ("kl_0", "none (λ = 0)", GRAY),
+        ("kl_0", "none\n(λ = 0)", GRAY),
     ]
     for i, (arm, _, color) in enumerate(arms):
         sub = done[done.arm == arm]
         part = runs[(runs.arm == arm) & ~runs.complete]
         if len(sub):
-            ax[5].bar(
+            f.bar(
                 i,
                 sub.val_pearson_fixed.mean(),
-                width=0.6,
-                facecolor="white",
-                edgecolor=color,
-                linewidth=0.8,
+                width=0.62,
+                facecolor=color,
+                edgecolor="black",
+                linewidth=0.5,
+                zorder=2,
             )
-            _seed_points(
-                ax[5], i, sub.val_pearson_fixed.to_numpy(), color, True, jitter=0.12
+            f.scatter(
+                i + np.linspace(-0.12, 0.12, len(sub)),
+                sub.val_pearson_fixed.to_numpy(),
+                s=9,
+                facecolor="white",
+                edgecolor="black",
+                linewidth=0.4,
+                zorder=4,
+            )
+            f.text(
+                i,
+                0.4015,
+                f"n = {len(sub)}",
+                ha="center",
+                va="bottom",
+                fontsize=5,
+                color="white",
             )
         for r in part.to_dict("records"):
-            vmax, ep = float(r["val_pearson_max"]), int(r["epochs_logged"]) - 1
-            ax[5].scatter(
-                [i + 0.22], [vmax], s=9, marker="x", color=color, linewidth=0.6
+            f.scatter(
+                [i + 0.42],
+                [float(r["val_pearson_max"])],
+                s=12,
+                marker="x",
+                color=color,
+                linewidth=0.6,
+                zorder=4,
             )
-            ax[5].text(
-                i + 0.22,
-                vmax + 0.003,
-                f"seed {int(r['seed'])}, max at\nepoch {ep}, partial",
+            f.text(
+                i + 0.42,
+                float(r["val_pearson_max"]) + 0.003,
+                f"seed {int(r['seed'])}\nmax, ep {int(r['epochs_logged']) - 1}\n(running)",
                 ha="center",
+                va="bottom",
                 fontsize=5,
                 color=color,
             )
-    ax[5].set_xticks(range(len(arms)))
-    ax[5].set_xticklabels([a[1] for a in arms])
-    ax[5].set_xlim(-0.6, len(arms) - 0.4)
-    ax[5].set_ylim(0.40, 0.46)
-    ax[5].set_ylabel("Held-out Pearson, epoch 29")
-    ax[5].set_title("Graph target of the KL at λ = 0.001")
-    _tenths(ax[5])
-    _box(ax[5])
+    f.set_xticks(range(len(arms)))
+    f.set_xticklabels([t[1] for t in arms])
+    f.set_xlim(-0.6, len(arms) - 0.3)
+    f.set_ylim(0.40, 0.46)
+    f.set_ylabel("Held-out Pearson, epoch 29")
+    f.set_title("λ = 0.001: random target equals no penalty")
+    _pearson_grid(f)
+    _box(f)
 
     # g, h, i: curves, complete runs only
-    complete_ids = set(done.run_id)
-    h = hist[hist.run_id.isin(complete_ids)]
+    h_ = hist[hist.run_id.isin(set(done.run_id))]
     panels = [
         (
             "val/gene_interaction/Pearson",
             "Validation Pearson, gene interaction",
-            "Held-out accuracy by epoch",
+            "Strong prior removes the decline after epoch 16",
         ),
         (
             "train/gene_interaction/Pearson",
             "Training Pearson, gene interaction",
-            "Fit to the training triples",
+            "Strong priors fit training like no penalty",
         ),
         (
             "val/point_loss",
             "Validation point loss (z-scored MSE)",
-            "Held-out loss by epoch",
+            "Held-out loss rises less under a strong prior",
         ),
     ]
     for k, (key, ylabel, title) in enumerate(panels):
-        a = ax[6 + k]
+        p_ = ax[6 + k]
         for z, (arm, label, color, ls) in enumerate(CURVE_ARMS):
-            _curve(a, h, arm, key, color, ls, label, z=20 + z)
-        a.set_xlabel("Epoch")
-        a.set_ylabel(ylabel)
-        a.set_title(title)
-        a.set_xlim(0, 29)
-        _box(a)
-    _tenths(ax[6])
+            _curve(p_, h_, arm, key, color, ls, label, z=20 + z)
+        p_.set_xlabel("Epoch")
+        p_.set_ylabel(ylabel)
+        p_.set_title(title)
+        p_.set_xlim(0, 29)
+        _box(p_)
+    _pearson_grid(ax[6])
     handles, labels = ax[6].get_legend_handles_labels()
     ax[6].legend(
         handles[::-1],
@@ -395,18 +571,19 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame) -> None:
         borderpad=0.2,
     )
     ax[7].yaxis.set_major_locator(MultipleLocator(0.1))
-    ax[7].grid(axis="y", color="#DDDDDD", linewidth=0.3)
+    ax[8].yaxis.set_major_locator(MultipleLocator(0.02))
 
-    for a, letter in zip(ax, "abcdefghi"):
-        panel_label(a, letter)
+    for p_, letter in zip(ax, "abcdefghi"):
+        panel_label(p_, letter)
     _save(fig, "graph_reg_sweep")
 
 
 def main() -> None:
-    """The figure from the CSVs."""
+    """The figure from the CSVs and the summary."""
     runs = pd.read_csv(osp.join(RESULTS_DIR, "graph_reg_sweep_runs.csv"))
     hist = pd.read_csv(osp.join(RESULTS_DIR, "graph_reg_sweep_history.csv"))
-    figure(runs, hist)
+    summary = json.load(open(osp.join(RESULTS_DIR, "graph_reg_sweep_summary.json")))
+    figure(runs, hist, summary)
     print("wrote", osp.join(IMG_DIR, "graph_reg_sweep.svg"))
 
 

@@ -1,0 +1,206 @@
+{
+  "generated_by": "experiments/019-simb-multimodal/scripts/proteome_morphology_covariation.py",
+  "n_shared_strains": 4314,
+  "n_proteins": 1652,
+  "n_morph_features": 278,
+  "n_moving_features": 116,
+  "reliability_threshold": 0.5,
+  "ridge_lambda_median": {
+    "proteome_to_morph": 10000.0,
+    "morph_to_proteome": 10000.0
+  },
+  "proteome_to_morphology": {
+    "all_features": {
+      "n": 278,
+      "median": 0.16932101720922496,
+      "mean": 0.17781824501919138,
+      "q25": 0.09926348176462749,
+      "q75": 0.25414707570123796,
+      "max": 0.35700293955557305,
+      "frac_above_0.3": 0.1079136690647482
+    },
+    "moving_features": {
+      "n": 116,
+      "median": 0.27950700540446516,
+      "mean": 0.24960799130205027,
+      "q25": 0.20739486641159288,
+      "q75": 0.3007766152823323,
+      "max": 0.35700293955557305,
+      "frac_above_0.3": 0.25862068965517243
+    },
+    "quiet_features": {
+      "n": 162,
+      "median": 0.1257890942055065,
+      "mean": 0.12641324150800848,
+      "q25": 0.07629755122328974,
+      "q75": 0.16781179952198777,
+      "max": 0.254203277909409,
+      "frac_above_0.3": 0.0
+    },
+    "null_all": {
+      "n": 278,
+      "median": -0.0022767690813598335,
+      "mean": -9.375754532823907e-05,
+      "q25": -0.010338149380890095,
+      "q75": 0.009594877022161183,
+      "max": 0.05346584384604822,
+      "frac_above_0.3": 0.0
+    },
+    "growth_axis_removed_all": {
+      "n": 278,
+      "median": 0.11834770982078213,
+      "mean": 0.1209776712661232,
+      "q25": 0.07826148833963839,
+      "q75": 0.15421460637010734,
+      "max": 0.3186058064642199,
+      "frac_above_0.3": 0.0035971223021582736
+    },
+    "growth_axis_removed_moving": {
+      "n": 116,
+      "median": 0.14491862393096663,
+      "mean": 0.14977063090483256,
+      "q25": 0.11225002107448047,
+      "q75": 0.17563751103092426,
+      "max": 0.3186058064642199,
+      "frac_above_0.3": 0.008620689655172414
+    },
+    "top_features": [
+      {
+        "feature": "D173_A",
+        "description": "nucleus maximum radius in mother cell on stage A",
+        "r": 0.35700293955557305,
+        "reliability": 0.7006469225331482,
+        "r_growth_removed": 0.23917301827401338
+      },
+      {
+        "feature": "D17-1_A",
+        "description": "Fitness to ellipse of the nucleus in the mother cell on stage A",
+        "r": 0.3545197287243153,
+        "reliability": 0.5191330102862717,
+        "r_growth_removed": 0.3186058064642199
+      },
+      {
+        "feature": "D176_A",
+        "description": "nucleus diameter in mother cell on stage A",
+        "r": 0.3537408100681821,
+        "reliability": 0.6974571367347489,
+        "r_growth_removed": 0.22954813557765727
+      },
+      {
+        "feature": "A7-2_A1B",
+        "description": "Actin region size in bud on stage A1B",
+        "r": 0.3494009187346494,
+        "reliability": 0.7671515532264996,
+        "r_growth_removed": 0.25030991872270036
+      },
+      {
+        "feature": "D182_A",
+        "description": "nucleus roundness in mother cell on stage A",
+        "r": 0.3437739285948844,
+        "reliability": 0.5444349687697931,
+        "r_growth_removed": 0.2695228707827752
+      },
+      {
+        "feature": "C11-2_A1B",
+        "description": "Area of daughter cell on stage A1B",
+        "r": 0.33807803448605656,
+        "reliability": 0.775061662790708,
+        "r_growth_removed": 0.23541512053952915
+      },
+      {
+        "feature": "C108_A1B",
+        "description": "Short axis length in bud on stage A1B",
+        "r": 0.3279321657854057,
+        "reliability": 0.7359087567100027,
+        "r_growth_removed": 0.22426060209441767
+      },
+      {
+        "feature": "C102_A1B",
+        "description": "Contour length of cell on stage A1B",
+        "r": 0.32750174607919397,
+        "reliability": 0.8402597998986665,
+        "r_growth_removed": 0.12792873292512558
+      },
+      {
+        "feature": "C101_A1B",
+        "description": "Cell size on stage A1B",
+        "r": 0.3264026711160435,
+        "reliability": 0.8609822486903655,
+        "r_growth_removed": 0.11580801161707661
+      },
+      {
+        "feature": "D14-1_A",
+        "description": "Area of nucleus region in mother cell on stage A",
+        "r": 0.32510918869641164,
+        "reliability": 0.7646304172951018,
+        "r_growth_removed": 0.1653070748658703
+      },
+      {
+        "feature": "C111_A1B",
+        "description": "Length from bud tip to mother cell's short axis on stage A1B",
+        "r": 0.3238231474727085,
+        "reliability": 0.7782624897187915,
+        "r_growth_removed": 0.11872070423707022
+      },
+      {
+        "feature": "C112_C",
+        "description": "Distance from neck to mother cell's center on stage C",
+        "r": 0.3213367298393222,
+        "reliability": 0.8523623043079263,
+        "r_growth_removed": 0.1342662957909899
+      },
+      {
+        "feature": "C12-2_A1B",
+        "description": "Contour length of daughter cell on stage A1B",
+        "r": 0.32095200569784027,
+        "reliability": 0.7153717451163867,
+        "r_growth_removed": 0.2129183863609915
+      },
+      {
+        "feature": "D185_C",
+        "description": "Total length of two straight segments D11-1C4-1 and D11-2C4-1 on stage C",
+        "r": 0.3155598019770714,
+        "reliability": 0.8882756713223683,
+        "r_growth_removed": 0.07876153792576548
+      },
+      {
+        "feature": "C112_A1B",
+        "description": "Distance from neck to mother cell's center on stage A1B",
+        "r": 0.31516912703656946,
+        "reliability": 0.8425683980234812,
+        "r_growth_removed": 0.1081332833553686
+      }
+    ]
+  },
+  "morphology_to_proteome": {
+    "all_proteins": {
+      "n": 1652,
+      "median": 0.08125006486044878,
+      "mean": 0.0920929989223462,
+      "q25": 0.04473762793153337,
+      "q75": 0.13206746750890935,
+      "max": 0.33143430041308003,
+      "frac_above_0.3": 0.00423728813559322
+    },
+    "null": {
+      "n": 1652,
+      "median": -0.00479122778081936,
+      "mean": -0.005954521880209325,
+      "q25": -0.020704859163140875,
+      "q75": 0.009067506662275062,
+      "max": 0.05992618802352356,
+      "frac_above_0.3": 0.0
+    }
+  },
+  "response_magnitude": {
+    "spearman": 0.17839142296844135,
+    "p": 3.5332393147257635e-32,
+    "n": 4314
+  },
+  "pc1_agreement_abs_r": 0.09150553362874804,
+  "context": {
+    "proteome_to_expression_ridge_per_feature": 0.226,
+    "expression_to_proteome_ridge_per_feature": 0.218,
+    "source": "review/2026-09-27-joint-review/01_data_ceilings.md"
+  }
+}

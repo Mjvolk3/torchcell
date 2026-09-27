@@ -37,9 +37,9 @@ moves the proteome tends to move morphology, weakly (0.18).
 
 Not measured here: whether any of this reaches a genotype-only trunk. The linear subspace
 test that bounded proteome-to-expression transfer at +0.006 has not been run for
-morphology, and the morphology head already reaches about 0.62 from the genotype (the
-paper's Figure 3 claim), far above what the observed proteome gives it, so the prior is
-that the proteome adds little to morphology prediction from genotype. Hypothesis
-(untested): if anything transfers, it is on the moving features.
+morphology. The manuscript abstract's morphology figure of about 0.62 from the genotype
+is NOT substantiated by data the group trusts (author, 2026-09-27; earlier morphology
+reads carried mistakes), so no comparison against it is made here. Hypothesis (untested):
+if anything transfers to a genotype-only morphology head, it is on the moving features.
 
 ![](./assets/images/019-simb-multimodal/proteome_morphology_covariation.svg)

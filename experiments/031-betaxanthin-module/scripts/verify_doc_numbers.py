@@ -10624,7 +10624,7 @@ CHECKS: list[Check] = [
     ),
     Check(
         claim="graphs: one-block cells",
-        stated=384,
+        stated=372,
         recompute=graph_reg_loss_over_cells(1, "n"),
         tolerance=0.5,
     ),

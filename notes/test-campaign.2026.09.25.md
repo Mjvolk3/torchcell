@@ -475,3 +475,46 @@ Live-critical: importer graph (scripts/legacy_partition.py) @ PR-0c tip
 | TOTAL (line only) | | 67020 | 27.8% | 28.3% | 19.6% | |
 
 No module row moved; the statement total fell from 68,290 to 67,020.
+
+## 2026.09.26 - Phase 5, dataset loaders on synthetic raw files (PR-5)
+
+The largest untested pool in the live tree is `torchcell/datasets/scerevisiae/` (12,976 lines, most loaders near 25% because only their import and class body ran). A survey of the base class (`torchcell/data/experiment_dataset.py`) gave the lever: when every name in `raw_file_names` exists under `<root>/raw/`, PyG never calls `download()`; `process()` runs once because `<root>/processed/lmdb` is absent; `@post_process` then computes the gene set, the experiment-reference index and the build manifest (git and hostname only). So each loader is built end to end on a two-to-four-row hand-written raw file under `tmp_path` (xlsx via openpyxl, TSV, CSV, or a fake GFF), with a duck-typed genome stub carrying only the attributes the loader reads, and every record is compared to a hand-built pydantic object by `model_dump()` equality, with the side files (`gene_set.json`, `experiment_reference_index.json`, `build_manifest.json`, `processed/interned`) asserted exactly. Four Fable 5.1 agents wrote the nine files in parallel in one worktree (no git for the agents); one independent audit followed. Files: [[tests.torchcell.datasets.scerevisiae.test_kuzmin2018_synthetic]] and [[tests.torchcell.datasets.scerevisiae.test_kuzmin2020_synthetic]] (all ten Smf/Dmf/Tmf/Dmi/Tmi classes, one TSV and three xlsx), [[tests.torchcell.datasets.scerevisiae.test_costanzo2016]] (three classes), [[tests.torchcell.datasets.scerevisiae.test_synth_leth_db]], [[tests.torchcell.datasets.scerevisiae.test_lopez2024]], [[tests.torchcell.datasets.scerevisiae.test_xue2025]], [[tests.torchcell.datasets.scerevisiae.test_zelezniak2018]] (the metabolome with `build_metabolite_s_id_map` stubbed, since it loads Yeast9), [[tests.torchcell.datasets.scerevisiae.test_messner2023]] (`DATA_ROOT` pointed into `tmp_path` with a five-line fake GFF) and [[tests.torchcell.datasets.scerevisiae.test_yeastphenome_synthetic]] (`SCREENS` monkeypatched to two synthetic screens). Not attempted, with the reason: kemmeren2014 and sameith2015 read pickled GEOparse objects and fall back to the network; caudal2024 and hillenmeyer2008 resolve genome files through the genomes registry; nadal_ribelles2025 reads `.Rdata`.
+
+Findings the tests produced, all confirmed by the audit against the source line and pinned as the code behaves:
+
+- `costanzo2016` Smf: a strain suffix outside damp/tsa/tsq/dma/sn/S is typed `unknown` and `create_experiment` then raises `UnboundLocalError` (no branch binds `genotype`). Dmf stores a one-perturbation double-mutant record for the same unknown array suffix while Dmi raises its two-perturbation assertion on the identical row.
+- `synth_leth_db`: SL stores `nan` and SR stores `None` for an empty statistic score; the documented "fall back to the raw name" path always ends in the schema's invalid-systematic-name error.
+- `kuzmin2018` Smf drops an array single-mutant record when the row's query fitness is empty (the final `isna` filter runs on the concatenated frame); Smf and Dmf disagree on the reference SD (all rows vs digenic rows); the "no ho" columns glue both query genes on trigenic rows (never read).
+- `kuzmin2020`: the Dmf fallback query-strain record stores `fitness_std = nan`, not `None`; Smf labels the S5 "St.dev." `sample_sd` n = 4 while Dmf labels the same column `bootstrap_se` n = 12; Dmf computes a reference SD and never uses it; Tmf/Tmi tag query perturbations with split strain-id halves; Tmf stores `fitness_std` without uncertainty typing.
+- `lopez2024` screen rebuilds the WT reference per record with that record's replicate count, so the dataset carries one reference per distinct n.
+- `xue2025` `_resolve_systematic` is case-sensitive on the `gene_set` branch (only the alias lookup upper-cases).
+- `zelezniak2018` proteome regex lacks `Q\d{4}` (a mitochondrial protein id aborts a build); a non-systematic `KO_ORF` is skipped while a non-systematic protein `ORF` raises; a protein measured once stores `nan` as SE and only the metabolome collapses an all-NaN SE dict to `None`.
+- `messner2023` `_gene_from_filename` returns the numeric suffix as a gene name when no gene token is present.
+- `yeastphenome`: quinine is absent from the compound table, so its `Compound` carries a `deferred_pending_source_review` gap with no identifiers; `_parse_media` discards supplements (`SC + EtOH` becomes `SC`).
+- Base class, surfaced by the audit's strace: `build_manifest.py` runs `git status --porcelain` on every build, so each hermetic build writes `index.lock` into the shared `.git` (65 times in this run); a concurrent git operation would collide.
+
+Runs: behavioral suite under the sentinel, PR-5 tip on top of f838c0508 (before the PR-0c rebase): 2199 passed, 81 skipped, 402 deselected (import-all), 9 xfailed, 85 s; the nine files alone: 127 passed (104 test functions), 12 s; `test-quality` 164 files clean; paired-tests clean; the sentinel directory absent afterwards. Diff coverage vs `origin/main`: no source lines changed. Local table, rows that moved:
+
+Generated by: python scripts/coverage_gaps.py --before coverage-p4.json --after coverage-p5.json --import-only coverage-import.json
+Live-critical: importer graph (scripts/legacy_partition.py) @ f838c0508
+
+| Module | Live-critical | Statements | before @ f838c0508 | after @ f838c0508 | import-only @ f838c0508 | Delta |
+|---|---|---|---|---|---|---|
+| `torchcell/datasets/scerevisiae/zelezniak2018.py` | yes | 238 | 24.8% | 70.9% | 22.7% | +46.1 |
+| `torchcell/datasets/scerevisiae/costanzo2016.py` | yes | 359 | 19.2% | 80.8% | 17.1% | +61.7 |
+| `torchcell/datasets/scerevisiae/synth_leth_db.py` | yes | 200 | 25.8% | 80.9% | 23.3% | +55.1 |
+| `torchcell/datasets/scerevisiae/messner2023.py` | yes | 156 | 26.6% | 81.2% | 25.0% | +54.7 |
+| `torchcell/datasets/scerevisiae/kuzmin2018.py` | yes | 457 | 21.7% | 85.3% | 19.0% | +63.5 |
+| `torchcell/data/experiment_dataset.py` | yes | 279 | 75.6% | 86.1% | 23.2% | +10.5 |
+| `torchcell/datasets/scerevisiae/yeastphenome.py` | yes | 176 | 26.6% | 86.2% | 25.2% | +59.6 |
+| `torchcell/loader/cpu_experiment_loader.py` | yes | 79 | 87.9% | 88.8% | 17.8% | +0.9 |
+| `torchcell/datasets/scerevisiae/kuzmin2020.py` | yes | 459 | 25.0% | 89.6% | 22.1% | +64.7 |
+| `torchcell/datamodels/schema.py` | yes | 1153 | 90.0% | 90.8% | 57.1% | +0.8 |
+| `torchcell/datasets/scerevisiae/lopez2024.py` | yes | 199 | 26.0% | 93.6% | 24.7% | +67.7 |
+| `torchcell/datasets/scerevisiae/xue2025.py` | yes | 168 | 27.9% | 93.6% | 26.5% | +65.7 |
+| TOTAL (line+branch) |  | 68290 | 25.7% | 27.8% | 15.4% | +2.1 |
+| TOTAL (line only) | | 68290 | 27.8% | 29.9% | 19.6% | |
+
+### Quality audit
+
+Reviewer: independent agent (Fable 5.1, read-only; re-derived every mean, standard error, reference SD, replicate count, temperature, PubMed id, media name, message string and Counter order from the loader source and the synthetic rows; re-ran the suite under a socket-blocking plugin and `strace` on file writes to prove hermeticity; all reproduced). Files: 9. Test functions: 104 before and after (127 cases). Rejected: 0. Rewritten: 6, all of one kind: a `pytest.approx` or relative-tolerance comparison replaced by exact equality after the auditor verified the value is float-reproducible (three Costanzo reference-SD tests, three Zelezniak record tests, whose helper's "pandas orders the arithmetic differently" rationale did not hold for these fixtures). Accepted with note: 9, applied where cheap: assertions entailed by a full-dump equality dropped, a test constant compared with itself dropped, the Kuzmin 2020 Tmi expected genotypes hand-built instead of lifted from a Tmf build, three docstrings corrected (a five-line GFF called three-line, an ordering claim the test does not observe, an unverified provenance sentence about the khozoie screen). Accepted: 89. Wrong constants: 0. Duplication of the data-gated files: none. Gaps the audit named for a later phase: a 2018 query-side allele perturbation and the prime replacement, the 2020 S5 mismatch warning, the `io_workers > 1` reference-index branch, the Costanzo `tsq`/`damp` array branches, YeastPhenome's post-SGA backgrounds. After the audit: 127 passed.

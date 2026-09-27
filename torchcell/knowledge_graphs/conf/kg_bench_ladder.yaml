@@ -38,6 +38,9 @@ adapters:
   # r5 arm: adapters.fast_writer=true (rows rendered in the chunk workers, the main
   # process only dedups and appends; torchcell.fast_csv). false is production.
   fast_writer: false
+  # r6 arm: adapters.chunks_per_worker=N (pool group = workers x N chunks; the pool is
+  # torn down and re-forked every group). 2 is production.
+  chunks_per_worker: 2
 
 datasets:
   - MetaboliteZelezniak2018Dataset # 95 records

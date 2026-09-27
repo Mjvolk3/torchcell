@@ -166,6 +166,7 @@ def main(cfg: DictConfig) -> None:
     inprocess_max_records = int(wandb.config.adapters.get("inprocess_max_records", 0))
     single_pass = bool(wandb.config.adapters.get("single_pass", False))
     fast_writer = bool(wandb.config.adapters.get("fast_writer", False))
+    chunks_per_worker = int(wandb.config.adapters.get("chunks_per_worker", 2))
     # r5: rows rendered in the chunk workers, the main process only dedups and
     # appends (torchcell.fast_csv). The specs are frozen from THIS BioCypher instance
     # before any adapter forks a pool, so every worker inherits them.
@@ -313,6 +314,7 @@ def main(cfg: DictConfig) -> None:
         adapters[-1].inprocess_max_records = inprocess_max_records
         adapters[-1].single_pass = single_pass
         adapters[-1].row_specs = row_specs
+        adapters[-1].chunks_per_worker = chunks_per_worker
     log.info(
         "Built %d adapters; skipped %d with no LMDB: %s",
         len(adapters),

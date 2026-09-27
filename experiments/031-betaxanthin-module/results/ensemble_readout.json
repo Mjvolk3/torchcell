@@ -5697,6 +5697,54 @@
       "n_seeds": 6
     },
     {
+      "stem": "w233_bxdelaapoolmlp256skl_h36l2p1_e200",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.2352636906027689,
+          "top50_enrichment": 3.594285714285714,
+          "top50_hits": 18.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.23494702752851868,
+          "top50_enrichment": 4.792380952380952,
+          "top50_hits": 24.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.205245533291159,
+          "top50_enrichment": 4.393015873015873,
+          "top50_hits": 22.0
+        }
+      ],
+      "mean_single_spearman": 0.2251520838074822,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.2337693900076815,
+          "top50_enrichment": 4.393015873015873,
+          "top50_hits": 22.0
+        }
+      ],
+      "mean_triple_spearman": 0.2337693900076815,
+      "first_six": null,
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.2337693900076815,
+        "top50_enrichment": 4.393015873015873,
+        "top50_hits": 22.0
+      },
+      "n_seeds": 3
+    },
+    {
       "stem": "w234_bxdelaapoolmlp256smask_h36l2p1_e200",
       "head": "betaxanthin",
       "seeds": [

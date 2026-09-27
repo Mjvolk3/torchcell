@@ -1,0 +1,72 @@
+{
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_prediction_agreement.py",
+  "name": "w233_vs_w232",
+  "arm": "w233_bxdelaapoolmlp256skl_h36l2p1_e200",
+  "control": "w232_bxdelaapoolmlp256ss_h36l2p1_e200",
+  "statistic": "Spearman and Pearson between the arm's and the control's pinned-test predictions at the same seed, from the per-gene dumps; the control's seed pairs as the reference for what initialization alone moves",
+  "summary": {
+    "mean_same_seed_spearman": 0.7022750508469425,
+    "min_same_seed_spearman": 0.6578878177793243,
+    "n_seeds_at_or_above_0.9999": 0,
+    "mean_control_seed_pair_spearman": 0.9414348139431846,
+    "min_control_seed_pair_spearman": 0.8995491478946062,
+    "max_control_seed_pair_spearman": 0.9691505527771477,
+    "n_seeds": 3
+  },
+  "seeds": [
+    {
+      "seed": 2700,
+      "n_pinned": 639,
+      "spearman": 0.7333834183260483,
+      "pearson": 0.5793327754312947,
+      "arm_select_epoch": 21,
+      "control_select_epoch": 34,
+      "arm_spearman_vs_target": 0.2352636906027689,
+      "control_spearman_vs_target": 0.2352696699268449
+    },
+    {
+      "seed": 2701,
+      "n_pinned": 639,
+      "spearman": 0.6578878177793243,
+      "pearson": 0.5660492218511824,
+      "arm_select_epoch": 102,
+      "control_select_epoch": 116,
+      "arm_spearman_vs_target": 0.23494702752851868,
+      "control_spearman_vs_target": 0.2753084974195349
+    },
+    {
+      "seed": 2702,
+      "n_pinned": 639,
+      "spearman": 0.7155539164354553,
+      "pearson": 0.6689148270045701,
+      "arm_select_epoch": 40,
+      "control_select_epoch": 60,
+      "arm_spearman_vs_target": 0.205245533291159,
+      "control_spearman_vs_target": 0.26244310771436363
+    }
+  ],
+  "control_seed_pairs": [
+    {
+      "seeds": [
+        2700,
+        2701
+      ],
+      "spearman": 0.8995491478946062
+    },
+    {
+      "seeds": [
+        2700,
+        2702
+      ],
+      "spearman": 0.9691505527771477
+    },
+    {
+      "seeds": [
+        2701,
+        2702
+      ],
+      "spearman": 0.9556047411578001
+    }
+  ],
+  "seconds": 0.02512192726135254
+}

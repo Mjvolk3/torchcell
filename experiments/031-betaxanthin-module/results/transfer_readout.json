@@ -18701,6 +18701,116 @@
       ]
     },
     {
+      "name": "betaxanthin: pool through 256 on two blocks of width 36 with the KL regularizer on the second block against two unmasked blocks",
+      "head": "betaxanthin",
+      "arm": {
+        "stem": "w233_bxdelaapoolmlp256skl_h36l2p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 21,
+            "select_val_pearson": 0.3650783598423004,
+            "spearman": 0.2352636906027689,
+            "pearson": 0.3110429048538208,
+            "top50_enrichment": 3.594285714285714,
+            "top50_hits": 18.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 102,
+            "select_val_pearson": 0.35736310482025146,
+            "spearman": 0.23494702752851868,
+            "pearson": 0.3837464153766632,
+            "top50_enrichment": 4.792380952380952,
+            "top50_hits": 24.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 40,
+            "select_val_pearson": 0.35118332505226135,
+            "spearman": 0.205245533291159,
+            "pearson": 0.3367573320865631,
+            "top50_enrichment": 4.393015873015873,
+            "top50_hits": 22.0
+          }
+        ],
+        "mean_spearman": 0.2251520838074822,
+        "sd_spearman": 0.01724030550685932,
+        "mean_top50_enrichment": 4.25989417989418
+      },
+      "control": {
+        "stem": "w232_bxdelaapoolmlp256ss_h36l2p1_e200",
+        "cells": [
+          {
+            "seed": 2700,
+            "select_epoch": 34,
+            "select_val_pearson": 0.38765260577201843,
+            "spearman": 0.2352696699268449,
+            "pearson": 0.2858017086982727,
+            "top50_enrichment": 2.9952380952380953,
+            "top50_hits": 15.0
+          },
+          {
+            "seed": 2701,
+            "select_epoch": 116,
+            "select_val_pearson": 0.36058732867240906,
+            "spearman": 0.2753084974195349,
+            "pearson": 0.3167061507701874,
+            "top50_enrichment": 4.193333333333333,
+            "top50_hits": 21.0
+          },
+          {
+            "seed": 2702,
+            "select_epoch": 60,
+            "select_val_pearson": 0.37169766426086426,
+            "spearman": 0.26244310771436363,
+            "pearson": 0.2906516194343567,
+            "top50_enrichment": 3.594285714285714,
+            "top50_hits": 18.0
+          },
+          {
+            "seed": 2703,
+            "select_epoch": 57,
+            "select_val_pearson": 0.3651195466518402,
+            "spearman": 0.2636025117673358,
+            "pearson": 0.29504096508026123,
+            "top50_enrichment": 3.793968253968254,
+            "top50_hits": 19.0
+          },
+          {
+            "seed": 2704,
+            "select_epoch": 194,
+            "select_val_pearson": 0.3926534056663513,
+            "spearman": 0.2771373043535992,
+            "pearson": 0.32667428255081177,
+            "top50_enrichment": 4.592698412698413,
+            "top50_hits": 23.0
+          },
+          {
+            "seed": 2705,
+            "select_epoch": 74,
+            "select_val_pearson": 0.3646450340747833,
+            "spearman": 0.305735039755272,
+            "pearson": 0.41770145297050476,
+            "top50_enrichment": 5.591111111111111,
+            "top50_hits": 28.0
+          }
+        ],
+        "mean_spearman": 0.2699160218228251,
+        "sd_spearman": 0.02306643585077081,
+        "mean_top50_enrichment": 4.126772486772487
+      },
+      "n": 3,
+      "mean_difference": -0.03252167454609895,
+      "sd_difference": 0.029390754171734153,
+      "n_positive": 0,
+      "differences": [
+        -5.979324076005321e-6,
+        -0.040361469891016216,
+        -0.05719757442320464
+      ]
+    },
+    {
       "name": "betaxanthin: pool through 256 on two blocks of width 36 with the hard graph mask on the second block against two unmasked blocks",
       "head": "betaxanthin",
       "arm": {

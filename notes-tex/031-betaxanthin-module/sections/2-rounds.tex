@@ -1060,4 +1060,25 @@ by the graphs carries no more of this target than unshaped attention did, and th
 graphs' own read (0.244 by one hop of label propagation, Section~\ref{sec:homophily})
 is not what either backbone learns.
 
+Round 215 is read on three seeds (job 2900, 6 h 53 min): the pool through 256 on two
+blocks of width 36 with 019's KL regularizer on the second at the 019 weight, the
+first cell of the campaign on which the regularizer is not inert. The regularized block
+holds its attention in memory, about 14.5 GB a seed, and the pack's six concurrent
+seeds ran a 46 GB card out of memory at the start, so seeds 2703 to 2705 are rerunning
+as a three-seed pack (job 2923) and the read here is seeds 2700 to 2702 against the
+same three seeds of the unmasked control. It reads 0.225 (sd 0.017) against 0.258
+($-0.033$ paired, sd 0.029, none of three), top-50 4.26 against the control's six-seed
+4.13, the seeds 0.205 to 0.235 selecting at epochs 21 to 102, and the regularizer's
+loss at the selected epoch is 0.35 to 0.40 against a data term near 0.42. The prior
+moves every seed's prediction (agreement with the unmasked twin 0.66 to 0.73 against
+0.88 to 0.99 between the control's own seeds) and it moves the backbone: its head is
+live on all three seeds with a spread 1.5 to 2.1 times the slot's, and its own read of
+the target, 0.076 to 0.103, is the highest of any backbone head in the study, above the
+masked head's $-0.06$ to 0.07 and the unmasked live heads' $-0.10$ and 0.09. It still
+subtracts, by 0.009 to 0.045, because a head that reads 0.09 with a spread twice the
+slot's dilutes a slot that reads 0.25 (the slot alone 0.251 here). So at the 019 weight
+the graph prior is the one intervention that makes the backbone read betaxanthin at
+all, and what it reads is a tenth of what the graphs carry by label propagation; the
+weight ladder (217, 218) asks whether a stronger prior raises it.
+
 \input{tables/target_transfer}

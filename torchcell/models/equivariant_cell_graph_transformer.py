@@ -2584,10 +2584,13 @@ class CellGraphTransformer(nn.Module):
         """Normalize adjacency matrices row-wise: A_tilde[i,:] = A[i,:] / (degree[i] + eps).
 
         With ``hops > 1`` the support is the k-hop reachability of the graph (see
-        :func:`khop_reach`) with the diagonal cleared, so the prior's target excludes the
-        self-loop at every hop count exactly as it does at one hop; ``symmetrize`` adds
-        the reverse of every edge before normalization. At ``hops == 1`` and
-        ``symmetrize == False`` the matrices are bit-identical to the original path.
+        :func:`khop_reach`) with the diagonal replaced by the one-hop diagonal, so a
+        gene's self entry is in the target exactly when the stored graph has its
+        self-loop (``to_cell_data`` adds one to every gene by default, so every round-1
+        target held one) and the even-length walks that return home on an undirected
+        graph add nothing; ``symmetrize`` adds the reverse of every edge before
+        normalization. At ``hops == 1`` and ``symmetrize == False`` the matrices are
+        bit-identical to the original path.
 
         Args:
             cell_graph: HeteroData with (gene, edge_type, gene) edges
@@ -2616,8 +2619,17 @@ class CellGraphTransformer(nn.Module):
                 A = torch.zeros(num_nodes, num_nodes)
                 A[edge_index[0], edge_index[1]] = 1.0
             else:
+                one_hop = torch.zeros(num_nodes, num_nodes)
+                one_hop[edge_index[0], edge_index[1]] = 1.0
                 A = khop_reach(edge_index, num_nodes, hops, symmetrize).float()
-                A.fill_diagonal_(0.0)
+                # The reach's diagonal says nothing about the graph (every even walk on
+                # an undirected graph returns home). Keep exactly the diagonal the
+                # one-hop target has, so the k-hop and symmetric targets differ from
+                # round 1 in reach or direction alone. The real-size smoke of
+                # 2026-09-27 caught the earlier `fill_diagonal_(0)`: it emptied 6,147 of
+                # 6,607 regulatory rows that the one-hop target constrains to self.
+                idx = torch.arange(num_nodes)
+                A[idx, idx] = one_hop[idx, idx]
 
             # Compute row-wise normalization
             row_sums = A.sum(dim=1, keepdim=True) + 1e-10  # [num_nodes, 1]

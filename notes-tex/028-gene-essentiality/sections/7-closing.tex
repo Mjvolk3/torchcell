@@ -485,6 +485,14 @@ The depth control (w135, job 2907, 34 min), two unmasked blocks of width 36 with
 $+0.001$ paired (sd 0.006, three of six), the seeds 0.910 to 0.917 selecting at epochs
 37 to 79: a second unmasked block changes nothing, so whatever the masked and
 regularized second blocks read is theirs.
+The hard mask (w137, job 2909, 37 min), one of the nine relations burned into each of
+the second block's nine heads with self-loops and the summary token free, reads 0.903
+(sd 0.004) against the two unmasked blocks' 0.913, $-0.010$ paired (sd 0.004, none of
+six above), the seeds 0.899 to 0.910 selecting at epochs 36 to 73. The one pattern
+that forces the second block to attend along the graphs is under the free block on
+every seed, on the target whose labels propagate along those graphs at 0.902
+(Section~\ref{sec:mp-architectures}): attention restricted to a gene's cataloged
+neighbors is not how this model reads them.
 
 \input{tables/pattern_ladder}
 

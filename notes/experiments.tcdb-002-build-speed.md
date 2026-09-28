@@ -347,3 +347,32 @@ Test: `kg_bench_bloom.yaml` runs Bloom alone with job 2905's settings, so the pa
 starts small. Job 2934 (`r8 bloom-alone`, commit c3f6b940, 32 CPUs / 128 GB). The r7
 arms 2930 to 2933 are held (my jobs only) so 2934 runs first. If Bloom passes alone,
 the parent's dedup state is the thing to shrink; if it dies alone, the workers are.
+
+### Bloom alone: the interned table rides along with every chunk
+
+Scheduling first: the arms sat PENDING for hours with 32 CPUs idle because they asked
+for 12 h. GilaHyper is one node, and backfill starts a job beside the GPU packs only if
+its limit ends before the next pack's reservation. Lowering the limits to 1 to 1.5 h
+started job 2934 within seconds; `submit_bench.sh` now defaults to `TIME=1:00:00`
+(commit 3a97fa04).
+
+Job 2934 (`r8 bloom-alone`, commit c3f6b940, fresh parent) completed: Bloom's node pass
+401 s and edge pass 417 s, 1,049,814 node rows and 3,180,715 edge rows, but anonymous
+memory peaked at 70.5 GB with the container at 4.5 cores on average. So the full-build
+kill is both terms: a 36 GB parent plus about 70 GB of Bloom workers.
+
+<https://wandb.ai/zhao-group/tcdb/runs/cmnj14mw>
+
+The per-worker cost is the interned table. Bloom stores 13,992 interned objects (about
+1 GB once loaded; Costanzo dmf has 4), and a dataset carried its table as an attribute,
+so every chunk view pickled it: 152 MB per 2,555-record Bloom chunk, pickled by the
+parent's feeder thread and unpickled by every worker and loader child. Fix (commit
+dffbe79d): `ExperimentDataset.__getstate__` drops the table and its validated
+instances, and `_load_interned` re-attaches them from a per-process cache keyed by the
+interned directory, so forked workers share the parent's copy. A Bloom chunk now
+pickles to 0.024 MB; records are identical after a round trip and after a cold load in
+a fresh process; `tests/torchcell/data` and `test_validated_cache.py` pass. Hypothesis
+(untested until job 2935 reports): Bloom's peak drops by most of the 70 GB and its
+cores rise, since the parent no longer serializes 152 MB per chunk.
+
+Job 2935 (`r8 bloom-shared-interned`, commit dffbe79d) repeats job 2934 with the fix.

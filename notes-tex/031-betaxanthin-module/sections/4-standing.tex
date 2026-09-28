@@ -184,13 +184,56 @@ patterns are read against a depth control under its width control. The hard mask
 the second block (214) reads 0.228 against 0.270, one of six: it keeps the backbone's
 head from collapsing to a constant (live on five seeds of six against two), and the
 head it keeps alive reads the target at $-0.06$ to 0.07 on its own and costs the arm up
-to 0.10 where its spread rivals the slot's. The regularizer at 019's weight (215, three seeds so far) reads 0.225 against 0.258:
-it keeps the backbone live on every seed and gives its head the highest own read of
-any backbone in the study (0.08 to 0.10), which still dilutes the slot. The three-block
-mask (216), the remaining seeds of 215, and the weight ladder (217, 218) are in flight. The graphs carry the target on their own
-(Section~\ref{sec:homophily}): the mean betaxanthin level of a gene's labeled STRING
-coexpression neighbors reads the pin at 0.244 with nothing fitted and 0.192 on the
-measured strains, under the profile (0.212) and above every genotype-side store. The
-regularizer at 019's weight sits at the bottom of the 025 sweep's ladder (the penalty
-0.77 of the data term by epoch 40), so its weight is swept (217, 218), and the
-propagated label is queued as a store alone and beside the pool (219, 220).
+to 0.10 where its spread rivals the slot's. The regularizer at 019's weight (215) reads
+0.226 against 0.270 on none of six: it keeps the backbone live on every seed and gives
+its head the highest own read of any backbone in the study (0.05 to 0.13), which still
+dilutes the slot. The three-block mask (216) reads 0.247, level with
+the two-block mask and under the unmasked two blocks. The weight ladder is flat: at ten
+and a hundred times the 019 weight, where the penalty is 6.5 and 60 times the data
+term, the prior reads 0.236 and 0.243 (217, 218), under the unregularized two blocks on
+every seed but one, so no weight of the graph prior helps this target. The graphs carry
+the target on their own (Section~\ref{sec:homophily}): the mean betaxanthin level of a
+gene's labeled STRING coexpression neighbors reads the pin at 0.244 with nothing fitted
+and 0.192 on the measured strains, under the profile (0.212) and above every
+genotype-side store. Fed to the slot as a store the propagated label reads 0.182 alone
+and lifts the pool to 0.288 from 0.279 on four seeds of six (219, 220), the study's
+tightest band and highest ensemble (0.318), the gain on the measured strains. Both are
+TRANSDUCTIVE: the store is other strains' labels, it needs the neighbors screened, and
+it has nothing to give a strain outside the screen, so it is a ceiling for a
+semi-supervised read and not a property of the genotype encoding. The essentiality
+recipe's two levers carried to this target, the default affine initialization and the
+four media as a control, leave the flux store at 0.142 and 0.160 against 0.130 (221,
+222): the metabolic module reads betaxanthin at 0.13 to 0.16, under GO alone.
+
+The coverage caveat on every pool number. The M\"ulleder screen measured 556 of the 629
+pinned strains. The trainer hands the slot the reference row for the other 73, which
+sit low on the target, and every pool arm ranks them near the bottom (the uncovered
+strains' mean percentile among the covered is 0.05 to 0.11), so the indicator of
+having been measured reads the target at 0.196 by itself. A pool arm's score on all
+629 strains therefore carries that indicator; the fair number is the score on the 556
+measured strains, where the pool through 256 reads 0.212, the width-36 backbone 0.214
+and the pool with the graphs 0.219, against the GO affine's 0.140 and the control's
+$-0.013$ (Section~\ref{sec:coverage}). No penalty is applied to the full-pin score, and
+none should be read into it: the two numbers answer two questions, how well the strains
+of the screen are ranked and how much the profile's values add where they exist, and
+the document states both wherever a pool arm is read.
+
+What is inductive. Every pool arm reads a measurement of the held-out strain from
+another screen, and every label-store arm reads its neighbors' labels; neither is
+available for a strain nobody has measured, and neither scales past the deletion
+collection. The inductive reads, from the gene's annotation and the model's own
+solutions, stand at 0.217 for the three families in one affine (GO with both flux
+programs, twelve seeds), 0.203 for GO alone and 0.13 to 0.16 for the flux store, and
+the ladder puts the same ceiling on the inductive inputs by every CPU model (forest over
+GO with the HiGHS vector 0.204). Against them the profile alone reads 0.280 by forest
+and 0.285 by nearest neighbors on the ladder, and the transformer over the same
+columns reads 0.278 to 0.291: the pool CGT does not beat a forest on its own input, so
+the transformer's contribution on the measured side is nil and the profile's
+contribution is the 0.06 to 0.08 between 0.217 and 0.28. The program now is the
+inductive one, the only design that scales: the amino-acid profile as a training target
+rather than an input, the trainer's nineteen-column M\"ulleder co-head
+(\texttt{--aux-mulleder}) beside the betaxanthin head with selection and scoring on
+betaxanthin alone, on the three-family affine, on GO alone and on the affine-free
+control (rounds 223 to 225, jobs 2945 to 2948, queued 2026-09-28, pending). Every
+pinned gene's M\"ulleder record sits in the test block with its betaxanthin record, so
+the co-head reads nothing of a held-out strain.

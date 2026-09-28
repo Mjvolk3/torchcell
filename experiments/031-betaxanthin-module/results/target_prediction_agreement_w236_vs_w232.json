@@ -1,0 +1,186 @@
+{
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_prediction_agreement.py",
+  "name": "w236_vs_w232",
+  "arm": "w236_bxdelaapoolmlp256skl10_h36l2p1_e200",
+  "control": "w232_bxdelaapoolmlp256ss_h36l2p1_e200",
+  "statistic": "Spearman and Pearson between the arm's and the control's pinned-test predictions at the same seed, from the per-gene dumps; the control's seed pairs as the reference for what initialization alone moves",
+  "summary": {
+    "mean_same_seed_spearman": 0.8036454878215632,
+    "min_same_seed_spearman": 0.7301609442658903,
+    "n_seeds_at_or_above_0.9999": 0,
+    "mean_control_seed_pair_spearman": 0.9390143885764073,
+    "min_control_seed_pair_spearman": 0.8839238693343776,
+    "max_control_seed_pair_spearman": 0.9936203841166896,
+    "n_seeds": 6
+  },
+  "seeds": [
+    {
+      "seed": 2700,
+      "n_pinned": 639,
+      "spearman": 0.8046692642795119,
+      "pearson": 0.7644946679962658,
+      "arm_select_epoch": 62,
+      "control_select_epoch": 34,
+      "arm_spearman_vs_target": 0.25141461645770374,
+      "control_spearman_vs_target": 0.2352696699268449
+    },
+    {
+      "seed": 2701,
+      "n_pinned": 639,
+      "spearman": 0.7301609442658903,
+      "pearson": 0.6437662728045133,
+      "arm_select_epoch": 15,
+      "control_select_epoch": 116,
+      "arm_spearman_vs_target": 0.22243476147560073,
+      "control_spearman_vs_target": 0.2753084974195349
+    },
+    {
+      "seed": 2702,
+      "n_pinned": 639,
+      "spearman": 0.8538187170944175,
+      "pearson": 0.8548881541028523,
+      "arm_select_epoch": 92,
+      "control_select_epoch": 60,
+      "arm_spearman_vs_target": 0.23390141734090777,
+      "control_spearman_vs_target": 0.26244310771436363
+    },
+    {
+      "seed": 2703,
+      "n_pinned": 639,
+      "spearman": 0.776027926197387,
+      "pearson": 0.8009271577604923,
+      "arm_select_epoch": 32,
+      "control_select_epoch": 57,
+      "arm_spearman_vs_target": 0.20978824995310566,
+      "control_spearman_vs_target": 0.2636025117673358
+    },
+    {
+      "seed": 2704,
+      "n_pinned": 639,
+      "spearman": 0.8538102050267558,
+      "pearson": 0.7065756269009701,
+      "arm_select_epoch": 194,
+      "control_select_epoch": 194,
+      "arm_spearman_vs_target": 0.25802219698464973,
+      "control_spearman_vs_target": 0.2771373043535992
+    },
+    {
+      "seed": 2705,
+      "n_pinned": 639,
+      "spearman": 0.8033858700654168,
+      "pearson": 0.7227621306314047,
+      "arm_select_epoch": 110,
+      "control_select_epoch": 74,
+      "arm_spearman_vs_target": 0.24087316067098202,
+      "control_spearman_vs_target": 0.305735039755272
+    }
+  ],
+  "control_seed_pairs": [
+    {
+      "seeds": [
+        2700,
+        2701
+      ],
+      "spearman": 0.8995491478946062
+    },
+    {
+      "seeds": [
+        2700,
+        2702
+      ],
+      "spearman": 0.9691505527771477
+    },
+    {
+      "seeds": [
+        2700,
+        2703
+      ],
+      "spearman": 0.9537376717467432
+    },
+    {
+      "seeds": [
+        2700,
+        2704
+      ],
+      "spearman": 0.8839238693343776
+    },
+    {
+      "seeds": [
+        2700,
+        2705
+      ],
+      "spearman": 0.8907508793618556
+    },
+    {
+      "seeds": [
+        2701,
+        2702
+      ],
+      "spearman": 0.9556047411578001
+    },
+    {
+      "seeds": [
+        2701,
+        2703
+      ],
+      "spearman": 0.9715825191192856
+    },
+    {
+      "seeds": [
+        2701,
+        2704
+      ],
+      "spearman": 0.9857102259754706
+    },
+    {
+      "seeds": [
+        2701,
+        2705
+      ],
+      "spearman": 0.9355167711091564
+    },
+    {
+      "seeds": [
+        2702,
+        2703
+      ],
+      "spearman": 0.9936203841166896
+    },
+    {
+      "seeds": [
+        2702,
+        2704
+      ],
+      "spearman": 0.9419804603366164
+    },
+    {
+      "seeds": [
+        2702,
+        2705
+      ],
+      "spearman": 0.9119388503900003
+    },
+    {
+      "seeds": [
+        2703,
+        2704
+      ],
+      "spearman": 0.9529857836144472
+    },
+    {
+      "seeds": [
+        2703,
+        2705
+      ],
+      "spearman": 0.9212709028986317
+    },
+    {
+      "seeds": [
+        2704,
+        2705
+      ],
+      "spearman": 0.9178930688132805
+    }
+  ],
+  "seconds": 0.0755462646484375
+}

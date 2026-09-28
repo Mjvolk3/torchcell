@@ -354,10 +354,16 @@ of 0.479). On the gene-interaction sweep of the same regularizer at width 180
 is where $\lambda = 10^{-3}$ sits, the bottom of that ladder, where the prior's gain is
 within the seeds' noise; the gain there begins where the penalty is fifteen times the
 data term ($\lambda = 10^{-2}$) and grows to 0.02 at $\lambda = 1$ with no turnover
-inside the ladder, and the hard mask reads as no penalty. So the weight is swept here:
+inside the ladder, and the hard mask reads as no penalty. So the weight was swept here,
 the same cell at $6.5 \times 10^{-4}$ and $6.5 \times 10^{-3}$ (rounds 217 and 218,
-through a \texttt{--graph-reg-lambda} flag the trainer did not have) is queued behind
-the pattern ladder.
+through a \texttt{--graph-reg-lambda} flag added for it), and the ladder is flat: the
+penalty at the selected epoch is 0.8, 6.5 and 60 times the data term at the three
+weights and the arm reads 0.226, 0.236 and 0.243 against the unregularized two blocks'
+0.270, under the control on every seed but one at every weight
+(Section~\ref{sec:rounds}, rounds 215 to 218). A prior a hundred times the 019 weight,
+with the penalty sixty times the data term, moves the read by 0.017 from the 019
+weight and leaves it 0.027 under no prior. On this target the graph prior costs at every
+weight the 025 sweep found a gain.
 
 \input{tables/head_decomposition}
 
@@ -472,8 +478,9 @@ betaxanthin, the training and validation genes' labels (a validation gene never 
 its own, but validation labels enter the training genes' features, so epoch selection
 on validation is slightly generous), and it has nothing to offer a gene whose neighbors
 were not screened. A gain from it is a semi-supervised gain, not a gain of the
-genotype encoding or of the metabolic module. It is queued alone through 256 on the pool's recipe (round 219) and
-appended to the pool (220), which pairs the profile against the graphs' own read of
+genotype encoding or of the metabolic module, and it does not scale to a strain whose
+neighbors carry no label. It is read alone through 256 on the pool's recipe (round 219)
+and appended to the pool (220), which pairs the profile against the graphs' own read of
 betaxanthin in one slot.
 
 On the ladder the same store is read by every model beside the pool
@@ -485,7 +492,10 @@ coverage indicator. Appended to the pool, the forest reads 0.284 on all genes an
 on the 556 the pool covers against 0.280 and 0.226 for the pool alone, the highest
 forest read of the ladder; the nearest neighbors fall from 0.285 to 0.258 and the ridge
 from 0.149 to 0.143. So in a forest the profile and the graphs add, by 0.004 on all
-genes and 0.008 on the measured strains, and the question rounds 219 and 220 put to the
-transformer's slot is whether its hidden layer does the same.
+genes and 0.008 on the measured strains. The transformer's slot does the same
+(rounds 219 and 220): the store alone reads 0.182, under its own ridge, and appended to
+the pool 0.288 against 0.279, $+0.009$ on four seeds of six with the gain on the
+measured strains (0.219 against 0.212), the tightest band and the highest ensemble
+(0.318) of any pool arm. Both reads are transductive.
 
 \input{tables/graph_homophily}

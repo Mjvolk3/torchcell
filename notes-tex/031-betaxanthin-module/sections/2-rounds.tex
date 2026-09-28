@@ -1060,25 +1060,138 @@ by the graphs carries no more of this target than unshaped attention did, and th
 graphs' own read (0.244 by one hop of label propagation, Section~\ref{sec:homophily})
 is not what either backbone learns.
 
-Round 215 is read on three seeds (job 2900, 6 h 53 min): the pool through 256 on two
-blocks of width 36 with 019's KL regularizer on the second at the 019 weight, the
+Round 215 is read (jobs 2900 and 2923, 6 h 53 min and 7 h 00 min): the pool through 256
+on two blocks of width 36 with 019's KL regularizer on the second at the 019 weight, the
 first cell of the campaign on which the regularizer is not inert. The regularized block
-holds its attention in memory, about 14.5 GB a seed, and the pack's six concurrent
-seeds ran a 46 GB card out of memory at the start, so seeds 2703 to 2705 are rerunning
-as a three-seed pack (job 2923) and the read here is seeds 2700 to 2702 against the
-same three seeds of the unmasked control. It reads 0.225 (sd 0.017) against 0.258
-($-0.033$ paired, sd 0.029, none of three), top-50 4.26 against the control's six-seed
-4.13, the seeds 0.205 to 0.235 selecting at epochs 21 to 102, and the regularizer's
-loss at the selected epoch is 0.35 to 0.40 against a data term near 0.42. The prior
-moves every seed's prediction (agreement with the unmasked twin 0.66 to 0.73 against
-0.90 to 0.97 between the control's own seeds) and it moves the backbone: its head is
-live on all three seeds with a spread 1.5 to 2.1 times the slot's, and its own read of
-the target, 0.076 to 0.103, is the highest of any backbone head in the study, above the
-masked head's $-0.06$ to 0.07 and the unmasked live heads' $-0.10$ and 0.09. It still
-subtracts, by 0.009 to 0.045, because a head that reads 0.09 with a spread twice the
-slot's dilutes a slot that reads 0.25 (the slot alone 0.251 here). So at the 019 weight
-the graph prior is the one intervention that makes the backbone read betaxanthin at
-all, and what it reads is a tenth of what the graphs carry by label propagation; the
-weight ladder (217, 218) asks whether a stronger prior raises it.
+holds its attention in memory, about 14.5 GB a seed, and the pack's six concurrent seeds
+ran a 46 GB card out of memory at the start, so seeds 2703 to 2705 ran as a three-seed
+pack. It reads 0.226 (sd 0.023) against the unmasked two blocks' 0.270 ($-0.044$
+paired, sd 0.033, none of six), top-50 4.16 against 4.13, ensembled 0.241 with a top-50
+of 4.79; the seeds read 0.201 to 0.263 and select at epochs 12 to 102 on validation
+Pearson 0.33 to 0.40, and the regularizer's loss at the selected epoch is 0.34 to 0.44
+against a data term of 0.46 to 0.50. On the covered genes it reads 0.152, on the
+uncovered 0.031. The prior moves every seed's prediction (agreement with the unmasked
+twin 0.66 to 0.81 against 0.88 to 0.99 between the control's own seeds) and it moves the
+backbone: its head is live on all six seeds with a spread 1.0 to 2.2 times the slot's,
+and its own read of the target, 0.045 to 0.130, is the highest of any backbone head in
+the study, above the masked head's $-0.06$ to 0.07 and the unmasked live heads' $-0.10$
+and 0.09. It still subtracts, by 0.002 to 0.046, because a head that reads 0.1 with a
+spread twice the slot's dilutes a slot that reads 0.25 (the slot alone 0.250 here). So
+at the 019 weight the graph prior is the one intervention that makes the backbone read
+betaxanthin at all, and what it reads is under half of what the graphs carry by label
+propagation; the weight ladder (217, 218) asks whether a stronger prior raises it.
+
+Round 216 is read (job 2902, 5 h 42 min): the pool through 256 on three blocks of
+width 36, the first unmasked and the second and third hard-masked (the $[S, M, M]$
+pattern). It reads 0.247 (sd 0.043) against the two-block mask's 0.228 ($+0.019$
+paired, sd 0.079, three of six) and against the width-12 one-block incumbent's 0.279
+($-0.032$, sd 0.061, three of six), top-50 3.39 against 3.66 and 4.69, ensembled 0.261
+with a top-50 of 3.59, the lowest calls of the pattern ladder; the seeds read 0.176 to
+0.283 and select at epochs 23 to 170 on validation Pearson 0.36 to 0.41. On the covered
+genes it reads 0.183, on the uncovered 0.075. The decomposition
+(Table~\ref{tab:head-decomposition}) is the two-block mask's again: the backbone's head
+is a constant on three seeds of six, and on the three where it is live it reads the
+target at 0.025 to 0.074 on its own and costs the arm 0.006, 0.037 and 0.077, the
+slot alone reading 0.267. The predictions agree with the unmasked two blocks' at 0.74
+to 0.98 by seed, lowest on the two seeds where the live head costs most. A second
+masked block does not change what one does: the mask keeps a head alive that reads
+betaxanthin under 0.08 and dilutes the slot on the seeds where it is live.
+
+Round 217 is read (jobs 2924 and 2925, 7 h 11 min and 7 h 16 min, three seeds a pack
+for the memory): the round-215 cell with the regularizer at ten times the 019 weight
+($6.5 \times 10^{-4}$), where the penalty at the selected epoch is 2.95 to 3.65 against
+a data term of 0.46 to 0.51. It reads 0.236 (sd 0.018) against the 019 weight's 0.226
+($+0.010$ paired, sd 0.016, four of six) and against the unmasked two blocks' 0.270
+($-0.034$, sd 0.030, one of six), top-50 3.93 against 4.16 and 4.13, ensembled 0.245
+with a top-50 of 4.39; the seeds read 0.210 to 0.258 and select at epochs 15 to 194 on
+validation Pearson 0.31 to 0.40. On the covered genes it reads 0.158, on the uncovered
+0.061. The backbone's head is live on every seed with a spread 0.6 to 1.2 times the
+slot's, reads the target at 0.024 to 0.076 on its own, and subtracts 0.006 to 0.042,
+the slot alone reading 0.260; the predictions agree with the unmasked twin's at 0.73
+to 0.85. A prior ten times heavier moves the backbone less than the 019 weight did
+(its head's own read falls from 0.05 to 0.13 to 0.02 to 0.08) and costs the arm the
+same.
+
+Round 218 is read (jobs 2926 and 2927, 7 h 01 min and 7 h 13 min): the same cell at a
+hundred times the 019 weight ($6.5 \times 10^{-3}$), the penalty at the selected epoch
+28.4 to 30.3 against a data term of 0.48 to 0.50, sixty times the data term. It reads
+0.243 (sd 0.031) against the 019 weight's 0.226 ($+0.017$ paired, sd 0.037, five of
+six) and against the unmasked two blocks' 0.270 ($-0.027$, sd 0.025, none of six),
+top-50 4.29 against 4.16 and 4.13, ensembled 0.255 with a top-50 of 4.79; the seeds
+read 0.186 to 0.271 and select at epochs 74 to 189, later than either lighter weight,
+on validation Pearson 0.29 to 0.40. On the covered genes it reads 0.172, on the
+uncovered 0.127. The head is live on every seed with a spread 0.45 to 0.94 times the
+slot's, reads $-0.007$ to 0.116 on its own, and moves the arm by $+0.001$ to $-0.078$,
+the slot alone reading 0.269; the predictions agree with the unmasked twin's at 0.77
+to 0.89. So the weight ladder is flat: 0.226, 0.236 and 0.243 at one, ten and a
+hundred times the 019 weight, every point under the unregularized two blocks on every
+seed but one, and the slot alone reads 0.25 to 0.27 at every weight. Where the 025
+sweep found the prior's gain, at a penalty fifteen to fifteen hundred times the data
+term, this target finds a cost that shrinks with the weight and never turns. The
+backbone the prior keeps alive reads betaxanthin at 0.02 to 0.13, under half of the
+0.244 the graphs carry by label propagation (Section~\ref{sec:homophily}), and it never
+adds to the slot.
+
+Round 219 is read (job 2914, 3 h 35 min): the graphs' one-hop label propagation of
+betaxanthin as the store (\texttt{YPD\_bx\_graphlabel}, twenty columns over every gene
+of the genome, Section~\ref{sec:homophily}) through 256 on the width-12 one-block
+recipe of round 187, so the graphs and the pool are read in the same slot with the same
+encoding. The arm is TRANSDUCTIVE: its columns are the training and validation genes'
+measured betaxanthin, and a gene whose neighbors were not screened has nothing to
+read, so a gain here is a semi-supervised gain that does not carry to a strain outside
+the screen. It reads 0.182 (sd 0.041) against the pool's 0.279 ($-0.097$ paired, sd
+0.041, zero of six) and against the affine-free control's 0.058 ($+0.124$, sd 0.052,
+six of six), top-50 4.86 against 4.69 and 3.39, ensembled 0.213 with a top-50 of 5.79;
+the seeds read 0.125 to 0.227 and select at epochs 44 to 197 on validation Pearson 0.25
+to 0.28. The store covers every pinned gene, so none of this is a coverage indicator,
+and the split by the pool's coverage runs the other way from the pool's: 0.120 on the
+556 strains M\"ulleder measured against the pool's 0.212, and 0.287 on the 73 it did
+not against the pool's 0.095. The same twenty columns read 0.254 by forest and 0.219
+by ridge on the ladder, so the transformer's hidden slot reads the propagated label
+under its own ridge, where it read the pool above every ladder model: the label store's
+signal is linear and the slot's nonlinearity buys nothing on it.
+
+Round 220 is read (job 2915, 3 h 31 min): the pool with the label-propagation store
+appended in the same slot through 256 (\texttt{YPD\_bx\_aapoolgraphlabel}, the pool's
+gene axis so the 73 uncovered pinned genes keep their zero row), TRANSDUCTIVE for the
+same reason as round 219. It reads 0.288 (sd 0.013) against the pool alone's 0.279
+($+0.009$ paired, sd 0.017, four of six), against the label store alone's 0.182
+($+0.106$, sd 0.044, six of six) and against the one-block width-36 backbone's 0.291
+($-0.003$, sd 0.021, three of six), top-50 4.99 against 4.69, ensembled 0.318 with a
+top-50 of 5.59, the highest six-seed ensemble of the study; the seeds read 0.273 to
+0.310, the tightest band of any pool arm, and select at epochs 33 to 192 on validation
+Pearson 0.36 to 0.42. On the measured strains it reads 0.219 against the pool's 0.212,
+and on the unmeasured 0.087 against 0.095. So the graphs add to the profile what the
+ladder's forest said they would (0.284 against 0.280 on all genes, 0.234 against 0.226
+on the measured strains): under a hundredth, on four seeds of six, with the whole of it
+on the measured strains. The gain is real at the ensemble and at the band, and it is a
+gain the model can only have where the neighbors were screened.
+
+Round 221 is read (job 2937, 3 h 35 min), a CONTROL: the essentiality incumbent's
+four-media recipe carried to this target, the HiGHS parsimonious store of round 139
+with the growth-ratio columns for the shipped medium, SM, SC and YPD from the scan over
+every yeast-GEM gene (\texttt{fba\_ratio\_all\_gem\_genes.csv}) in place of YPD alone.
+The screen was run on YPD, so four media do not describe it and the arm is not a
+candidate. It reads 0.160 (sd 0.022) against the YPD store's 0.130 ($+0.030$ paired, sd
+0.040, five of six), top-50 4.23 against 4.46, ensembled 0.188; the seeds read 0.120
+to 0.182 and select at epochs 40 to 191 on validation Pearson 0.03 to 0.30. Three of
+the four columns are the same number for every gene outside the GEM and differ from
+YPD's only on the 1,161 genes the model carries, and what they add is a ranking of
+those genes by how their deletion's growth defect changes with the medium.
+
+Round 222 is read (job 2941, 3 h 34 min): the essentiality incumbent's default affine
+initialization carried to this target on the screen's own medium, the HiGHS store with
+YPD's growth ratio as in round 139 and \texttt{--ess-solve-zero-init} removed, the
+essentiality document's incumbent recipe. It reads 0.142 (sd 0.036)
+against the zero-initialized store's 0.130 ($+0.012$ paired, sd 0.024, five of six) and
+against the four-media control's 0.160 ($-0.019$, sd 0.047, one of six), top-50 4.49
+against 4.46, ensembled 0.163; the seeds read 0.080 to 0.178, the widest band of the
+three, and select at epochs 2 to 114 on validation Pearson 0.02 to 0.27. So the
+essentiality recipe's two levers, the initialization and the media, move the flux
+store by 0.01 and 0.03 on this target, and the metabolic module's best read of
+betaxanthin stays at 0.13 to 0.16: under GO alone (0.203), a half of the profile's
+0.279 and under the graphs' label propagation (0.182). Where it works on essentiality,
+where a gene's growth ratio is the label's own quantity, it does not carry to a
+production level the flux balance does not represent.
 
 \input{tables/target_transfer}

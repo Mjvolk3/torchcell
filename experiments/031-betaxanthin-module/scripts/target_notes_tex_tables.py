@@ -721,7 +721,10 @@ HEAD_DECOMPOSITION = (
     ),
     ("w232", "pool through 256, two unmasked blocks of width 36 (round 213)"),
     ("w234", "pool through 256, the hard mask on the second block (round 214)"),
-    ("w233", "pool through 256, the KL regularizer on the second block (round 215, three seeds)"),
+    ("w233", "pool through 256, the KL regularizer on the second block (round 215)"),
+    ("w235", "pool through 256, three blocks, the hard mask on the second and third (round 216)"),
+    ("w236", "pool through 256, the KL regularizer at ten times the 019 weight (round 217)"),
+    ("w237", "pool through 256, the KL regularizer at a hundred times the 019 weight (round 218)"),
 )
 CONSTANT_SD_RATIO = 1e-2
 

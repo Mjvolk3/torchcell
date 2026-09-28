@@ -5,13 +5,13 @@
   "control": "w232_bxdelaapoolmlp256ss_h36l2p1_e200",
   "statistic": "Spearman and Pearson between the arm's and the control's pinned-test predictions at the same seed, from the per-gene dumps; the control's seed pairs as the reference for what initialization alone moves",
   "summary": {
-    "mean_same_seed_spearman": 0.7022750508469425,
+    "mean_same_seed_spearman": 0.7187611254858557,
     "min_same_seed_spearman": 0.6578878177793243,
     "n_seeds_at_or_above_0.9999": 0,
-    "mean_control_seed_pair_spearman": 0.9414348139431846,
-    "min_control_seed_pair_spearman": 0.8995491478946062,
-    "max_control_seed_pair_spearman": 0.9691505527771477,
-    "n_seeds": 3
+    "mean_control_seed_pair_spearman": 0.9390143885764073,
+    "min_control_seed_pair_spearman": 0.8839238693343776,
+    "max_control_seed_pair_spearman": 0.9936203841166896,
+    "n_seeds": 6
   },
   "seeds": [
     {
@@ -43,6 +43,36 @@
       "control_select_epoch": 60,
       "arm_spearman_vs_target": 0.205245533291159,
       "control_spearman_vs_target": 0.26244310771436363
+    },
+    {
+      "seed": 2703,
+      "n_pinned": 639,
+      "spearman": 0.724070266757902,
+      "pearson": 0.7143969816276605,
+      "arm_select_epoch": 15,
+      "control_select_epoch": 57,
+      "arm_spearman_vs_target": 0.20120449625882372,
+      "control_spearman_vs_target": 0.2636025117673358
+    },
+    {
+      "seed": 2704,
+      "n_pinned": 639,
+      "spearman": 0.8102767172242163,
+      "pearson": 0.541168082136476,
+      "arm_select_epoch": 82,
+      "control_select_epoch": 194,
+      "arm_spearman_vs_target": 0.263443135904732,
+      "control_spearman_vs_target": 0.2771373043535992
+    },
+    {
+      "seed": 2705,
+      "n_pinned": 639,
+      "spearman": 0.671394616392188,
+      "pearson": 0.6833839772318048,
+      "arm_select_epoch": 12,
+      "control_select_epoch": 74,
+      "arm_spearman_vs_target": 0.21684674558410036,
+      "control_spearman_vs_target": 0.305735039755272
     }
   ],
   "control_seed_pairs": [
@@ -62,11 +92,95 @@
     },
     {
       "seeds": [
+        2700,
+        2703
+      ],
+      "spearman": 0.9537376717467432
+    },
+    {
+      "seeds": [
+        2700,
+        2704
+      ],
+      "spearman": 0.8839238693343776
+    },
+    {
+      "seeds": [
+        2700,
+        2705
+      ],
+      "spearman": 0.8907508793618556
+    },
+    {
+      "seeds": [
         2701,
         2702
       ],
       "spearman": 0.9556047411578001
+    },
+    {
+      "seeds": [
+        2701,
+        2703
+      ],
+      "spearman": 0.9715825191192856
+    },
+    {
+      "seeds": [
+        2701,
+        2704
+      ],
+      "spearman": 0.9857102259754706
+    },
+    {
+      "seeds": [
+        2701,
+        2705
+      ],
+      "spearman": 0.9355167711091564
+    },
+    {
+      "seeds": [
+        2702,
+        2703
+      ],
+      "spearman": 0.9936203841166896
+    },
+    {
+      "seeds": [
+        2702,
+        2704
+      ],
+      "spearman": 0.9419804603366164
+    },
+    {
+      "seeds": [
+        2702,
+        2705
+      ],
+      "spearman": 0.9119388503900003
+    },
+    {
+      "seeds": [
+        2703,
+        2704
+      ],
+      "spearman": 0.9529857836144472
+    },
+    {
+      "seeds": [
+        2703,
+        2705
+      ],
+      "spearman": 0.9212709028986317
+    },
+    {
+      "seeds": [
+        2704,
+        2705
+      ],
+      "spearman": 0.9178930688132805
     }
   ],
-  "seconds": 0.02512192726135254
+  "seconds": 0.09567856788635254
 }

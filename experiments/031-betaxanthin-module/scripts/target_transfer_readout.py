@@ -1147,6 +1147,30 @@ PAIRS = [
         "w238_bxdelgraphlabelmlp256_h12l1p1_e200",
     ),
     (
+        "betaxanthin: the HiGHS parsimonious store with four media growth ratios (control) against YPD alone",
+        "betaxanthin",
+        "w240_bxdelpfba4m_h12l1p1_e200",
+        "w156_bxdelpfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the HiGHS parsimonious store under default affine initialization against zero init",
+        "betaxanthin",
+        "w241_bxdelpfbadef_h12l1p1_e200",
+        "w156_bxdelpfba_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the HiGHS parsimonious store under default affine initialization against the four-media control",
+        "betaxanthin",
+        "w241_bxdelpfbadef_h12l1p1_e200",
+        "w240_bxdelpfba4m_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the pool with the label-propagation store appended, through 256, against one block of width 36",
+        "betaxanthin",
+        "w239_bxdelaapoolgraphlabelmlp256_h12l1p1_e200",
+        "w231_bxdelaapoolmlp256w36_h36l1p1_e200",
+    ),
+    (
         "betaxanthin: two-slot head at 256 with the linear slot at a tenth of the rate against both slots at the full rate",
         "betaxanthin",
         "w222_bxdelgolinaapoolmlp256lr01_h12l1p1_e200",

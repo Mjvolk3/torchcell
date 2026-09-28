@@ -472,7 +472,11 @@ unmasked block as the width control (w134), two unmasked blocks as the depth con
 the second (w137), and three with the mask on the second and third (w138). Beside it
 the one-hop propagation of Section~\ref{sec:mp-architectures}'s neighbor read enters
 the affine as a store, per graph the essential fraction among the gene's labeled
-neighbors and the log count, alone (w139) and appended to the pFBA vector (w140).
+neighbors and the log count, alone (w139) and appended to the pFBA vector (w140). That store is transductive: its columns are the training and validation genes'
+essentiality calls (a gene's own call never, the held-out genes' never, validation
+calls entering the training genes' features), so what it adds is a semi-supervised
+gain, available only where the neighbors were screened, and not a gain of the
+genotype encoding or the metabolic module.
 
 The width control is read (job 2906, 27 min): one block of width 36 with nine heads,
 83,373 parameters against the incumbent's 22,773, reads 0.913 (sd 0.006) against the

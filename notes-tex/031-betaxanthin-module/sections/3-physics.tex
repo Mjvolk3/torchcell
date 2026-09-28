@@ -467,7 +467,12 @@ different question from this table. The direct one is a store
 (\texttt{target\_graph\_label\_store.py}): per graph the labeled-neighbor mean, shifted
 nonnegative so $\log(1 + v)$ stays monotone, and $\log(1 + n)$ of the neighbor count,
 twenty columns over every gene of the genome, a labeled gene's row leave-one-out and no
-pinned label read. It is queued alone through 256 on the pool's recipe (round 219) and
+pinned label read. The store is transductive: its columns are other strains' measured
+betaxanthin, the training and validation genes' labels (a validation gene never reads
+its own, but validation labels enter the training genes' features, so epoch selection
+on validation is slightly generous), and it has nothing to offer a gene whose neighbors
+were not screened. A gain from it is a semi-supervised gain, not a gain of the
+genotype encoding or of the metabolic module. It is queued alone through 256 on the pool's recipe (round 219) and
 appended to the pool (220), which pairs the profile against the graphs' own read of
 betaxanthin in one slot.
 

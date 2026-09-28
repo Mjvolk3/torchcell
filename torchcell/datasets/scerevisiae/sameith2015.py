@@ -95,7 +95,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
     Microarray gene expression data for 82 single mutant yeast strains with
     deletions in general stress transcription factors (GSTFs). All single mutants
-    are from the yeast deletion library (BY4742, mata, KanMX marker).
+    are from the yeast deletion library (BY4742, MATalpha, KanMX marker).
 
     Data source: GEO accession GSE42536
     Paper: Sameith et al. (2015) BMC Biology
@@ -746,8 +746,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
             log2_ratio_variance: Variance for log2 ratios (optional)
             n_replicates: Number of replicates per gene (optional)
         """
-        # BY4742 for single mutants (from deletion library)
-        # Paper: "Single mutants taken from Deletion library" = BY4742, mata
+        # BY4742 (MATalpha) for every single mutant. Paper: "All single mutants and
+        # most double mutants carry the mating type matα and are in the genetic
+        # background of BY4742."
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="BY4742"
         )
@@ -947,14 +948,22 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             # Create canonical genotype key (sorted to handle order-independence)
             genotype_key = tuple(sorted([gstf1_sys.upper(), gstf2_sys.upper()]))
 
-            # EXTRACT STRAIN FROM COMMENTS COLUMN
+            # Strain from the comments column. Paper: "All single mutants and most
+            # double mutants carry the mating type matα and are in the genetic
+            # background of BY4742. Few double mutants carry the mating type matA and
+            # are in the genetic background of BY4741." The SI marks those few with a
+            # "MATa" comment (4 of the 72 passed pairs), and GEO's own sample
+            # characteristics carry "strain: BY4741" on exactly those four (checked
+            # 2026-09-28 on GSE42536). BY4741 is the MATa strain and BY4742 the
+            # MATalpha strain, so a MATa comment means BY4741; "mata" is a prefix of
+            # "matalpha", hence the order of the tests.
             comments = row.get("comments", "")
             if pd.notna(comments):
-                comments_str = str(comments)
-                if "MATa" in comments_str:
-                    strain = "BY4742"  # mata mating type
-                elif "MATα" in comments_str or "matA" in comments_str:
-                    strain = "BY4741"  # matA/alpha mating type
+                lowered = str(comments).lower()
+                if "matα" in lowered or "matalpha" in lowered:
+                    strain = "BY4742"
+                elif "mata" in lowered:
+                    strain = "BY4741"
                 else:
                     strain = "BY4742"  # Default for comments without mating type
             else:
@@ -1826,8 +1835,8 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             n_replicates: Number of replicates per gene (optional)
             strain: Strain background (BY4742 or BY4741), extracted from Excel comments
         """
-        # USE PROVIDED STRAIN (not hardcoded!)
-        # Extracted from Excel "comments" column: "MATa" → BY4742, "MATα" → BY4741
+        # Per-pair strain from the SI comments column: "MATa" -> BY4741, otherwise
+        # BY4742 (see _load_authoritative_gstf_pairs).
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain=strain
         )

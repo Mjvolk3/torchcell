@@ -12,31 +12,39 @@ without a pickle; the WT loop skips a missing pickle, and the two deletion GSEs 
 have one, so ``GEOparse.get_GEO`` (the network branch) is never reached. The genome is a
 stub with the three attributes ``resolve_gene_name_comprehensive`` reads.
 
+Channels follow GEO's own metadata, as on the real series: ``label_ch1`` is Cy5 and
+``label_ch2`` Cy3 on every array, and ``source_name_ch1`` / ``source_name_ch2`` say
+which channel holds the reference pool ("refpool", or "ref1" on GSE42217). The title
+suffix is not consulted.
+
 Platform probes: 1 YAL001C, 2 YBR001C, 3 Q0010, 4 NaN (unmapped). Table S1: YPL177C
 CUP9 MATa, YHR127W HSN1 MATalpha, TLC1 (-> YNCB0010W) MATa, CMS1 (-> YLR003C) MATa,
 YXX001W with mating type ``diploid`` (skipped).
 
-Deletion samples (responsive GSE42527 then non-responsive GSE42526):
+Deletion samples (responsive GSE42527 then non-responsive GSE42526), signals listed
+as YAL001C, YBR001C, Q0010:
 
-    GSM1 "[HS1991] cup9-del-a"   deletion Cy5 2, 8, 0   refpool Cy3 4, 4, 1
-    GSM2 "cup9-del-b"            deletion Cy3 8, 2, 4   refpool Cy5 4, 4, 1  (dye swap)
-    GSM3 "Sample X", ch2 hsn1-del deletion Cy5 3, 6, 1  refpool Cy3 3, 3, 2  (default)
+    GSM1 "[HS1991] cup9-del-a"   refpool Cy5 4, 4, 1   deletion Cy3 2, 8, 0
+    GSM2 "cup9-del-b"            deletion Cy5 8, 2, 4  refpool Cy3 4, 4, 1  (dye swap)
+    GSM3 "Sample X"              deletion Cy5 3, 6, 1  refpool Cy3 3, 3, 2; the gene is
+                                 named only in ``characteristics_ch1``
     GSM4 "wt control"            wildtype, ignored
     GSM5 "cdk8-del-a"            resolves through the shared reconciler to YPL042C,
                                  which has no Table S1 strain: not written
     GSM6 "zzz9-del-a"            retired name: unresolved
 
-CUP9 -> YPL177C (BY4741): refpool averaged over GSM1 Cy3 and GSM2 Cy5 = 4, 4, 1. Per
-replicate log2 ratio -log2(deletion / refpool): YAL001C 2/4 -> +1 and 8/4 -> -1, mean 0,
-sample SD sqrt(2), SE sqrt(2)/sqrt(2) = 1, variance 2; YBR001C the mirror image, same
-statistics (the variance is stored as sqrt(2)**2 = 2.0000000000000004);
-Q0010 drops the 0 replicate and keeps 4/1 -> -2 alone (n = 1, SE and variance
-NaN); linear means 5, 5, 2. HSN1 -> YHR127W (BY4742): 3/3 -> 0, 6/3 -> -1, 1/2 -> +1,
-all n = 1.
+CUP9 -> YPL177C (BY4741): the log2 ratio is taken within each array, log2(deletion /
+refpool). YAL001C 2/4 -> -1 and 8/4 -> +1, mean 0, sample SD sqrt(2), SE sqrt(2)/sqrt(2)
+= 1, variance 2 (stored as sqrt(2)**2 = 2.0000000000000004); YBR001C the mirror image,
+same statistics; Q0010 drops the array with the 0 signal and keeps 4/1 -> +2 alone (n =
+1, SE and variance NaN). The linear ``expression`` is the mean deletion signal over the
+kept arrays, 5, 5, 4, and the reference ``expression`` the mean refpool signal over the
+same arrays, 4, 4, 1. HSN1 -> YHR127W (BY4742): 3/3 -> 0, 6/3 -> +1, 1/2 -> -1, all n
+= 1, linear 3, 6, 1, refpool 3, 3, 2.
 
-WT refpool replicate counts (positive refpool channel per gene): MATa W1 "refpool vs wt"
-(Cy5 1, 1, 1), W2 "wt vs refpool" (Cy3 2, 0, 2), W3 "wt_b" (Cy5 3, 3, 0) -> YAL001C 3,
-YBR001C 2, Q0010 2; MATalpha W4 "plain" (Cy3 5, 5, 5) -> 1 each.
+WT refpool replicate counts (positive refpool channel per gene): MATa W1 (refpool Cy5
+1, 1, 1), W2 (refpool Cy3 2, 0, 2), W3 (refpool Cy5 3, 3, 0) -> YAL001C 3, YBR001C 2,
+Q0010 2; MATalpha W4 (reference named "ref1", Cy5 5, 5, 5) -> 1 each.
 """
 
 from __future__ import annotations
@@ -72,6 +80,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import GeneNameResolution
 
 _DATASET = "MicroarrayKemmeren2014Dataset"
 _NAN = "NaN"
+_PROBES = {"1": "YAL001C", "2": "YBR001C", "3": "Q0010"}
 
 
 class _StubGenome:
@@ -109,8 +118,17 @@ def _gsm(
     title: str,
     cy5: list[float],
     cy3: list[float],
+    refpool_in: str = "Cy5",
+    test: str = "wt",
+    reference: str = "refpool",
     characteristics: list[str] | None = None,
 ) -> GSM:
+    """A two-channel array with GEO-style channel metadata.
+
+    ``label_ch1`` is Cy5 and ``label_ch2`` Cy3, as on every real array; ``refpool_in``
+    says which dye carries the reference (named ``reference``), and ``test`` names the
+    other channel. ``characteristics`` are attached to the test channel.
+    """
     table = pd.DataFrame(
         {
             "ID_REF": [1, 2, 3, 4],
@@ -119,10 +137,16 @@ def _gsm(
             "Signal Norm_Cy3": [*cy3, 9.0],
         }
     )
-    metadata = {
+    reference_channel = 1 if refpool_in == "Cy5" else 2
+    test_channel = 3 - reference_channel
+    metadata: dict[str, list[str]] = {
         "title": [title],
         "geo_accession": [name],
-        "characteristics_ch2": characteristics or [],
+        "label_ch1": ["Cy5"],
+        "label_ch2": ["Cy3"],
+        f"source_name_ch{reference_channel}": [reference],
+        f"source_name_ch{test_channel}": [test],
+        f"characteristics_ch{test_channel}": characteristics or [],
     }
     return GSM(name=name, metadata=metadata, table=table, columns=_describe(table))
 
@@ -172,8 +196,22 @@ def _write_raw(raw: Path) -> None:
         "GSE42527": _gse(
             "GSE42527",
             [
-                _gsm("GSM1", "[HS1991] cup9-del-a", [2.0, 8.0, 0.0], [4.0, 4.0, 1.0]),
-                _gsm("GSM2", "cup9-del-b", [4.0, 4.0, 1.0], [8.0, 2.0, 4.0]),
+                _gsm(
+                    "GSM1",
+                    "[HS1991] cup9-del-a",
+                    [4.0, 4.0, 1.0],
+                    [2.0, 8.0, 0.0],
+                    refpool_in="Cy5",
+                    test="cup9-del",
+                ),
+                _gsm(
+                    "GSM2",
+                    "cup9-del-b",
+                    [8.0, 2.0, 4.0],
+                    [4.0, 4.0, 1.0],
+                    refpool_in="Cy3",
+                    test="cup9-del",
+                ),
             ],
         ),
         "GSE42526": _gse(
@@ -184,32 +222,85 @@ def _write_raw(raw: Path) -> None:
                     "Sample X",
                     [3.0, 6.0, 1.0],
                     [3.0, 3.0, 2.0],
-                    ["strain: BY4742", "genotype/variation: hsn1-del"],
+                    refpool_in="Cy3",
+                    test="hsn1-del",
+                    characteristics=["strain: BY4742", "genotype/variation: hsn1-del"],
                 ),
                 _gsm(
                     "GSM4",
                     "wt control",
                     [1.0, 1.0, 1.0],
                     [1.0, 1.0, 1.0],
-                    ["genotype/variation: refpool"],
+                    refpool_in="Cy5",
+                    test="wt",
+                    characteristics=["genotype/variation: wt"],
                 ),
-                _gsm("GSM5", "cdk8-del-a", [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]),
-                _gsm("GSM6", "zzz9-del-a", [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]),
+                _gsm(
+                    "GSM5",
+                    "cdk8-del-a",
+                    [1.0, 1.0, 1.0],
+                    [1.0, 1.0, 1.0],
+                    refpool_in="Cy5",
+                    test="cdk8-del",
+                ),
+                _gsm(
+                    "GSM6",
+                    "zzz9-del-a",
+                    [1.0, 1.0, 1.0],
+                    [1.0, 1.0, 1.0],
+                    refpool_in="Cy5",
+                    test="zzz9-del",
+                ),
             ],
             with_platform=False,
         ),
         "GSE42241": _gse(
             "GSE42241",
             [
-                _gsm("W1", "refpool vs wt", [1.0, 1.0, 1.0], [0.0, 0.0, 0.0]),
-                _gsm("W2", "wt vs refpool", [0.0, 0.0, 0.0], [2.0, 0.0, 2.0]),
+                _gsm(
+                    "W1",
+                    "wt-matA-1-a",
+                    [1.0, 1.0, 1.0],
+                    [0.0, 0.0, 0.0],
+                    refpool_in="Cy5",
+                    test="wt-matA",
+                ),
+                _gsm(
+                    "W2",
+                    "wt-matA-1-b",
+                    [0.0, 0.0, 0.0],
+                    [2.0, 0.0, 2.0],
+                    refpool_in="Cy3",
+                    test="wt-matA",
+                ),
             ],
         ),
         "GSE42240": _gse(
-            "GSE42240", [_gsm("W3", "wt_b", [3.0, 3.0, 0.0], [0.0, 0.0, 0.0])]
+            "GSE42240",
+            [
+                _gsm(
+                    "W3",
+                    "wt-matA-THM012-a",
+                    [3.0, 3.0, 0.0],
+                    [0.0, 0.0, 0.0],
+                    refpool_in="Cy5",
+                    test="wt-matA",
+                )
+            ],
         ),
         "GSE42217": _gse(
-            "GSE42217", [_gsm("W4", "plain", [0.0, 0.0, 0.0], [5.0, 5.0, 5.0])]
+            "GSE42217",
+            [
+                _gsm(
+                    "W4",
+                    "wt-htp07-a",
+                    [5.0, 5.0, 5.0],
+                    [0.0, 0.0, 0.0],
+                    refpool_in="Cy5",
+                    test="wt-htp07-a",
+                    reference="ref1",
+                )
+            ],
         ),
     }
     for accession, gse in gses.items():
@@ -298,15 +389,15 @@ _NANF = float("nan")
 _SD2 = math.sqrt(2.0)
 _CUP9 = _experiment(
     "YPL177C",
-    {"Q0010": -2.0, "YAL001C": 0.0, "YBR001C": 0.0},
+    {"Q0010": 2.0, "YAL001C": 0.0, "YBR001C": 0.0},
     {"Q0010": _NANF, "YAL001C": 1.0, "YBR001C": 1.0},
     {"Q0010": _NANF, "YAL001C": _SD2**2, "YBR001C": _SD2**2},
     {"Q0010": 1, "YAL001C": 2, "YBR001C": 2},
-    {"Q0010": 2.0, "YAL001C": 5.0, "YBR001C": 5.0},
+    {"Q0010": 4.0, "YAL001C": 5.0, "YBR001C": 5.0},
 )
 _HSN1 = _experiment(
     "YHR127W",
-    {"Q0010": 1.0, "YAL001C": 0.0, "YBR001C": -1.0},
+    {"Q0010": -1.0, "YAL001C": 0.0, "YBR001C": 1.0},
     dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), _NANF),
     dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), _NANF),
     {"Q0010": 1, "YAL001C": 1, "YBR001C": 1},
@@ -324,12 +415,13 @@ _REF_HSN1 = _reference(
 )
 
 
-def test_two_deletions_build_with_log2_statistics_per_replicate(
+def test_two_deletions_build_with_within_array_log2_statistics(
     dataset: m.MicroarrayKemmeren2014Dataset,
 ) -> None:
     """Record 0 is CUP9 (two dye-swapped arrays, MATa), record 1 HSN1 (one array,
-    MATalpha, named only in ``characteristics_ch2``); CDK8 resolves but has no Table S1
-    strain and ZZZ9 does not resolve, so neither is written.
+    MATalpha, named only in ``characteristics_ch1``); CDK8 resolves but has no Table S1
+    strain and ZZZ9 does not resolve, so neither is written. The deleted gene is not
+    on the platform, so the ratios are the docstring's within-array values.
     """
     assert len(dataset) == 2
     assert _nan_safe(dataset[0]["experiment"]) == _nan_safe(_CUP9.model_dump())
@@ -402,9 +494,8 @@ def test_a_table_s1_without_an_orf_column_yields_empty_maps(
     dataset: m.MicroarrayKemmeren2014Dataset,
 ) -> None:
     """Finding: ``_load_mating_type_map`` raises ``ValueError("Required 'orf name'
-    column not found ...")`` at kemmeren2014.py line 1591 inside a ``try`` whose
-    ``except Exception`` (line 1700) only logs, so a Table S1 missing its required
-    column returns two empty maps instead of failing.
+    column not found ...")`` inside a ``try`` whose ``except Exception`` only logs, so
+    a Table S1 missing its required column returns two empty maps instead of failing.
     """
     workbook = openpyxl.Workbook()
     workbook.active.append(["gene", "mating type"])
@@ -416,29 +507,112 @@ def test_a_table_s1_without_an_orf_column_yields_empty_maps(
         dataset._load_mating_type_map()
 
 
-def test_a_dye_swap_title_containing_dash_a_is_read_as_standard_orientation() -> None:
-    """Finding: the channel rule at kemmeren2014.py line 902 tests ``"-a" in title``
-    before ``"-b"``, so a dye-swapped ``-b`` array of a gene whose name itself carries
-    ``-A`` (``ycr087c-a-del-b``) reads the DELETION from Cy5, which on a dye swap is the
-    refpool channel.
-
-    The channel rule itself is also contradicted by the source. The audit read GEO's
-    own channel labels: on ``-a`` arrays GEO puts the reference pool in Cy5 and the
-    deletion in Cy3 (the reverse on ``-b``), the opposite of the loader's rule
-    (kemmeren2014.py lines 902-907: ``-a`` -> deletion in Cy5). On the real data the
-    loader therefore reads the reference pool as the deletion on 2594 of 2633 arrays.
-    The fixture here encodes the loader's belief (deletion Cy5 on ``-a``), so these
-    tests pin code behavior, not biology.
+def test_channels_come_from_geo_metadata_not_from_the_title() -> None:
+    """``_channel_columns`` reads ``source_name_ch*`` and ``label_ch*``: a "-a" title
+    with the refpool in Cy5 gives the test in Cy3, a "-b" title of a gene whose own
+    name carries ``-a`` (``ycr087c-a-del-b``) with the refpool in Cy3 gives the test in
+    Cy5, and "ref1" counts as the reference. Two reference channels, none, and a label
+    pair other than Cy5 + Cy3 raise ``ValueError``; a deletion named ``ref2-del`` is
+    not mistaken for a reference.
     """
-    gsm = _gsm("G", "ycr087c-a-del-b", [4.0, 4.0, 1.0], [8.0, 2.0, 4.0])
-    probes = {"1": "YAL001C", "2": "YBR001C", "3": "Q0010"}
-    extract = m.MicroarrayKemmeren2014Dataset._extract_expression_from_gsm_static
-    assert dict(extract(gsm, probes)) == {"Q0010": 1.0, "YAL001C": 4.0, "YBR001C": 4.0}
-    plain = _gsm("G", "cup9-del-b", [4.0, 4.0, 1.0], [8.0, 2.0, 4.0])
-    assert dict(extract(plain, probes)) == {
-        "Q0010": 4.0,
-        "YAL001C": 8.0,
-        "YBR001C": 2.0,
+    columns = m.MicroarrayKemmeren2014Dataset._channel_columns
+    ones = [1.0, 1.0, 1.0]
+    assert columns(_gsm("A", "cup9-del-a", ones, ones, "Cy5", "cup9-del")) == (
+        "Signal Norm_Cy3",
+        "Signal Norm_Cy5",
+    )
+    assert columns(
+        _gsm("B", "ycr087c-a-del-b", ones, ones, "Cy3", "ycr087c-a-del")
+    ) == ("Signal Norm_Cy5", "Signal Norm_Cy3")
+    assert columns(_gsm("C", "wt-htp07-a", ones, ones, "Cy5", "wt", "ref1")) == (
+        "Signal Norm_Cy3",
+        "Signal Norm_Cy5",
+    )
+    assert columns(_gsm("D", "ref2-del-a", ones, ones, "Cy5", "ref2-del")) == (
+        "Signal Norm_Cy3",
+        "Signal Norm_Cy5",
+    )
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "E: expected the reference pool in exactly one channel, source names "
+            "['refpool', 'refpool']"
+        ),
+    ):
+        columns(_gsm("E", "x", ones, ones, "Cy5", "refpool"))
+    with pytest.raises(ValueError, match="F: expected the reference pool"):
+        columns(_gsm("F", "x", ones, ones, "Cy5", "cup9-del", reference="wt"))
+    swapped = _gsm("G", "x", ones, ones, "Cy5", "cup9-del")
+    swapped.metadata["label_ch2"] = ["Cy5"]
+    with pytest.raises(
+        ValueError,
+        match=re.escape("G: channel labels ['Cy5', 'Cy5'] are not one Cy5 and one Cy3"),
+    ):
+        columns(swapped)
+
+
+def test_extract_channels_pairs_the_two_signals_of_each_row() -> None:
+    """``ycr087c-a-del-b`` with the refpool in Cy3: the deletion values are the Cy5
+    column and the refpool values the Cy3 column, row by row, the unmapped probe 4
+    skipped; a missing signal column raises.
+    """
+    extract = m.MicroarrayKemmeren2014Dataset._extract_channels_from_gsm_static
+    gsm = _gsm(
+        "G", "ycr087c-a-del-b", [8.0, 2.0, 4.0], [4.0, 4.0, 1.0], "Cy3", "ycr087c-a-del"
+    )
+    deletion, refpool = extract(gsm, _PROBES)
+    assert dict(deletion) == {"Q0010": 4.0, "YAL001C": 8.0, "YBR001C": 2.0}
+    assert dict(refpool) == {"Q0010": 1.0, "YAL001C": 4.0, "YBR001C": 4.0}
+    gsm.table = gsm.table.drop(columns=["Signal Norm_Cy3"])
+    with pytest.raises(
+        ValueError, match=re.escape("G: column 'Signal Norm_Cy3' missing")
+    ):
+        extract(gsm, _PROBES)
+
+
+def test_replicate_pairs_are_one_pair_per_array_in_array_order() -> None:
+    """GSM1 (refpool Cy5 4, 4, 1; deletion Cy3 2, 8, 0) then GSM2 (deletion Cy5 8, 2,
+    4; refpool Cy3 4, 4, 1) give per gene the (deletion, refpool) pairs in that order,
+    the 0 signal kept here and dropped later by ``create_expression_experiment``.
+    """
+    collect = m.MicroarrayKemmeren2014Dataset._collect_replicate_pairs_static
+    first = _gsm(
+        "GSM1", "cup9-del-a", [4.0, 4.0, 1.0], [2.0, 8.0, 0.0], "Cy5", "cup9-del"
+    )
+    second = _gsm(
+        "GSM2", "cup9-del-b", [8.0, 2.0, 4.0], [4.0, 4.0, 1.0], "Cy3", "cup9-del"
+    )
+    assert dict(collect([first, second], _PROBES)) == {
+        "Q0010": [(0.0, 1.0), (4.0, 1.0)],
+        "YAL001C": [(2.0, 4.0), (8.0, 4.0)],
+        "YBR001C": [(8.0, 4.0), (2.0, 4.0)],
+    }
+    assert dict(collect([], _PROBES)) == {}
+
+
+def test_channel_check_counts_arrays_with_the_deleted_gene_depleted() -> None:
+    """For YAL001C (probe 1) on two arrays: 2/4 on the first is depleted, 8/4 on the
+    second is not, so the fraction is 0.5; a gene with no probe on the platform, or an
+    array with a 0 signal at that probe, is not counted (NaN when none is).
+    """
+    check = m.MicroarrayKemmeren2014Dataset._validate_channel_assignment
+    depleted = _gsm("A", "yal001c-del-a", [4.0, 4.0, 1.0], [2.0, 8.0, 0.0], "Cy5", "x")
+    raised = _gsm("B", "yal001c-del-b", [8.0, 2.0, 4.0], [4.0, 4.0, 1.0], "Cy3", "x")
+    zero = _gsm("C", "yal001c-del-a", [4.0, 4.0, 1.0], [0.0, 8.0, 0.0], "Cy5", "x")
+    assert check({"YAL001C": [depleted, raised, zero]}, _PROBES) == 0.5
+    assert check({"YAL001C": [depleted]}, _PROBES) == 1.0
+    assert math.isnan(check({"YPL177C": [depleted], "YAL001C": [zero]}, _PROBES))
+
+
+def test_refpool_from_a_wildtype_array_keeps_positive_values_of_its_channel() -> None:
+    """W2 (refpool in Cy3: 2, 0, 2) yields YAL001C and Q0010 at 2.0; the 0 is dropped
+    and the wildtype channel is not read.
+    """
+    dataset = m.MicroarrayKemmeren2014Dataset.__new__(m.MicroarrayKemmeren2014Dataset)
+    gsm = _gsm("W2", "wt-matA-1-b", [7.0, 7.0, 7.0], [2.0, 0.0, 2.0], "Cy3", "wt-matA")
+    assert dict(dataset._extract_refpool_from_wt_gsm(gsm, _PROBES)) == {
+        "Q0010": 2.0,
+        "YAL001C": 2.0,
     }
 
 
@@ -470,20 +644,52 @@ def test_resolution_passes_in_priority_order(
     ) == (1, 2, 2, 1, 1)
 
 
-def test_create_expression_experiment_requires_a_strain_and_a_refpool() -> None:
+def test_create_expression_experiment_from_pairs() -> None:
+    """No strain raises; no pair, or only pairs with a non-positive signal, returns the
+    ``(None, None, None)`` skip; pairs (2, 4) and (8, 4) give log2 -1 and +1, mean 0,
+    SE 1, variance 2.0000000000000004, n 2, linear 5, refpool 4, and the reference
+    carries the WT replicate count it was given.
+    """
     build = m.MicroarrayKemmeren2014Dataset.create_expression_experiment
     with pytest.raises(
         ValueError,
         match=re.escape("Strain (BY4741 or BY4742) must be specified in sample_info"),
     ):
-        build("d", {"systematic_gene_name": "YAL001C"}, {}, {}, {})
+        build("d", {"systematic_gene_name": "YAL001C"}, {}, {})
     info = {"systematic_gene_name": "YAL001C", "strain": "BY4741"}
-    assert build("d", info, {"YAL001C": [1.0]}, {}, {}) == (None, None, None)
-    assert build("d", info, {"YAL001C": [0.0]}, {"YAL001C": 1.0}, {}) == (
+    assert build("d", info, {}, {}) == (None, None, None)
+    assert build("d", info, {"YAL001C": [(0.0, 1.0), (1.0, 0.0)]}, {}) == (
         None,
         None,
         None,
     )
+    experiment, reference, publication = build(
+        "d", info, {"YAL001C": [(2.0, 4.0), (8.0, 4.0)]}, {"YAL001C": 7}
+    )
+    assert experiment.phenotype.model_dump() == {
+        "graph_level": "node",
+        "label_name": "expression_log2_ratio",
+        "label_statistic_name": "expression_log2_ratio_se",
+        "expression": {"YAL001C": 5.0},
+        "expression_log2_ratio": {"YAL001C": 0.0},
+        "expression_log2_ratio_se": {"YAL001C": 1.0},
+        "expression_log2_ratio_variance": {"YAL001C": _SD2**2},
+        "n_replicates": {"YAL001C": 2},
+        "provenance_gaps": [],
+    }
+    assert reference.phenotype_reference.model_dump() == {
+        "graph_level": "node",
+        "label_name": "expression_log2_ratio",
+        "label_statistic_name": "expression_log2_ratio_se",
+        "expression": {"YAL001C": 4.0},
+        "expression_log2_ratio": {"YAL001C": 0.0},
+        "expression_log2_ratio_se": None,
+        "expression_log2_ratio_variance": None,
+        "n_replicates": {"YAL001C": 7},
+        "provenance_gaps": [],
+    }
+    assert reference.genome_reference.strain == "BY4741"
+    assert publication == _PUBLICATION
 
 
 def test_parallel_build_writes_the_same_records(tmp_path: Path) -> None:

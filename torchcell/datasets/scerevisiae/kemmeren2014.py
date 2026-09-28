@@ -60,8 +60,15 @@ log = logging.getLogger(__name__)
 #
 # Experimental design:
 # - 2 biological replicates (two independently inoculated cultures)
-# - Each culture profiled in technical replicate (dye-swap: mutant-Cy5/ref-Cy3 and mutant-Cy3/ref-Cy5)
-# - Total: 4 measurements per gene per deletion mutant (2 biological × 2 dye orientations)
+# - Each culture profiled in technical replicate with the dyes swapped. GEO labels
+#   ch1 = Cy5 and ch2 = Cy3 on every array of the six series, and source_name_ch1/ch2
+#   say which channel holds the common reference pool ("refpool"; "ref1" on 193
+#   GSE42217 arrays) and which the deletion or wildtype culture. On the "-a" arrays
+#   the reference pool is in Cy5 and the deletion in Cy3; the "-b" arrays are the
+#   swap. Measured 2026-09-28 on the raw SOFT files: 3061 of 3061 arrays name the
+#   reference in exactly one channel, and the deleted gene's own probes read lower
+#   in the deletion channel on 702 of 705 arrays that carry one.
+# - Total: 4 measurements per gene per deletion mutant (2 biological x 2 dye orientations)
 # - Common reference RNA (WT pool) used in dye-swap on each microarray
 # - Applies to 1,484 deletion mutants (gene-specific regulators focus)
 #
@@ -360,41 +367,36 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 if not systematic_gene_name:
                     log.debug(f"Skipping {common_name} from title - cannot resolve")
 
-            # Check characteristics_ch2 for confirmation
-            characteristics_ch2 = gsm.metadata.get("characteristics_ch2", [])
-
-            for char in characteristics_ch2:
-                if "genotype/variation:" in char:
+            # Check the channel characteristics for confirmation. The deletion is in
+            # ch2 on the "-a" arrays and in ch1 on the "-b" arrays (the dye swap), so
+            # both channels are read; the other one names the reference pool.
+            for channel in ("characteristics_ch1", "characteristics_ch2"):
+                for char in gsm.metadata.get(channel, []):
+                    if "genotype/variation:" not in char:
+                        continue
                     genotype = char.split("genotype/variation:")[-1].strip()
+                    if "-del" not in genotype:
+                        continue
+                    is_deletion = True
+                    is_wildtype = False
 
-                    # Note: "refpool" in ch2 means this is a dye-swap sample, NOT a wildtype
-                    # The deletion mutant is in ch1, reference in ch2
-                    if "-del" in genotype:
-                        # This is a deletion mutant sample
-                        is_deletion = True
-                        is_wildtype = False
-
-                        # Only extract gene name if we haven't already tried from title
-                        if not gene_resolved_from_title and not systematic_gene_name:
-                            gene_part = genotype.replace("-del", "").strip()
-                            # Remove [HS1991] or similar prefixes if present
-                            if "]" in gene_part:
-                                gene_part = gene_part.split("]")[-1].strip()
-                            common_name = gene_part.upper()
-                            systematic_gene_name = self.resolve_gene_name_comprehensive(
-                                common_name,
-                                common_to_systematic,
-                                systematic_to_strain,
-                                already_assigned,
+                    # Only extract gene name if we haven't already tried from title
+                    if not gene_resolved_from_title and not systematic_gene_name:
+                        gene_part = genotype.replace("-del", "").strip()
+                        # Remove [HS1991] or similar prefixes if present
+                        if "]" in gene_part:
+                            gene_part = gene_part.split("]")[-1].strip()
+                        common_name = gene_part.upper()
+                        systematic_gene_name = self.resolve_gene_name_comprehensive(
+                            common_name,
+                            common_to_systematic,
+                            systematic_to_strain,
+                            already_assigned,
+                        )
+                        if not systematic_gene_name:
+                            log.debug(
+                                f"Skipping {common_name} from characteristics - cannot resolve"
                             )
-                            if not systematic_gene_name:
-                                log.debug(
-                                    f"Skipping {common_name} from characteristics - cannot resolve"
-                                )
-
-            # Note: We do NOT check characteristics_ch1 for refpool
-            # In two-channel microarrays, ch1 is ALWAYS the reference pool
-            # Only ch2 determines if this sample is a deletion mutant or wildtype
 
             # Final check: Only mark as wildtype if no deletion was found
             # Most samples should be deletion mutants (with or without dye-swap)
@@ -544,10 +546,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             )
             log.warning(f"First 10 missing genes: {missing_genes[:10]}")
 
-        # Validate log2 ratios against original GEO data
-        self._validate_log2_ratios(
-            deletion_samples_by_gene, probe_to_gene_map, systematic_to_strain
-        )
+        # Check the channel assignment on the deleted genes' own probes
+        self._validate_channel_assignment(deletion_samples_by_gene, probe_to_gene_map)
 
         # Choose processing method based on process_workers
         if self.process_workers > 0:
@@ -593,13 +593,13 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         with env.begin(write=True) as txn:
             # Process each unique gene deletion (collect replicate-level data)
             for gene_name, gsm_list in tqdm(deletion_samples_by_gene.items()):
-                # Collect expression data from all dye-swap replicates (replicate-level, not averaged)
-                replicate_expressions, n_replicates = (
-                    self._collect_replicate_expressions(gsm_list, probe_to_gene_map)
+                # Per-array (deletion, refpool) signal pairs, one pair per array
+                replicate_pairs = self._collect_replicate_pairs_static(
+                    gsm_list, probe_to_gene_map
                 )
 
                 # Skip if no expression data was extracted
-                if not replicate_expressions:
+                if not replicate_pairs:
                     log.warning(f"No expression data for gene {gene_name}, skipping...")
                     continue
 
@@ -630,23 +630,11 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     log.error(f"Unknown strain {strain} for {gene_name}")
                     continue
 
-                # Extract refpool from deletion samples' Cy3 channel
-                # This is the actual refpool at the scale of the deletion experiment
-                deletion_refpool = self._extract_refpool_from_deletion_samples(
-                    gsm_list, probe_to_gene_map
-                )
-
-                # Skip if no refpool data
-                if not deletion_refpool:
-                    log.error(f"No refpool data extracted for {gene_name}, skipping...")
-                    continue
-
                 # Create experiment with correct n_replicates for reference
                 experiment, reference, publication = self.create_expression_experiment(
                     self.name,
                     sample_info,
-                    replicate_expressions,  # Pass replicate-level data (List[float] per gene)
-                    deletion_refpool,  # Use actual refpool from deletion samples (already averaged)
+                    replicate_pairs,
                     refpool_n_replicates,  # Number of WT samples refpool was measured in
                 )
 
@@ -760,15 +748,15 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         results = []
 
         for gene_name, gsm_list in batch_items:
-            # Collect expression data from all dye-swap replicates (replicate-level, not averaged)
-            replicate_expressions, n_replicates = (
-                MicroarrayKemmeren2014Dataset._collect_replicate_expressions_static(
+            # Per-array (deletion, refpool) signal pairs, one pair per array
+            replicate_pairs = (
+                MicroarrayKemmeren2014Dataset._collect_replicate_pairs_static(
                     gsm_list, probe_to_gene_map
                 )
             )
 
             # Skip if no expression data was extracted
-            if not replicate_expressions:
+            if not replicate_pairs:
                 continue
 
             # Determine strain from systematic_to_strain map - REQUIRED
@@ -791,22 +779,12 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             else:
                 continue
 
-            # Extract refpool from deletion samples' Cy3 channel
-            deletion_refpool = MicroarrayKemmeren2014Dataset._extract_refpool_from_deletion_samples_static(
-                gsm_list, probe_to_gene_map
-            )
-
-            # Skip if no refpool data
-            if not deletion_refpool:
-                continue
-
             # Create experiment with correct n_replicates for reference
             experiment, reference, publication = (
                 MicroarrayKemmeren2014Dataset.create_expression_experiment(
                     dataset_name,
                     sample_info,
-                    replicate_expressions,  # Pass replicate-level data (List[float] per gene)
-                    deletion_refpool,  # Use actual refpool from deletion samples (already averaged)
+                    replicate_pairs,
                     refpool_n_replicates,  # Number of WT samples refpool was measured in
                 )
             )
@@ -828,159 +806,106 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return results
 
     @staticmethod
-    def _collect_replicate_expressions_static(
-        gsm_list: list[Any], probe_to_gene_map: dict[str, str] | None = None
-    ) -> tuple[SortedDict, SortedDict]:
-        """Static version of _collect_replicate_expressions for multiprocessing.
+    def _channel_columns(gsm: Any) -> tuple[str, str]:
+        """Signal columns of the test culture and of the common reference pool, read
+        from GEO's own channel metadata.
 
-        NOTE: Returns REPLICATE-LEVEL data, not averaged values.
-        The averaging will be done on log2 scale in create_expression_experiment.
+        Every array of the six series names the reference pool in the ``source_name``
+        of exactly one channel ("refpool", or "ref1" on 193 GSE42217 arrays) and gives
+        that channel's dye in ``label_ch1`` / ``label_ch2`` (Cy5 for ch1 and Cy3 for ch2
+        throughout). Measured 2026-09-28 on the raw SOFT files: 3061 of 3061 arrays.
+        The sample title is not consulted: on the "-a" arrays the reference pool is in
+        Cy5, the reverse of what the title suffix was once taken to mean, and the
+        deleted gene's own probes confirm GEO's labels on 702 of 705 arrays.
 
         Returns:
-            tuple: (replicate_expressions, n_replicates)
-                - replicate_expressions: Dict[gene, List[float]] - LINEAR scale values per replicate
-                - n_replicates: Dict[gene, int] - number of replicates per gene
+            (test_column, reference_column), for example
+            ("Signal Norm_Cy3", "Signal Norm_Cy5") on a "-a" array.
         """
-        # Collect all expression data (LINEAR scale, replicate-level)
-        all_expressions = SortedDict()
+        metadata = gsm.metadata
+        names = [
+            metadata.get("source_name_ch1", [""])[0],
+            metadata.get("source_name_ch2", [""])[0],
+        ]
+        labels = [
+            metadata.get("label_ch1", [""])[0],
+            metadata.get("label_ch2", [""])[0],
+        ]
+        is_reference = [
+            name.strip().lower().startswith("ref") and "-del" not in name.lower()
+            for name in names
+        ]
+        if sum(is_reference) != 1:
+            raise ValueError(
+                f"{gsm.name}: expected the reference pool in exactly one channel, "
+                f"source names {names}"
+            )
+        reference = is_reference.index(True)
+        reference_dye, test_dye = labels[reference], labels[1 - reference]
+        if {reference_dye, test_dye} != {"Cy5", "Cy3"}:
+            raise ValueError(
+                f"{gsm.name}: channel labels {labels} are not one Cy5 and one Cy3"
+            )
+        return f"Signal Norm_{test_dye}", f"Signal Norm_{reference_dye}"
 
+    @staticmethod
+    def _extract_channels_from_gsm_static(
+        gsm: Any, probe_to_gene_map: dict[str, str]
+    ) -> tuple[SortedDict, SortedDict]:
+        """Per-gene (test, reference) normalized signals of one array.
+
+        Both values of a gene come from the same table row, so the pair shares its
+        spot. Rows whose probe is not in the map and rows with a non-numeric cell are
+        skipped; a gene with two probes keeps the last row, as before.
+        """
+        test_column, reference_column = MicroarrayKemmeren2014Dataset._channel_columns(
+            gsm
+        )
+        table = gsm.table
+        for column in ("ID_REF", test_column, reference_column):
+            if column not in table.columns:
+                raise ValueError(
+                    f"{gsm.name}: column {column!r} missing from the sample table"
+                )
+
+        test_data = SortedDict()
+        reference_data = SortedDict()
+        for _, row in table.iterrows():
+            probe_id = str(int(row["ID_REF"]))
+            if probe_id not in probe_to_gene_map:
+                continue
+            gene = probe_to_gene_map[probe_id]
+            try:
+                test_value = float(row[test_column])
+                reference_value = float(row[reference_column])
+            except (ValueError, TypeError):
+                continue
+            test_data[gene] = test_value
+            reference_data[gene] = reference_value
+
+        return test_data, reference_data
+
+    @staticmethod
+    def _collect_replicate_pairs_static(
+        gsm_list: list[Any], probe_to_gene_map: dict[str, str]
+    ) -> SortedDict:
+        """Per-gene list of (deletion, refpool) signal pairs, one pair per array.
+
+        The pairs feed ``create_expression_experiment``, which takes the log2 ratio
+        within each array before averaging over arrays.
+        """
+        pairs = SortedDict()
         for gsm in gsm_list:
-            expr_data = (
-                MicroarrayKemmeren2014Dataset._extract_expression_from_gsm_static(
+            deletion, refpool = (
+                MicroarrayKemmeren2014Dataset._extract_channels_from_gsm_static(
                     gsm, probe_to_gene_map
                 )
             )
-            for gene, value in expr_data.items():
-                if gene not in all_expressions:
-                    all_expressions[gene] = []
-                all_expressions[gene].append(value)
-
-        # Count replicates per gene (for tracking)
-        n_replicates = SortedDict()
-        for gene, values in all_expressions.items():
-            n_replicates[gene] = len(values)
-
-        return all_expressions, n_replicates
-
-    @staticmethod
-    def _extract_expression_from_gsm_static(
-        gsm: Any, probe_to_gene_map: dict[str, str] | None = None
-    ) -> SortedDict:
-        """Static version of _extract_expression_from_gsm for multiprocessing.
-
-        Handles dye-swap design:
-        - Sample ending in '-a': Cy5 = deletion, Cy3 = refpool
-        - Sample ending in '-b': Cy5 = refpool, Cy3 = deletion (dye swap)
-
-        This function extracts the deletion mutant channel, accounting for dye swaps.
-        """
-        expression_data = SortedDict()
-
-        # Get the expression table from the GSM
-        if hasattr(gsm, "table") and gsm.table is not None:
-            table = gsm.table
-
-            # Check for expected columns
-            if "ID_REF" not in table.columns:
-                return expression_data
-
-            # Determine which channel contains deletion mutant expression
-            # This must account for dye-swap design to extract the correct biological sample
-            expression_column = None
-            if (
-                "Signal Norm_Cy5" in table.columns
-                and "Signal Norm_Cy3" in table.columns
-            ):
-                # Determine which channel has deletion mutant based on sample name
-                title = (
-                    gsm.metadata.get("title", [""])[0]
-                    if hasattr(gsm, "metadata")
-                    else ""
-                )
-
-                # Check for dye-swap pattern
-                if "-a" in title or "_a" in title or title.endswith("a"):
-                    # Standard orientation: deletion in Cy5, refpool in Cy3
-                    expression_column = "Signal Norm_Cy5"
-                elif "-b" in title or "_b" in title or title.endswith("b"):
-                    # Dye swap: deletion in Cy3, refpool in Cy5
-                    expression_column = "Signal Norm_Cy3"
-                else:
-                    # Default to Cy5 for samples without clear dye-swap naming
-                    expression_column = "Signal Norm_Cy5"
-            elif "VALUE" in table.columns:
-                expression_column = "VALUE"
-            else:
-                return expression_data
-
-            for _, row in table.iterrows():
-                probe_id = str(int(row["ID_REF"]))
-
-                # Map probe ID to gene name
-                if probe_to_gene_map and probe_id in probe_to_gene_map:
-                    gene = probe_to_gene_map[probe_id]
-                    try:
-                        value = float(row[expression_column])
-                        expression_data[gene] = value
-                    except (ValueError, TypeError):
-                        continue
-
-        return expression_data
-
-    @staticmethod
-    def _extract_refpool_from_deletion_samples_static(
-        gsm_list: list[Any], probe_to_gene_map: dict[str, str]
-    ) -> SortedDict:
-        """Static version of _extract_refpool_from_deletion_samples for multiprocessing."""
-        refpool_values: dict[str, list[float]] = {}
-
-        for gsm in gsm_list:
-            if not hasattr(gsm, "table") or gsm.table is None:
-                continue
-
-            table = gsm.table
-            if "ID_REF" not in table.columns:
-                continue
-
-            # Determine which channel has refpool based on sample name
-            title = (
-                gsm.metadata.get("title", [""])[0] if hasattr(gsm, "metadata") else ""
-            )
-
-            # Check for dye-swap pattern
-            if "-a" in title or "_a" in title or title.endswith("a"):
-                refpool_column = (
-                    "Signal Norm_Cy3"  # Standard: deletion in Cy5, refpool in Cy3
-                )
-            elif "-b" in title or "_b" in title or title.endswith("b"):
-                refpool_column = (
-                    "Signal Norm_Cy5"  # Dye swap: deletion in Cy3, refpool in Cy5
-                )
-            else:
-                # Default to Cy3 as refpool
-                refpool_column = "Signal Norm_Cy3"
-
-            # Extract refpool values
-            if refpool_column in table.columns:
-                for _, row in table.iterrows():
-                    probe_id = str(int(row["ID_REF"]))
-                    if probe_id in probe_to_gene_map:
-                        gene = probe_to_gene_map[probe_id]
-                        try:
-                            value = float(row[refpool_column])
-                            if value > 0:
-                                if gene not in refpool_values:
-                                    refpool_values[gene] = []
-                                refpool_values[gene].append(value)
-                        except (ValueError, TypeError):
-                            continue
-
-        # Average refpool values across samples
-        averaged_refpool = SortedDict()
-        for gene, values in refpool_values.items():
-            averaged_refpool[gene] = np.mean(values)
-
-        return averaged_refpool
+            for gene, deletion_value in deletion.items():
+                if gene not in pairs:
+                    pairs[gene] = []
+                pairs[gene].append((deletion_value, refpool[gene]))
+        return pairs
 
     def _process_wt_references(
         self, probe_to_gene_map: dict[str, str]
@@ -1153,74 +1078,6 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             refpool_n_replicates,
         )
 
-    def _calculate_wt_reference_with_std(
-        self, wt_gsm_list: list[Any], probe_to_gene_map: dict[str, str]
-    ) -> tuple[SortedDict, SortedDict]:
-        """Calculate average wildtype expression values and std from GSM objects.
-
-        Returns:
-            tuple: (mean_expression, std_expression)
-        """
-        if len(wt_gsm_list) == 0:
-            log.warning("No wildtype samples found, returning empty reference")
-            return SortedDict(), SortedDict()
-
-        log.info(f"Calculating reference from {len(wt_gsm_list)} wildtype samples")
-
-        # Collect all expression values per gene
-        all_expressions: dict[str, list[float]] = {}
-
-        for gsm in wt_gsm_list:
-            expr_data = self._extract_expression_from_gsm(gsm, probe_to_gene_map)
-            for gene, value in expr_data.items():
-                if gene not in all_expressions:
-                    all_expressions[gene] = []
-                all_expressions[gene].append(value)
-
-        # Calculate mean and std
-        wt_mean_expression = SortedDict()
-        wt_std_expression = SortedDict()
-
-        for gene, values in all_expressions.items():
-            wt_mean_expression[gene] = np.mean(values)
-            wt_std_expression[gene] = np.std(values, ddof=1) if len(values) > 1 else 0.0
-
-        log.info(f"Calculated reference for {len(wt_mean_expression)} genes")
-
-        return wt_mean_expression, wt_std_expression
-
-    def _calculate_wt_reference_from_gsm(
-        self, wt_gsm_list: list[Any], probe_to_gene_map: dict[str, str]
-    ) -> SortedDict:
-        """Calculate average wildtype expression values from GSM objects.
-        DEPRECATED: Use _calculate_wt_reference_with_std instead.
-        """
-        if len(wt_gsm_list) == 0:
-            log.warning("No wildtype samples found, returning empty reference")
-            return SortedDict()
-
-        log.info(f"Calculating reference from {len(wt_gsm_list)} wildtype samples")
-
-        # Aggregate expression across all WT samples
-        all_expression = SortedDict()
-        gene_counts = SortedDict()
-
-        for gsm in wt_gsm_list:
-            expr_data = self._extract_expression_from_gsm(gsm, probe_to_gene_map)
-            for gene, value in expr_data.items():
-                if gene not in all_expression:
-                    all_expression[gene] = 0.0
-                    gene_counts[gene] = 0
-                all_expression[gene] += value
-                gene_counts[gene] += 1
-
-        # Calculate mean
-        wt_reference = SortedDict(
-            {gene: all_expression[gene] / gene_counts[gene] for gene in all_expression}
-        )
-
-        return wt_reference
-
     def _extract_probe_to_gene_mapping(self, gse: Any) -> dict[str, str]:
         """Extract probe ID to gene name mapping from GEO platform annotation."""
         probe_to_gene: dict[str, str] = {}
@@ -1298,238 +1155,18 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         return probe_to_gene
 
-    def _extract_expression_from_gsm(
-        self, gsm: Any, probe_to_gene_map: dict[str, str] | None = None
-    ) -> SortedDict:
-        """Extract deletion mutant expression values from a GSM object.
-
-        Handles dye-swap design:
-        - Sample ending in '-a': Cy5 = deletion, Cy3 = refpool
-        - Sample ending in '-b': Cy5 = refpool, Cy3 = deletion (dye swap)
-
-        This function extracts the deletion mutant channel, accounting for dye swaps.
-        """
-        expression_data = SortedDict()
-
-        # Get the expression table from the GSM
-        if hasattr(gsm, "table") and gsm.table is not None:
-            # The table contains probe IDs and expression values
-            # We need to map probes to genes
-            table = gsm.table
-
-            # Check for expected columns
-            if "ID_REF" not in table.columns:
-                log.warning(
-                    f"ID_REF column not found. Available columns: {list(table.columns)}"
-                )
-                return expression_data
-
-            # Determine which channel contains deletion mutant expression
-            # This must account for dye-swap design to extract the correct biological sample
-            expression_column = None
-            if (
-                "Signal Norm_Cy5" in table.columns
-                and "Signal Norm_Cy3" in table.columns
-            ):
-                # Determine which channel has deletion mutant based on sample name
-                title = (
-                    gsm.metadata.get("title", [""])[0]
-                    if hasattr(gsm, "metadata")
-                    else ""
-                )
-
-                # Check for dye-swap pattern
-                if "-a" in title or "_a" in title or title.endswith("a"):
-                    # Standard orientation: deletion in Cy5, refpool in Cy3
-                    expression_column = "Signal Norm_Cy5"
-                elif "-b" in title or "_b" in title or title.endswith("b"):
-                    # Dye swap: deletion in Cy3, refpool in Cy5
-                    expression_column = "Signal Norm_Cy3"
-                else:
-                    # Default to Cy5 for samples without clear dye-swap naming
-                    expression_column = "Signal Norm_Cy5"
-            elif "VALUE" in table.columns:
-                expression_column = "VALUE"
-            else:
-                log.warning(
-                    f"No suitable expression column found. Available: {list(table.columns)}"
-                )
-                return expression_data
-
-            for _, row in table.iterrows():
-                probe_id = str(
-                    int(row["ID_REF"])
-                )  # Convert to int first to avoid '1.0'
-
-                # Map probe ID to gene name
-                if probe_to_gene_map and probe_id in probe_to_gene_map:
-                    gene = probe_to_gene_map[probe_id]
-                    # Skip conversion here - probe_to_gene_map already has the gene names we need
-                    # Converting 15000+ genes per sample is too slow
-                    try:
-                        value = float(row[expression_column])
-                        # Keep all expression values (including negative log2 ratios)
-                        expression_data[gene] = value
-                    except (ValueError, TypeError):
-                        continue
-
-            # Log if we didn't extract any expression data
-            if not expression_data and probe_to_gene_map:
-                log.debug(
-                    f"No expression data extracted. Probe map size: {len(probe_to_gene_map)}"
-                )
-
-        return expression_data
-
-    def _extract_refpool_from_deletion_samples(
-        self, gsm_list: list[Any], probe_to_gene_map: dict[str, str]
-    ) -> SortedDict:
-        """Extract refpool values from deletion samples' Cy3 or Cy5 channel.
-
-        In deletion samples, dye-swap design means:
-        - Sample ending in '-a': Cy5 = deletion, Cy3 = refpool
-        - Sample ending in '-b': Cy5 = refpool, Cy3 = deletion (dye swap)
-
-        Returns:
-            SortedDict: Average refpool expression values at deletion experiment scale
-        """
-        refpool_values: dict[str, list[float]] = {}
-
-        for gsm in gsm_list:
-            if not hasattr(gsm, "table") or gsm.table is None:
-                continue
-
-            table = gsm.table
-            if "ID_REF" not in table.columns:
-                continue
-
-            # Determine which channel has refpool based on sample name
-            title = (
-                gsm.metadata.get("title", [""])[0] if hasattr(gsm, "metadata") else ""
-            )
-
-            # Check for dye-swap pattern
-            if "-a" in title or "_a" in title or title.endswith("a"):
-                refpool_column = (
-                    "Signal Norm_Cy3"  # Standard: deletion in Cy5, refpool in Cy3
-                )
-            elif "-b" in title or "_b" in title or title.endswith("b"):
-                refpool_column = (
-                    "Signal Norm_Cy5"  # Dye swap: deletion in Cy3, refpool in Cy5
-                )
-            else:
-                # Default to Cy3 as refpool
-                refpool_column = "Signal Norm_Cy3"
-
-            # Extract refpool values
-            if refpool_column in table.columns:
-                for _, row in table.iterrows():
-                    probe_id = str(int(row["ID_REF"]))
-                    if probe_id in probe_to_gene_map:
-                        gene = probe_to_gene_map[probe_id]
-                        try:
-                            value = float(row[refpool_column])
-                            if value > 0:
-                                if gene not in refpool_values:
-                                    refpool_values[gene] = []
-                                refpool_values[gene].append(value)
-                        except (ValueError, TypeError):
-                            continue
-
-        # Average refpool values across samples
-        averaged_refpool = SortedDict()
-        for gene, values in refpool_values.items():
-            averaged_refpool[gene] = np.mean(values)
-
-        return averaged_refpool
-
     def _extract_refpool_from_wt_gsm(
-        self, gsm: Any, probe_to_gene_map: dict[str, str] | None = None
+        self, gsm: Any, probe_to_gene_map: dict[str, str]
     ) -> SortedDict:
-        """Extract refpool expression values from a WT GSM object.
+        """Reference-pool signals of one wildtype array, positive values only.
 
-        In WT samples (GSE42215, GSE42217, GSE42240, GSE42241):
-        - Some samples: wt vs. refpool (wt in Cy5, refpool in Cy3)
-        - Other samples: refpool vs. wt (refpool in Cy5, wt in Cy3)
-
-        We need to determine which channel contains refpool and extract it.
+        The wildtype series (GSE42215, GSE42217, GSE42240, GSE42241) hybridize a
+        wildtype culture against the same reference pool as the deletions, in both dye
+        orientations. The channel comes from GEO's metadata (``_channel_columns``);
+        the wildtype culture is the other channel and is not used.
         """
-        expression_data = SortedDict()
-
-        if not hasattr(gsm, "table") or gsm.table is None:
-            return expression_data
-
-        table = gsm.table
-
-        # Check for expected columns
-        if "ID_REF" not in table.columns:
-            log.warning("ID_REF column not found")
-            return expression_data
-
-        # We need both Cy5 and Cy3 to extract refpool
-        if (
-            "Signal Norm_Cy5" not in table.columns
-            or "Signal Norm_Cy3" not in table.columns
-        ):
-            log.warning("Missing Cy5 or Cy3 columns, cannot extract refpool")
-            return expression_data
-
-        # Determine hybridization direction from sample metadata
-        title = gsm.metadata.get("title", [""])[0] if hasattr(gsm, "metadata") else ""
-        geo_accession = (
-            gsm.metadata.get("geo_accession", [""])[0]
-            if hasattr(gsm, "metadata")
-            else ""
-        )
-
-        # Debug logging
-        log.debug(f"Processing WT sample {geo_accession}: {title}")
-
-        # Determine which channel has refpool based on title or metadata
-        # The VALUE column represents log2(Cy5/Cy3)
-        # If VALUE is positive when wt > refpool, then wt is in Cy5
-        # If VALUE is negative when wt < refpool, then wt is in Cy5
-
-        # For WT samples, we need to look at the VALUE to infer direction
-        # If most VALUEs are near 0, it's wt vs refpool (both similar)
-        # We can also check the title pattern
-
-        refpool_column = "Signal Norm_Cy3"  # Default assumption
-
-        # Try to parse from title
-        title_lower = title.lower()
-        if "refpool" in title_lower:
-            # Look for patterns like "refpool vs wt" or "wt vs refpool"
-            if "refpool vs" in title_lower or "refpool-" in title_lower:
-                # refpool is first, so it's in Cy5
-                refpool_column = "Signal Norm_Cy5"
-            elif "vs refpool" in title_lower or "-refpool" in title_lower:
-                # refpool is second, so it's in Cy3
-                refpool_column = "Signal Norm_Cy3"
-
-        # Alternative: check sample name patterns
-        # GSE42215 samples often have patterns in their names
-        if "-a" in title or "_a" in title:
-            refpool_column = "Signal Norm_Cy3"  # Standard orientation
-        elif "-b" in title or "_b" in title:
-            refpool_column = "Signal Norm_Cy5"  # Dye swap
-
-        log.debug(f"  Using {refpool_column} as refpool channel")
-
-        # Extract refpool values
-        for _, row in table.iterrows():
-            probe_id = str(int(row["ID_REF"]))
-
-            if probe_to_gene_map and probe_id in probe_to_gene_map:
-                gene = probe_to_gene_map[probe_id]
-                try:
-                    value = float(row[refpool_column])
-                    if value > 0:  # Only keep positive values
-                        expression_data[gene] = value
-                except (ValueError, TypeError):
-                    continue
-
-        return expression_data
+        _, refpool = self._extract_channels_from_gsm_static(gsm, probe_to_gene_map)
+        return SortedDict({gene: value for gene, value in refpool.items() if value > 0})
 
     def _load_mating_type_map(self) -> tuple[dict[str, str], dict[str, str]]:
         """Load mating type information from supplementary Table S1.
@@ -1918,183 +1555,83 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         )
         log.info(f"Unique gene deletions: {len(deletion_samples_by_gene)}")
 
-    def _validate_log2_ratios(
-        self,
+    @staticmethod
+    def _validate_channel_assignment(
         deletion_samples_by_gene: dict[str, list[Any]],
         probe_to_gene_map: dict[str, str],
-        systematic_to_strain: dict[str, str],
-    ) -> None:
-        """Validate that our calculated log2 ratios match the original GEO data.
+    ) -> float:
+        """Fraction of deletion arrays on which the deleted gene reads lower in the
+        deletion channel than in the reference channel.
 
-        IMPORTANT: The VALUE column in GEO follows standard microarray convention:
-        VALUE = log2(Cy3/Cy5) = log2(refpool/deletion) = log2(reference/test)
-
-        This means:
-        - Negative VALUE: deletion has HIGHER expression than refpool
-        - Positive VALUE: deletion has LOWER expression than refpool
-
-        For biological interpretation, log2(deletion/refpool) would be more intuitive
-        (positive = upregulated), but we validate against GEO's convention here.
+        A deleted gene's transcript is absent from the deletion culture, so with the
+        channels assigned correctly the median log2(deletion / refpool) over that
+        gene's probes is negative; a swapped assignment makes it positive. Every array
+        whose deleted gene has a probe on the platform is checked. On the real data
+        (2026-09-28) 702 of 705 such arrays are negative under GEO's channel labels
+        and 10 of 705 under the former title rule. Returns NaN when no array can be
+        checked; warns below 0.9.
         """
-        log.info("\n=== Validating Log2 Ratios ===")
+        probes_by_gene: dict[str, list[str]] = {}
+        for probe_id, gene in probe_to_gene_map.items():
+            probes_by_gene.setdefault(gene, []).append(probe_id)
 
-        # Debug: Check refpool reference
-        log.debug("\n=== Refpool Reference Debug ===")
-        if hasattr(self, "wt_expression_BY4742") and self.wt_expression_BY4742:
-            sample_genes = list(self.wt_expression_BY4742.keys())[:5]
-            for gene in sample_genes:
-                log.debug(
-                    f"Refpool BY4742 {gene}: {self.wt_expression_BY4742[gene]:.4f}"
+        checked = 0
+        negative = 0
+        for gene_name, gsm_list in deletion_samples_by_gene.items():
+            if gene_name not in probes_by_gene:
+                continue
+            probe_ids = probes_by_gene[gene_name]
+            for gsm in gsm_list:
+                test_column, reference_column = (
+                    MicroarrayKemmeren2014Dataset._channel_columns(gsm)
                 )
-
-        # Sample a subset of genes for validation
-        genes_to_validate = list(deletion_samples_by_gene.keys())[
-            : min(20, len(deletion_samples_by_gene))
-        ]
-
-        original_ratios = []
-        calculated_ratios = []
-
-        for gene_idx, gene_name in enumerate(genes_to_validate):
-            gsm_list = deletion_samples_by_gene[gene_name]
-            if not gsm_list:
-                continue
-
-            # Skip genes whose strain has no WT reference (the refpool comes from the
-            # array's Cy5/Cy3 channels directly, validated below).
-            strain = systematic_to_strain.get(gene_name)
-            if strain not in ("BY4741", "BY4742"):
-                continue
-
-            # Get first GSM for this gene
-            gsm = gsm_list[0]
-
-            # Debug: Show first few probes for first gene
-            if gene_idx == 0:
-                log.debug(f"\n=== Debug for gene {gene_name} ===")
-                log.debug(f"GSM: {gsm.metadata.get('geo_accession', [''])[0]}")
-
-            # Extract original log2 ratios from VALUE column
-            if hasattr(gsm, "table") and gsm.table is not None:
                 table = gsm.table
+                rows = table[table["ID_REF"].astype(int).astype(str).isin(probe_ids)]
+                deletion = rows[test_column].astype(float).to_numpy()
+                refpool = rows[reference_column].astype(float).to_numpy()
+                positive = (deletion > 0) & (refpool > 0)
+                if not positive.any():
+                    continue
+                checked += 1
+                ratio = np.median(np.log2(deletion[positive] / refpool[positive]))
+                if ratio < 0:
+                    negative += 1
 
-                # Debug: Show available columns for first gene
-                if gene_idx == 0:
-                    log.debug(f"Available columns: {list(table.columns)[:10]}")
-
-                if "VALUE" in table.columns and "ID_REF" in table.columns:
-                    probe_count = 0
-                    for _, row in table.iterrows():
-                        probe_id = str(int(row["ID_REF"]))
-                        if probe_id in probe_to_gene_map:
-                            probe_gene = probe_to_gene_map[probe_id]
-                            # We don't need refpool_ref anymore - just validate Cy5/Cy3 directly
-                            try:
-                                # Original log2 ratio from GEO (VALUE column = log2(Cy3/Cy5))
-                                original = float(row["VALUE"])
-
-                                # VALUE = log2(Cy3/Cy5) = log2(refpool/deletion)
-                                # This is standard microarray convention: log2(reference/test)
-
-                                if (
-                                    "Signal Norm_Cy5" in table.columns
-                                    and "Signal Norm_Cy3" in table.columns
-                                ):
-                                    cy5 = float(
-                                        row["Signal Norm_Cy5"]
-                                    )  # Deletion mutant
-                                    cy3 = float(row["Signal Norm_Cy3"])  # Refpool
-
-                                    # Calculate log2(Cy3/Cy5) to match VALUE convention
-                                    if cy5 > 0:
-                                        calculated = np.log2(
-                                            cy3 / cy5
-                                        )  # Note: Cy3/Cy5, not Cy5/Cy3
-                                    else:
-                                        continue
-
-                                    # Debug first few probes of first gene
-                                    if gene_idx == 0 and probe_count < 3:
-                                        log.debug(
-                                            f"\nProbe {probe_id} -> Gene {probe_gene}: "
-                                            f"Original={original:.4f}, Calculated={calculated:.4f}, "
-                                            f"Diff={abs(original - calculated):.4f}"
-                                        )
-                                        probe_count += 1
-
-                                    original_ratios.append(original)
-                                    calculated_ratios.append(calculated)
-                            except (ValueError, TypeError):
-                                continue
-
-        if len(original_ratios) > 10:
-            # Calculate correlation
-            correlation = np.corrcoef(original_ratios, calculated_ratios)[0, 1]
-
-            # Calculate RMSE
-            rmse = np.sqrt(
-                np.mean((np.array(original_ratios) - np.array(calculated_ratios)) ** 2)
+        if checked == 0:
+            log.warning(
+                "Channel assignment check: no deletion array carries a probe for its "
+                "own deleted gene"
             )
-
-            log.info(f"Validation samples: {len(original_ratios)}")
-            log.info(
-                f"Correlation between original and calculated log2 ratios: {correlation:.3f}"
+            return float("nan")
+        fraction = negative / checked
+        log.info(
+            f"Channel assignment check: deleted gene lower in the deletion channel on "
+            f"{negative} of {checked} arrays ({fraction:.3f})"
+        )
+        if fraction < 0.9:
+            log.warning(
+                "Channel assignment check: fewer than 90 percent of arrays show the "
+                "deleted gene depleted; the channel metadata may be wrong"
             )
-            log.info(f"RMSE: {rmse:.3f}")
-
-            if correlation < 0.8:
-                log.warning(
-                    f"WARNING: Low correlation ({correlation:.3f}) between original and calculated ratios!"
-                )
-                log.warning(
-                    "This may indicate issues with refpool extraction or processing."
-                )
-            else:
-                log.info("✓ Good correlation - refpool references appear correct")
-        else:
-            log.warning("Not enough data points for validation")
-
-        log.info("===")
-
-    def _collect_replicate_expressions(
-        self, gsm_list: list[Any], probe_to_gene_map: dict[str, str] | None = None
-    ) -> tuple[SortedDict, SortedDict]:
-        """Collect expression values from technical replicates (dye-swaps).
-
-        NOTE: This method returns REPLICATE-LEVEL data, not averaged values.
-        The averaging will be done on log2 scale in create_expression_experiment.
-
-        Returns:
-            tuple: (replicate_expressions, n_replicates)
-                - replicate_expressions: Dict[gene, List[float]] - LINEAR scale values per replicate
-                - n_replicates: Dict[gene, int] - number of replicates per gene
-        """
-        # Collect all expression data (LINEAR scale, replicate-level)
-        all_expressions = SortedDict()
-
-        for gsm in gsm_list:
-            expr_data = self._extract_expression_from_gsm(gsm, probe_to_gene_map)
-            for gene, value in expr_data.items():
-                if gene not in all_expressions:
-                    all_expressions[gene] = []
-                all_expressions[gene].append(value)
-
-        # Count replicates per gene (for tracking)
-        n_replicates = SortedDict()
-        for gene, values in all_expressions.items():
-            n_replicates[gene] = len(values)
-
-        return all_expressions, n_replicates
+        return fraction
 
     @staticmethod
     def create_expression_experiment(
         dataset_name: str,
         sample_info: dict[str, Any],
-        replicate_expressions: SortedDict,
-        refpool_expression: SortedDict,
+        replicate_pairs: SortedDict,
         refpool_n_replicates: SortedDict,
     ) -> tuple[Any, Any, Any]:
-        """Build an experiment, reference, and publication from sample expression data."""
+        """Build an experiment, reference, and publication from per-array signal pairs.
+
+        ``replicate_pairs`` maps a gene to its (deletion, refpool) normalized signals,
+        one pair per array (``_collect_replicate_pairs_static``). The log2 ratio is
+        taken within each array, log2(deletion / refpool), so the two-color design
+        cancels the spot; the mean, sample SD, SE and variance are then taken over the
+        arrays. An array on which either signal is not positive is dropped for that
+        gene. The stored linear ``expression`` is the mean deletion signal and the
+        reference ``expression`` the mean refpool signal over the same arrays.
+        """
         # Genome reference - strain MUST be specified (BY4741 or BY4742)
         if "strain" not in sample_info:
             raise ValueError(
@@ -2125,58 +1662,43 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        # CRITICAL: Compute log2 ratios PER REPLICATE, then average on log2 scale
-        # This is mathematically correct: mean(log2(x)) ≠ log2(mean(x))
-        if not refpool_expression:
-            # Cannot create experiment without refpool - return None to signal skip
-            return None, None, None
-
-        # Step 1: Compute log2 ratios per replicate, then aggregate statistics on log2 scale
+        # Within-array log2 ratios, then statistics over the arrays on the log2 scale
         mean_log2_ratios = SortedDict()
         log2_se = SortedDict()
         log2_variance = SortedDict()
         n_replicates_dict = SortedDict()
-        mean_expression = SortedDict()  # Also compute mean LINEAR expression for QC
+        mean_expression = SortedDict()  # Mean LINEAR deletion signal (for QC)
+        refpool_expression = SortedDict()  # Mean LINEAR refpool signal (reference)
 
-        for gene, replicate_values in replicate_expressions.items():
-            if gene not in refpool_expression or refpool_expression[gene] <= 0:
-                continue  # Skip genes not in refpool or with invalid refpool values
-
-            # Compute log2 ratio for EACH replicate (correct order of operations!)
-            log2_ratios_per_replicate = []
-            for rep_value in replicate_values:
-                if rep_value > 0:  # Skip invalid values
-                    # NOTE: GEO stores log2(refpool/deletion), but torchcell convention is
-                    # log2(deletion/refpool) where positive = upregulated, negative = downregulated.
-                    # We negate to transform from GEO convention to torchcell convention.
-                    log2_ratio = -np.log2(rep_value / refpool_expression[gene])
-                    log2_ratios_per_replicate.append(log2_ratio)
-
-            # Skip genes with no valid replicates
-            if len(log2_ratios_per_replicate) == 0:
+        for gene, pairs in replicate_pairs.items():
+            kept = [(d, r) for d, r in pairs if d > 0 and r > 0]
+            if not kept:
                 continue
 
-            # Compute statistics on log2 scale
-            n = len(log2_ratios_per_replicate)
-            mean_log2 = np.mean(log2_ratios_per_replicate)
+            log2_ratios_per_array = [float(np.log2(d / r)) for d, r in kept]
+            n = len(log2_ratios_per_array)
+            mean_log2 = float(np.mean(log2_ratios_per_array))
 
+            se_log2: float
+            var_log2: float
             if n > 1:
-                sd_log2 = np.std(log2_ratios_per_replicate, ddof=1)
-                se_log2 = sd_log2 / np.sqrt(n)
+                sd_log2 = float(np.std(log2_ratios_per_array, ddof=1))
+                se_log2 = sd_log2 / n**0.5
                 var_log2 = sd_log2**2
             else:
                 # n=1: SE and variance are undefined
-                se_log2 = np.nan
-                var_log2 = np.nan
+                se_log2 = float("nan")
+                var_log2 = float("nan")
 
             mean_log2_ratios[gene] = mean_log2
             log2_se[gene] = se_log2
             log2_variance[gene] = var_log2
             n_replicates_dict[gene] = n
-            mean_expression[gene] = np.mean(replicate_values)  # For QC purposes
+            mean_expression[gene] = float(np.mean([d for d, _ in kept]))
+            refpool_expression[gene] = float(np.mean([r for _, r in kept]))
 
         if not mean_log2_ratios:
-            # No matching genes between expression and refpool - return None to signal skip
+            # No array with both signals positive - return None to signal skip
             return None, None, None
 
         # Create phenotype with new schema fields

@@ -447,7 +447,7 @@ def test_convert_to_systematic_tries_table_gene_alias_then_alias_map(
 _DOUBLE_EXPECTED = [
     _record(
         _DM,
-        "BY4742",
+        "BY4741",
         [_kan("YCR001W"), _nat("YDR001C")],
         _three(3.0, 3.0, 3.0),
         _three(1.0, 1.0, 1.0),
@@ -474,7 +474,7 @@ def test_double_mutant_records_pair_replicates_and_take_the_strain_from_comments
     double: m.DmMicroarraySameith2015Dataset,
 ) -> None:
     """Pair (YCR001W, YDR001C) over D1 + D2 carries comment ``MATa strain`` and is built
-    in BY4742; pair (YAL001C, YBR001C) from D3 carries ``matA`` and is built in BY4741;
+    in BY4741; pair (YAL001C, YBR001C) from D3 carries ``matA`` and is built in BY4741;
     the failed-curation pair D4 and the one-gene S1 write nothing.
     """
     assert len(double) == 2
@@ -487,25 +487,24 @@ def test_double_mutant_records_pair_replicates_and_take_the_strain_from_comments
 def test_gstf_pairs_map_mating_comments_onto_strains(
     double: m.DmMicroarraySameith2015Dataset,
 ) -> None:
-    """Finding: ``_load_authoritative_gstf_pairs`` (sameith2015.py lines 954-957) maps a
-    ``MATa`` comment to BY4742 and ``matA`` or ``MATα`` to BY4741, while in the standard
-    nomenclature BY4741 is the MATa strain and BY4742 the MATalpha strain; a blank or
-    unrelated comment defaults to BY4742. The mapping is pinned as written.
+    """``_load_authoritative_gstf_pairs`` maps a ``MATa`` or ``matA`` comment (any case)
+    to BY4741, the MATa strain, and ``MATα`` or ``MATalpha`` to BY4742, the MATalpha
+    strain; a blank or unrelated comment defaults to BY4742.
 
     The paper states: "All single mutants and most double mutants carry the mating type
-    matalpha and are in the genetic background of BY4742. Few double mutants carry the
-    mating type matA and are in the genetic background of BY4741" (verbatim, including
-    the paper's spelling). The SI has exactly four ``MATa`` comments, and no ``matA`` or
-    ``MATα`` one, so the loader stores all 72 passed pairs as BY4742, including the four
-    that the paper places in BY4741. The fixture's ``matA`` and ``MATα`` comments exist
-    only to exercise the BY4741 branch.
+    matα and are in the genetic background of BY4742. Few double mutants carry the
+    mating type matA and are in the genetic background of BY4741" (verbatim). The SI
+    has exactly four ``MATa`` comments, on the passed pairs HAC1+SNT1, SNT1+SPT2,
+    CUP2+HAA1 and SIP4+YER184C, and GEO's sample characteristics carry ``strain:
+    BY4741`` on exactly those four double mutants (GSE42536, 2026-09-28). Before this
+    mapping the loader stored all 72 passed pairs as BY4742.
     """
     pairs = double._load_authoritative_gstf_pairs()
     assert {key: value["strain"] for key, value in pairs.items()} == {
-        ("YCR001W", "YDR001C"): "BY4742",
+        ("YCR001W", "YDR001C"): "BY4741",
         ("YAL001C", "YBR001C"): "BY4741",
         ("YGL001C", "YHL001W"): "BY4742",
-        ("YIL001W", "YJL001W"): "BY4741",
+        ("YIL001W", "YJL001W"): "BY4742",
         ("YKL001C", "YLL001W"): "BY4742",
     }
     assert {
@@ -539,8 +538,10 @@ def test_double_side_files(double: m.DmMicroarraySameith2015Dataset) -> None:
         "['YAL001C', 'YBR001C']",
         "['YEL001C', 'YFL001W']",
     ]
+    # Both pairs are now BY4741 with the same all-ones refpool, so they share one
+    # reference.
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0], [1]]
+    assert [entry["member_indices"] for entry in index] == [[0, 1]]
     assert double.raw_file_names == ["GSE42536_family.soft.gz"]
 
 

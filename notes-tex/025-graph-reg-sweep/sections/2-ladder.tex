@@ -12,7 +12,9 @@ the hard mask, lilac the prior toward degree-matched random graphs at $10^{-3}$.
 point is one seed, filled in its arm's color with a black edge; a short black bar is the
 arm mean; a cross marks a quantity the model does not compute. The ladder axis is
 $\log_{10} \lambda$, with \emph{none} the unpenalized arm, \emph{mask} the hard mask and
-\emph{rand} the random-graph arm. (a) Held-out Pearson on the
+\emph{r$-$3}, \emph{r$-$1} and \emph{r0} the degree-matched random-graph arms at
+$\lambda = 10^{-3}$, $10^{-1}$ and 1 (the last two queued in round 1b, their columns
+empty). (a) Held-out Pearson on the
 37{,}673 validation triples at three readings per seed: epoch 29 (circle, left), max
 over epochs (triangle, middle, every run) and at the epoch of minimum validation point
 loss (square, right). Stars are the paired $t$ of each reading against no penalty on the
@@ -25,12 +27,12 @@ rewired graphs it was trained toward, the mask is 1 by construction. (d) Diverge
 layer-1 attention from the target graphs at epoch 29, validation pass, log scale; not
 computed at $\lambda = 0$ or under the mask. (e) Gradient norm of the penalty over that
 of the point loss on the probe batch at epochs 0, 1, 2, 5, 10 and 20, mean over seeds,
-log scale; the two arms without a penalty are at 0. (f) Biological against
-degree-matched random graphs at the minimum-validation-loss reading, arm means as bars
-and seeds as points, stars the paired $t$ against no penalty. The groups are chosen
-from the data: the $\lambda$ with the highest seed mean at this reading (0.1), the one
-highest at epoch 29 (1), and $10^{-3}$, where the control ran first; the random arms at
-0.1 and 1 are queued in round 1b. (g) Validation Pearson, (h) training Pearson and (i) validation point loss
+log scale; the two arms without a penalty are at 0. (f) The control as a paired difference: biological minus degree-matched random graphs,
+seed by seed, at each $\lambda$ the random arm runs at, under the three readings of (a)
+(same markers, arm mean as a bar); stars are the paired $t$ of that difference. Panel
+(a) gives the levels and (f) the pairing across arms, which (a) does not show. The
+groups at 0.1 and 1, the best $\lambda$ at minimum validation loss and at epoch 29, are
+queued in round 1b. (g) Validation Pearson, (h) training Pearson and (i) validation point loss
 by epoch, mean over complete seeds with a $\pm$ sd band. Panel titles state the finding
 each panel shows and are checked against the tables in Section~\ref{sec:reading}.}{fig:sweep}
 

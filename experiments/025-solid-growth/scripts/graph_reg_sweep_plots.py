@@ -83,6 +83,8 @@ ARM_INDEX = {
     "kl_1": 4,  # steel blue
     "mask": 1,  # brick
     "random_0.001": 2,  # lilac
+    "random_0.1": 14,  # dusty mauve
+    "random_1": 8,  # dark purple
 }
 
 
@@ -113,11 +115,19 @@ LADDER = [
     "kl_1",
     "mask",
     RANDOM,
+    "random_0.1",
+    "random_1",
 ]
+# The random-graph control at each lambda it runs at, paired with the biological arm of
+# the same lambda in panel f.
+RANDOM_PAIRS = [("kl_0.001", RANDOM), ("kl_0.1", "random_0.1"), ("kl_1", "random_1")]
 # Exponents of lambda at full size: mathtext superscripts render at 0.7 of the font
 # (4.2 pt at 6 pt), under Nature's 5 pt floor, so the axis carries log10 lambda instead.
-LADDER_TICKS = ["none", "−5", "−4", "−3", "−2", "−1", "0", "mask", "rand"]
-XPOS = {arm: i for i, arm in enumerate(LADDER)}
+LADDER_TICKS = ["none", "−5", "−4", "−3", "−2", "−1", "0", "mask", "r−3", "r−1", "r0"]
+# The random columns sit after a gap, so their labels clear the mask label.
+XPOS = {
+    arm: i + (0.5 if arm.startswith("random_") else 0.0) for i, arm in enumerate(LADDER)
+}
 ARM_COLOR = {arm: PLOT_PALETTE[k] for arm, k in ARM_INDEX.items()}
 ARM_SHORT = {
     "kl_1e-05": "1e-5",
@@ -146,7 +156,7 @@ READINGS = {
     "min_loss": ("s", 0.27, "val_pearson_at_min_loss", 0.4665),
 }
 PROBE_EPOCHS = [0, 1, 2, 5, 10, 20]
-X_LABEL = "log10 λ (graph prior weight)"
+X_LABEL = "log10 λ (graph prior weight); r, random graphs"
 
 
 def _box(ax: Axes) -> None:
@@ -202,9 +212,9 @@ def _not_logged(ax: Axes, x: float, y: float, color: str) -> None:
 
 
 def _ladder_axis(ax: Axes, xlabel: str = X_LABEL) -> None:
-    ax.set_xticks(range(len(LADDER)))
+    ax.set_xticks([XPOS[a] for a in LADDER])
     ax.set_xticklabels(LADDER_TICKS)
-    ax.set_xlim(-0.6, len(LADDER) - 0.4)
+    ax.set_xlim(-0.6, XPOS[LADDER[-1]] + 0.6)
     ax.set_xlabel(xlabel)
     _box(ax)
 
@@ -499,111 +509,75 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
     e.set_title("Penalty dominates the gradient from λ = 0.01")
     _box(e)
 
-    # f: biological against degree-matched random graphs at the best lambda. The best
-    # lambda is read from the data, not chosen in advance: the KL arm with the highest
-    # seed mean at the minimum-validation-loss reading, and the one highest at epoch 29
-    # if that differs. lambda 0.001 stays beside them as the control measured first.
-    # Bars and points are the minimum-validation-loss reading; stars are its paired t
-    # against no penalty by seed.
-    f = ax[5]
-    col = "val_pearson_at_min_loss"
-    kl_arms = [a for a in LADDER if a.startswith("kl_") and a != "kl_0"]
-    means_min = {a: done[done.arm == a][col].mean() for a in kl_arms}
-    means_fix = {a: done[done.arm == a].val_pearson_fixed.mean() for a in kl_arms}
-    best_min = max(means_min, key=lambda a: means_min[a])
-    best_fix = max(means_fix, key=lambda a: means_fix[a])
-    groups = sorted(
-        {"kl_0.001", best_min, best_fix}, key=lambda a: float(a.split("_")[1])
-    )
+    # f: the control as a paired difference. Biological minus degree-matched random
+    # graphs, seed by seed, at every lambda the random arm runs at, under the three
+    # readings of panel a; stars are the paired t of that difference. Panel a shows the
+    # levels; this is the comparison a cannot show, because a does not pair seeds
+    # across arms.
+    from scipy import stats
 
-    def _bar(x: float, arm: str, color: str) -> None:
-        sub = done[done.arm == arm]
-        star = _stars(pvals.get((arm, "min_loss")))
-        if star:
-            f.text(x, 0.4625, star, ha="center", va="center", fontsize=5.5)
-        if not len(sub):
+    f = ax[5]
+    f.axhline(0.0, color="black", lw=0.5, ls="--", zorder=1)
+    for g, (bio, rnd) in enumerate(RANDOM_PAIRS):
+        for reading, (marker, dx, col, _) in READINGS.items():
+            pool = runs if reading == "max" else done
+            b = pool[pool.arm == bio].set_index("seed")[col]
+            r = pool[pool.arm == rnd].set_index("seed")[col]
+            seeds = sorted(set(b.index) & set(r.index))
+            if not seeds:
+                continue
+            diffs = np.array([b[k] - r[k] for k in seeds])
+            _points(
+                f, g + dx, diffs, ARM_COLOR[bio], marker=marker, jitter=0.05, size=6
+            )
+            if len(diffs) > 1 and diffs.std(ddof=1) > 0:
+                t = diffs.mean() / (diffs.std(ddof=1) / np.sqrt(len(diffs)))
+                star = _stars(float(2 * stats.t.sf(abs(t), df=len(diffs) - 1)))
+                if star:
+                    f.text(g + dx, 0.0375, star, ha="center", va="center", fontsize=5.5)
+        if not len(runs[runs.arm == rnd]):
             f.text(
-                x,
-                0.4225,
+                g,
+                0.0,
                 "queued,\nround 1b",
                 ha="center",
-                va="bottom",
+                va="center",
                 fontsize=5,
-                rotation=90,
-                color=color,
+                color=ARM_COLOR[rnd],
+                bbox={"facecolor": "white", "edgecolor": "none", "pad": 0.6},
             )
-            return
-        f.bar(
-            x,
-            sub[col].mean(),
-            width=0.5,
-            facecolor=color,
+    f.set_xticks(range(len(RANDOM_PAIRS)))
+    f.set_xticklabels([f"λ = {float(b.split('_')[1]):g}" for b, _ in RANDOM_PAIRS])
+    f.set_xlim(-0.6, len(RANDOM_PAIRS) - 0.4)
+    f.set_ylim(-0.03, 0.045)
+    f.yaxis.set_major_locator(MultipleLocator(0.01))
+    f.set_ylabel("Held-out Pearson, biological − random graphs")
+    f.set_xlabel("same λ, same seed")
+    f.set_title("λ = 0.001: biology above random at ep 29, n.s.")
+    for reading, label in (
+        ("fixed", "epoch 29"),
+        ("max", "max over epochs"),
+        ("min_loss", "at min validation loss"),
+    ):
+        f.scatter(
+            [],
+            [],
+            marker=READINGS[reading][0],
+            s=10,
+            facecolor="white",
             edgecolor="black",
             linewidth=0.5,
-            zorder=2,
+            label=label,
         )
-        f.scatter(
-            x + np.linspace(-0.1, 0.1, len(sub)),
-            sub[col].to_numpy(),
-            s=7,
-            facecolor="black",
-            edgecolor="black",
-            linewidth=0.4,
-            zorder=4,
-        )
-
-    _bar(0.0, "kl_0", GRAY)
-    ticks, labels = [0.0], ["none"]
-    for g, arm in enumerate(groups):
-        lam = arm.split("_")[1]
-        base = 1.2 + 1.35 * g
-        _bar(base, arm, ARM_COLOR[arm])
-        _bar(base + 0.55, f"random_{lam}", PURPLE)
-        tag = []
-        if arm == best_min:
-            tag.append("best,\nmin loss")
-        if arm == best_fix:
-            tag.append("best,\nepoch 29")
-        ticks.append(base + 0.275)
-        labels.append(f"λ = {float(lam):g}" + ("\n" + "\n".join(tag) if tag else ""))
-    f.set_xticks(ticks)
-    f.set_xticklabels(labels, fontsize=5)
-    f.set_xlim(-0.5, ticks[-1] + 0.65)
-    f.set_ylim(0.42, 0.482)
-    f.set_ylabel("Held-out Pearson, at min validation loss")
-    f.set_title("Random graphs at the best λ: queued")
-    f.scatter(
-        [],
-        [],
-        marker="s",
-        s=12,
-        color=ARM_COLOR[best_min],
-        edgecolor="black",
-        linewidth=0.4,
-        label="biological graphs (ladder color)",
-    )
-    f.scatter(
-        [],
-        [],
-        marker="s",
-        s=12,
-        color=PURPLE,
-        edgecolor="black",
-        linewidth=0.4,
-        label="random, degree-matched",
-    )
+    f.scatter([], [], s=0, label="paired t: * p < 0.05, ** < 0.01, *** < 0.001")
     f.legend(
-        loc="upper left",
+        loc="lower left",
         fontsize=5,
         frameon=False,
-        handletextpad=0.4,
-        labelspacing=0.6,
-        borderaxespad=0.5,
-        title="paired t vs none: * p < 0.05, ** < 0.01, *** < 0.001",
-        title_fontsize=5,
-        alignment="left",
+        handletextpad=0.3,
+        labelspacing=0.4,
+        borderaxespad=0.4,
     )
-    _pearson_grid(f)
     _box(f)
 
     # g, h, i: curves, complete runs only

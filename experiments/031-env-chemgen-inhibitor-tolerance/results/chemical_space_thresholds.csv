@@ -1,0 +1,6 @@
+source,n_target_embedded,n_exact_match,nn_similarity_median,n_above_0.3,n_above_0.4,n_above_0.5,n_above_0.7,n_above_0.9
+union_of_others,41,12,0.6,24,18,13,3,1
+wildenhain2015,41,10,0.5454545454545454,25,17,13,3,1
+hillenmeyer2008_hom,41,2,0.3269230769230769,24,9,1,0,0
+hillenmeyer2008_het,41,2,0.31666666666666665,21,13,9,1,0
+hoepfner2014,41,2,0.3048780487804878,21,8,0,0,0

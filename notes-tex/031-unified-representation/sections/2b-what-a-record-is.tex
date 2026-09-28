@@ -1,0 +1,92 @@
+%% notes-tex/031-unified-representation/sections/2b-what-a-record-is.tex
+
+\section{What a record is and what is done to it\secstatus{tent}}
+\label{sec:record}
+
+Before any argument about pooling, this section fixes what the data actually looks like and
+what the model is asked to do with it, because the rest of the document is unreadable without
+both. Table~\ref{tab:vocab} defines every term that appears in a later figure label or table
+header.
+
+%% SOURCE: VOCABULARY in experiments/031-env-chemgen-inhibitor-tolerance/scripts/notes_tex_representation_tables.py
+%% (curated definitions; the measured quantities they name are produced by the scripts cited
+%% at each table and figure).
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Controlled vocabulary, alphabetical. Each term is used in a figure label or a table
+header later in the document.}
+\label{tab:vocab}
+\input{tables/t15-vocabulary}
+\end{table}
+
+\notesec{The task is regression on a continuous number}
+It is worth stating plainly, because the sign conventions in the next section invite the
+opposite reading. The model predicts a real-valued growth response for a strain under a
+compound. Nothing is thresholded into sick and healthy, no class label is formed, and no
+cutoff appears anywhere in the pipeline. The reason the document talks about which SIGN means
+a sick strain is that the five sources disagree about that sign, and a pooled target has to
+resolve the disagreement before it can be regressed on. Resolving it costs nothing: the fix
+is a multiplication by plus or minus one, which is a bijection on the real line and discards
+no information. Were the target binarized, the compound-level correlations that every score
+in this document reports would not be the right way to measure it.
+
+\notesec{One real record from each dataset, carried through}
+Table~\ref{tab:worked} takes an actual served record from each of the five and prints it at
+every step. Reading a row left to right gives what the strain is, what it was dosed with,
+what the source reported, and what the pooled model would be asked to predict.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/worked_example_records.py ->
+%% results/worked_example_records.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{One real served record from each dataset, carried through the two target
+transformations. The strain column gives the queried gene with its common name, and for
+Vanacloig also the three sensitized-host deletions every one of its genotypes carries.
+$o_k$ is the orientation factor and $\tilde y$ the standardized target. The records were
+chosen as the strongest response of a gene measured in all five, so the arithmetic is visible
+rather than sitting at zero.}
+\label{tab:worked}
+\input{tables/t16-worked-example}
+\end{table}
+
+Three things in that table are worth naming, because each is a place the datasets differ in a
+way a reader would otherwise have to infer.
+
+The Vanacloig strain perturbs four genes, not one. Three of them, PDR1, PDR3 and SNQ2, are
+the drug-efflux regulators deleted to build the sensitized host, and they are the same three
+in every Vanacloig record; the fourth is the gene being queried. That is what the four-gene
+perturbation count in Table~\ref{tab:datasets} means, and it is the reason a Vanacloig
+genotype contributes four indices to the perturbed set where the others contribute one.
+
+One gene appears in four of the five rows on four different scales. UBP14 under crystal violet
+reads $-3.40$ as a log ratio, the same gene under nocodazole reads $+1.92$ as a log ratio
+pointing the other way, under an epothilone derivative $-7.17$ as a sensitivity score, and
+under mitomycin C $+56.29$ as a z score. These are not phenotypes of different magnitude; they
+are the same kind of measurement reported on scales that differ by a factor of twenty and, for
+two of the five, with the opposite sign. The fifth row is a different gene because
+Wildenhain's panel is 242 genes and does not contain this one, which is the narrowness
+Table~\ref{tab:datasets} records.
+
+After both steps all five land in the same range and the same direction. Every standardized
+value in the table is negative, which under the shared convention means every one of these
+records is a strain that grew badly, which is what picking the strongest response per dataset
+was meant to produce.
+
+\notesec{The two steps, and why in that order}
+For a record from dataset $k$ with served response $y$,
+\[
+  \tilde y \;=\; o_k \cdot \frac{y - \mathrm{med}_k}{\mathrm{sd}_k},
+\]
+where $o_k \in \{-1, +1\}$ is the orientation factor and $\mathrm{med}_k$ and $\mathrm{sd}_k$
+are the median and standard deviation of dataset $k$ on the TRAINING split only, so no
+held-out value informs the scale. Orientation comes first because the median and the standard
+deviation are computed on the oriented values; the standard deviation is unaffected by the
+sign, but stating the order keeps the two from being applied inconsistently. Three of the five
+sources already store a sick strain as negative and take $o_k = +1$, and only the two
+Hillenmeyer arms flip.
+
+Section~\ref{sec:joinability} is where $o_k$ comes from, and it is not a preference. The five
+sources declare opposite conventions in their own words, and ignoring that puts two records of
+the same gene under the same compound on opposite sides of zero.

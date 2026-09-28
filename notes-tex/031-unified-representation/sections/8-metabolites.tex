@@ -1,0 +1,64 @@
+%% notes-tex/031-unified-representation/sections/6-metabolites.tex
+
+\section{Whether the metabolites can join\secstatus{tent}}
+\label{sec:metabolites}
+
+The plan is to represent media components and metabolic-model metabolites as molecules in the
+same embedding space as the dosed inhibitors. Two things decide whether that works: how many
+Yeast9 species have a structure at all, and whether the encoders can embed them.
+
+\notesec{The encoders are not the constraint}
+Eleven of the twelve registered encoders embed every structure-bearing species with no
+failures (Table~\ref{tab:yeast9enc}). The three-dimensional encoder reaches 836 of 894, its
+refusals being monatomic ions with no conformer and planar or linear molecules, together with
+the inositol-phosphoceramide sphingolipids. The descriptor block emits undefined entries on 18
+rows, so a caller imputes before taking any distance.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/yeast9_molecule_coverage.py ->
+%% results/yeast9_encoder_coverage.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Encoder coverage over the 894 structure-bearing Yeast9 species.}
+\label{tab:yeast9enc}
+\input{tables/t4-yeast9-encoders}
+\end{table}
+
+\notesec{The structures are the constraint}
+Yeast9 holds 2{,}806 compartment-specific entries that collapse to 1{,}378 distinct species,
+and only 894 of those carry a SMILES, all from the release's own name-keyed table. No species
+carries an InChI, so every key used here is derived from the shipped SMILES rather than
+sourced. Two quality problems matter for a shared space. Every shipped SMILES is
+stereochemically flat, with 621 of 894 carrying an unassigned stereocenter, so L and D forms
+collapse onto one key. And 36 do not encode the species the model declares, judged against the
+model's own formula, two of them being outright wrong molecules.
+
+The 484 species without a structure split into two halves that need different treatment
+(Table~\ref{tab:yeast9cls}). About 167 have no single structure and never will, being transfer
+RNAs, pooled lipid classes, protein species, glycan accessions and biomass pseudo-metabolites.
+Those need a non-molecular slot regardless of curation. The remaining 317 have a definite
+structure absent from the release table, dominated by acyl-resolved lipids, and 295 of the 484
+carry a cross-reference identifier, so a lookup route exists.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/yeast9_molecule_coverage.py ->
+%% results/yeast9_failure_classes.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Yeast9 species by structure class, with how many carry a SMILES.}
+\label{tab:yeast9cls}
+\input{tables/t3-yeast9-classes}
+\end{table}
+
+The consequence for anything reaction-level is that 2{,}156 of 4{,}131 reactions, 52 percent,
+have a structure for every participant.
+
+\notesec{The axes are related but not the same}
+Against the full five-dataset compound set, 49 exact keys and 103 connectivity skeletons are
+shared with Yeast9, so 103 metabolites are dosed as exogenous compounds somewhere in the five
+datasets. They are the central cofactors and metabolites rather than the drug-like library.
+The media axis is a different story: 30 of 37 media components are Yeast9 metabolites, which
+is expected since media components are metabolites by construction and is the strongest
+argument for one shared space. Because Yeast9 is stereo-flat while the curated compound keys
+carry stereochemistry, any join between the axes is on the connectivity skeleton with the
+ambiguity recorded.

@@ -1,0 +1,5 @@
+what,a,b,n_a,n_b,shared,jaccard
+compounds (InChIKey),Vanacloig 2022,Hillenmeyer 2008 HOM,41,114,2,0.013071895424836602
+compounds (InChIKey),Vanacloig 2022,Hillenmeyer 2008 HET,41,290,2,0.0060790273556231
+compounds (InChIKey),Hillenmeyer 2008 HOM,Hillenmeyer 2008 HET,114,290,99,0.32459016393442625
+compounds (InChIKey),all three,,,,1,

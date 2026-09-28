@@ -1,0 +1,3 @@
+file,columns,adjusted_score_columns,madl_columns,companion_zscore_columns,distinct_experiment_ids,experiment_ids_appearing_twice
+HIP_scores.txt,5912,2905,51,2956,2905,0
+HOP_scores.txt,5846,2904,19,2923,2904,0

@@ -1,0 +1,46 @@
+%% notes-tex/031-unified-representation/sections/4-dose.tex
+
+\section{The dose axis does not resolve\secstatus{tent}}
+\label{sec:dose}
+
+A pooled model sees one dose field, and a field that means different things in different
+rows is a nuisance variable rather than a feature. The five datasets use three mutually
+non-convertible regimes, and the measurement is worse than a missing column.
+
+\notesec{Vanacloig's dose is a potency, not a quantity}
+Of its 143{,}218 records, 3{,}492 carry a numeric concentration and they are all one
+compound, benomyl. The other 40 of 41 compounds carry a target-inhibition basis with the
+concentration unstated. There is no molar value to pool.
+
+\notesec{Wildenhain's dose is a constant}
+Every one of its 5{,}170 compounds sits at the same fixed concentration, so its dose column
+has zero variance and carries no information at all. This is harmless for a model that
+ignores dose and fatal for one that regresses on it.
+
+\notesec{Hillenmeyer is the only arm with real variation}
+Its two arms carry a numeric dose on essentially every record, converting to molar for 84
+and 96 percent of them, across a range spanning nine orders of magnitude, with up to seven
+doses per compound.
+
+\notesec{Hoepfner is the only possible bridge, and it is two compounds wide}
+It is the only dataset stating both a molar concentration and a target-inhibition basis, on
+100 percent of its records, with a median of two doses per compound. In principle that
+calibrates what the basis means in molar terms, which is exactly what Vanacloig lacks. In
+practice Vanacloig and Hoepfner share two compounds, so the calibration cannot reach the
+panel.
+
+\notesec{Shared compounds are not dosed alike}
+Across the five datasets, 214 compounds are dosed in more than one with a molar value. The
+median ratio between the highest and the lowest of those doses is 12.5, and the 90th
+percentile is 100. A compound shared by two datasets is typically dosed an order of
+magnitude apart in them.
+
+\notesec{What follows}
+Dose cannot be one shared continuous feature. Three routes exist and they are not
+equivalent. A dose-basis token per dataset alongside log molar where it exists keeps the
+information and accepts that the model cannot compare across bases. Dropping absolute dose
+and training on within-condition gene profiles removes the problem and makes Wildenhain's
+constant harmless. Learning a per-compound potency scale from the multi-dose compounds and
+using it to place the single-dose ones is a modeling project rather than a preprocessing
+step. The representation in Section~\ref{sec:representation} takes the first, because it is
+the only one that keeps the information without a new model.

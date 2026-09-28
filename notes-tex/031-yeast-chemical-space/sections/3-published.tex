@@ -1,0 +1,71 @@
+%% notes-tex/031-yeast-chemical-space/sections/3-published.tex
+
+\section{The expansion has already been done\secstatus{todo}}
+\label{sec:published}
+
+The scoping question has a published answer, and it arrived in 2026. Yeast-MetaTwin
+\external{Wu et al.\ 2026, ``Systematically exploring yeast metabolism through
+retrobiosynthesis and deep learning''; Nielsen and Kerkhoven are authors} applies exactly the
+method under consideration here, at a scale that would be hard to improve on casually.
+
+The numbers, quoted through \file{yeast9\_literature\_counts.py} and plotted hatched in
+Figure~\ref{fig:scope}. The Yeast Metabolome Database holds \textbf{16{,}042} entries carrying
+a SMILES, of which \textbf{14{,}882 are absent from Yeast9}, and those missing entries are
+\textbf{14{,}310 lipids against 572 non-lipids}. The authors extracted \textbf{21{,}921
+enzyme-associated reaction rules and 213 spontaneous rules} from MetaNetX and MetaCyc, report
+that 95 percent of the rules regenerate their original reactions, and trimmed the resulting
+pool to a connected network of \textbf{1{,}092{,}946 reactions}. The outcome they state is
+that coverage of the yeast metabolome rose \textbf{from 7 percent to 92 percent}, and for the
+non-lipid metabolome from 54 to 75 percent.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/yeast9_chemical_accounting.py
+%% and yeast9_literature_counts.py -> yeast9_scope.svg, converted by `make plots`.
+\tcfig{figures/yeast9_scope.pdf}{\textbf{The retrobiosynthetic
+expansion is published, and what is left open is stereochemistry, lipids and a missing mass
+fraction.} Hatched bars are published and were not measured here; solid bars are measured from
+the release. \textbf{a}, Metabolome coverage before and after the published expansion, for the
+whole metabolome and for the non-lipid subset. \textbf{b}, Yeast dry-mass composition computed from the
+model's own biomass pseudo-reactions, which closes to 96.1 percent; red whiskers are the
+published range for the four pools the literature covers. DNA is 0.39 percent and the cofactor
+and ion pools together 0.73 percent, so the remainder after the four large pools is not a
+five-to-ten percent small-molecule fraction. \textbf{c}, What remains: Yeast9 species whose structure names a set
+rather than a molecule, Yeast9 lipid species with no structure at all, and the non-lipid
+metabolites the published expansion could not connect.}{fig:scope}
+
+Two consequences follow immediately. First, proposing a retrobiosynthetic enumeration of yeast
+metabolism as new work would duplicate a published result from the same group that maintains
+the reconstruction. Second, the residual they report is specific and small: \textbf{267
+non-lipid metabolites}, 1.7 percent of the metabolome, could not be connected without
+introducing metabolites outside the yeast metabolome.
+
+\notesec{The mass question, answered from the model's own biomass equation}
+The rounded figures in the literature do not add up and say nothing about DNA or the
+small-molecule pool: yeast is reported as 40 to 50 percent protein, about 10 percent RNA,
+about 10 percent lipid and about 25 percent cell wall \external{Milo and Phillips 2016;
+Feldmann 2012}. The reconstruction carries a complete answer that needs no lookup. Its biomass
+pseudo-reaction draws one unit each from a protein, carbohydrate, RNA, DNA, lipid, cofactor and
+ion pool, and every pool lists its constituents with coefficients in millimoles per gram dry
+weight, so multiplying by formula mass gives grams per gram directly
+(Figure~\ref{fig:scope}b).
+
+Measured that way the pools are \textbf{46.8 percent protein, 38.3 percent carbohydrate, 6.4
+percent RNA and 3.5 percent lipid}, with \textbf{0.48 percent cofactor, 0.39 percent DNA and
+0.25 percent ion}. They sum to 96.1 percent, and the 3.9 percent shortfall is the few
+constituents carrying no formula, so the accounting nearly closes and the residual is named
+rather than left implicit.
+
+That settles the question the rounded figures leave open, and the answer is not what the
+arithmetic suggests. \textbf{The remainder after protein, carbohydrate, RNA and lipid is not
+five to ten percent of small molecules.} DNA is 0.39 percent and the cofactor and ion pools
+together are 0.73 percent. Two caveats on reading those numbers. The model's carbohydrate pool
+runs above the 25 percent cell-wall figure because it also carries storage glycogen and
+trehalose, and its lipid pool runs below the published 10 percent. And the cofactor and ion
+pools are a \textbf{lower bound} on the small-molecule pool, because they hold the cofactors
+and ions the biomass equation requires rather than the cell's whole metabolite pool; a soluble
+pool measured by extraction would be larger, and the \org{E. coli} figure for that quantity is
+3 to 3.9 percent of dry weight.
+
+The practical consequence for a chemical accounting is that the pool it is about is small. If
+the target is every distinct chemical species, the species are numerous and they are under one
+percent of the cell by mass, so the exercise is about identity and connectivity rather than
+about mass balance.

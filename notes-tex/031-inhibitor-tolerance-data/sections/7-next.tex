@@ -1,0 +1,70 @@
+%% notes-tex/031-inhibitor-tolerance-data/sections/7-next.tex
+
+\section{What follows\secstatus{todo}}
+\label{sec:next}
+
+\notesec{Baselines before models}
+The ceilings of Section~\ref{sec:noise} become scores through the same ladder the
+trigenic work used: a per-gene additive ridge and a nearest-neighbor model over genes,
+fit on Vanacloig alone and then on Vanacloig with HOM, under a split that holds out
+whole compounds. A held-out compound is the case a strain-design model faces, a stress
+it has never seen, and it is the split that isolates the model from the dataset
+offsets of Section~\ref{sec:axes}. Every per-compound score is reported beside that
+compound's ceiling, because a score of 0.3 on a compound with a ceiling of 0.9 and a
+score of 0.3 on one with a ceiling of 0.35 are different results.
+
+\notesec{Two transfer tests}
+Section~\ref{sec:structure} found one exact match that transfers. The model question
+is whether a partner dataset helps on held-out inhibitors through exact matches only,
+or through chemical similarity as well. Both are testable on the same split: add HOM
+restricted to the exact-match compounds, then add all of HOM with compounds encoded by
+one of the encoders of Section~\ref{sec:encoders}, and compare the held-out Vanacloig
+score against Vanacloig alone. Section~\ref{sec:chemistry} gives the prior for the
+second arm.
+
+\notesec{The environment encoding}
+The first environment representation is the dosed compound alone, one vector per record
+from a chosen encoder. The second adds the medium: SynBase, YPD and SC dropouts enter as
+sets of compound vectors rather than as names, which is the representation the
+metabolism arm will share. Whether adding the metabolic model degrades the held-out
+compound score is the ablation that decides whether the integrated representation
+costs anything.
+
+\notesec{Lian 2019 as the external furfural check}
+Lian et al.\ 2019 (\texttt{10.1038/s41467-019-13621-4}) selected a genome-wide
+CRISPRa, CRISPRi and CRISPRd library on furfural. Round 1 of the CRISPRd arm, about
+21{,}000 guides over about 5{,}200 genes in the unmodified host, is the nearest thing
+to a deletion screen; the activation and interference arms have no deletion analog
+and rounds 2 and 3 carry integrated backgrounds. Furfural's ceiling in Vanacloig is
+0.88, so there is signal to transfer, and the environments differ (aerobic SED-URA
+with G418 at 5\,mM against anaerobic SynBase at IC30), so a weak score would not
+separate the model from the modality.
+
+That paper also validated its hits as genome-integrated strains, and the per-replicate
+values behind those figures are released as a Source Data workbook now held in the raw
+mirror. One sheet crosses three integrated edits fully: interference of \emph{SIZ1},
+activation of \emph{NAT1} and interference of \emph{PDR1}, as seven strains plus the wild
+type, at three furfural concentrations in biological triplicate. At 17.5\,mM the mean
+relative biomass is 1.03 for the wild type, 1.95, 0.77 and 0.48 for the three single
+edits, 55.7 and 25.7 for the two doubles containing the \emph{SIZ1} edit, 0.53 for the
+double without it, and 142.2 for the triple. Two edits that do nothing alone become large
+only together with the third, so the set scores an interaction rather than a ranking, and
+it is the external check with the most stringent form available on any inhibitor here.
+
+\notesec{The isobutanol validator, and what is missing from it}
+Isobutanol has no equivalent. It is the inhibitor the strain-design work targets and the
+served graph carries it as a stress only in Vanacloig, at a ceiling of 0.786. The nearest
+external check is a set of engineered strains from the laboratory whose single-deletion
+biosensor screen the graph already serves: 23 strains that each combine one
+mitochondrial-morphology deletion with a five-cassette mitochondrial isobutanol pathway,
+and two double deletions, \emph{gln3} with \emph{gcn4} and \emph{gln3} with \emph{gnp1},
+whose combined tolerance is reported as less than the sum of the two singles. The
+genotypes are released and machine-readable; the titers and tolerance factors appear only
+in figures, with no per-strain table and no deposit, so nothing can be ingested from them
+without the numbers themselves.
+
+The prediction is therefore recorded before the check exists. A model fit on Vanacloig
+with HOM as a gene prior should place deletion of \emph{GLN3} and of \emph{GNP1} among the
+strongest tolerance gains on isobutanol, and should place both double deletions below the
+sum of their singles. The first two are reachable by the additive baseline of this section;
+the third needs an interaction, which makes it the informative one.

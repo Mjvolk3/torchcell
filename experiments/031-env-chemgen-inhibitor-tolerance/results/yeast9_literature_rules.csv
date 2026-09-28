@@ -1,0 +1,6 @@
+quantity,value,source,quote
+enzyme-associated reaction rules,21921,wuSystematicallyExploringYeast2026,"we first extracted 21,921 known enzyme-associated biochemical reaction rules and 213 spontaneous reaction rules from MetaNetX and MetaCyc"
+spontaneous reaction rules,213,wuSystematicallyExploringYeast2026,"21,921 known enzyme-associated biochemical reaction rules and 213 spontaneous reaction rules"
+reactions in the connected expansion,1092946,wuSystematicallyExploringYeast2026,"we extracted a connected yeast network with 1,092,946 reactions from this reaction pool by removing dead-end reactions"
+non-lipid metabolites still unconnected,267,wuSystematicallyExploringYeast2026,we were unable to find enzyme-annotated reactions to connect 267 non-lipid metabolites (1.7% of the yeast metabolome) to the Yeast-MetaTwin model without introducing non-yeast-metabolome metabolites.
+Yeast8 dead-end metabolites,464,chenGenomescaleModelingYeast2022,"Even in the latest version 8.5.0 of Yeast8 there are 464 out of 2742 metabolites participating in only one reaction or can only be consumed or produced, and those so-called dead-end metabolites indicate missing reactions"

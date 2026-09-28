@@ -1,0 +1,84 @@
+%% notes-tex/031-inhibitor-tolerance-data/031-inhibitor-tolerance-data.tex
+%% [[experiments.031-env-chemgen-inhibitor-tolerance]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/031-inhibitor-tolerance-data/031-inhibitor-tolerance-data.tex
+%%
+%% Data exploration for inhibitor-tolerance modeling on Vanacloig-Pedros 2022 with
+%% Hillenmeyer 2008 as the candidate partner: the cell, environment and readout axes
+%% of each dataset, their overlap, replication and error, the prediction ceiling each
+%% condition allows, the response structure the two share, and the molecular encoders
+%% that will carry compounds into a model as vectors.
+%%
+%% Build:  make            -> 031-inhibitor-tolerance-data.pdf
+%%         make check      -> the formatting / provenance / style gate
+%%         make plots      -> re-convert the panels from ASSET_IMAGES_DIR
+%%         make tables     -> regenerate tables/*.tex from the result CSVs
+%%
+%% Every figure and table is written by a committed script under
+%% experiments/031-env-chemgen-inhibitor-tolerance/scripts/: flatten_records.py,
+%% dataset_axes_comparison.py, cross_dataset_similarity.py,
+%% replicate_noise_and_ceilings.py, embed_compounds.py, chemical_similarity.py and
+%% notes_tex_tables.py.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}Inhibitor Tolerance: the Data\\
+  {\large Vanacloig-Pedros 2022 and Hillenmeyer 2008 axis by axis, their replication
+   and ceilings, the response structure they share, and the molecular encoders}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Vanacloig-Pedros 2022 is the one genome-wide screen in the served graph that doses the
+industrial inhibitor panel, furfural, 5-hydroxymethylfurfural, the phenolic aldehydes
+and acids, the ionic liquids, ethanol and isobutanol, at a matched IC30, and it is the
+only dataset in which isobutanol appears as a stress. Hillenmeyer 2008 is the only
+other genome-wide environment-response compendium of comparable size. Every number here
+is read from the served records of the two datasets through their loaders. The two
+agree on genes (3{,}550 of Vanacloig's 3{,}598 queried genes are in the homozygous
+Hillenmeyer arm) and disagree on almost everything else: Vanacloig strains are
+quadruple mutants on a drug-sensitized host, anaerobic, in a defined hydrolysate mimic
+at pH 5, dosed to a target inhibition; Hillenmeyer strains are single deletions in
+diploids, aerobic, in YPD, dosed by mass. Only two compounds are shared per arm.
+
+Replication sets the ceiling. Vanacloig's three batch replicates agree at a median
+Spearman of 0.33 over genes and its bottom-5\% hit sets at a Jaccard of 0.24; the
+served-standard-error reliability index tracks that agreement at rank 0.87 and gives a
+median ceiling of 0.84 on the correlation any model can reach with the noise-free
+response, 0.84 for isobutanol and 0.80 for furfural, and no ceiling at all for six
+compounds including 5-hydroxymethylfurfural. For Hillenmeyer the served standard error
+overstates reliability (index 0.92 against a raw replicate agreement of 0.39), so its
+raw replicate agreement is the number to use. The response structure the datasets
+share is real and small: a per-gene mean-response correlation of 0.118 and a gene-gene
+similarity agreement eleven null standard deviations from zero for the homozygous arm,
+a third of that for the heterozygous arm, and exactly one compound, methyl
+methanesulfonate, whose per-gene profile transfers. Benomyl, the acetate salt against
+the free acid, and ferulic acid at two doses do not. Molecular encoders embed every
+compound of the three datasets, and whether chemical similarity predicts response
+similarity where exact matches do not exist is measured for each encoder in
+Section~\ref{sec:chemistry}.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-question}
+\input{sections/2-axes}
+\input{sections/3-noise}
+\input{sections/4-structure}
+\input{sections/5-encoders}
+\input{sections/6-chemistry}
+\input{sections/7-next}
+
+\end{document}

@@ -1,0 +1,2807 @@
+metabolite,name,n_reactions,single_reaction,produced_only,consumed_only,dead_end
+s_0001,(1->3)-beta-D-glucan,3,False,False,False,False
+s_0002,(1->3)-beta-D-glucan,1,True,False,False,True
+s_0003,(1->3)-beta-D-glucan,1,True,False,True,True
+s_0004,(1->6)-beta-D-glucan,2,False,False,False,False
+s_0006,"(2-amino-4-hydroxy-7,8-dihydropteridin-6-yl)methyl trihydrogen diphosphate",2,False,False,False,False
+s_0007,(2E)-3-(methoxycarbonyl)pent-2-enedioic acid,1,True,True,False,True
+s_0008,"(2R,3R)-2,3-dihydroxy-3-methylpentanoate",2,False,False,False,False
+s_0009,"(2R,3S)-3-isopropylmalate",3,False,False,False,False
+s_0010,(2S)-2-isopropyl-3-oxosuccinate,3,False,False,False,False
+s_0011,(2S)-2-isopropyl-3-oxosuccinate,2,False,False,False,False
+s_0012,"(2S,3R)-3-hydroxybutane-1,2,3-tricarboxylic acid",2,False,False,False,False
+s_0013,"(5S,6S)-di-HETE",1,True,False,False,True
+s_0014,"(5S,6S)-di-HETE",1,True,False,False,True
+s_0015,(N(omega)-L-arginino)succinic acid,2,False,False,False,False
+s_0016,"(R)-2,3-dihydroxy-3-methylbutanoate",2,False,False,False,False
+s_0017,(R)-4'-phosphopantothenic acid,2,False,False,False,False
+s_0018,(R)-5-diphosphomevalonic acid,2,False,False,False,False
+s_0019,(R)-5-phosphomevalonic acid,5,False,False,False,False
+s_0020,(R)-acetoin,5,False,False,False,False
+s_0021,(R)-carnitine,6,False,False,False,False
+s_0022,(R)-carnitine,1,True,False,False,True
+s_0023,(R)-carnitine,3,False,False,False,False
+s_0024,(R)-carnitine,3,False,False,False,False
+s_0025,(R)-lactate,7,False,False,False,False
+s_0026,(R)-lactate,1,True,False,False,True
+s_0027,(R)-lactate,5,False,False,False,False
+s_0028,(R)-mevalonate,6,False,False,False,False
+s_0029,(R)-mevalonate,1,True,False,False,True
+s_0030,(R)-pantoate,2,False,False,False,False
+s_0031,(R)-pantothenate,3,False,False,False,False
+s_0032,(R)-pantothenate,1,True,False,False,True
+s_0033,(R)-S-lactoylglutathione,2,False,False,False,False
+s_0034,(R)-S-lactoylglutathione,1,True,False,True,True
+s_0035,"(R,R)-2,3-butanediol",2,False,False,False,False
+s_0036,"(R,R)-2,3-butanediol",1,True,False,False,True
+s_0037,"(S)-2,3-epoxysqualene",2,False,False,False,False
+s_0038,"(S)-2,3-epoxysqualene",3,False,False,False,False
+s_0039,(S)-2-acetyl-2-hydroxybutanoate,2,False,False,False,False
+s_0042,(R)-3-hydroxydecanoyl-CoA,2,False,False,False,False
+s_0045,(S)-3-hydroxyhexacosanoyl-CoA,2,False,False,False,False
+s_0048,(R)-3-hydroxylauroyl-CoA,2,False,False,False,False
+s_0051,(S)-3-hydroxypalmitoyl-CoA,2,False,False,False,False
+s_0054,(S)-3-hydroxytetradecanoyl-CoA,2,False,False,False,False
+s_0056,(S)-3-methyl-2-oxopentanoate,4,False,False,False,False
+s_0058,(S)-3-methyl-2-oxopentanoate,1,True,False,False,True
+s_0060,(S)-3-methyl-2-oxopentanoate,3,False,False,False,False
+s_0061,(S)-dihydroorotate,2,False,False,False,False
+s_0062,(S)-lactaldehyde,2,False,False,False,False
+s_0063,(S)-lactate,5,False,False,False,False
+s_0064,(S)-lactate,1,True,False,True,True
+s_0065,(S)-lactate,1,True,False,False,True
+s_0066,(S)-malate,10,False,False,False,False
+s_0067,(S)-malate,2,False,False,False,False
+s_0068,(S)-malate,7,False,False,False,False
+s_0069,(S)-malate,4,False,False,False,False
+s_0075,"1,3-bisphospho-D-glycerate",3,False,False,False,False
+s_0076,1-(2-carboxyphenylamino)-1-deoxy-D-ribulose 5-phosphate,2,False,False,False,False
+s_0077,1-(5-phospho-D-ribosyl)-5-[(5-phospho-D-ribosylamino)methylideneamino]imidazole-4-carboxamide,2,False,False,False,False
+s_0078,1-(5-phosphoribosyl)-5'-AMP,2,False,False,False,False
+s_0079,1-(sn-glycero-3-phospho)-1D-myo-inositol,2,False,False,False,False
+s_0080,1-(sn-glycero-3-phospho)-1D-myo-inositol,1,True,False,False,True
+s_0084,1-acylglycerophosphocholine,0,True,False,False,True
+s_0086,1-C-(indol-3-yl)glycerol 3-phosphate,2,False,False,False,False
+s_0087,1-methylnicotinamide,1,True,True,False,True
+s_0089,1-phosphatidyl-1D-myo-inositol backbone,9,False,False,False,False
+s_0116,1-pyrroline-3-hydroxy-5-carboxylic acid,2,False,False,False,False
+s_0117,1-pyrroline-3-hydroxy-5-carboxylic acid,2,False,False,False,False
+s_0118,1-pyrroline-5-carboxylate,2,False,False,False,False
+s_0119,1-pyrroline-5-carboxylate,2,False,False,False,False
+s_0120,10-formyl-THF,6,False,False,False,False
+s_0121,10-formyl-THF,3,False,False,False,False
+s_0122,14-demethyllanosterol,3,False,False,False,False
+s_0123,"1D-myo-inositol 1,3,4,5-tetrakisphosphate",2,False,False,False,False
+s_0124,"1D-myo-inositol 1,4,5,6-tetrakisphosphate",2,False,False,False,False
+s_0125,"1D-myo-inositol 1,4,5-trisphosphate",10,False,False,False,False
+s_0126,1D-myo-inositol 1-phosphate,3,False,False,False,False
+s_0127,1D-myo-inositol 1-phosphate,11,False,False,False,False
+s_0129,1D-myo-inositol 3-phosphate,10,False,True,False,True
+s_0131,"2',3'-cyclic AMP",2,False,False,False,False
+s_0132,2'-deoxyadenosine,3,False,False,False,False
+s_0133,2'-deoxyadenosine,1,True,False,True,True
+s_0134,2'-deoxyguanosine,3,False,False,False,False
+s_0135,2'-deoxyguanosine,1,True,False,True,True
+s_0136,2'-deoxyinosine,2,False,True,False,True
+s_0137,2'-deoxyinosine,1,True,False,True,True
+s_0138,2'-deoxyuridine,4,False,False,False,False
+s_0139,2'-deoxyuridine,1,True,False,True,True
+s_0140,"2,3-bisphospho-D-glyceric acid",1,True,False,False,True
+s_0141,"2,5-diamino-4-hydroxy-6-(5-phosphoribosylamino)pyrimidine",2,False,False,False,False
+s_0142,"2,5-diamino-6-(5-phosphono)ribitylamino-4(3H)-pyrimidinone",2,False,False,False,False
+s_0143,2-(3-amino-3-carboxypropyl)-L-histidine,1,True,False,True,True
+s_0144,2-[3-carboxy-3-(methylammonio)propyl]-L-histidine,1,True,True,False,True
+s_0145,2-acetamido-5-oxopentanoate,2,False,False,False,False
+s_0146,2-acetyllactic acid,2,False,False,False,False
+s_0147,2-amino-3-carboxymuconate-6-semialdehyde,2,False,False,False,False
+s_0148,"2-amino-6-(hydroxymethyl)-7,8-dihydropteridin-4-ol",3,False,False,False,False
+s_0149,2-dehydropantoate,2,False,False,False,False
+s_0150,2-dehydropantoate,2,False,False,False,False
+s_0152,2-deoxy-D-ribose,2,False,False,False,False
+s_0153,2-deoxy-D-ribose 5-phosphate,1,True,True,False,True
+s_0154,"2-hexaprenyl-5-hydroxy-6-methoxy-3-methyl-1,4-benzoquinone",2,False,False,False,False
+s_0155,"2-hexaprenyl-6-methoxy-1,4-benzoquinone",2,False,False,False,False
+s_0156,"2-hexaprenyl-6-methoxy-3-methyl-1,4-benzoquinone",2,False,False,False,False
+s_0157,2-hexaprenyl-6-methoxyphenol,2,False,False,False,False
+s_0158,2-hydroxy-3-oxobutyl phosphate,2,False,False,False,False
+s_0161,2-hydroxyhexadecanal,1,True,True,False,True
+s_0162,2-isopropylmalate,4,False,False,False,False
+s_0163,2-isopropylmalate,1,True,False,False,True
+s_0164,2-isopropylmalate,2,False,False,False,False
+s_0165,2-isopropylmaleic acid,2,False,False,False,False
+s_0166,2-methylbutanal,6,False,False,False,False
+s_0167,2-methylbutanal,1,True,False,False,True
+s_0168,2-methylbutanal,2,False,False,False,False
+s_0169,2-methylbutanol,5,False,False,False,False
+s_0170,2-methylbutanol,1,True,False,False,True
+s_0171,2-methylbutanol,2,False,False,False,False
+s_0172,2-methylbutyl acetate,2,False,False,False,False
+s_0173,2-methylbutyl acetate,1,True,True,False,True
+s_0174,2-methylcitrate,2,False,False,False,False
+s_0176,2-oxoadipic acid,2,False,False,False,False
+s_0177,2-oxoadipic acid,2,False,False,False,False
+s_0178,2-oxobutanoate,7,False,False,False,False
+s_0179,2-oxobutanoate,3,False,False,False,False
+s_0180,2-oxoglutarate,37,False,False,False,False
+s_0181,2-oxoglutarate,2,False,False,False,False
+s_0182,2-oxoglutarate,16,False,False,False,False
+s_0183,2-oxoglutarate,2,False,False,False,False
+s_0184,2-oxoglutarate,5,False,False,False,False
+s_0185,2-phenylethanol,5,False,False,False,False
+s_0186,2-phenylethanol,1,True,False,False,True
+s_0187,2-phenylethanol,2,False,False,False,False
+s_0188,2-phospho-D-glyceric acid,3,False,False,False,False
+s_0189,geranylgeranyl diphosphate,2,False,False,False,False
+s_0190,farnesyl diphosphate,6,False,False,False,False
+s_0191,farnesyl diphosphate,2,False,False,False,False
+s_0192,"3',5'-cyclic AMP",2,False,False,False,False
+s_0193,"3',5'-cyclic CMP",1,True,False,True,True
+s_0194,"3',5'-cyclic dAMP",1,True,False,True,True
+s_0195,"3',5'-cyclic GMP",2,False,False,False,False
+s_0196,"3',5'-cyclic IMP",1,True,False,True,True
+s_0197,3'-dephospho-CoA,2,False,False,False,False
+s_0200,3'-dephospho-CoA,2,False,False,False,False
+s_0201,3'-phospho-5'-adenylyl sulfate,2,False,False,False,False
+s_0204,3-(4-hydroxyphenyl)pyruvate,6,False,False,False,False
+s_0206,3-(4-hydroxyphenyl)pyruvate,2,False,False,False,False
+s_0207,3-(imidazol-4-yl)-2-oxopropyl dihydrogen phosphate,2,False,False,False,False
+s_0208,3-aminopropanal,4,False,False,False,False
+s_0209,3-dehydro-4-methylzymosterol,2,False,False,False,False
+s_0210,3-dehydroquinate,2,False,False,False,False
+s_0211,3-dehydroshikimate,2,False,False,False,False
+s_0212,"3-hexaprenyl-4,5-dihydroxybenzoic acid",2,False,False,False,False
+s_0213,"3-hexaprenyl-4,5-dihydroxybenzoic acid",2,False,False,False,False
+s_0214,3-hexaprenyl-4-hydroxy-5-methoxybenzoic acid,2,False,False,False,False
+s_0215,3-hexaprenyl-4-hydroxybenzoic acid,2,False,False,False,False
+s_0216,3-hexaprenyl-4-hydroxybenzoic acid,2,False,False,False,False
+s_0217,3-hydroxy-2-isopropyl-4-methoxy-4-oxobutanoate,1,True,True,False,True
+s_0218,3-hydroxy-3-methylglutaryl-CoA,2,False,False,False,False
+s_0221,3-hydroxy-3-methylglutaryl-CoA,2,False,False,False,False
+s_0222,3-hydroxy-L-kynurenine,3,False,False,False,False
+s_0224,3-hydroxyanthranilate,2,False,False,False,False
+s_0229,3-hydroxyoctadecanoyl-CoA,2,False,False,False,False
+s_0231,3-ketosphinganine,2,False,False,False,False
+s_0232,3-methyl-2-oxobutanoate,3,False,False,False,False
+s_0233,3-methyl-2-oxobutanoate,4,False,False,False,False
+s_0234,3-methylbutanal,5,False,False,False,False
+s_0235,3-methylbutanal,1,True,False,False,True
+s_0236,3-methylbutanal,2,False,False,False,False
+s_0239,3-oxodecanoyl-CoA,2,False,False,False,False
+s_0243,3-oxohexacosanoyl-CoA,2,False,False,False,False
+s_0247,3-oxolauroyl-CoA,2,False,False,False,False
+s_0250,3-oxooctadecanoyl-CoA,2,False,False,False,False
+s_0253,3-oxopalmitoyl-CoA,2,False,False,False,False
+s_0257,3-oxotetradecanoyl-CoA,2,False,False,False,False
+s_0258,3-phospho-hydroxypyruvate,2,False,False,False,False
+s_0259,3-phospho-serine,3,False,False,False,False
+s_0260,3-phosphonato-D-glycerate(3-),4,False,False,False,False
+s_0261,3-phosphoshikimic acid,2,False,False,False,False
+s_0262,"4,4-dimethyl-5alpha-cholesta-8,14,24-trien-3beta-ol",2,False,False,False,False
+s_0263,"4,5-bis(diphospho)-1D-myo-inositol tetrakisphosphate",2,False,False,False,False
+s_0264,4-(phosphonooxy)-L-threonine,1,True,False,True,True
+s_0267,4-amino-2-methyl-5-diphosphomethylpyrimidine,3,False,False,False,False
+s_0268,4-amino-2-methyl-5-phosphomethylpyrimidine,2,False,False,False,False
+s_0269,4-amino-4-deoxychorismate,2,False,False,False,False
+s_0270,4-amino-5-hydroxymethyl-2-methylpyrimidine,3,False,False,False,False
+s_0271,4-aminobenzoate,3,False,False,False,False
+s_0272,4-aminobenzoate,1,True,False,False,True
+s_0273,4-aminobenzoate,3,False,False,False,False
+s_0274,4-aminobutanal,4,False,False,False,False
+s_0275,4-aminobutanal,2,False,False,False,False
+s_0279,4-diphospho-1D-myo-inositol pentakisphosphate,2,False,False,True,True
+s_0280,4-guanidinobutanamide,1,True,False,True,True
+s_0281,4-guanidinobutanoic acid,1,True,True,False,True
+s_0282,4-hydroxy-2-oxoglutarate,3,False,False,False,False
+s_0283,4-hydroxy-2-oxoglutarate,2,False,False,False,False
+s_0284,4-hydroxy-2-oxoglutarate,2,False,False,False,False
+s_0285,4-hydroxy-L-threonine,1,True,True,False,True
+s_0286,4-hydroxybenzoate,3,False,False,False,False
+s_0287,4-hydroxybenzoate,3,False,False,False,False
+s_0290,4-hydroxybenzoyl-CoA,1,True,False,True,True
+s_0291,4-methyl-2-oxopentanoate,3,False,False,False,False
+s_0292,4-methyl-2-oxopentanoate,2,False,False,False,False
+s_0293,4-methyl-5-(2-phosphonooxyethyl)thiazole,3,False,False,False,False
+s_0294,4-methylthio-2-oxobutanoate,3,False,False,False,False
+s_0295,4-phospho-L-aspartate,2,False,False,False,False
+s_0296,4alpha-methylzymosterol,2,False,False,False,False
+s_0297,4beta-methylzymosterol-4alpha-carboxylic acid,2,False,False,False,False
+s_0298,5'-adenylyl sulfate,3,False,False,False,False
+s_0299,5'-phosphoribosyl-4-(N-succinocarboxamide)-5-aminoimidazole,2,False,False,False,False
+s_0300,5'-phosphoribosyl-5-aminoimidazole,3,False,False,False,False
+s_0301,5'-phosphoribosyl-N-formylglycineamide,2,False,False,False,False
+s_0302,5'-phosphoribosyl-N-formylglycineamidine,2,False,False,False,False
+s_0303,5'-S-methyl-5'-thioadenosine,4,False,False,False,False
+s_0304,"5,10-methenyl-THF",4,False,False,False,False
+s_0305,"5,10-methenyl-THF",4,False,False,False,False
+s_0306,"5,10-methylenetetrahydrofolate",5,False,False,False,False
+s_0307,"5,10-methylenetetrahydrofolate",6,False,False,False,False
+s_0308,"5,6,7,8-tetrahydrofolyl-L-glutamic acid",1,True,False,False,True
+s_0309,"5,6-bis(diphospho)-1D-myo-inositol tetrakisphosphate",4,False,False,False,False
+s_0310,5-(2-hydroxyethyl)-4-methylthiazole,2,False,False,False,False
+s_0311,"5-(methylsulfanyl)-2,3-dioxopentyl phosphate",2,False,False,False,False
+s_0312,5-[(5-phospho-1-deoxy-D-ribulos-1-ylamino)methylideneamino]-1-(5-phospho-D-ribosyl)imidazole-4-carboxamide,2,False,False,False,False
+s_0313,5-amino-6-(5-phosphoribitylamino)uracil,2,False,False,False,False
+s_0314,5-amino-6-(D-ribitylamino)uracil,3,False,False,False,False
+s_0315,5-aminolevulinate,3,False,False,False,False
+s_0316,5-aminolevulinate,1,True,False,True,True
+s_0317,5-aminolevulinate,2,False,False,False,False
+s_0318,5-diphospho-1D-myo-inositol pentakisphosphate,4,False,False,False,False
+s_0319,5-formyltetrahydrofolic acid,3,False,False,False,False
+s_0320,5-formyltetrahydrofolic acid,1,True,False,False,True
+s_0321,5-formyltetrahydrofolic acid,2,False,False,False,False
+s_0322,5-methyltetrahydrofolate,2,False,False,False,False
+s_0323,5-methyltetrahydropteroyltri-L-glutamic acid,1,True,False,True,True
+s_0324,5-O-(1-carboxyvinyl)-3-phosphoshikimic acid,2,False,False,False,False
+s_0325,5-phospho-ribosyl-glycineamide,2,False,False,False,False
+s_0326,5-phosphoribosyl-ATP,2,False,False,False,False
+s_0327,5-phosphoribosylamine,2,False,False,False,False
+s_0328,"6,7-dimethyl-8-(1-D-ribityl)lumazine",2,False,False,False,False
+s_0329,6-(alpha-D-glucosaminyl)-1-phosphatidyl-1D-myo-inositol,2,False,False,False,False
+s_0330,6-(alpha-D-glucosaminyl)-O-acyl-1-phosphatidyl-1D-myo-inositol,2,False,False,False,False
+s_0331,6-(N-acetyl-alpha-D-glucosaminyl)-1-phosphatidyl-1D-myo-inositol,1,True,False,False,True
+s_0332,6-[6-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-2-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-alpha-2-(2-aminoethylphosphoryl)mannosyl-(1->4)-alpha-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol,1,True,False,False,True
+s_0333,6-diphospho-1D-myo-inositol pentakisphosphate,2,False,False,True,True
+s_0334,6-O-[alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol,2,False,False,False,False
+s_0335,"6-O-phosphono-D-glucono-1,5-lactone",2,False,False,False,False
+s_0337,6-O-{2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol,2,False,False,False,False
+s_0338,6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol,2,False,False,False,False
+s_0339,6-O-{alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol,2,False,False,False,False
+s_0340,6-phospho-D-gluconate,5,False,False,False,False
+s_0341,"7,8-diaminononanoate",3,False,False,False,False
+s_0342,"7,8-diaminononanoate",1,True,False,False,True
+s_0343,"7,8-dihydroneopterin",3,False,False,False,False
+s_0344,"7,8-dihydroneopterin",2,False,False,False,False
+s_0345,"7,8-dihydroneopterin 3'-phosphate",2,False,False,False,False
+s_0346,"7,8-dihydroneopterin 3'-triphosphate",3,False,False,False,False
+s_0347,"7,8-dihydropteroate",2,False,False,False,False
+s_0348,"7,8-dihydropteroate",3,False,False,False,False
+s_0349,7-phospho-2-dehydro-3-deoxy-D-arabino-heptonic acid,3,False,False,False,False
+s_0350,7-phospho-2-dehydro-3-deoxy-D-arabino-heptonic acid,2,False,False,False,False
+s_0352,8-amino-7-oxononanoate,3,False,False,False,False
+s_0354,8-amino-7-oxononanoate,1,True,False,False,True
+s_0357,9H-xanthine,3,False,False,False,False
+s_0358,9H-xanthine,1,True,False,False,True
+s_0359,acetaldehyde,13,False,False,False,False
+s_0360,acetaldehyde,1,True,False,False,True
+s_0361,acetaldehyde,4,False,False,False,False
+s_0362,acetate,17,False,False,False,False
+s_0363,acetate,2,False,False,False,False
+s_0364,acetate,1,True,False,False,True
+s_0365,acetate,6,False,False,False,False
+s_0366,acetate,2,False,False,False,False
+s_0367,acetoacetyl-CoA,2,False,False,False,False
+s_0370,acetoacetyl-CoA,2,False,False,False,False
+s_0372,acetyl-ACP,2,False,False,False,False
+s_0373,acetyl-CoA,28,False,False,False,False
+s_0376,acetyl-CoA,15,False,False,False,False
+s_0377,acetyl-CoA,3,False,False,False,False
+s_0378,acetyl-CoA,21,False,False,False,False
+s_0383,adenine,6,False,False,False,False
+s_0384,adenine,1,True,False,True,True
+s_0385,adenine,1,True,False,False,True
+s_0386,adenosine,8,False,False,False,False
+s_0387,adenosine,1,True,False,True,True
+s_0389,adenosine 2'-phosphate,3,False,False,False,False
+s_0390,"adenosine 3',5'-bismonophosphate",4,False,False,False,False
+s_0391,"adenosine 3',5'-bismonophosphate",1,True,False,False,True
+s_0392,"adenosine 3',5'-bismonophosphate",2,False,False,False,False
+s_0393,adenylo-succinate,2,False,False,False,False
+s_0394,ADP,143,False,False,False,False
+s_0395,ADP,3,False,False,False,False
+s_0397,ADP,27,False,False,False,False
+s_0398,ADP,25,False,False,False,False
+s_0399,ADP,1,True,False,True,True
+s_0402,ADP-ribose,2,False,False,False,False
+s_0403,AICAR,3,False,False,False,False
+s_0404,Ala-tRNA(Ala),2,False,False,False,False
+s_0405,allantoate,3,False,False,False,False
+s_0406,allantoate,1,True,False,True,True
+s_0407,allantoin,2,False,False,False,False
+s_0408,allantoin,1,True,False,True,True
+s_0409,"alpha,alpha-trehalose 6-phosphate",2,False,False,False,False
+s_0410,alpha-D-galactose 1-phosphate,4,False,False,False,False
+s_0411,alpha-D-glucosamine 1-phosphate,1,True,False,False,True
+s_0412,alpha-D-glucosamine 6-phosphate,6,False,False,False,False
+s_0413,alpha-D-glucosamine 6-phosphate,1,True,False,False,True
+s_0414,alpha-D-mannosyl-beta-D-mannosyldiacetylchitobiosyldiphosphodolichol,1,True,True,False,True
+s_0415,alpha-D-ribose 1-phosphate(2-),6,False,False,False,False
+s_0416,alpha-D-ribose 1-phosphate(2-),1,True,False,False,True
+s_0417,aminoacetaldehyde,2,False,False,False,False
+s_0418,aminoacetone,2,False,False,False,False
+s_0419,ammonium,47,False,False,False,False
+s_0420,ammonium,2,False,False,False,False
+s_0421,ammonium,6,False,False,False,False
+s_0423,AMP,52,False,False,False,False
+s_0424,AMP,20,False,False,False,False
+s_0425,AMP,3,False,False,False,False
+s_0426,AMP,13,False,False,False,False
+s_0427,anthranilate,3,False,False,False,False
+s_0428,Arg-tRNA(Arg),3,False,False,False,False
+s_0429,Arg-tRNA(Arg),1,True,True,False,True
+s_0430,Asn-tRNA(Asn),2,False,False,False,False
+s_0431,Asn-tRNA(Asn),1,True,True,False,True
+s_0432,Asp-tRNA(Asp),2,False,False,False,False
+s_0433,Asp-tRNA(Asp),1,True,True,False,True
+s_0434,ATP,186,False,False,False,False
+s_0435,ATP,3,False,False,False,False
+s_0437,ATP,44,False,False,False,False
+s_0438,ATP,27,False,False,False,False
+s_0439,ATP,12,False,False,False,False
+s_0441,beta-alanine,3,False,False,False,False
+s_0442,"beta-D-fructose 2,6-bisphosphate",3,False,False,False,False
+s_0443,beta-D-mannosyldiacetylchitobiosyldiphosphodolichol,1,True,True,False,True
+s_0444,beta-D-mannosyldiacetylchitobiosyldiphosphodolichol,1,True,False,True,True
+s_0445,bicarbonate,7,False,False,False,False
+s_0446,bicarbonate,1,True,False,False,True
+s_0447,bicarbonate,2,False,False,False,False
+s_0448,bicarbonate,2,False,False,False,False
+s_0450,biomass,1,True,True,False,True
+s_0451,biotin,3,False,False,False,False
+s_0452,biotin,1,True,False,True,True
+s_0453,biotinyl-5'-AMP,1,True,True,False,True
+s_0454,"but-1-ene-1,2,4-tricarboxylic acid",2,False,False,False,False
+s_0455,carbamoyl phosphate,4,False,False,False,False
+s_0456,carbon dioxide,57,False,False,False,False
+s_0457,carbon dioxide,2,False,False,False,False
+s_0458,carbon dioxide,2,False,False,False,False
+s_0460,carbon dioxide,21,False,False,False,False
+s_0461,carbon dioxide,2,False,False,False,False
+s_0462,carbon dioxide,2,False,False,False,False
+s_0465,carboxyacetyl-ACP,4,False,False,False,False
+s_0467,CDP,9,False,False,False,False
+s_0468,CDP,2,False,False,False,False
+s_0469,CDP-choline,2,False,False,False,False
+s_0474,CDP-ethanolamine,2,False,False,False,False
+s_0475,ceramide-1 (C24),8,False,False,False,False
+s_0476,ceramide-1 (C24),10,False,False,False,False
+s_0477,ceramide-1 (C24),3,False,True,False,True
+s_0478,ceramide-1 (C26),8,False,False,False,False
+s_0479,ceramide-1 (C26),10,False,False,False,False
+s_0480,ceramide-1 (C26),3,False,True,False,True
+s_0481,ceramide-2 (C24),9,False,False,False,False
+s_0482,ceramide-2 (C24),10,False,False,False,False
+s_0483,ceramide-2 (C24),3,False,True,False,True
+s_0484,ceramide-2 (C26),9,False,False,False,False
+s_0485,ceramide-2 (C26),10,False,False,False,False
+s_0486,ceramide-2 (C26),3,False,True,False,True
+s_0487,ceramide-2' (C24),5,False,False,False,False
+s_0488,ceramide-2' (C24),10,False,False,False,False
+s_0489,ceramide-2' (C24),3,False,True,False,True
+s_0490,ceramide-2' (C26),5,False,False,False,False
+s_0491,ceramide-2' (C26),10,False,False,False,False
+s_0492,ceramide-2' (C26),3,False,True,False,True
+s_0493,ceramide-3 (C24),6,False,False,False,False
+s_0494,ceramide-3 (C24),10,False,False,False,False
+s_0495,ceramide-3 (C24),3,False,True,False,True
+s_0496,ceramide-3 (C26),6,False,False,False,False
+s_0497,ceramide-3 (C26),10,False,False,False,False
+s_0498,ceramide-3 (C26),3,False,True,False,True
+s_0499,ceramide-4 (C24),5,False,False,False,False
+s_0500,ceramide-4 (C24),10,False,False,False,False
+s_0501,ceramide-4 (C24),3,False,True,False,True
+s_0502,ceramide-4 (C26),5,False,False,False,False
+s_0503,ceramide-4 (C26),10,False,False,False,False
+s_0504,ceramide-4 (C26),3,False,True,False,True
+s_0507,cerotic acid,4,False,False,False,False
+s_0509,chitin,4,False,False,False,False
+s_0510,chitosan,1,True,True,False,True
+s_0511,choline,9,False,False,False,False
+s_0512,choline,5,False,False,False,False
+s_0513,choline,2,False,False,False,False
+s_0514,choline phosphate,3,False,False,False,False
+s_0515,chorismate,5,False,False,False,False
+s_0516,cis-aconitate,3,False,False,False,False
+s_0517,cis-aconitate,3,False,False,False,False
+s_0522,citrate,8,False,False,False,False
+s_0523,citrate,1,True,False,False,True
+s_0524,citrate,7,False,False,False,False
+s_0525,citrate,3,False,False,False,False
+s_0526,CMP,13,False,False,False,False
+s_0528,CMP,3,False,False,False,False
+s_0529,coenzyme A,42,False,False,False,False
+s_0530,coenzyme A,8,False,False,False,False
+s_0531,coenzyme A,58,False,False,False,False
+s_0532,coenzyme A,30,False,False,False,False
+s_0533,coenzyme A,3,False,False,False,False
+s_0534,coenzyme A,42,False,False,False,False
+s_0538,coproporphyrinogen III,2,False,False,False,False
+s_0539,CTP,13,False,False,False,False
+s_0541,CTP,5,False,False,False,False
+s_0542,Cys-tRNA(Cys),2,False,False,False,False
+s_0543,cytidine,7,False,False,False,False
+s_0544,cytidine,1,True,False,True,True
+s_0545,cytosine,4,False,False,False,False
+s_0546,cytosine,1,True,False,True,True
+s_0547,"D-arabinono-1,4-lactone",3,False,False,False,False
+s_0548,D-arabinose,4,False,False,False,False
+s_0549,D-arabinose,1,True,False,False,True
+s_0550,D-erythro-1-(imidazol-4-yl)glycerol 3-phosphate,2,False,False,False,False
+s_0551,D-erythrose 4-phosphate,5,False,False,False,False
+s_0552,D-erythrose 4-phosphate,2,False,False,False,False
+s_0553,D-fructose,8,False,False,False,False
+s_0554,D-fructose,4,False,False,False,False
+s_0555,"D-fructose 1,6-bisphosphate",4,False,False,False,False
+s_0556,D-fructose 1-phosphate,2,False,False,False,False
+s_0557,D-fructose 6-phosphate,12,False,False,False,False
+s_0558,D-galactose,4,False,False,False,False
+s_0559,D-galactose,1,True,False,True,True
+s_0560,D-galacturonate,1,True,True,False,True
+s_0561,D-glucitol,2,False,False,False,False
+s_0562,D-glucitol,1,True,False,False,True
+s_0563,D-glucose,11,False,False,False,False
+s_0565,D-glucose,5,False,False,False,False
+s_0566,D-glucose,3,False,False,False,False
+s_0567,D-glucose 1-phosphate,5,False,False,False,False
+s_0568,D-glucose 6-phosphate,7,False,False,False,False
+s_0570,D-glyceraldehyde,4,False,False,False,False
+s_0571,D-mannose,2,False,False,False,False
+s_0572,D-mannose,1,True,False,True,True
+s_0573,D-mannose 1-phosphate,3,False,False,False,False
+s_0574,D-mannose 6-phosphate,5,False,False,False,False
+s_0575,D-ribose,4,False,False,False,False
+s_0576,D-ribose,1,True,False,True,True
+s_0577,D-ribulose 5-phosphate,6,False,False,False,False
+s_0578,D-xylose,2,False,False,False,False
+s_0579,D-xylose,1,True,False,False,True
+s_0580,D-xylulose,3,False,False,False,False
+s_0581,D-xylulose 5-phosphate,4,False,False,False,False
+s_0582,dADP,7,False,False,False,False
+s_0583,dADP,2,False,False,False,False
+s_0584,dAMP,6,False,False,False,False
+s_0585,dAMP,1,True,False,True,True
+s_0586,dATP,6,False,False,False,False
+s_0587,dCDP,4,False,False,False,False
+s_0588,dCDP,2,False,False,False,False
+s_0589,dCMP,4,False,False,False,False
+s_0590,dCTP,3,False,False,False,False
+s_0591,deamido-NAD(+),3,False,False,False,False
+s_0593,deamido-NAD(+),2,False,False,False,False
+s_0595,decanoate,2,False,False,False,False
+s_0597,decanoate,1,True,False,False,True
+s_0600,decanoate,3,False,False,False,False
+s_0605,decanoyl-CoA,5,False,False,False,False
+s_0606,decaprenyl diphosphate,2,False,False,False,False
+s_0607,"dehydro-D-arabinono-1,4-lactone",1,True,True,False,True
+s_0608,"Delta(6)-trans,Delta(8)-cis-leukotriene B4",1,True,False,False,True
+s_0609,"Delta(6)-trans,Delta(8)-cis-leukotriene B4",1,True,False,False,True
+s_0610,deoxycytidine,3,False,False,False,False
+s_0611,deoxycytidine,1,True,False,True,True
+s_0612,dethiobiotin,2,False,False,False,False
+s_0613,dGDP,6,False,False,False,False
+s_0614,dGDP,2,False,False,False,False
+s_0615,dGMP,6,False,False,False,False
+s_0616,dGMP,1,True,False,True,True
+s_0617,dGTP,4,False,False,False,False
+s_0618,dIDP,2,False,False,False,False
+s_0620,diglyceride backbone,1,True,False,False,True
+s_0625,dihydrofolic acid,4,False,False,False,False
+s_0626,dihydrofolic acid,2,False,False,False,False
+s_0627,dihydrolipoamide,3,False,False,False,False
+s_0628,dihydrolipoylprotein,2,False,False,False,False
+s_0629,dihydroxyacetone phosphate,10,False,False,False,False
+s_0631,dihydroxyacetone phosphate,5,False,False,False,False
+s_0632,dihydroxyacetone phosphate,3,False,False,False,False
+s_0633,diphosphate,85,False,False,False,False
+s_0635,diphosphate,29,False,False,False,False
+s_0636,diphosphate,28,False,False,False,False
+s_0637,diphosphate,3,False,False,False,False
+s_0638,diphosphate,12,False,False,False,False
+s_0639,dITP,2,False,False,False,False
+s_0640,docosaprenyl diphosphate,1,True,True,False,True
+s_0641,dodecaprenyl diphosphate,2,False,False,False,False
+s_0642,dolichol,1,True,False,True,True
+s_0644,dolichyl D-mannosyl phosphate,9,False,False,False,False
+s_0645,dolichyl phosphate,3,False,False,False,False
+s_0646,dolichyl phosphate,14,False,False,False,False
+s_0647,dTDP,2,False,False,False,False
+s_0649,dTMP,6,False,False,False,False
+s_0650,dTTP,3,False,False,False,False
+s_0651,dTTP,1,True,False,False,True
+s_0652,dUDP,3,False,False,False,False
+s_0653,dUDP,2,False,False,False,False
+s_0654,dUMP,7,False,False,False,False
+s_0655,dUMP,2,False,False,False,False
+s_0656,dUTP,4,False,False,False,False
+s_0657,episterol,4,False,False,False,False
+s_0659,episterol,1,True,False,False,True
+s_0662,"ergosta-5,7,22,24(28)-tetraen-3beta-ol",4,False,False,False,False
+s_0663,"ergosta-5,7,22,24(28)-tetraen-3beta-ol",2,False,False,False,False
+s_0664,"ergosta-5,7,24(28)-trien-3beta-ol",2,False,False,False,False
+s_0665,ergosterol,1,True,False,False,True
+s_0666,ergosterol,7,False,False,False,False
+s_0667,ergosterol,3,False,False,False,False
+s_0668,ergosterol,1,True,False,False,True
+s_0669,ergosterol,3,False,False,False,False
+s_0670,ergosterol 3-beta-D-glucoside,1,True,True,False,True
+s_0672,ergosterol ester backbone,2,False,False,False,False
+s_0677,erythro-4-hydroxy-L-glutamic acid,3,False,False,False,False
+s_0678,erythro-4-hydroxy-L-glutamic acid,4,False,False,False,False
+s_0679,erythro-4-hydroxy-L-glutamic acid,2,False,False,False,False
+s_0680,ethanol,14,False,False,False,False
+s_0681,ethanol,1,True,False,False,True
+s_0682,ethanol,8,False,False,False,False
+s_0683,ethanolamine,2,False,False,False,False
+s_0684,ethanolamine,1,True,False,False,True
+s_0685,ethyl acetate,4,False,False,False,False
+s_0686,ethyl acetate,1,True,True,False,True
+s_0687,FAD,3,False,False,False,False
+s_0688,FAD,4,False,False,False,False
+s_0689,FADH2,2,False,False,False,False
+s_0690,FADH2,4,False,False,False,False
+s_0692,farnesyl diphosphate,2,False,False,False,False
+s_0694,fatty acid backbone,5,False,False,False,False
+s_0699,fecosterol,1,True,False,False,True
+s_0700,fecosterol,5,False,False,False,False
+s_0702,fecosterol,1,True,False,False,True
+s_0703,fecosterol,3,False,False,False,False
+s_0709,ferricytochrome c,7,False,False,False,False
+s_0710,ferrocytochrome c,7,False,False,False,False
+s_0712,ferroheme b,3,False,False,False,False
+s_0713,fMet-tRNA(fMet),1,True,True,False,True
+s_0714,FMN,9,False,False,False,False
+s_0715,FMN,1,True,False,True,True
+s_0716,FMN,3,False,False,False,False
+s_0717,FMNH2,5,False,False,False,False
+s_0719,folate,1,True,False,False,True
+s_0720,folate,1,True,False,False,True
+s_0721,formaldehyde,1,True,False,True,True
+s_0722,formate,11,False,False,False,False
+s_0723,formate,1,True,False,False,True
+s_0724,formate,2,False,False,False,False
+s_0725,fumarate,10,False,False,False,False
+s_0726,fumarate,1,True,False,False,True
+s_0727,fumarate,5,False,False,False,False
+s_0734,gamma-aminobutyrate,6,False,False,False,False
+s_0736,gamma-aminobutyrate,1,True,False,True,True
+s_0738,gamma-aminobutyrate,2,False,False,False,False
+s_0739,GDP,16,False,False,False,False
+s_0740,GDP,13,False,False,False,False
+s_0741,GDP,3,False,False,False,False
+s_0742,GDP,2,False,False,False,False
+s_0743,GDP-alpha-D-mannose,5,False,False,False,False
+s_0744,GDP-alpha-D-mannose,13,False,False,False,False
+s_0745,geranyl diphosphate,2,False,False,False,False
+s_0746,geranylgeranyl diphosphate,2,False,False,False,False
+s_0747,Gln-tRNA(Gln),2,False,False,False,False
+s_0748,Glu-tRNA(Glu),2,False,False,False,False
+s_0749,Glu-tRNA(Glu),1,True,True,False,True
+s_0750,glutathione,17,False,False,False,False
+s_0751,glutathione,1,True,False,True,True
+s_0752,glutathione,4,False,False,False,False
+s_0753,glutathione,2,False,False,False,False
+s_0754,glutathione disulfide,4,False,False,False,False
+s_0755,glutathione disulfide,1,True,False,True,True
+s_0756,glutathione disulfide,2,False,False,False,False
+s_0757,Gly-tRNA(Gly),2,False,False,False,False
+s_0764,glyceraldehyde 3-phosphate,10,False,False,False,False
+s_0765,glycerol,10,False,False,False,False
+s_0766,glycerol,2,False,False,False,False
+s_0767,glycerol 3-phosphate,7,False,False,False,False
+s_0769,glycerol 3-phosphate,5,False,False,False,False
+s_0770,glycerol 3-phosphate,4,False,False,False,False
+s_0771,glycerone,3,False,False,False,False
+s_0773,glycogen,5,False,False,False,False
+s_0774,glycogen,2,False,False,False,False
+s_0775,glycolaldehyde,4,False,False,False,False
+s_0776,glycolaldehyde,1,True,False,False,True
+s_0777,glycolaldehyde,2,False,False,False,False
+s_0779,glyoxylate,11,False,False,False,False
+s_0780,glyoxylate,1,True,False,False,True
+s_0781,glyoxylate,2,False,False,False,False
+s_0782,GMP,11,False,False,False,False
+s_0783,GMP,2,False,False,False,False
+s_0785,GTP,14,False,False,False,False
+s_0786,GTP,3,False,False,False,False
+s_0787,guanine,6,False,False,False,False
+s_0788,guanine,1,True,False,False,True
+s_0789,guanine,2,False,False,False,False
+s_0790,guanosine,7,False,False,False,False
+s_0791,guanosine,1,True,False,True,True
+s_0792,guanosine,2,False,False,False,False
+s_0793,H+,107,False,False,False,False
+s_0794,H+,685,False,False,False,False
+s_0795,H+,46,False,False,False,False
+s_0796,H+,115,False,False,False,False
+s_0797,H+,16,False,False,False,False
+s_0798,H+,79,False,False,False,False
+s_0799,H+,123,False,False,False,False
+s_0800,H+,43,False,False,False,False
+s_0801,H+,49,False,False,False,False
+s_0802,H+,38,False,False,False,False
+s_0803,H2O,382,False,False,False,False
+s_0804,H2O,57,False,False,False,False
+s_0805,H2O,12,False,False,False,False
+s_0806,H2O,4,False,False,False,False
+s_0807,H2O,90,False,False,False,False
+s_0808,H2O,21,False,False,False,False
+s_0809,H2O,36,False,False,False,False
+s_0810,H2O,19,False,False,False,False
+s_0811,heme a,2,False,False,False,False
+s_0812,heme o,2,False,False,False,False
+s_0813,henicosaprenyl diphosphate,2,False,False,False,False
+s_0814,heptadecaprenyl diphosphate,2,False,False,False,False
+s_0815,heptaprenyl diphosphate,2,False,False,False,False
+s_0816,hexacosanoyl-CoA,5,False,False,False,False
+s_0817,hexacosanoyl-CoA,3,False,False,False,False
+s_0819,hexacosanoyl-CoA,2,False,False,False,False
+s_0823,hexadec-2-enoyl-CoA,2,False,False,False,False
+s_0825,hexadecanal,1,True,True,False,True
+s_0826,hexadecanal,0,True,False,False,True
+s_0829,hexadecaprenyl diphosphate,2,False,False,False,False
+s_0830,hexaprenyl diphosphate,2,False,False,False,False
+s_0831,hexaprenyl diphosphate,2,False,False,False,False
+s_0832,His-tRNA(His),2,False,False,False,False
+s_0833,His-tRNA(His),1,True,True,False,True
+s_0834,homocitrate,2,False,False,False,False
+s_0835,homocitrate,1,True,True,False,True
+s_0836,homoisocitrate,2,False,False,False,False
+s_0837,hydrogen peroxide,14,False,False,False,False
+s_0838,hydrogen peroxide,4,False,False,False,False
+s_0839,hydrogen peroxide,2,False,False,False,False
+s_0840,hydrogen peroxide,20,False,False,False,False
+s_0841,hydrogen sulfide,9,False,False,False,False
+s_0843,hypoxanthine,4,False,False,False,False
+s_0844,hypoxanthine,1,True,False,False,True
+s_0845,icosaprenyl diphosphate,2,False,False,False,False
+s_0846,IDP,4,False,False,False,False
+s_0847,Ile-tRNA(Ile),2,False,False,False,False
+s_0848,Ile-tRNA(Ile),1,True,True,False,True
+s_0849,IMP,9,False,False,False,False
+s_0850,indol-3-ylacetaldehyde,6,False,False,False,False
+s_0851,indol-3-ylacetaldehyde,1,True,False,False,True
+s_0852,indol-3-ylacetaldehyde,4,False,False,False,False
+s_0853,indole-3-acetate,4,False,False,False,False
+s_0854,indole-3-acetate,3,False,False,False,False
+s_0855,indole-3-pyruvate,3,False,False,False,False
+s_0856,inosine,5,False,False,False,False
+s_0857,inosine,1,True,False,True,True
+s_0859,inositol phosphomannosylinositol phosphoceramide backbone,11,False,False,False,False
+s_0861,inositol phosphomannosylinositol phosphoceramide A (C24),2,False,False,False,False
+s_0862,inositol phosphomannosylinositol phosphoceramide A (C24),10,False,False,False,False
+s_0863,inositol phosphomannosylinositol phosphoceramide A (C24),1,True,False,True,True
+s_0864,inositol phosphomannosylinositol phosphoceramide A (C26),2,False,False,False,False
+s_0865,inositol phosphomannosylinositol phosphoceramide A (C26),10,False,False,False,False
+s_0866,inositol phosphomannosylinositol phosphoceramide A (C26),1,True,False,True,True
+s_0867,inositol phosphomannosylinositol phosphoceramide B (C24),2,False,False,False,False
+s_0868,inositol phosphomannosylinositol phosphoceramide B (C24),10,False,False,False,False
+s_0869,inositol phosphomannosylinositol phosphoceramide B (C24),1,True,False,True,True
+s_0870,inositol phosphomannosylinositol phosphoceramide B (C26),2,False,False,False,False
+s_0871,inositol phosphomannosylinositol phosphoceramide B (C26),10,False,False,False,False
+s_0872,inositol phosphomannosylinositol phosphoceramide B (C26),1,True,False,True,True
+s_0873,inositol phosphomannosylinositol phosphoceramide B' (C24),2,False,False,False,False
+s_0874,inositol phosphomannosylinositol phosphoceramide B' (C24),10,False,False,False,False
+s_0875,inositol phosphomannosylinositol phosphoceramide B' (C24),1,True,False,True,True
+s_0876,inositol phosphomannosylinositol phosphoceramide B' (C26),2,False,False,False,False
+s_0877,inositol phosphomannosylinositol phosphoceramide B' (C26),10,False,False,False,False
+s_0878,inositol phosphomannosylinositol phosphoceramide B' (C26),1,True,False,True,True
+s_0879,inositol phosphomannosylinositol phosphoceramide C (C24),2,False,False,False,False
+s_0880,inositol phosphomannosylinositol phosphoceramide C (C24),10,False,False,False,False
+s_0881,inositol phosphomannosylinositol phosphoceramide C (C24),1,True,False,True,True
+s_0882,inositol phosphomannosylinositol phosphoceramide C (C26),2,False,False,False,False
+s_0883,inositol phosphomannosylinositol phosphoceramide C (C26),10,False,False,False,False
+s_0884,inositol phosphomannosylinositol phosphoceramide C (C26),1,True,False,True,True
+s_0885,inositol phosphomannosylinositol phosphoceramide D (C24),2,False,False,False,False
+s_0886,inositol phosphomannosylinositol phosphoceramide D (C24),10,False,False,False,False
+s_0887,inositol phosphomannosylinositol phosphoceramide D (C24),1,True,False,True,True
+s_0888,inositol phosphomannosylinositol phosphoceramide D (C26),2,False,False,False,False
+s_0889,inositol phosphomannosylinositol phosphoceramide D (C26),10,False,False,False,False
+s_0890,inositol phosphomannosylinositol phosphoceramide D (C26),1,True,False,True,True
+s_0892,inositol-P-ceramide backbone,11,False,False,False,False
+s_0894,inositol-P-ceramide A (C24),2,False,False,False,False
+s_0895,inositol-P-ceramide A (C24),11,False,False,False,False
+s_0896,inositol-P-ceramide A (C24),1,True,False,True,True
+s_0897,inositol-P-ceramide A (C26),2,False,False,False,False
+s_0898,inositol-P-ceramide A (C26),11,False,False,False,False
+s_0899,inositol-P-ceramide A (C26),1,True,False,True,True
+s_0900,inositol-P-ceramide B (C24),2,False,False,False,False
+s_0901,inositol-P-ceramide B (C24),11,False,False,False,False
+s_0902,inositol-P-ceramide B (C24),1,True,False,True,True
+s_0903,inositol-P-ceramide B (C26),2,False,False,False,False
+s_0904,inositol-P-ceramide B (C26),11,False,False,False,False
+s_0905,inositol-P-ceramide B (C26),1,True,False,True,True
+s_0906,inositol-P-ceramide B' (C24),2,False,False,False,False
+s_0907,inositol-P-ceramide B' (C24),11,False,False,False,False
+s_0908,inositol-P-ceramide B' (C24),1,True,False,True,True
+s_0909,inositol-P-ceramide B' (C26),2,False,False,False,False
+s_0910,inositol-P-ceramide B' (C26),11,False,False,False,False
+s_0911,inositol-P-ceramide B' (C26),1,True,False,True,True
+s_0912,inositol-P-ceramide C (C24),2,False,False,False,False
+s_0913,inositol-P-ceramide C (C24),11,False,False,False,False
+s_0914,inositol-P-ceramide C (C24),1,True,False,True,True
+s_0915,inositol-P-ceramide C (C26),2,False,False,False,False
+s_0916,inositol-P-ceramide C (C26),11,False,False,False,False
+s_0917,inositol-P-ceramide C (C26),1,True,False,True,True
+s_0918,inositol-P-ceramide D (C24),2,False,False,False,False
+s_0919,inositol-P-ceramide D (C24),11,False,False,False,False
+s_0920,inositol-P-ceramide D (C24),1,True,False,True,True
+s_0921,inositol-P-ceramide D (C26),2,False,False,False,False
+s_0922,inositol-P-ceramide D (C26),11,False,False,False,False
+s_0923,inositol-P-ceramide D (C26),1,True,False,True,True
+s_0924,iron(2+),6,False,False,False,False
+s_0925,iron(2+),1,True,False,True,True
+s_0926,iron(2+),3,False,False,False,False
+s_0927,isoamyl acetate,3,False,False,False,False
+s_0928,isoamyl acetate,1,True,True,False,True
+s_0929,isoamylol,6,False,False,False,False
+s_0930,isoamylol,1,True,False,False,True
+s_0931,isoamylol,2,False,False,False,False
+s_0932,isobutanol,6,False,False,False,False
+s_0933,isobutanol,1,True,False,False,True
+s_0934,isobutanol,2,False,False,False,False
+s_0935,isobutyl acetate,3,False,False,False,False
+s_0936,isobutyl acetate,1,True,True,False,True
+s_0937,isobutyraldehyde,6,False,False,False,False
+s_0938,isobutyraldehyde,1,True,False,False,True
+s_0939,isobutyraldehyde,2,False,False,False,False
+s_0940,isocitrate,5,False,False,False,False
+s_0941,isocitrate,5,False,False,False,False
+s_0942,isocitrate,2,False,False,False,False
+s_0943,isopentenyl diphosphate,7,False,False,False,False
+s_0944,isopentenyl diphosphate,19,False,False,False,False
+s_0945,isopentenyl diphosphate,2,False,False,False,False
+s_0946,itaconate,1,True,False,False,True
+s_0949,itaconyl-CoA,1,True,False,False,True
+s_0950,ITP,3,False,False,False,False
+s_0951,keto-phenylpyruvate,5,False,False,False,False
+s_0952,L-2-amino-3-oxobutanoate,3,False,False,False,False
+s_0953,L-2-aminoadipate,2,False,False,False,False
+s_0954,L-4-hydroxyglutamic semialdehyde,2,False,False,False,False
+s_0955,L-alanine,14,False,False,False,False
+s_0956,L-alanine,1,True,False,False,True
+s_0957,L-alanine,3,False,False,False,False
+s_0958,L-allothreonine,2,False,False,False,False
+s_0959,L-allysine,2,False,False,False,False
+s_0960,L-alpha-formylglycine,1,True,True,False,True
+s_0961,L-arabinitol,3,False,False,False,False
+s_0962,L-arabinitol,1,True,False,False,True
+s_0963,L-arabinose,2,False,False,False,False
+s_0964,L-arabinose,1,True,False,False,True
+s_0965,L-arginine,8,False,False,False,False
+s_0966,L-arginine,1,True,False,False,True
+s_0967,L-arginine,2,False,False,False,False
+s_0968,L-arginine,2,False,False,False,False
+s_0969,L-asparagine,7,False,False,False,False
+s_0970,L-asparagine,2,False,False,False,False
+s_0971,L-asparagine,2,False,False,False,False
+s_0972,L-asparagine,3,False,False,False,False
+s_0973,L-aspartate,13,False,False,False,False
+s_0974,L-aspartate,2,False,False,False,False
+s_0975,L-aspartate,3,False,False,False,False
+s_0976,L-aspartate,2,False,False,False,False
+s_0977,L-aspartate,2,False,False,False,False
+s_0978,L-aspartate 4-semialdehyde,3,False,False,False,False
+s_0979,L-citrulline,3,False,False,False,False
+s_0980,L-cystathionine,5,False,False,False,False
+s_0981,L-cysteine,11,False,False,False,False
+s_0982,L-cysteine,1,True,False,False,True
+s_0983,L-cysteinylglycine,6,False,False,False,False
+s_0984,L-cystine,1,True,True,False,True
+s_0985,L-cystine,1,True,False,True,True
+s_0986,L-gamma-glutamyl phosphate,2,False,False,False,False
+s_0987,L-gamma-glutamyl-L-alanine,1,True,True,False,True
+s_0988,L-gamma-glutamyl-L-cysteine,2,False,False,False,False
+s_0989,L-glucitol,2,False,False,False,False
+s_0990,L-glucitol,1,True,False,False,True
+s_0991,L-glutamate,53,False,False,False,False
+s_0992,L-glutamate,1,True,False,False,True
+s_0993,L-glutamate,14,False,False,False,False
+s_0994,L-glutamate,2,False,False,False,False
+s_0995,L-glutamate,4,False,False,False,False
+s_0996,L-glutamate,3,False,False,False,False
+s_0997,L-glutamic 5-semialdehyde,3,False,False,False,False
+s_0999,L-glutamine,22,False,False,False,False
+s_1000,L-glutamine,1,True,False,False,True
+s_1001,L-glutamine,2,False,False,False,False
+s_1002,L-glutamine,4,False,False,False,False
+s_1003,L-glycine,16,False,False,False,False
+s_1004,L-glycine,1,True,False,False,True
+s_1005,L-glycine,6,False,False,False,False
+s_1006,L-histidine,7,False,False,False,False
+s_1007,L-histidine,1,True,False,False,True
+s_1008,L-histidine,2,False,False,False,False
+s_1009,L-histidine,3,False,False,False,False
+s_1010,L-histidinol,2,False,False,False,False
+s_1011,L-histidinol phosphate,2,False,False,False,False
+s_1012,L-homocysteine,8,False,False,False,False
+s_1014,L-homoserine,5,False,False,False,False
+s_1015,L-homoserine,1,True,False,False,True
+s_1016,L-isoleucine,7,False,False,False,False
+s_1017,L-isoleucine,1,True,False,False,True
+s_1018,L-isoleucine,3,False,False,False,False
+s_1019,L-isoleucine,3,False,False,False,False
+s_1020,L-kynurenine,5,False,False,False,False
+s_1021,L-leucine,6,False,False,False,False
+s_1022,L-leucine,1,True,False,False,True
+s_1023,L-leucine,2,False,False,False,False
+s_1024,L-leucine,4,False,False,False,False
+s_1025,L-lysine,6,False,False,False,False
+s_1026,L-lysine,1,True,False,False,True
+s_1027,L-lysine,2,False,False,False,False
+s_1028,L-lysine,2,False,False,False,False
+s_1029,L-methionine,13,False,False,False,False
+s_1030,L-methionine,1,True,False,False,True
+s_1031,L-methionine,4,False,False,False,False
+s_1032,L-phenylalanine,6,False,False,False,False
+s_1033,L-phenylalanine,1,True,False,False,True
+s_1034,L-phenylalanine,2,False,False,False,False
+s_1035,L-proline,4,False,False,False,False
+s_1036,L-proline,1,True,False,False,True
+s_1037,L-proline,3,False,False,False,False
+s_1038,L-saccharopine,2,False,False,False,False
+s_1039,L-serine,12,False,False,False,False
+s_1040,L-serine,2,False,False,False,False
+s_1041,L-serine,1,True,False,False,True
+s_1042,L-serine,2,False,False,False,False
+s_1043,L-sorbose,3,False,False,False,False
+s_1044,L-sorbose,1,True,False,False,True
+s_1045,L-threonine,9,False,False,False,False
+s_1046,L-threonine,1,True,False,False,True
+s_1047,L-threonine,3,False,False,False,False
+s_1048,L-tryptophan,7,False,False,False,False
+s_1049,L-tryptophan,1,True,False,False,True
+s_1050,L-tryptophan,2,False,False,False,False
+s_1051,L-tyrosine,11,False,False,False,False
+s_1052,L-tyrosine,1,True,False,False,True
+s_1053,L-tyrosine,2,False,False,False,False
+s_1054,L-tyrosine,2,False,False,False,False
+s_1055,L-tyrosine,3,False,False,False,False
+s_1056,L-valine,4,False,False,False,False
+s_1057,L-valine,1,True,False,False,True
+s_1058,L-valine,3,False,False,False,False
+s_1059,lanosterol,4,False,False,False,False
+s_1061,lanosterol,1,True,False,False,True
+s_1065,laurate,3,False,False,False,False
+s_1067,laurate,1,True,False,False,True
+s_1070,laurate,3,False,False,False,False
+s_1073,lauroyl-CoA,3,False,False,False,False
+s_1076,lauroyl-CoA,5,False,False,False,False
+s_1077,Leu-tRNA(Leu),2,False,False,False,False
+s_1078,Leu-tRNA(Leu),1,True,True,False,True
+s_1079,leukotriene A4,3,False,False,False,False
+s_1080,leukotriene A4,3,False,False,False,False
+s_1081,leukotriene B4,1,True,False,False,True
+s_1082,leukotriene B4,1,True,False,False,True
+s_1085,lignoceric acid,4,False,False,False,False
+s_1096,lipid,2,False,False,False,False
+s_1097,lipoamide,3,False,False,False,False
+s_1098,lipoylprotein,2,False,False,False,False
+s_1099,Lys-tRNA(Lys),2,False,False,False,False
+s_1100,Lys-tRNA(Lys),1,True,True,False,True
+s_1101,malonyl-CoA,4,False,False,False,False
+s_1104,malonyl-CoA,2,False,False,False,False
+s_1105,maltose,2,False,False,False,False
+s_1106,maltose,2,False,False,False,False
+s_1107,mannan,2,False,False,False,False
+s_1108,mannan,2,False,False,False,False
+s_1109,mannose-(1D-myo-inositol 1-phosphate)2,10,False,True,False,True
+s_1110,mannose-(1D-myo-inositol 1-phosphate)2,10,False,True,False,True
+s_1111,mannose-1D-myo-inositol 1-phosphate,10,False,True,False,True
+s_1112,mannose-1D-myo-inositol 1-phosphate,10,False,True,False,True
+s_1114,mannosylinositol phosphorylceramide backbone,11,False,False,False,False
+s_1116,mannosylinositol phosphorylceramide A (C24),2,False,False,False,False
+s_1117,mannosylinositol phosphorylceramide A (C24),11,False,False,False,False
+s_1118,mannosylinositol phosphorylceramide A (C24),1,True,False,True,True
+s_1119,mannosylinositol phosphorylceramide A (C26),2,False,False,False,False
+s_1120,mannosylinositol phosphorylceramide A (C26),11,False,False,False,False
+s_1121,mannosylinositol phosphorylceramide A (C26),1,True,False,True,True
+s_1122,mannosylinositol phosphorylceramide B (C24),2,False,False,False,False
+s_1123,mannosylinositol phosphorylceramide B (C24),11,False,False,False,False
+s_1124,mannosylinositol phosphorylceramide B (C24),1,True,False,True,True
+s_1125,mannosylinositol phosphorylceramide B (C26),2,False,False,False,False
+s_1126,mannosylinositol phosphorylceramide B (C26),11,False,False,False,False
+s_1127,mannosylinositol phosphorylceramide B (C26),1,True,False,True,True
+s_1128,mannosylinositol phosphorylceramide B' (C24),2,False,False,False,False
+s_1129,mannosylinositol phosphorylceramide B' (C24),11,False,False,False,False
+s_1130,mannosylinositol phosphorylceramide B' (C24),1,True,False,True,True
+s_1131,mannosylinositol phosphorylceramide B' (C26),2,False,False,False,False
+s_1132,mannosylinositol phosphorylceramide B' (C26),11,False,False,False,False
+s_1133,mannosylinositol phosphorylceramide B' (C26),1,True,False,True,True
+s_1134,mannosylinositol phosphorylceramide C (C24),2,False,False,False,False
+s_1135,mannosylinositol phosphorylceramide C (C24),11,False,False,False,False
+s_1136,mannosylinositol phosphorylceramide C (C24),1,True,False,True,True
+s_1137,mannosylinositol phosphorylceramide C (C26),2,False,False,False,False
+s_1138,mannosylinositol phosphorylceramide C (C26),11,False,False,False,False
+s_1139,mannosylinositol phosphorylceramide C (C26),1,True,False,True,True
+s_1140,mannosylinositol phosphorylceramide D (C24),2,False,False,False,False
+s_1141,mannosylinositol phosphorylceramide D (C24),11,False,False,False,False
+s_1142,mannosylinositol phosphorylceramide D (C24),1,True,False,True,True
+s_1143,mannosylinositol phosphorylceramide D (C26),2,False,False,False,False
+s_1144,mannosylinositol phosphorylceramide D (C26),11,False,False,False,False
+s_1145,mannosylinositol phosphorylceramide D (C26),1,True,False,True,True
+s_1148,Met-tRNA(Met),2,False,False,False,False
+s_1149,Met-tRNA(Met),2,False,False,False,False
+s_1150,methanethiol,1,True,False,True,True
+s_1151,methylglyoxal,5,False,False,False,False
+s_1153,myo-inositol,3,False,False,False,False
+s_1154,myo-inositol,1,True,False,True,True
+s_1156,"myo-inositol 1,3,4,5,6-pentakisphosphate",3,False,False,False,False
+s_1157,"myo-inositol 1,3,4,5,6-pentakisphosphate",4,False,False,False,False
+s_1158,myo-inositol hexakisphosphate,6,False,False,False,False
+s_1159,myo-inositol hexakisphosphate,2,False,False,False,False
+s_1161,myristate,3,False,False,False,False
+s_1163,myristate,1,True,False,False,True
+s_1166,myristate,3,False,False,False,False
+s_1176,myristoyl-CoA,3,False,False,False,False
+s_1179,myristoyl-CoA,5,False,False,False,False
+s_1180,N(1)-acetylspermidine,3,False,False,False,False
+s_1181,N(1)-acetylspermine,2,False,False,False,False
+s_1182,N(2)-acetyl-L-ornithine,2,False,False,False,False
+s_1183,N(pros)-methyl-L-histidine,1,True,True,False,True
+s_1184,"N,N'-diacetylchitobiosyldiphosphodolichol",1,True,False,True,True
+s_1185,"N,N'-diformyldityrosine",2,False,False,False,False
+s_1186,"N,N'-diformyldityrosine",1,True,True,False,True
+s_1187,N-(5-phospho-beta-D-ribosyl)anthranilate,2,False,False,False,False
+s_1188,N-[(R)-4-phosphonopantothenoyl]-L-cysteine,2,False,False,False,False
+s_1189,N-acetyl-alpha-D-glucosamine 1-phosphate,2,False,False,False,False
+s_1190,N-acetyl-D-glucosamine 6-phosphate,2,False,False,False,False
+s_1191,N-acetyl-L-gamma-glutamyl phosphate,2,False,False,False,False
+s_1192,N-acetyl-L-glutamate,4,False,False,False,False
+s_1193,N-acetylputrescine,1,True,True,False,True
+s_1194,N-carbamoyl-L-aspartate,2,False,False,False,False
+s_1195,N-formyl-L-kynurenine,2,False,False,False,False
+s_1196,N-formyl-L-tyrosine,2,False,False,False,False
+s_1198,NAD,86,False,False,False,False
+s_1199,NAD,1,True,True,False,True
+s_1200,NAD,34,False,False,False,False
+s_1201,NAD,4,False,False,False,False
+s_1202,NAD,20,False,False,False,False
+s_1203,NADH,78,False,False,False,False
+s_1204,NADH,1,True,False,True,True
+s_1205,NADH,30,False,False,False,False
+s_1206,NADH,19,False,False,False,False
+s_1207,NADP(+),73,False,False,False,False
+s_1208,NADP(+),13,False,False,False,False
+s_1210,NADP(+),18,False,False,False,False
+s_1211,NADP(+),3,False,False,False,False
+s_1212,NADPH,73,False,False,False,False
+s_1213,NADPH,13,False,False,False,False
+s_1214,NADPH,18,False,False,False,False
+s_1215,NADPH,3,False,False,False,False
+s_1216,nicotinamide,6,False,False,False,False
+s_1217,nicotinamide,2,False,False,False,False
+s_1218,nicotinamide riboside,2,False,False,True,True
+s_1219,nicotinate,4,False,False,False,False
+s_1220,nicotinate,1,True,False,False,True
+s_1221,nicotinate,2,False,False,False,False
+s_1222,nicotinic acid D-ribonucleotide,3,False,False,False,False
+s_1223,nicotinic acid D-ribonucleotide,2,False,True,False,True
+s_1224,NMN,5,False,False,False,False
+s_1225,NMN,1,True,False,True,True
+s_1227,NMN,2,False,False,False,False
+s_1228,NMN,2,False,False,False,False
+s_1229,nonadecaprenyl diphosphate,2,False,False,False,False
+s_1230,nonaprenyl 4-hydroxybenzoate,1,True,True,False,True
+s_1231,nonaprenyl diphosphate,1,True,False,True,True
+s_1232,nonaprenyl diphosphate,2,False,False,False,False
+s_1233,O-acetyl-L-homoserine,4,False,False,False,False
+s_1234,O-acetyl-L-serine,3,False,False,False,False
+s_1235,O-acetylcarnitine,5,False,False,False,False
+s_1236,O-acetylcarnitine,3,False,False,False,False
+s_1237,O-acetylcarnitine,3,False,False,False,False
+s_1238,O-phospho-L-homoserine,2,False,False,False,False
+s_1239,O-phosphoethanolamine,4,False,False,False,False
+s_1240,O-phosphoethanolamine,3,False,False,False,False
+s_1241,O-succinyl-L-homoserine,3,False,False,False,False
+s_1246,octadecaprenyl diphosphate,2,False,False,False,False
+s_1248,octanoate,2,False,False,False,False
+s_1250,octanoate,1,True,False,False,True
+s_1253,octanoate,3,False,False,False,False
+s_1254,octanoyl-ACP,3,False,False,False,False
+s_1258,octanoyl-CoA,5,False,False,False,False
+s_1259,octaprenyl diphosphate,2,False,False,False,False
+s_1260,oleate,8,False,False,False,False
+s_1262,oleoyl-CoA,4,False,False,False,False
+s_1265,oleoyl-CoA,4,False,False,False,False
+s_1266,ornithine,6,False,False,False,False
+s_1267,ornithine,1,True,False,False,True
+s_1268,ornithine,2,False,False,False,False
+s_1269,orotate,2,False,False,False,False
+s_1270,orotidine 5'-(dihydrogen phosphate),2,False,False,False,False
+s_1271,oxaloacetate,10,False,False,False,False
+s_1272,oxaloacetate,1,True,False,False,True
+s_1273,oxaloacetate,5,False,False,False,False
+s_1274,oxaloacetate,4,False,False,False,False
+s_1275,oxygen,39,False,False,False,False
+s_1276,oxygen,12,False,False,False,False
+s_1277,oxygen,1,True,False,False,True
+s_1278,oxygen,8,False,False,False,False
+s_1279,oxygen,20,False,False,False,False
+s_1282,"P(1),P(4)-bis(5'-adenosyl) tetraphosphate",2,False,False,False,False
+s_1283,"P(1),P(4)-bis(5'-guanosyl) tetraphosphate",1,True,True,False,True
+s_1284,"P1-(5'-adenosyl),P4-(5'-guanosyl) tetraphosphate",1,True,True,False,True
+s_1286,palmitate,7,False,False,False,False
+s_1288,palmitate,1,True,False,False,True
+s_1291,palmitate,3,False,False,False,False
+s_1293,palmitoleate,6,False,False,False,False
+s_1295,palmitoleate,1,True,False,False,True
+s_1298,palmitoleate,3,False,False,False,False
+s_1302,palmitoyl-CoA,5,False,False,False,False
+s_1303,palmitoyl-CoA,3,False,False,False,False
+s_1305,palmitoyl-CoA,5,False,False,False,False
+s_1307,pantetheine 4'-phosphate,3,False,False,False,False
+s_1308,pantetheine 4'-phosphate,3,False,False,False,False
+s_1309,pectin,1,True,False,True,True
+s_1310,pentadecaprenyl diphosphate,2,False,False,False,False
+s_1311,pentaprenyl diphosphate,2,False,False,False,False
+s_1312,pentaprenyl diphosphate,2,False,False,False,False
+s_1313,pentaprenyl diphosphate,2,False,False,False,False
+s_1314,Phe-tRNA(Phe),2,False,False,False,False
+s_1315,Phe-tRNA(Phe),1,True,True,False,True
+s_1316,phenethyl acetate,2,False,False,False,False
+s_1317,phenethyl acetate,1,True,True,False,True
+s_1318,phenylacetaldehyde,6,False,False,False,False
+s_1319,phenylacetaldehyde,1,True,False,False,True
+s_1320,phenylacetaldehyde,2,False,False,False,False
+s_1321,phenylacetic acid,3,False,False,False,False
+s_1322,phosphate,190,False,False,False,False
+s_1323,phosphate,4,False,False,False,False
+s_1324,phosphate,4,False,False,False,False
+s_1325,phosphate,4,False,False,False,False
+s_1326,phosphate,20,False,False,False,False
+s_1329,phosphate,3,False,False,False,False
+s_1337,phosphatidyl-L-serine backbone,2,False,False,False,False
+s_1346,phosphatidylcholine backbone,2,False,False,False,False
+s_1351,phosphatidylethanolamine backbone,2,False,False,False,False
+s_1352,phosphatidylethanolamine backbone,2,False,False,False,False
+s_1360,phosphoenolpyruvate,7,False,False,False,False
+s_1361,phosphoenolpyruvate,2,False,False,False,False
+s_1364,phosphoribosyl-carboxy-aminoimidazole,2,False,False,False,False
+s_1365,phosphoribosyl-formamido-carboxamide,2,False,False,False,False
+s_1366,phytosphingosine,10,False,False,False,False
+s_1367,phytosphingosine 1-phosphate,4,False,False,False,False
+s_1368,pimeloyl-CoA,1,True,False,True,True
+s_1371,polysulphur,1,True,False,False,True
+s_1372,porphobilinogen,2,False,False,False,False
+s_1373,potassium,3,False,False,False,False
+s_1374,potassium,1,True,False,False,True
+s_1375,precorrin-2,2,False,False,False,False
+s_1376,prenyl diphosphate(3-),2,False,False,False,False
+s_1377,prephenate,3,False,False,False,False
+s_1378,preuroporphyrinogen,2,False,False,False,False
+s_1379,Pro-tRNA(Pro),2,False,False,False,False
+s_1382,propionyl-CoA,4,False,False,False,False
+s_1383,protoporphyrin,2,False,False,False,False
+s_1384,protoporphyrinogen,2,False,False,False,False
+s_1385,protoporphyrinogen,2,False,False,False,False
+s_1386,PRPP,13,False,False,False,False
+s_1387,PRPP,3,False,False,False,False
+s_1388,pseudouridine 5'-phosphate,1,True,False,False,True
+s_1389,putrescine,5,False,False,False,False
+s_1390,putrescine,2,False,False,False,False
+s_1391,putrescine,1,True,False,False,True
+s_1392,pyridoxal,4,False,False,False,False
+s_1393,pyridoxal 5'-phosphate,5,False,False,False,False
+s_1394,pyridoxamine,3,False,False,False,False
+s_1395,pyridoxamine 5'-phosphate,3,False,False,False,False
+s_1396,pyridoxine,4,False,False,False,False
+s_1397,pyridoxine,1,True,False,False,True
+s_1398,pyridoxine 5'-phosphate,2,False,False,False,False
+s_1399,pyruvate,25,False,False,False,False
+s_1400,pyruvate,1,True,False,False,True
+s_1401,pyruvate,12,False,False,False,False
+s_1403,quinolinate,3,False,False,False,False
+s_1404,quinolinate,2,False,False,False,False
+s_1405,riboflavin,6,False,False,False,False
+s_1406,riboflavin,2,False,False,False,False
+s_1407,riboflavin,2,False,False,False,False
+s_1408,ribose-5-phosphate,7,False,False,False,False
+s_1409,S(8)-aminomethyldihydrolipoamide,2,False,False,False,False
+s_1410,S(8)-aminomethyldihydrolipoylprotein,2,False,False,False,False
+s_1411,S(8)-succinyldihydrolipoamide,2,False,False,False,False
+s_1412,S-adenosyl-4-methylthio-2-oxobutanoate,1,True,False,False,True
+s_1413,S-adenosyl-L-homocysteine,15,False,False,False,False
+s_1415,S-adenosyl-L-homocysteine,4,False,False,False,False
+s_1416,S-adenosyl-L-methionine,19,False,False,False,False
+s_1418,S-adenosyl-L-methionine,1,True,False,True,True
+s_1419,S-adenosyl-L-methionine,6,False,False,False,False
+s_1420,S-adenosylmethioninamine,4,False,False,False,False
+s_1421,S-formylglutathione,2,False,False,False,False
+s_1422,S-methyl-5-thio-alpha-D-ribose 1-phosphate,2,False,False,False,False
+s_1423,S-methyl-5-thio-D-ribulose 1-phosphate,2,False,False,False,False
+s_1424,S-methyl-L-methionine,1,True,True,False,True
+s_1425,S-methyl-L-methionine,1,True,False,True,True
+s_1426,"sedoheptulose 1,7-bisphosphate",3,False,False,False,False
+s_1427,sedoheptulose 7-phosphate,4,False,False,False,False
+s_1428,Ser-tRNA(Ser),2,False,False,False,False
+s_1429,shikimate,2,False,False,False,False
+s_1430,siroheme,1,True,True,False,True
+s_1431,sirohydrochlorin,2,False,False,False,False
+s_1432,sn-glycero-3-phosphocholine,5,False,False,False,False
+s_1433,sn-glycero-3-phosphocholine,4,False,False,False,False
+s_1435,sn-glycero-3-phosphocholine,1,True,False,False,True
+s_1437,sodium,4,False,False,False,False
+s_1438,sodium,2,False,False,False,False
+s_1439,spermidine,8,False,False,False,False
+s_1440,spermidine,2,False,False,False,False
+s_1441,spermidine,1,True,False,False,True
+s_1442,spermine,5,False,False,False,False
+s_1443,spermine,1,True,False,False,True
+s_1444,spermine,1,True,False,False,True
+s_1445,sphinganine,9,False,False,False,False
+s_1446,sphinganine 1-phosphate,4,False,False,False,False
+s_1447,squalene,2,False,False,False,False
+s_1448,squalene,3,False,False,False,False
+s_1449,stearate,7,False,False,False,False
+s_1450,stearate,1,True,False,False,True
+s_1451,stearate,3,False,False,False,False
+s_1454,stearoyl-CoA,4,False,False,False,False
+s_1457,stearoyl-CoA,5,False,False,False,False
+s_1458,succinate,15,False,False,False,False
+s_1459,succinate,1,True,False,False,True
+s_1460,succinate,8,False,False,False,False
+s_1461,succinic semialdehyde,2,False,False,False,False
+s_1464,succinyl-CoA,4,False,False,False,False
+s_1466,sucrose,1,True,False,True,True
+s_1467,sulphate,7,False,False,False,False
+s_1468,sulphate,1,True,False,True,True
+s_1469,sulphite,9,False,False,False,False
+s_1470,sulphite,1,True,True,False,True
+s_1471,taurine,3,False,False,False,False
+s_1472,taurine,1,True,False,False,True
+s_1473,taurocholic acid,1,True,False,True,True
+s_1474,taurocholic acid,1,True,True,False,True
+s_1475,TDP,5,False,False,False,False
+s_1476,TDP,1,True,False,True,True
+s_1477,TDP,1,True,True,False,True
+s_1479,tetracosanoyl-CoA,5,False,False,False,False
+s_1480,tetracosanoyl-CoA,3,False,False,False,False
+s_1482,tetracosanoyl-CoA,3,False,False,False,False
+s_1483,tetradecaprenyl diphosphate,2,False,False,False,False
+s_1486,tetrahydropteroyltri-L-glutamic acid,1,True,True,False,True
+s_1487,THF,9,False,False,False,False
+s_1488,THF,8,False,False,False,False
+s_1489,thiamine,4,False,False,False,False
+s_1490,thiamine,3,False,False,False,False
+s_1491,Thr-tRNA(Thr),2,False,False,False,False
+s_1492,Thr-tRNA(Thr),1,True,True,False,True
+s_1493,thymidine,5,False,False,False,False
+s_1494,thymidine,1,True,False,False,True
+s_1497,TMP,4,False,False,False,False
+s_1498,TMP,1,True,False,True,True
+s_1503,trans-aconitate,2,False,False,False,False
+s_1504,trans-aconitate,1,True,False,False,True
+s_1507,trans-dec-2-enoyl-CoA,3,False,False,False,False
+s_1510,trans-dodec-2-enoyl-CoA,4,False,False,False,False
+s_1513,trans-hexacos-2-enoyl-CoA,2,False,False,False,False
+s_1516,trans-octadec-2-enoyl-CoA,2,False,False,False,False
+s_1519,trans-tetradec-2-enoyl-CoA,3,False,False,False,False
+s_1520,trehalose,5,False,False,False,False
+s_1521,trehalose,1,True,False,False,True
+s_1522,trehalose,2,False,False,False,False
+s_1523,tridecaprenyl diphosphate,2,False,False,False,False
+s_1524,triglyceride backbone,2,False,False,False,False
+s_1526,trimethylenediamine,1,True,True,False,True
+s_1527,Trp-tRNA(Trp),2,False,False,False,False
+s_1528,Trp-tRNA(Trp),1,True,True,False,True
+s_1529,tryptophol,3,False,False,False,False
+s_1530,tryptophol,1,True,False,False,True
+s_1531,tryptophol,2,False,False,False,False
+s_1532,thiamine(1+) triphosphate(4-),1,True,True,False,True
+s_1533,Tyr-tRNA(Tyr),2,False,False,False,False
+s_1534,Tyr-tRNA(Tyr),1,True,True,False,True
+s_1535,ubiquinol-6,6,False,False,False,False
+s_1537,ubiquinone-6,5,False,False,False,False
+s_1538,UDP,13,False,False,False,False
+s_1539,UDP,2,False,False,False,False
+s_1540,UDP,2,False,False,False,False
+s_1541,UDP-D-galactose,4,False,False,False,False
+s_1542,UDP-D-galactose,1,True,True,False,True
+s_1543,UDP-D-glucose,9,False,False,False,False
+s_1544,UDP-N-acetyl-alpha-D-glucosamine,3,False,False,False,False
+s_1545,UMP,14,False,False,False,False
+s_1546,UMP,2,False,False,False,False
+s_1547,UMP,2,False,False,True,True
+s_1548,UMP,2,False,False,False,False
+s_1549,undecaprenyl diphosphate,2,False,False,False,False
+s_1550,uracil,6,False,False,False,False
+s_1551,uracil,1,True,False,True,True
+s_1552,urea,6,False,False,False,False
+s_1553,urea,1,True,False,False,True
+s_1554,urea-1-carboxylic acid,2,False,False,False,False
+s_1555,ureidoglycolic acid,3,False,False,False,False
+s_1556,uridine,9,False,False,False,False
+s_1557,uridine,1,True,False,True,True
+s_1558,uroporphyrinogen III,3,False,False,False,False
+s_1559,UTP,11,False,False,False,False
+s_1560,UTP,2,False,True,False,True
+s_1561,Val-tRNA(Val),2,False,False,False,False
+s_1562,Val-tRNA(Val),1,True,True,False,True
+s_1563,xanthosine,2,False,True,False,True
+s_1564,xanthosine,1,True,False,True,True
+s_1565,xanthosine-5-phosphate,4,False,False,False,False
+s_1566,xylitol,4,False,False,False,False
+s_1567,xylitol,1,True,False,False,True
+s_1568,zymosterol,4,False,False,False,False
+s_1569,zymosterol,5,False,False,False,False
+s_1571,zymosterol,1,True,False,False,True
+s_1572,zymosterol,3,False,False,False,False
+s_1576,zymosterol intermediate 1a,2,False,False,False,False
+s_1577,zymosterol intermediate 1b,2,False,False,False,False
+s_1578,zymosterol intermediate 1c,2,False,False,False,False
+s_1579,zymosterol intermediate 2,2,False,False,False,False
+s_1582,tRNA(Ala),3,False,False,False,False
+s_1583,tRNA(Arg),3,False,False,False,False
+s_1584,tRNA(Arg),1,True,False,True,True
+s_1585,tRNA(Asn),2,False,False,False,False
+s_1586,tRNA(Asn),1,True,False,True,True
+s_1587,tRNA(Asp),2,False,False,False,False
+s_1588,tRNA(Asp),1,True,False,True,True
+s_1589,tRNA(Cys),2,False,False,False,False
+s_1590,tRNA(Gln),2,False,False,False,False
+s_1591,tRNA(Glu),2,False,False,False,False
+s_1592,tRNA(Glu),1,True,False,True,True
+s_1593,tRNA(Gly),2,False,False,False,False
+s_1594,tRNA(His),2,False,False,False,False
+s_1595,tRNA(His),1,True,False,True,True
+s_1596,tRNA(Ile),2,False,False,False,False
+s_1597,tRNA(Ile),1,True,False,True,True
+s_1598,tRNA(Leu),2,False,False,False,False
+s_1599,tRNA(Leu),1,True,False,True,True
+s_1600,tRNA(Lys),2,False,False,False,False
+s_1601,tRNA(Lys),1,True,False,True,True
+s_1602,tRNA(Met),2,False,False,False,False
+s_1603,tRNA(Met),1,True,False,True,True
+s_1604,tRNA(Phe),2,False,False,False,False
+s_1605,tRNA(Phe),1,True,False,True,True
+s_1606,tRNA(Pro),2,False,False,False,False
+s_1607,tRNA(Ser),2,False,False,False,False
+s_1608,tRNA(Thr),2,False,False,False,False
+s_1609,tRNA(Thr),1,True,False,True,True
+s_1610,tRNA(Trp),2,False,False,False,False
+s_1611,tRNA(Trp),1,True,False,True,True
+s_1612,tRNA(Tyr),3,False,False,False,False
+s_1613,tRNA(Tyr),1,True,False,True,True
+s_1614,tRNA(Val),2,False,False,False,False
+s_1615,tRNA(Val),1,True,False,True,True
+s_1616,TRX1,14,False,False,False,False
+s_1617,TRX1,2,False,False,False,False
+s_1618,TRX1,4,False,False,True,True
+s_1619,TRX1,2,False,False,False,False
+s_1620,TRX1 disulphide,15,False,False,False,False
+s_1621,TRX1 disulphide,2,False,False,False,False
+s_1622,TRX1 disulphide,5,False,False,False,False
+s_1623,TRX1 disulphide,2,False,False,False,False
+s_1845,ACP1,7,False,False,False,False
+s_2763,kynurenic acid,2,False,False,False,False
+s_2764,quinaldic acid,1,True,True,False,True
+s_2766,14-demethyllanosterol,1,True,False,False,True
+s_2768,"ergosta-5,7,22,24(28)-tetraen-3beta-ol",1,True,False,False,True
+s_2770,acetoacetyl-ACP,2,False,False,False,False
+s_2771,butanoyl-ACP,2,False,False,False,False
+s_2772,3-oxo-hexanoyl-ACP,2,False,False,False,False
+s_2773,hexanoyl-ACP,2,False,False,False,False
+s_2774,3-oxo-octanoyl-ACP,2,False,False,False,False
+s_2775,3-hydroxybutanoyl-ACP,2,False,False,False,False
+s_2776,3-hydroxyhexanoyl-ACP,2,False,False,False,False
+s_2777,3-hydroxyoctanoyl-ACP,2,False,False,False,False
+s_2778,trans-but-2-enoyl-ACP,2,False,False,False,False
+s_2779,trans-hex-2-enoyl-ACP,2,False,False,False,False
+s_2780,trans-oct-2-enoyl-ACP,2,False,False,False,False
+s_2781,lauroyl-CoA,3,False,False,False,False
+s_2782,malonyl-CoA,8,False,False,False,False
+s_2783,H+,158,False,False,False,False
+s_2784,carbon dioxide,8,False,False,False,False
+s_2785,coenzyme A,77,False,False,False,False
+s_2786,3-oxotetradecanoyl-CoA,2,False,False,False,False
+s_2787,myristoyl-CoA,4,False,False,False,False
+s_2788,3-oxopalmitoyl-CoA,2,False,False,False,False
+s_2789,palmitoyl-CoA,15,False,False,False,False
+s_2790,3-oxooctadecanoyl-CoA,2,False,False,False,False
+s_2791,stearoyl-CoA,17,False,False,False,False
+s_2792,3-oxoicosanoyl-CoA,2,False,False,False,False
+s_2793,icosanoyl-CoA,3,False,False,False,False
+s_2794,3-oxodocosanoyl-CoA,2,False,False,False,False
+s_2795,docosanoyl-CoA,4,False,False,False,False
+s_2796,3-oxotetracosanoyl-CoA,2,False,False,False,False
+s_2797,tetracosanoyl-CoA,4,False,False,False,False
+s_2798,3-oxohexacosanoyl-CoA,2,False,False,False,False
+s_2799,NADPH,19,False,False,False,False
+s_2800,NADP(+),19,False,False,False,False
+s_2801,(S)-3-hydroxytetradecanoyl-CoA,2,False,False,False,False
+s_2802,(S)-3-hydroxypalmitoyl-CoA,2,False,False,False,False
+s_2803,3-hydroxyoctadecanoyl-CoA,2,False,False,False,False
+s_2804,3-hydroxyicosanoyl-CoA,2,False,False,False,False
+s_2805,3-hydroxydocosanoyl-CoA,2,False,False,False,False
+s_2806,3-hydroxytetracosanoyl-CoA,2,False,False,False,False
+s_2807,(S)-3-hydroxyhexacosanoyl-CoA,2,False,False,False,False
+s_2808,H2O,55,False,False,False,False
+s_2809,trans-tetradec-2-enoyl-CoA,2,False,False,False,False
+s_2810,trans-hexadec-2-enoyl-CoA,2,False,False,False,False
+s_2811,trans-octadec-2-enoyl-CoA,2,False,False,False,False
+s_2812,trans-icos-2-enoyl-CoA,2,False,False,False,False
+s_2813,trans-docos-2-enoyl-CoA,2,False,False,False,False
+s_2814,trans-tetracos-2-enoyl-CoA,2,False,False,False,False
+s_2815,trans-hexacos-2-enoyl-CoA,2,False,False,False,False
+s_2816,hexacosanoyl-CoA,3,False,False,False,False
+s_2817,oxygen,3,False,False,False,False
+s_2818,NADH,4,False,False,False,False
+s_2819,palmitoleoyl-CoA(4-),22,False,False,False,False
+s_2820,NAD,4,False,False,False,False
+s_2821,oleoyl-CoA,22,False,False,False,False
+s_2822,butyrate,1,True,False,False,True
+s_2824,hexanoate,1,True,False,False,True
+s_2826,oleate,1,True,False,False,True
+s_2828,butyrate,2,False,False,False,False
+s_2829,hexanoate,2,False,False,False,False
+s_2831,ATP,12,False,False,False,False
+s_2832,laurate,3,False,False,False,False
+s_2833,AMP,10,False,False,False,False
+s_2834,diphosphate,18,False,False,False,False
+s_2835,myristate,3,False,False,False,False
+s_2836,palmitate,3,False,False,False,False
+s_2837,palmitoleate,7,False,False,False,False
+s_2838,stearate,3,False,False,False,False
+s_2839,oleate,7,False,False,False,False
+s_2840,ATP,10,False,False,False,False
+s_2841,laurate,2,False,False,False,False
+s_2842,AMP,10,False,False,False,False
+s_2843,lauroyl-CoA,2,False,False,False,False
+s_2844,myristate,2,False,False,False,False
+s_2845,myristoyl-CoA,2,False,False,False,False
+s_2846,palmitate,11,False,False,False,False
+s_2847,palmitoyl-CoA,12,False,False,False,False
+s_2848,palmitoleate,28,False,False,False,False
+s_2849,palmitoleoyl-CoA(4-),12,False,False,False,False
+s_2850,stearate,11,False,False,False,False
+s_2851,stearoyl-CoA,12,False,False,False,False
+s_2852,oleate,28,False,False,False,False
+s_2853,oleoyl-CoA,20,False,False,False,False
+s_2854,palmitoleoyl-CoA(4-),4,False,False,False,False
+s_2855,oleate,3,False,False,False,False
+s_2856,ATP,21,False,False,False,False
+s_2857,coenzyme A,4,False,False,False,False
+s_2858,arachidate,1,True,False,False,True
+s_2859,AMP,4,False,False,False,False
+s_2860,diphosphate,4,False,False,False,False
+s_2861,icosanoyl-CoA,2,False,False,False,False
+s_2862,behenate,1,True,False,False,True
+s_2863,docosanoyl-CoA,2,False,False,False,False
+s_2864,lignoceric acid,2,False,False,False,False
+s_2865,tetracosanoyl-CoA,2,False,False,False,False
+s_2866,cerotic acid,2,False,False,False,False
+s_2867,hexacosanoyl-CoA,2,False,False,False,False
+s_2868,behenate,1,True,False,False,True
+s_2869,lignoceric acid,4,False,False,False,False
+s_2870,cerotic acid,4,False,False,False,False
+s_2871,behenate,1,True,False,False,True
+s_2872,docosanoyl-CoA,2,False,False,False,False
+s_2873,lignoceric acid,2,False,False,False,False
+s_2874,tetracosanoyl-CoA,2,False,False,False,False
+s_2875,cerotic acid,2,False,False,False,False
+s_2876,hexacosanoyl-CoA,2,False,False,False,False
+s_2877,palmitoleoyl-CoA(4-),4,False,False,False,False
+s_2878,icosanoyl-CoA,3,False,False,False,False
+s_2879,icosanoyl-CoA,3,False,False,False,False
+s_2880,docosanoyl-CoA,4,False,False,False,False
+s_2881,docosanoyl-CoA,3,False,False,False,False
+s_2882,butyrate,2,False,False,False,False
+s_2883,hexanoate,2,False,False,False,False
+s_2884,butanoyl-CoA,4,False,False,False,False
+s_2885,hexanoyl-CoA,4,False,False,False,False
+s_2886,but-2-enoyl-CoA,2,False,False,False,False
+s_2887,trans-hex-2-enoyl-CoA,2,False,False,False,False
+s_2888,trans-oct-2-enoyl-CoA,2,False,False,False,False
+s_2889,trans-icos-2-enoyl-CoA,2,False,False,False,False
+s_2890,trans-docos-2-enoyl-CoA,2,False,False,False,False
+s_2891,trans-tetracos-2-enoyl-CoA,2,False,False,False,False
+s_2892,"trans-2,cis-9-hexadecadienoyl-CoA",2,False,False,False,False
+s_2893,cis-tetradec-7-enoyl-CoA,2,False,False,False,False
+s_2894,"trans-2,cis-7-tetradecadienoyl-CoA",2,False,False,False,False
+s_2895,cis-dodec-5-enoyl-CoA,2,False,False,False,False
+s_2896,"trans-2,cis-5-dodecadienoyl-CoA",3,False,False,False,False
+s_2897,"trans-2,cis-9-octadecadienoyl-CoA",2,False,False,False,False
+s_2898,cis-hexadec-7-enoyl-CoA,2,False,False,False,False
+s_2899,"trans-2,cis-7-hexadecadienoyl-CoA",2,False,False,False,False
+s_2900,cis-tetradec-5-enoyl-CoA,2,False,False,False,False
+s_2901,"trans-2,cis-5-tetradecadienoyl-CoA",3,False,False,False,False
+s_2902,(R)-3-hydroxybutanoyl-CoA,2,False,False,False,False
+s_2903,(R)-3-hydroxyhexanoyl-CoA,2,False,False,False,False
+s_2904,(R)-3-hydroxyoctanoyl-CoA,2,False,False,False,False
+s_2905,(R)-3-hydroxyicosanoyl-CoA,2,False,False,False,False
+s_2906,(R)-3-hydroxydocosanoyl-CoA,2,False,False,False,False
+s_2907,(R)-3-hydroxytetracosanoyl-CoA,2,False,False,False,False
+s_2908,(R)-3-hydroxy-cis-hexadec-9-enoyl-CoA,2,False,False,False,False
+s_2909,(R)-3-hydroxy-cis-tetradec-7-enoyl-CoA,2,False,False,False,False
+s_2910,(R)-3-hydroxy-cis-dodec-5-enoyl-CoA,2,False,False,False,False
+s_2911,(R)-3-hydroxy-cis-octadec-9-enoyl-CoA,2,False,False,False,False
+s_2912,(R)-3-hydroxy-cis-hexadec-7-enoyl-CoA,2,False,False,False,False
+s_2913,(R)-3-hydroxy-cis-tetradec-5-enoyl-CoA,2,False,False,False,False
+s_2914,acetoacetyl-CoA,2,False,False,False,False
+s_2915,3-oxohexanoyl-CoA,2,False,False,False,False
+s_2916,3-oxooctanoyl-CoA,2,False,False,False,False
+s_2917,3-oxoicosanoyl-CoA,2,False,False,False,False
+s_2918,3-oxodocosanoyl-CoA,2,False,False,False,False
+s_2919,3-oxotetracosanoyl-CoA,2,False,False,False,False
+s_2920,3-oxo-cis-hexadec-9-enoyl-CoA,2,False,False,False,False
+s_2921,3-oxo-cis-tetradec-7-enoyl-CoA,2,False,False,False,False
+s_2922,3-oxo-cis-dodec-5-enoyl-CoA,2,False,False,False,False
+s_2923,3-oxo-cis-octadec-9-enoyl-CoA,2,False,False,False,False
+s_2924,3-oxo-cis-hexadec-7-enoyl-CoA,2,False,False,False,False
+s_2925,3-oxo-cis-tetradec-5-enoyl-CoA,2,False,False,False,False
+s_2926,cis-dec-3-enoyl-CoA,2,False,False,False,False
+s_2927,cis-dodec-3-enoyl-CoA,2,False,False,False,False
+s_2928,"trans-3,cis-5-dodecadienoyl-CoA",2,False,False,False,False
+s_2929,trans-dodec-3-enoyl-CoA,2,False,False,False,False
+s_2930,"trans-3,cis-5-tetradecadienoyl-CoA",2,False,False,False,False
+s_2931,trans-tetradec-3-enoyl-CoA,2,False,False,False,False
+s_2932,"trans-2,trans-4-dodecadienoyl-CoA",2,False,False,False,False
+s_2933,"trans-2,trans-4-tetradecadienoyl-CoA",2,False,False,False,False
+s_2934,glycerol 3-phosphate,5,False,False,False,False
+s_2935,1-acyl-sn-glycerol 3-phosphate (16:0),4,False,False,False,False
+s_2936,1-acyl-sn-glycerol 3-phosphate (16:1),4,False,False,False,False
+s_2937,1-acyl-sn-glycerol 3-phosphate (18:0),4,False,False,False,False
+s_2938,1-acyl-sn-glycerol 3-phosphate (18:1),4,False,False,False,False
+s_2939,dihydroxyacetone phosphate,5,False,False,False,False
+s_2940,acylglycerone phosphate (16:0),2,False,False,False,False
+s_2941,acylglycerone phosphate (16:1),2,False,False,False,False
+s_2942,acylglycerone phosphate (18:0),2,False,False,False,False
+s_2943,acylglycerone phosphate (18:1),2,False,False,False,False
+s_2944,1-acyl-sn-glycerol 3-phosphate (16:0),3,False,False,False,False
+s_2945,1-acyl-sn-glycerol 3-phosphate (16:1),3,False,False,False,False
+s_2946,1-acyl-sn-glycerol 3-phosphate (18:0),3,False,False,False,False
+s_2947,1-acyl-sn-glycerol 3-phosphate (18:1),3,False,False,False,False
+s_2948,acylglycerone phosphate (16:0),2,False,False,False,False
+s_2949,acylglycerone phosphate (16:1),2,False,False,False,False
+s_2950,acylglycerone phosphate (18:0),2,False,False,False,False
+s_2951,acylglycerone phosphate (18:1),2,False,False,False,False
+s_2952,NADPH,5,False,False,False,False
+s_2953,NADP(+),5,False,False,False,False
+s_2954,"phosphatidate (1-16:0, 2-16:1)",9,False,False,False,False
+s_2955,"phosphatidate (1-16:0, 2-18:1)",10,False,False,False,False
+s_2956,"phosphatidate (1-16:1, 2-16:1)",9,False,False,False,False
+s_2957,"phosphatidate (1-16:1, 2-18:1)",10,False,False,False,False
+s_2958,"phosphatidate (1-18:0, 2-16:1)",9,False,False,False,False
+s_2959,"phosphatidate (1-18:0, 2-18:1)",9,False,False,False,False
+s_2960,"phosphatidate (1-18:1, 2-16:1)",9,False,False,False,False
+s_2961,"phosphatidate (1-18:1, 2-18:1)",9,False,False,False,False
+s_2962,"phosphatidate (1-16:0, 2-18:1)",2,False,False,False,False
+s_2963,"phosphatidate (1-16:1, 2-18:1)",2,False,False,False,False
+s_2964,"phosphatidate (1-18:0, 2-18:1)",2,False,False,False,False
+s_2965,"phosphatidate (1-18:1, 2-18:1)",2,False,False,False,False
+s_2966,phosphate,35,False,False,False,False
+s_2967,"diglyceride (1-16:0, 2-16:1)",27,False,False,False,False
+s_2968,"diglyceride (1-16:0, 2-18:1)",27,False,False,False,False
+s_2969,"diglyceride (1-16:1, 2-16:1)",27,False,False,False,False
+s_2970,"diglyceride (1-16:1, 2-18:1)",27,False,False,False,False
+s_2971,"diglyceride (1-18:0, 2-16:1)",27,False,False,False,False
+s_2972,"diglyceride (1-18:0, 2-18:1)",27,False,False,False,False
+s_2973,"diglyceride (1-18:1, 2-16:1)",27,False,False,False,False
+s_2974,"diglyceride (1-18:1, 2-18:1)",27,False,False,False,False
+s_2975,"phosphatidate (1-16:0, 2-16:1)",4,False,False,False,False
+s_2976,H2O,29,False,False,False,False
+s_2977,phosphate,29,False,False,False,False
+s_2978,"diglyceride (1-16:0, 2-16:1)",1,True,True,False,True
+s_2979,"phosphatidate (1-16:0, 2-18:1)",4,False,False,False,False
+s_2980,"diglyceride (1-16:0, 2-18:1)",1,True,True,False,True
+s_2981,"phosphatidate (1-16:1, 2-16:1)",4,False,False,False,False
+s_2982,"diglyceride (1-16:1, 2-16:1)",1,True,True,False,True
+s_2983,"phosphatidate (1-16:1, 2-18:1)",4,False,False,False,False
+s_2984,"diglyceride (1-16:1, 2-18:1)",1,True,True,False,True
+s_2985,"phosphatidate (1-18:0, 2-16:1)",4,False,False,False,False
+s_2986,"diglyceride (1-18:0, 2-16:1)",1,True,True,False,True
+s_2987,"phosphatidate (1-18:0, 2-18:1)",4,False,False,False,False
+s_2988,"diglyceride (1-18:0, 2-18:1)",1,True,True,False,True
+s_2989,"phosphatidate (1-18:1, 2-16:1)",4,False,False,False,False
+s_2990,"diglyceride (1-18:1, 2-16:1)",1,True,True,False,True
+s_2991,"phosphatidate (1-18:1, 2-18:1)",4,False,False,False,False
+s_2992,"diglyceride (1-18:1, 2-18:1)",1,True,True,False,True
+s_2993,"phosphatidate (1-16:0, 2-16:1)",4,False,False,False,False
+s_2994,H2O,37,False,False,False,False
+s_2995,phosphate,37,False,False,False,False
+s_2996,"diglyceride (1-16:0, 2-16:1)",22,False,False,False,False
+s_2997,"phosphatidate (1-16:0, 2-18:1)",4,False,False,False,False
+s_2998,"diglyceride (1-16:0, 2-18:1)",22,False,False,False,False
+s_2999,"phosphatidate (1-16:1, 2-16:1)",4,False,False,False,False
+s_3000,"diglyceride (1-16:1, 2-16:1)",22,False,False,False,False
+s_3001,"phosphatidate (1-16:1, 2-18:1)",4,False,False,False,False
+s_3002,"diglyceride (1-16:1, 2-18:1)",22,False,False,False,False
+s_3003,"phosphatidate (1-18:0, 2-16:1)",4,False,False,False,False
+s_3004,"diglyceride (1-18:0, 2-16:1)",22,False,False,False,False
+s_3005,"phosphatidate (1-18:0, 2-18:1)",4,False,False,False,False
+s_3006,"diglyceride (1-18:0, 2-18:1)",22,False,False,False,False
+s_3007,"phosphatidate (1-18:1, 2-16:1)",4,False,False,False,False
+s_3008,"diglyceride (1-18:1, 2-16:1)",22,False,False,False,False
+s_3009,"phosphatidate (1-18:1, 2-18:1)",4,False,False,False,False
+s_3010,"diglyceride (1-18:1, 2-18:1)",22,False,False,False,False
+s_3011,"triglyceride (1-16:0, 2-16:1, 3-16:0)",3,False,False,False,False
+s_3012,"triglyceride (1-16:0, 2-18:1, 3-16:0)",3,False,False,False,False
+s_3013,"triglyceride (1-16:1, 2-16:1, 3-16:0)",3,False,False,False,False
+s_3014,"triglyceride (1-16:1, 2-18:1, 3-16:0)",3,False,False,False,False
+s_3015,"triglyceride (1-18:0, 2-16:1, 3-16:0)",3,False,False,False,False
+s_3016,"triglyceride (1-18:0, 2-18:1, 3-16:0)",3,False,False,False,False
+s_3017,"triglyceride (1-18:1, 2-16:1, 3-16:0)",3,False,False,False,False
+s_3018,"triglyceride (1-18:1, 2-18:1, 3-16:0)",3,False,False,False,False
+s_3019,"triglyceride (1-16:0, 2-16:1, 3-16:1)",11,False,False,False,False
+s_3020,"triglyceride (1-16:0, 2-18:1, 3-16:1)",11,False,False,False,False
+s_3021,"triglyceride (1-16:1, 2-16:1, 3-16:1)",11,False,False,False,False
+s_3022,"triglyceride (1-16:1, 2-18:1, 3-16:1)",11,False,False,False,False
+s_3023,"triglyceride (1-18:0, 2-16:1, 3-16:1)",11,False,False,False,False
+s_3024,"triglyceride (1-18:0, 2-18:1, 3-16:1)",11,False,False,False,False
+s_3025,"triglyceride (1-18:1, 2-16:1, 3-16:1)",11,False,False,False,False
+s_3026,"triglyceride (1-18:1, 2-18:1, 3-16:1)",11,False,False,False,False
+s_3027,"triglyceride (1-16:0, 2-16:1, 3-18:0)",3,False,False,False,False
+s_3028,"triglyceride (1-16:0, 2-18:1, 3-18:0)",3,False,False,False,False
+s_3029,"triglyceride (1-16:1, 2-16:1, 3-18:0)",3,False,False,False,False
+s_3030,"triglyceride (1-16:1, 2-18:1, 3-18:0)",3,False,False,False,False
+s_3031,"triglyceride (1-18:0, 2-16:1, 3-18:0)",3,False,False,False,False
+s_3032,"triglyceride (1-18:0, 2-18:1, 3-18:0)",3,False,False,False,False
+s_3033,"triglyceride (1-18:1, 2-16:1, 3-18:0)",3,False,False,False,False
+s_3034,"triglyceride (1-18:1, 2-18:1, 3-18:0)",3,False,False,False,False
+s_3035,"triglyceride (1-16:0, 2-16:1, 3-18:1)",11,False,False,False,False
+s_3036,"triglyceride (1-16:0, 2-18:1, 3-18:1)",11,False,False,False,False
+s_3037,"triglyceride (1-16:1, 2-16:1, 3-18:1)",11,False,False,False,False
+s_3038,"triglyceride (1-16:1, 2-18:1, 3-18:1)",11,False,False,False,False
+s_3039,"triglyceride (1-18:0, 2-16:1, 3-18:1)",11,False,False,False,False
+s_3040,"triglyceride (1-18:0, 2-18:1, 3-18:1)",11,False,False,False,False
+s_3041,"triglyceride (1-18:1, 2-16:1, 3-18:1)",11,False,False,False,False
+s_3042,"triglyceride (1-18:1, 2-18:1, 3-18:1)",11,False,False,False,False
+s_3043,"diglyceride (1-16:0, 2-16:1)",10,False,False,False,False
+s_3044,"triglyceride (1-16:0, 2-16:1, 3-16:0)",3,False,False,False,False
+s_3045,"diglyceride (1-16:0, 2-18:1)",10,False,False,False,False
+s_3046,"triglyceride (1-16:0, 2-18:1, 3-16:0)",3,False,False,False,False
+s_3047,"diglyceride (1-16:1, 2-16:1)",10,False,False,False,False
+s_3048,"triglyceride (1-16:1, 2-16:1, 3-16:0)",3,False,False,False,False
+s_3049,"diglyceride (1-16:1, 2-18:1)",10,False,False,False,False
+s_3050,"triglyceride (1-16:1, 2-18:1, 3-16:0)",3,False,False,False,False
+s_3051,"diglyceride (1-18:0, 2-16:1)",10,False,False,False,False
+s_3052,"triglyceride (1-18:0, 2-16:1, 3-16:0)",3,False,False,False,False
+s_3053,"diglyceride (1-18:0, 2-18:1)",10,False,False,False,False
+s_3054,"triglyceride (1-18:0, 2-18:1, 3-16:0)",3,False,False,False,False
+s_3055,"diglyceride (1-18:1, 2-16:1)",10,False,False,False,False
+s_3056,"triglyceride (1-18:1, 2-16:1, 3-16:0)",3,False,False,False,False
+s_3057,"diglyceride (1-18:1, 2-18:1)",10,False,False,False,False
+s_3058,"triglyceride (1-18:1, 2-18:1, 3-16:0)",3,False,False,False,False
+s_3059,"triglyceride (1-16:0, 2-16:1, 3-16:1)",3,False,False,False,False
+s_3060,"triglyceride (1-16:0, 2-18:1, 3-16:1)",3,False,False,False,False
+s_3061,"triglyceride (1-16:1, 2-16:1, 3-16:1)",3,False,False,False,False
+s_3062,"triglyceride (1-16:1, 2-18:1, 3-16:1)",3,False,False,False,False
+s_3063,"triglyceride (1-18:0, 2-16:1, 3-16:1)",3,False,False,False,False
+s_3064,"triglyceride (1-18:0, 2-18:1, 3-16:1)",3,False,False,False,False
+s_3065,"triglyceride (1-18:1, 2-16:1, 3-16:1)",3,False,False,False,False
+s_3066,"triglyceride (1-18:1, 2-18:1, 3-16:1)",3,False,False,False,False
+s_3067,"triglyceride (1-16:0, 2-16:1, 3-18:0)",3,False,False,False,False
+s_3068,"triglyceride (1-16:0, 2-18:1, 3-18:0)",3,False,False,False,False
+s_3069,"triglyceride (1-16:1, 2-16:1, 3-18:0)",3,False,False,False,False
+s_3070,"triglyceride (1-16:1, 2-18:1, 3-18:0)",3,False,False,False,False
+s_3071,"triglyceride (1-18:0, 2-16:1, 3-18:0)",3,False,False,False,False
+s_3072,"triglyceride (1-18:0, 2-18:1, 3-18:0)",3,False,False,False,False
+s_3073,"triglyceride (1-18:1, 2-16:1, 3-18:0)",3,False,False,False,False
+s_3074,"triglyceride (1-18:1, 2-18:1, 3-18:0)",3,False,False,False,False
+s_3075,"triglyceride (1-16:0, 2-16:1, 3-18:1)",3,False,False,False,False
+s_3076,"triglyceride (1-16:0, 2-18:1, 3-18:1)",3,False,False,False,False
+s_3077,"triglyceride (1-16:1, 2-16:1, 3-18:1)",3,False,False,False,False
+s_3078,"triglyceride (1-16:1, 2-18:1, 3-18:1)",3,False,False,False,False
+s_3079,"triglyceride (1-18:0, 2-16:1, 3-18:1)",3,False,False,False,False
+s_3080,"triglyceride (1-18:0, 2-18:1, 3-18:1)",3,False,False,False,False
+s_3081,"triglyceride (1-18:1, 2-16:1, 3-18:1)",3,False,False,False,False
+s_3082,"triglyceride (1-18:1, 2-18:1, 3-18:1)",3,False,False,False,False
+s_3083,CTP,17,False,False,False,False
+s_3084,"CDP-diacylglycerol (1-16:0, 2-16:1)",3,False,False,False,False
+s_3085,"CDP-diacylglycerol (1-16:1, 2-16:1)",3,False,False,False,False
+s_3086,"CDP-diacylglycerol (1-18:0, 2-16:1)",3,False,False,False,False
+s_3087,"CDP-diacylglycerol (1-18:1, 2-16:1)",3,False,False,False,False
+s_3088,"CDP-diacylglycerol (1-16:0, 2-18:1)",3,False,False,False,False
+s_3089,"CDP-diacylglycerol (1-16:1, 2-18:1)",3,False,False,False,False
+s_3090,"CDP-diacylglycerol (1-18:0, 2-18:1)",3,False,False,False,False
+s_3091,"CDP-diacylglycerol (1-18:1, 2-18:1)",3,False,False,False,False
+s_3092,"phosphatidate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3093,CTP,7,False,False,False,False
+s_3094,H+,91,False,False,False,False
+s_3095,diphosphate,7,False,False,False,False
+s_3096,"CDP-diacylglycerol (1-16:0, 2-16:1)",8,False,False,False,False
+s_3097,"phosphatidate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3098,"CDP-diacylglycerol (1-16:1, 2-16:1)",8,False,False,False,False
+s_3099,"phosphatidate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3100,"CDP-diacylglycerol (1-18:0, 2-16:1)",8,False,False,False,False
+s_3101,"phosphatidate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3102,"CDP-diacylglycerol (1-18:1, 2-16:1)",8,False,False,False,False
+s_3103,"phosphatidate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3104,"CDP-diacylglycerol (1-16:0, 2-18:1)",8,False,False,False,False
+s_3105,"phosphatidate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3106,"CDP-diacylglycerol (1-16:1, 2-18:1)",8,False,False,False,False
+s_3107,L-serine,9,False,False,False,False
+s_3108,CMP,33,False,False,False,False
+s_3109,"phosphatidyl-L-serine (1-16:0, 2-16:1)",6,False,False,False,False
+s_3110,"phosphatidyl-L-serine (1-16:1, 2-16:1)",6,False,False,False,False
+s_3111,"phosphatidyl-L-serine (1-18:0, 2-16:1)",6,False,False,False,False
+s_3112,"phosphatidyl-L-serine (1-18:1, 2-16:1)",6,False,False,False,False
+s_3113,"phosphatidyl-L-serine (1-16:0, 2-18:1)",6,False,False,False,False
+s_3114,"phosphatidyl-L-serine (1-16:1, 2-18:1)",6,False,False,False,False
+s_3115,"phosphatidyl-L-serine (1-18:0, 2-18:1)",6,False,False,False,False
+s_3116,"phosphatidyl-L-serine (1-18:1, 2-18:1)",6,False,False,False,False
+s_3117,myo-inositol,9,False,False,False,False
+s_3118,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-16:1)",8,False,False,False,False
+s_3119,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-16:1)",8,False,False,False,False
+s_3120,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-16:1)",9,False,False,False,False
+s_3121,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-16:1)",8,False,False,False,False
+s_3122,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-18:1)",8,False,False,False,False
+s_3123,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-18:1)",8,False,False,False,False
+s_3124,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-18:1)",9,False,False,False,False
+s_3125,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-18:1)",8,False,False,False,False
+s_3126,sn-2-acyl-1-lysophosphatidylinositol (16:1),2,False,False,False,False
+s_3127,sn-2-acyl-1-lysophosphatidylinositol (18:1),2,False,False,False,False
+s_3128,"phosphatidyl-L-serine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3129,carbon dioxide,9,False,False,False,False
+s_3130,"phosphatidylethanolamine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3131,"phosphatidyl-L-serine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3132,"phosphatidylethanolamine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3133,"phosphatidyl-L-serine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3134,"phosphatidylethanolamine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3135,"phosphatidyl-L-serine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3136,"phosphatidylethanolamine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3137,"phosphatidyl-L-serine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3138,"phosphatidylethanolamine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3139,"phosphatidyl-L-serine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3140,"phosphatidylethanolamine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3141,"phosphatidyl-L-serine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3142,"phosphatidylethanolamine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3143,"phosphatidyl-L-serine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3144,"phosphatidylethanolamine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3145,"phosphatidyl-L-serine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3146,H+,53,False,False,False,False
+s_3147,carbon dioxide,9,False,False,False,False
+s_3148,"phosphatidylethanolamine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3149,"phosphatidyl-L-serine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3150,"phosphatidylethanolamine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3151,"phosphatidyl-L-serine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3152,"phosphatidylethanolamine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3153,"phosphatidyl-L-serine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3154,"phosphatidylethanolamine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3155,"phosphatidyl-L-serine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3156,"phosphatidylethanolamine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3157,"phosphatidyl-L-serine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3158,"phosphatidylethanolamine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3159,"phosphatidyl-L-serine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3160,"phosphatidylethanolamine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3161,"phosphatidyl-L-serine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3162,"phosphatidylethanolamine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3163,"phosphatidyl-L-serine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3164,H+,61,False,False,False,False
+s_3165,carbon dioxide,9,False,False,False,False
+s_3166,"phosphatidylethanolamine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3167,"phosphatidyl-L-serine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3168,"phosphatidylethanolamine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3169,"phosphatidyl-L-serine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3170,"phosphatidylethanolamine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3171,"phosphatidyl-L-serine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3172,"phosphatidylethanolamine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3173,"phosphatidyl-L-serine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3174,"phosphatidylethanolamine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3175,"phosphatidyl-L-serine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3176,"phosphatidylethanolamine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3177,"phosphatidyl-L-serine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3178,"phosphatidylethanolamine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3179,"phosphatidyl-L-serine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3180,"phosphatidylethanolamine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3181,"phosphatidylethanolamine (1-16:0, 2-16:1)",16,False,False,False,False
+s_3182,S-adenosyl-L-methionine,25,False,False,False,False
+s_3183,S-adenosyl-L-homocysteine,25,False,False,False,False
+s_3184,"phosphatidyl-N-methylethanolamine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3185,"phosphatidylethanolamine (1-16:1, 2-16:1)",16,False,False,False,False
+s_3186,"phosphatidyl-N-methylethanolamine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3187,"phosphatidylethanolamine (1-18:0, 2-16:1)",16,False,False,False,False
+s_3188,"phosphatidyl-N-methylethanolamine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3189,"phosphatidylethanolamine (1-18:1, 2-16:1)",16,False,False,False,False
+s_3190,"phosphatidyl-N-methylethanolamine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3191,"phosphatidylethanolamine (1-16:0, 2-18:1)",16,False,False,False,False
+s_3192,"phosphatidyl-N-methylethanolamine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3193,"phosphatidylethanolamine (1-16:1, 2-18:1)",16,False,False,False,False
+s_3194,"phosphatidyl-N-methylethanolamine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3195,"phosphatidylethanolamine (1-18:0, 2-18:1)",16,False,False,False,False
+s_3196,"phosphatidyl-N-methylethanolamine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3197,"phosphatidylethanolamine (1-18:1, 2-18:1)",16,False,False,False,False
+s_3198,"phosphatidyl-N-methylethanolamine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3199,"phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3200,"phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3201,"phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3202,"phosphatidyl-N,N-dimethylethanolamine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3203,"phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3204,"phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3205,"phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3206,"phosphatidyl-N,N-dimethylethanolamine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3207,"phosphatidylcholine (1-16:0, 2-16:1)",15,False,False,False,False
+s_3208,"phosphatidylcholine (1-16:1, 2-16:1)",15,False,False,False,False
+s_3209,"phosphatidylcholine (1-18:0, 2-16:1)",15,False,False,False,False
+s_3210,"phosphatidylcholine (1-18:1, 2-16:1)",15,False,False,False,False
+s_3211,"phosphatidylcholine (1-16:0, 2-18:1)",15,False,False,False,False
+s_3212,"phosphatidylcholine (1-16:1, 2-18:1)",15,False,False,False,False
+s_3213,"phosphatidylcholine (1-18:0, 2-18:1)",15,False,False,False,False
+s_3214,"phosphatidylcholine (1-18:1, 2-18:1)",15,False,False,False,False
+s_3215,CDP,9,False,False,False,False
+s_3216,CDP-ethanolamine,9,False,False,False,False
+s_3217,CDP-choline,9,False,False,False,False
+s_3218,glycerol 3-phosphate,13,False,False,False,False
+s_3219,CMP,43,False,False,False,False
+s_3220,"3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3221,"3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3222,"3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3223,"3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3224,"3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3225,"3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3226,H2O,49,False,False,False,False
+s_3227,"phosphatidylglycerol (1-16:0, 2-16:1)",9,False,False,False,False
+s_3228,phosphate,7,False,False,False,False
+s_3229,"phosphatidylglycerol (1-16:1, 2-16:1)",9,False,False,False,False
+s_3230,"phosphatidylglycerol (1-18:0, 2-16:1)",9,False,False,False,False
+s_3231,"phosphatidylglycerol (1-18:1, 2-16:1)",9,False,False,False,False
+s_3232,"phosphatidylglycerol (1-16:0, 2-18:1)",9,False,False,False,False
+s_3233,"phosphatidylglycerol (1-16:1, 2-18:1)",9,False,False,False,False
+s_3234,"cardiolipin (1-16:0, 2-16:1, 3-16:0, 4-16:1)",4,False,False,False,False
+s_3235,"cardiolipin (1-16:0, 2-16:1, 3-16:1, 4-16:1)",7,False,False,False,False
+s_3236,"cardiolipin (1-16:0, 2-16:1, 3-18:0, 4-16:1)",4,False,False,False,False
+s_3237,"cardiolipin (1-16:0, 2-16:1, 3-18:1, 4-16:1)",7,False,False,False,False
+s_3238,"cardiolipin (1-16:0, 2-16:1, 3-16:0, 4-18:1)",4,False,False,False,False
+s_3239,"cardiolipin (1-16:0, 2-16:1, 3-16:1, 4-18:1)",7,False,False,False,False
+s_3240,"cardiolipin (1-16:1, 2-16:1, 3-16:0, 4-16:1)",7,False,False,False,False
+s_3241,"cardiolipin (1-16:1, 2-16:1, 3-16:1, 4-16:1)",10,False,False,False,False
+s_3242,"cardiolipin (1-16:1, 2-16:1, 3-18:0, 4-16:1)",7,False,False,False,False
+s_3243,"cardiolipin (1-16:1, 2-16:1, 3-18:1, 4-16:1)",10,False,False,False,False
+s_3244,"cardiolipin (1-16:1, 2-16:1, 3-16:0, 4-18:1)",7,False,False,False,False
+s_3245,"cardiolipin (1-16:1, 2-16:1, 3-16:1, 4-18:1)",10,False,False,False,False
+s_3246,"cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-16:1)",4,False,False,False,False
+s_3247,"cardiolipin (1-18:0, 2-16:1, 3-16:1, 4-16:1)",7,False,False,False,False
+s_3248,"cardiolipin (1-18:0, 2-16:1, 3-18:0, 4-16:1)",4,False,False,False,False
+s_3249,"cardiolipin (1-18:0, 2-16:1, 3-18:1, 4-16:1)",7,False,False,False,False
+s_3250,"cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-18:1)",4,False,False,False,False
+s_3251,"cardiolipin (1-18:0, 2-16:1, 3-16:1, 4-18:1)",7,False,False,False,False
+s_3252,"cardiolipin (1-18:1, 2-16:1, 3-16:0, 4-16:1)",7,False,False,False,False
+s_3253,"cardiolipin (1-18:1, 2-16:1, 3-16:1, 4-16:1)",10,False,False,False,False
+s_3254,"cardiolipin (1-18:1, 2-16:1, 3-18:0, 4-16:1)",7,False,False,False,False
+s_3255,"cardiolipin (1-18:1, 2-16:1, 3-18:1, 4-16:1)",10,False,False,False,False
+s_3256,"cardiolipin (1-18:1, 2-16:1, 3-16:0, 4-18:1)",7,False,False,False,False
+s_3257,"cardiolipin (1-18:1, 2-16:1, 3-16:1, 4-18:1)",10,False,False,False,False
+s_3258,"cardiolipin (1-16:0, 2-18:1, 3-16:0, 4-16:1)",4,False,False,False,False
+s_3259,"cardiolipin (1-16:0, 2-18:1, 3-16:1, 4-16:1)",7,False,False,False,False
+s_3260,"cardiolipin (1-16:0, 2-18:1, 3-18:0, 4-16:1)",4,False,False,False,False
+s_3261,"cardiolipin (1-16:0, 2-18:1, 3-18:1, 4-16:1)",7,False,False,False,False
+s_3262,"cardiolipin (1-16:0, 2-18:1, 3-16:0, 4-18:1)",4,False,False,False,False
+s_3263,"cardiolipin (1-16:0, 2-18:1, 3-16:1, 4-18:1)",7,False,False,False,False
+s_3264,"cardiolipin (1-16:1, 2-18:1, 3-16:0, 4-16:1)",7,False,False,False,False
+s_3265,"cardiolipin (1-16:1, 2-18:1, 3-16:1, 4-16:1)",10,False,False,False,False
+s_3266,"cardiolipin (1-16:1, 2-18:1, 3-18:0, 4-16:1)",7,False,False,False,False
+s_3267,"cardiolipin (1-16:1, 2-18:1, 3-18:1, 4-16:1)",10,False,False,False,False
+s_3268,"cardiolipin (1-16:1, 2-18:1, 3-16:0, 4-18:1)",7,False,False,False,False
+s_3269,"cardiolipin (1-16:1, 2-18:1, 3-16:1, 4-18:1)",10,False,False,False,False
+s_3270,"monolysocardiolipin (2-16:1, 3-16:0, 4-16:1)",10,False,False,False,False
+s_3271,palmitate,25,False,False,False,False
+s_3272,"monolysocardiolipin (2-16:1, 3-16:1, 4-16:1)",10,False,False,False,False
+s_3273,"monolysocardiolipin (2-16:1, 3-18:0, 4-16:1)",10,False,False,False,False
+s_3274,"monolysocardiolipin (2-16:1, 3-18:1, 4-16:1)",10,False,False,False,False
+s_3275,"monolysocardiolipin (2-16:1, 3-16:0, 4-18:1)",10,False,False,False,False
+s_3276,"monolysocardiolipin (2-16:1, 3-16:1, 4-18:1)",10,False,False,False,False
+s_3277,stearate,13,False,False,False,False
+s_3278,"monolysocardiolipin (2-18:1, 3-16:0, 4-16:1)",9,False,False,False,False
+s_3279,"monolysocardiolipin (2-18:1, 3-16:1, 4-16:1)",9,False,False,False,False
+s_3280,"monolysocardiolipin (2-18:1, 3-18:0, 4-16:1)",9,False,False,False,False
+s_3281,"monolysocardiolipin (2-18:1, 3-18:1, 4-16:1)",9,False,False,False,False
+s_3282,"monolysocardiolipin (2-18:1, 3-16:0, 4-18:1)",9,False,False,False,False
+s_3283,"monolysocardiolipin (2-18:1, 3-16:1, 4-18:1)",9,False,False,False,False
+s_3284,"monolysocardiolipin (1-16:0, 2-16:1, 4-16:1)",10,False,False,False,False
+s_3285,"monolysocardiolipin (1-16:0, 2-16:1, 4-18:1)",9,False,False,False,False
+s_3286,"monolysocardiolipin (1-16:1, 2-16:1, 4-16:1)",10,False,False,False,False
+s_3287,"monolysocardiolipin (1-16:1, 2-16:1, 4-18:1)",9,False,False,False,False
+s_3288,"monolysocardiolipin (1-18:0, 2-16:1, 4-16:1)",10,False,False,False,False
+s_3289,"monolysocardiolipin (1-18:0, 2-16:1, 4-18:1)",9,False,False,False,False
+s_3290,"monolysocardiolipin (1-18:1, 2-16:1, 4-16:1)",10,False,False,False,False
+s_3291,"monolysocardiolipin (1-18:1, 2-16:1, 4-18:1)",9,False,False,False,False
+s_3292,"monolysocardiolipin (1-16:0, 2-18:1, 4-16:1)",10,False,False,False,False
+s_3293,"monolysocardiolipin (1-16:0, 2-18:1, 4-18:1)",9,False,False,False,False
+s_3294,"monolysocardiolipin (1-16:1, 2-18:1, 4-16:1)",10,False,False,False,False
+s_3295,"monolysocardiolipin (1-16:1, 2-18:1, 4-18:1)",9,False,False,False,False
+s_3296,"phosphatidylcholine (1-16:0, 2-16:1)",26,False,False,False,False
+s_3297,1-acylglycerophosphocholine (16:0),50,False,False,False,False
+s_3298,"phosphatidylcholine (1-16:1, 2-16:1)",26,False,False,False,False
+s_3299,1-acylglycerophosphocholine (16:1),50,False,False,False,False
+s_3300,"phosphatidylcholine (1-18:0, 2-16:1)",26,False,False,False,False
+s_3301,1-acylglycerophosphocholine (18:0),50,False,False,False,False
+s_3302,"phosphatidylcholine (1-18:1, 2-16:1)",26,False,False,False,False
+s_3303,1-acylglycerophosphocholine (18:1),50,False,False,False,False
+s_3304,"phosphatidylcholine (1-16:0, 2-18:1)",26,False,False,False,False
+s_3305,"phosphatidylcholine (1-16:1, 2-18:1)",26,False,False,False,False
+s_3306,"phosphatidylcholine (1-18:0, 2-18:1)",26,False,False,False,False
+s_3307,"phosphatidylcholine (1-18:1, 2-18:1)",26,False,False,False,False
+s_3308,"cardiolipin (1-18:1, 2-18:1, 3-16:0, 4-16:1)",5,False,False,False,False
+s_3309,"cardiolipin (1-18:1, 2-18:1, 3-16:1, 4-16:1)",5,False,False,False,False
+s_3310,"cardiolipin (1-18:1, 2-18:1, 3-18:0, 4-16:1)",5,False,False,False,False
+s_3311,"cardiolipin (1-18:1, 2-18:1, 3-18:1, 4-16:1)",5,False,False,False,False
+s_3312,"cardiolipin (1-18:1, 2-18:1, 3-16:0, 4-18:1)",5,False,False,False,False
+s_3313,"cardiolipin (1-18:1, 2-18:1, 3-16:1, 4-18:1)",5,False,False,False,False
+s_3314,"cardiolipin (1-16:0, 2-16:1, 3-18:1, 4-18:1)",5,False,False,False,False
+s_3315,"cardiolipin (1-16:1, 2-16:1, 3-18:1, 4-18:1)",5,False,False,False,False
+s_3316,"cardiolipin (1-18:0, 2-16:1, 3-18:1, 4-18:1)",5,False,False,False,False
+s_3317,"cardiolipin (1-18:1, 2-16:1, 3-18:1, 4-18:1)",5,False,False,False,False
+s_3318,"cardiolipin (1-16:0, 2-18:1, 3-18:1, 4-18:1)",5,False,False,False,False
+s_3319,"cardiolipin (1-16:1, 2-18:1, 3-18:1, 4-18:1)",5,False,False,False,False
+s_3320,palmitoleoyl-CoA(4-),5,False,False,False,False
+s_3321,coenzyme A,9,False,False,False,False
+s_3322,oleoyl-CoA,5,False,False,False,False
+s_3323,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-16:1)",5,False,False,False,False
+s_3324,ADP,17,False,False,False,False
+s_3325,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-16:1)",6,False,False,False,False
+s_3326,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-16:1)",5,False,False,False,False
+s_3327,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-16:1)",6,False,False,False,False
+s_3328,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-16:1)",5,False,False,False,False
+s_3329,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-16:1)",6,False,False,False,False
+s_3330,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-16:1)",5,False,False,False,False
+s_3331,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-16:1)",6,False,False,False,False
+s_3332,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-18:1)",5,False,False,False,False
+s_3333,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-18:1)",6,False,False,False,False
+s_3334,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-18:1)",5,False,False,False,False
+s_3335,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-18:1)",6,False,False,False,False
+s_3336,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-18:1)",5,False,False,False,False
+s_3337,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-18:1)",6,False,False,False,False
+s_3338,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-18:1)",5,False,False,False,False
+s_3339,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-18:1)",6,False,False,False,False
+s_3340,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-16:1)",3,False,False,False,False
+s_3341,ATP,33,False,False,False,False
+s_3342,ADP,33,False,False,False,False
+s_3343,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-16:1)",1,True,True,False,True
+s_3344,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-16:1)",3,False,False,False,False
+s_3345,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-16:1)",1,True,True,False,True
+s_3346,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-16:1)",3,False,False,False,False
+s_3347,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-16:1)",1,True,True,False,True
+s_3348,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-16:1)",3,False,False,False,False
+s_3349,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-16:1)",1,True,True,False,True
+s_3350,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-18:1)",3,False,False,False,False
+s_3351,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-18:1)",1,True,True,False,True
+s_3352,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-18:1)",3,False,False,False,False
+s_3353,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-18:1)",1,True,True,False,True
+s_3354,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-18:1)",3,False,False,False,False
+s_3355,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-18:1)",1,True,True,False,True
+s_3356,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-18:1)",3,False,False,False,False
+s_3357,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-18:1)",1,True,True,False,True
+s_3358,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-16:1)",24,False,False,False,False
+s_3359,ATP,17,False,False,False,False
+s_3360,ADP,17,False,False,False,False
+s_3361,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3362,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-16:1)",24,False,False,False,False
+s_3363,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3364,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-16:1)",24,False,False,False,False
+s_3365,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3366,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-16:1)",24,False,False,False,False
+s_3367,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3368,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-18:1)",24,False,False,False,False
+s_3369,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3370,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-18:1)",24,False,False,False,False
+s_3371,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3372,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-18:1)",24,False,False,False,False
+s_3373,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3374,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-18:1)",24,False,False,False,False
+s_3375,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3376,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-16:1)",2,False,False,False,False
+s_3377,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3378,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-16:1)",2,False,False,False,False
+s_3379,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3380,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-16:1)",2,False,False,False,False
+s_3381,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3382,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-16:1)",2,False,False,False,False
+s_3383,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3384,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-18:1)",2,False,False,False,False
+s_3385,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3386,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-18:1)",2,False,False,False,False
+s_3387,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3388,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-18:1)",2,False,False,False,False
+s_3389,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3390,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-18:1)",2,False,False,False,False
+s_3391,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3392,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-16:1)",5,False,False,False,False
+s_3393,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-16:1)",5,False,False,False,False
+s_3394,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-16:1)",5,False,False,False,False
+s_3395,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-16:1)",5,False,False,False,False
+s_3396,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-18:1)",5,False,False,False,False
+s_3397,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-18:1)",5,False,False,False,False
+s_3398,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-18:1)",5,False,False,False,False
+s_3399,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-18:1)",5,False,False,False,False
+s_3400,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-16:1)",3,False,False,False,False
+s_3401,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-16:1)",3,False,False,False,False
+s_3402,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:0, 2-16:1)",3,False,False,False,False
+s_3403,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-16:1)",3,False,False,False,False
+s_3404,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-18:1)",3,False,False,False,False
+s_3405,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-18:1)",3,False,False,False,False
+s_3406,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:0, 2-18:1)",3,False,False,False,False
+s_3407,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-18:1)",3,False,False,False,False
+s_3408,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-16:1)",4,False,False,False,False
+s_3409,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-16:1)",4,False,False,False,False
+s_3410,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:0, 2-16:1)",4,False,False,False,False
+s_3411,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-16:1)",4,False,False,False,False
+s_3412,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-18:1)",4,False,False,False,False
+s_3413,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-18:1)",4,False,False,False,False
+s_3414,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:0, 2-18:1)",4,False,False,False,False
+s_3415,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-18:1)",4,False,False,False,False
+s_3416,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:0, 2-16:1)",4,False,False,False,False
+s_3417,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:1, 2-16:1)",4,False,False,False,False
+s_3418,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:0, 2-16:1)",4,False,False,False,False
+s_3419,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:1, 2-16:1)",4,False,False,False,False
+s_3420,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:0, 2-18:1)",4,False,False,False,False
+s_3421,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:1, 2-18:1)",4,False,False,False,False
+s_3422,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:0, 2-18:1)",4,False,False,False,False
+s_3423,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:1, 2-18:1)",4,False,False,False,False
+s_3424,1-acylglycerophosphoethanolamine (16:0),17,False,False,False,False
+s_3425,1-acylglycerophosphoethanolamine (16:1),17,False,False,False,False
+s_3426,1-acylglycerophosphoethanolamine (18:0),17,False,False,False,False
+s_3427,1-acylglycerophosphoethanolamine (18:1),17,False,False,False,False
+s_3428,1-acylglycerophosphocholine (16:0),20,False,False,False,False
+s_3429,1-acylglycerophosphocholine (16:1),20,False,False,False,False
+s_3430,1-acylglycerophosphocholine (18:0),20,False,False,False,False
+s_3431,1-acylglycerophosphocholine (18:1),20,False,False,False,False
+s_3432,episterol,4,False,False,False,False
+s_3433,episteryl oleate,2,False,False,False,False
+s_3434,episteryl palmitoleate,2,False,False,False,False
+s_3435,fecosterol,4,False,False,False,False
+s_3436,fecosteryl oleate,2,False,False,False,False
+s_3437,fecosteryl palmitoleate,2,False,False,False,False
+s_3438,lanosterol,4,False,False,False,False
+s_3439,lanosteryl oleate,2,False,False,False,False
+s_3440,lanosteryl palmitoleate,2,False,False,False,False
+s_3441,ergosterol,4,False,False,False,False
+s_3442,ergosteryl oleate,3,False,False,False,False
+s_3443,ergosteryl palmitoleate,3,False,False,False,False
+s_3444,zymosterol,4,False,False,False,False
+s_3445,zymosteryl oleate,3,False,False,False,False
+s_3446,zymosteryl palmitoleate,3,False,False,False,False
+s_3447,sn-glycero-3-phosphocholine,5,False,False,False,False
+s_3448,"phosphatidylcholine (1-16:0, 2-16:1)",3,False,False,False,False
+s_3449,H2O,91,False,False,False,False
+s_3450,1-acylglycerophosphocholine (16:0),3,False,False,False,False
+s_3451,palmitoleate,22,False,False,False,False
+s_3452,"phosphatidylcholine (1-16:1, 2-16:1)",3,False,False,False,False
+s_3453,1-acylglycerophosphocholine (16:1),3,False,False,False,False
+s_3454,"phosphatidylcholine (1-18:0, 2-16:1)",3,False,False,False,False
+s_3455,1-acylglycerophosphocholine (18:0),3,False,False,False,False
+s_3456,"phosphatidylcholine (1-18:1, 2-16:1)",3,False,False,False,False
+s_3457,1-acylglycerophosphocholine (18:1),3,False,False,False,False
+s_3458,"phosphatidylcholine (1-16:0, 2-18:1)",3,False,False,False,False
+s_3459,oleate,22,False,False,False,False
+s_3460,"phosphatidylcholine (1-16:1, 2-18:1)",3,False,False,False,False
+s_3461,"phosphatidylcholine (1-18:0, 2-18:1)",3,False,False,False,False
+s_3462,"phosphatidylcholine (1-18:1, 2-18:1)",3,False,False,False,False
+s_3463,palmitate,5,False,False,False,False
+s_3464,stearate,5,False,False,False,False
+s_3465,"phosphatidylethanolamine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3466,1-acylglycerophosphoethanolamine (16:0),3,False,False,False,False
+s_3467,"phosphatidylethanolamine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3468,1-acylglycerophosphoethanolamine (16:1),3,False,False,False,False
+s_3469,"phosphatidylethanolamine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3470,1-acylglycerophosphoethanolamine (18:0),3,False,False,False,False
+s_3471,"phosphatidylethanolamine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3472,1-acylglycerophosphoethanolamine (18:1),3,False,False,False,False
+s_3473,"phosphatidylethanolamine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3474,"phosphatidylethanolamine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3475,"phosphatidylethanolamine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3476,"phosphatidylethanolamine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3477,sn-glycero-3-phosphoethanolamine,4,False,True,False,True
+s_3478,"phosphatidyl-L-serine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3479,1-acylglycerophosphoserine (16:0),3,False,False,False,False
+s_3480,"phosphatidyl-L-serine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3481,1-acylglycerophosphoserine (16:1),3,False,False,False,False
+s_3482,"phosphatidyl-L-serine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3483,1-acylglycerophosphoserine (18:0),3,False,False,False,False
+s_3484,"phosphatidyl-L-serine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3485,1-acylglycerophosphoserine (18:1),3,False,False,False,False
+s_3486,"phosphatidyl-L-serine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3487,"phosphatidyl-L-serine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3488,"phosphatidyl-L-serine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3489,"phosphatidyl-L-serine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3490,sn-glycero-3-phosphoserine,4,False,True,False,True
+s_3491,1-acylglycerophosphoinositol (16:0),3,False,False,False,False
+s_3492,1-acylglycerophosphoinositol (16:1),3,False,False,False,False
+s_3493,1-acylglycerophosphoinositol (18:0),3,False,False,False,False
+s_3494,1-acylglycerophosphoinositol (18:1),3,False,False,False,False
+s_3495,1-(sn-glycero-3-phospho)-1D-myo-inositol,5,False,False,False,False
+s_3496,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-16:1)",4,False,False,False,False
+s_3497,"diglyceride (1-16:0, 2-16:1)",5,False,False,False,False
+s_3498,"1D-myo-inositol 1,4,5-trisphosphate",8,False,True,False,True
+s_3499,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-16:1)",4,False,False,False,False
+s_3500,"diglyceride (1-16:1, 2-16:1)",5,False,False,False,False
+s_3501,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:0, 2-16:1)",4,False,False,False,False
+s_3502,"diglyceride (1-18:0, 2-16:1)",5,False,False,False,False
+s_3503,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-16:1)",4,False,False,False,False
+s_3504,"diglyceride (1-18:1, 2-16:1)",5,False,False,False,False
+s_3505,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-18:1)",4,False,False,False,False
+s_3506,"diglyceride (1-16:0, 2-18:1)",5,False,False,False,False
+s_3507,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-18:1)",4,False,False,False,False
+s_3508,"diglyceride (1-16:1, 2-18:1)",5,False,False,False,False
+s_3509,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:0, 2-18:1)",4,False,False,False,False
+s_3510,"diglyceride (1-18:0, 2-18:1)",4,False,False,False,False
+s_3511,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-18:1)",4,False,False,False,False
+s_3512,"diglyceride (1-18:1, 2-18:1)",4,False,False,False,False
+s_3513,"diglyceride (1-16:0, 2-16:1)",2,False,False,False,False
+s_3514,"diglyceride (1-16:1, 2-16:1)",2,False,False,False,False
+s_3515,"diglyceride (1-18:0, 2-16:1)",2,False,False,False,False
+s_3516,"diglyceride (1-18:1, 2-16:1)",2,False,False,False,False
+s_3517,"diglyceride (1-16:0, 2-18:1)",2,False,False,False,False
+s_3518,"diglyceride (1-16:1, 2-18:1)",2,False,False,False,False
+s_3519,"diglyceride (1-18:0, 2-18:1)",2,False,False,False,False
+s_3520,"diglyceride (1-18:1, 2-18:1)",2,False,False,False,False
+s_3521,"diglyceride (1-16:0, 2-16:1)",2,False,False,False,False
+s_3522,"diglyceride (1-16:1, 2-16:1)",2,False,False,False,False
+s_3523,"diglyceride (1-18:0, 2-16:1)",2,False,False,False,False
+s_3524,"diglyceride (1-18:1, 2-16:1)",2,False,False,False,False
+s_3525,"diglyceride (1-16:0, 2-18:1)",2,False,False,False,False
+s_3526,"diglyceride (1-16:1, 2-18:1)",2,False,False,False,False
+s_3527,"phosphatidate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3528,"phosphatidate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3529,"phosphatidate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3530,"phosphatidate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3531,"phosphatidate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3532,"phosphatidate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3533,"phosphatidate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3534,"phosphatidate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3535,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3536,phosphate,33,False,False,False,False
+s_3537,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3538,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3539,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3540,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3541,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3542,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3543,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3544,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3545,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-16:1)",4,False,False,False,False
+s_3546,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3547,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-16:1)",4,False,False,False,False
+s_3548,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3549,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-16:1)",4,False,False,False,False
+s_3550,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3551,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-16:1)",4,False,False,False,False
+s_3552,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3553,"1-phosphatidyl-1D-myo-inositol (1-16:0, 2-18:1)",4,False,False,False,False
+s_3554,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3555,"1-phosphatidyl-1D-myo-inositol (1-16:1, 2-18:1)",4,False,False,False,False
+s_3556,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3557,"1-phosphatidyl-1D-myo-inositol (1-18:0, 2-18:1)",4,False,False,False,False
+s_3558,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3559,"1-phosphatidyl-1D-myo-inositol (1-18:1, 2-18:1)",4,False,False,False,False
+s_3560,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3561,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3562,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3563,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3564,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3565,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3566,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3567,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3568,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3569,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3570,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3571,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3572,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3573,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3574,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3575,"1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3576,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-16:1)",3,False,False,False,False
+s_3577,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-16:1)",3,False,False,False,False
+s_3578,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-16:1)",3,False,False,False,False
+s_3579,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-16:1)",3,False,False,False,False
+s_3580,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-18:1)",3,False,False,False,False
+s_3581,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-18:1)",3,False,False,False,False
+s_3582,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-18:1)",3,False,False,False,False
+s_3583,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-18:1)",3,False,False,False,False
+s_3584,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-16:1)",3,False,False,False,False
+s_3585,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-16:1)",3,False,False,False,False
+s_3586,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-16:1)",3,False,False,False,False
+s_3587,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-16:1)",3,False,False,False,False
+s_3588,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-18:1)",3,False,False,False,False
+s_3589,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-18:1)",3,False,False,False,False
+s_3590,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-18:1)",3,False,False,False,False
+s_3591,"1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-18:1)",3,False,False,False,False
+s_3592,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3593,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3594,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3595,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3596,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3597,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3598,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3599,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3600,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3601,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3602,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3603,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3604,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3605,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3606,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3607,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3608,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3609,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3610,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3611,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3612,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3613,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3614,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3615,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3616,"1,2-diacylglycerol 3-diphosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3617,"1,2-diacylglycerol 3-diphosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3618,"1,2-diacylglycerol 3-diphosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3619,"1,2-diacylglycerol 3-diphosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3620,"1,2-diacylglycerol 3-diphosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3621,"1,2-diacylglycerol 3-diphosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3622,"1,2-diacylglycerol 3-diphosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3623,"1,2-diacylglycerol 3-diphosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3624,"1,2-diacylglycerol 3-diphosphate (1-16:0, 2-16:1)",2,False,False,False,False
+s_3625,"1,2-diacylglycerol 3-diphosphate (1-16:1, 2-16:1)",2,False,False,False,False
+s_3626,"1,2-diacylglycerol 3-diphosphate (1-18:0, 2-16:1)",2,False,False,False,False
+s_3627,"1,2-diacylglycerol 3-diphosphate (1-18:1, 2-16:1)",2,False,False,False,False
+s_3628,"1,2-diacylglycerol 3-diphosphate (1-16:0, 2-18:1)",2,False,False,False,False
+s_3629,"1,2-diacylglycerol 3-diphosphate (1-16:1, 2-18:1)",2,False,False,False,False
+s_3630,"1,2-diacylglycerol 3-diphosphate (1-18:0, 2-18:1)",2,False,False,False,False
+s_3631,"1,2-diacylglycerol 3-diphosphate (1-18:1, 2-18:1)",2,False,False,False,False
+s_3632,1-acyl-sn-glycerol 3-phosphate (16:0),1,True,False,True,True
+s_3633,1-monoglyceride (16:0),1,True,True,False,True
+s_3634,1-acyl-sn-glycerol 3-phosphate (16:1),1,True,False,True,True
+s_3635,1-monoglyceride (16:1),1,True,True,False,True
+s_3636,1-acyl-sn-glycerol 3-phosphate (18:0),1,True,False,True,True
+s_3637,1-monoglyceride (18:0),1,True,True,False,True
+s_3638,1-acyl-sn-glycerol 3-phosphate (18:1),1,True,False,True,True
+s_3639,1-monoglyceride (18:1),1,True,True,False,True
+s_3640,1-acyl-sn-glycerol 3-phosphate (16:0),1,True,False,True,True
+s_3641,1-monoglyceride (16:0),1,True,True,False,True
+s_3642,1-acyl-sn-glycerol 3-phosphate (16:1),1,True,False,True,True
+s_3643,1-monoglyceride (16:1),1,True,True,False,True
+s_3644,1-acyl-sn-glycerol 3-phosphate (18:0),1,True,False,True,True
+s_3645,1-monoglyceride (18:0),1,True,True,False,True
+s_3646,1-acyl-sn-glycerol 3-phosphate (18:1),1,True,False,True,True
+s_3647,1-monoglyceride (18:1),1,True,True,False,True
+s_3648,1-acyl-sn-glycerol 3-phosphate (16:0),1,True,False,True,True
+s_3649,1-monoglyceride (16:0),1,True,True,False,True
+s_3650,1-acyl-sn-glycerol 3-phosphate (16:1),1,True,False,True,True
+s_3651,1-monoglyceride (16:1),1,True,True,False,True
+s_3652,1-acyl-sn-glycerol 3-phosphate (18:0),1,True,False,True,True
+s_3653,1-monoglyceride (18:0),1,True,True,False,True
+s_3654,1-acyl-sn-glycerol 3-phosphate (18:1),1,True,False,True,True
+s_3655,1-monoglyceride (18:1),1,True,True,False,True
+s_3656,ergosteryl palmitoleate,2,False,False,False,False
+s_3657,H2O,71,False,False,False,False
+s_3658,ergosteryl oleate,2,False,False,False,False
+s_3659,episteryl palmitoleate,2,False,False,False,False
+s_3660,episterol,3,False,False,False,False
+s_3661,episteryl oleate,2,False,False,False,False
+s_3662,fecosteryl palmitoleate,2,False,False,False,False
+s_3663,fecosteryl oleate,2,False,False,False,False
+s_3664,lanosteryl palmitoleate,2,False,False,False,False
+s_3665,lanosterol,3,False,False,False,False
+s_3666,lanosteryl oleate,2,False,False,False,False
+s_3667,zymosteryl palmitoleate,2,False,False,False,False
+s_3668,zymosteryl oleate,2,False,False,False,False
+s_3669,zymosteryl palmitoleate,2,False,False,False,False
+s_3670,zymosteryl oleate,2,False,False,False,False
+s_3671,1-monoglyceride (16:0),3,False,False,False,False
+s_3672,1-monoglyceride (16:1),3,False,False,False,False
+s_3673,1-monoglyceride (18:0),3,False,False,False,False
+s_3674,1-monoglyceride (18:1),3,False,False,False,False
+s_3675,"diglyceride (1-16:0, 2-18:1)",1,True,False,True,True
+s_3676,1-monoglyceride (16:0),1,True,True,False,True
+s_3677,oleate,5,False,False,False,False
+s_3678,"diglyceride (1-16:1, 2-18:1)",1,True,False,True,True
+s_3679,1-monoglyceride (16:1),1,True,True,False,True
+s_3680,"diglyceride (1-18:0, 2-18:1)",1,True,False,True,True
+s_3681,1-monoglyceride (18:0),1,True,True,False,True
+s_3682,"diglyceride (1-18:1, 2-18:1)",1,True,False,True,True
+s_3683,1-monoglyceride (18:1),1,True,True,False,True
+s_3684,glycerol,5,False,False,False,False
+s_3685,1-acylglycerophosphoethanolamine (16:0),4,False,False,False,False
+s_3686,"phosphatidylethanolamine (1-16:0, 2-18:1)",3,False,False,False,False
+s_3687,1-acylglycerophosphoethanolamine (16:1),4,False,False,False,False
+s_3688,"phosphatidylethanolamine (1-16:1, 2-18:1)",3,False,False,False,False
+s_3689,1-acylglycerophosphoethanolamine (18:0),4,False,False,False,False
+s_3690,"phosphatidylethanolamine (1-18:0, 2-18:1)",3,False,False,False,False
+s_3691,1-acylglycerophosphoethanolamine (18:1),4,False,False,False,False
+s_3692,"phosphatidylethanolamine (1-18:1, 2-18:1)",3,False,False,False,False
+s_3693,"phosphatidylcholine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3694,1-acylglycerophosphocholine (16:0),3,False,False,False,False
+s_3695,"phosphatidylcholine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3696,1-acylglycerophosphocholine (16:1),3,False,False,False,False
+s_3697,"phosphatidylcholine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3698,1-acylglycerophosphocholine (18:0),3,False,False,False,False
+s_3699,"phosphatidylcholine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3700,1-acylglycerophosphocholine (18:1),3,False,False,False,False
+s_3701,"phosphatidylcholine (1-16:0, 2-18:1)",2,False,False,False,False
+s_3702,"phosphatidylcholine (1-16:1, 2-18:1)",2,False,False,False,False
+s_3703,"phosphatidylcholine (1-18:0, 2-18:1)",2,False,False,False,False
+s_3704,"phosphatidylcholine (1-18:1, 2-18:1)",2,False,False,False,False
+s_3705,"phosphatidylethanolamine (1-16:0, 2-16:1)",2,False,False,False,False
+s_3706,"phosphatidylethanolamine (1-16:1, 2-16:1)",2,False,False,False,False
+s_3707,"phosphatidylethanolamine (1-18:0, 2-16:1)",2,False,False,False,False
+s_3708,"phosphatidylethanolamine (1-18:1, 2-16:1)",2,False,False,False,False
+s_3709,ergosterol ester backbone,3,False,False,False,False
+s_3710,phosphatidyl-L-serine backbone,9,False,False,False,False
+s_3711,phosphatidylcholine backbone,9,False,False,False,False
+s_3712,phosphatidylethanolamine backbone,9,False,False,False,False
+s_3713,triglyceride backbone,33,False,False,False,False
+s_3714,heme a,3,False,False,False,False
+s_3715,raffinose,1,True,False,True,True
+s_3716,melibiose,1,True,True,False,True
+s_3717,protein,2,False,False,False,False
+s_3718,carbohydrate,2,False,False,False,False
+s_3719,RNA,2,False,False,False,False
+s_3720,DNA,2,False,False,False,False
+s_3721,ceramide backbone,11,False,False,False,False
+s_3722,ceramide backbone,1,True,True,False,True
+s_3723,inositol phosphomannosylinositol phosphoceramide backbone,1,True,True,False,True
+s_3724,inositol-P-ceramide backbone,1,True,True,False,True
+s_3725,mannosylinositol phosphorylceramide backbone,1,True,True,False,True
+s_3726,long-chain base backbone,3,False,False,False,False
+s_3727,long-chain base backbone,1,True,True,False,True
+s_3728,long-chain base phosphate backbone,3,False,False,False,False
+s_3729,long-chain base phosphate backbone,1,True,True,False,True
+s_3730,phosphatidate backbone,9,False,False,False,False
+s_3731,phosphatidate backbone,1,True,True,False,True
+s_3732,diglyceride backbone,9,False,False,False,False
+s_3733,diglyceride backbone,1,True,True,False,True
+s_3734,sn-2-acyl-1-lysophosphatidylinositol backbone,3,False,False,False,False
+s_3735,sn-2-acyl-1-lysophosphatidylinositol backbone,1,True,True,False,True
+s_3736,phosphatidylglycerol backbone,7,False,False,False,False
+s_3737,phosphatidylglycerol backbone,1,True,True,False,True
+s_3738,cardiolipin backbone,49,False,False,False,False
+s_3739,cardiolipin backbone,1,True,True,False,True
+s_3740,C16:0 chain,54,False,False,False,False
+s_3741,C16:1 chain,107,False,False,False,False
+s_3742,C18:0 chain,86,False,False,False,False
+s_3743,C18:1 chain,99,False,False,False,False
+s_3744,C24:0 chain,20,False,True,False,True
+s_3745,C26:0 chain,20,False,True,False,True
+s_3746,lipid backbone,2,False,False,False,False
+s_3747,lipid chain,2,False,False,False,False
+s_3748,Cytochrome c,1,True,False,False,True
+s_3749,Apocytochrome c,1,True,False,False,True
+s_3750,diacetyl,1,True,False,True,True
+s_3751,(R)-acetoin,2,False,False,False,False
+s_3752,diacetyl,1,True,False,False,True
+s_3753,NADH,1,True,False,False,True
+s_3754,L-glutamyl-tRNA(Gln),1,True,False,True,True
+s_3755,L-glutamine,2,False,False,False,False
+s_3756,Gln-tRNA(Gln),1,True,True,False,True
+s_3757,Met-Ala,2,False,False,False,False
+s_3758,L-methionine,3,False,False,False,False
+s_3759,L-alanine,9,False,False,False,False
+s_3760,ADP-D-ribose 1''-phosphate,1,True,False,False,True
+s_3761,ADP-ribose,3,False,False,False,False
+s_3762,quinone,1,True,False,False,True
+s_3763,"1,4-benzosemiquinone",1,True,False,False,True
+s_3764,UDP-N-acetyl-alpha-D-glucosamine,4,False,False,False,False
+s_3765,N-Acetyl-D-glucosaminyldiphosphodolichol,2,False,False,False,False
+s_3766,UDP,3,False,False,False,False
+s_3767,"N,N'-Chitobiosyldiphosphodolichol",1,True,False,False,True
+s_3768,D-ribofuranose 5-phosphate,1,True,False,False,True
+s_3769,Oxalate,1,True,False,False,True
+s_3770,Oxalyl-CoA,1,True,False,False,True
+s_3771,G00171,2,False,False,False,False
+s_3772,D-glucose,3,False,False,False,False
+s_3773,G00010,2,False,False,False,False
+s_3774,G00011,3,False,False,False,False
+s_3775,sodium,1,True,False,False,True
+s_3776,potassium,1,True,False,False,True
+s_3777,chloride,1,True,False,False,True
+s_3778,chloride,4,False,False,False,False
+s_3779,D-fructose,1,True,False,False,True
+s_3780,D-galactose,1,True,False,False,True
+s_3781,UMP,2,False,False,False,False
+s_3782,cadmium(2+),1,True,False,True,True
+s_3783,cadmium(2+),1,True,True,False,True
+s_3784,(sulfur carrier)-H,1,True,False,False,True
+s_3785,L-cysteine,3,False,False,False,False
+s_3786,(sulfur carrier)-SH,1,True,False,False,True
+s_3787,cholesterol,1,True,False,False,True
+s_3788,cholesterol,1,True,False,False,True
+s_3789,3-chlorobenzyl alcohol,1,True,False,False,True
+s_3790,3-chlorobenzaldehyde,1,True,False,False,True
+s_3791,3-hydroxybenzyl alcohol,1,True,False,False,True
+s_3792,3-hydroxybenzaldehyde,1,True,False,False,True
+s_3793,3-methylbenzyl alcohol,1,True,False,False,True
+s_3794,3-methylbenzaldehyde,1,True,False,False,True
+s_3795,4-isopropylbenzyl alcohol,1,True,False,False,True
+s_3796,p-cumic aldehyde,1,True,False,False,True
+s_3797,4-methylbenzyl alcohol,1,True,False,False,True
+s_3798,4-methylbenzaldehyde,1,True,False,False,True
+s_3799,benzyl alcohol,2,False,False,False,False
+s_3800,benzaldehyde,1,True,False,False,True
+s_3801,Mn(2+),3,False,False,False,False
+s_3802,Mn(2+),1,True,False,False,True
+s_3805,Mannitol,1,True,False,False,True
+s_3806,4-hydroxy-4-methyl-2-oxoglutarate,1,True,False,False,True
+s_3807,L-methionine (S)-S-oxide,1,True,False,False,True
+s_3808,tRNA(Pro),1,True,False,True,True
+s_3809,Pro-tRNA(Pro),1,True,True,False,True
+s_3810,5-oxo-L-proline,2,False,False,False,False
+s_3811,4a-Hydroxytetrahydrobiopterin,1,True,False,False,True
+s_3812,Dihydrobiopterin,1,True,False,False,True
+s_3813,superoxide,1,True,False,True,True
+s_3814,2-deoxy-D-glucose 6-phosphate,1,True,False,False,True
+s_3815,2-deoxy-D-glucose,1,True,False,False,True
+s_3816,[cytochrome c]-L-lysine,1,True,False,False,True
+s_3817,[cytochrome c]-N6-methyl-L-lysine,1,True,False,False,True
+s_3818,S-adenosyl-L-methionine,2,False,False,False,False
+s_3819,L-lysine-[histone],1,True,False,False,True
+s_3820,S-adenosyl-L-homocysteine,1,True,False,False,True
+s_3821,N6-methyl-L-lysine-[histone],1,True,False,False,True
+s_3822,Zn(2+),3,False,False,False,False
+s_3823,Zn(2+),1,True,False,False,True
+s_3826,Ferricytochrome b5,1,True,False,False,True
+s_3827,Ferrocytochrome b5,1,True,False,False,True
+s_3828,(S)-benzoin,1,True,False,False,True
+s_3829,benzil,1,True,False,False,True
+s_3830,RX,1,True,False,False,True
+s_3831,glutathione,2,False,False,False,False
+s_3832,HX,1,True,False,False,True
+s_3833,R-S-glutathione,1,True,False,False,True
+s_3834,RX,1,True,False,False,True
+s_3835,HX,1,True,False,False,True
+s_3836,R-S-glutathione,1,True,False,False,True
+s_3837,L-Methionine S-oxide,2,False,False,False,False
+s_3838,Ala-Gly,2,False,False,False,False
+s_3839,L-glycine,6,False,False,False,False
+s_3840,Ala-Leu,2,False,False,False,False
+s_3841,Threo-3-hydroxy-L-aspartate,1,True,False,False,True
+s_3842,RX,1,True,False,False,True
+s_3843,glutathione,2,False,False,False,False
+s_3844,HX,1,True,False,False,True
+s_3845,R-S-glutathione,1,True,False,False,True
+s_3846,dehydroascorbate,1,True,False,False,True
+s_3847,ascorbate,1,True,False,False,True
+s_3848,dehydroascorbate,1,True,False,False,True
+s_3849,glutathione disulfide,1,True,False,False,True
+s_3850,ascorbate,1,True,False,False,True
+s_3851,Cyanamide,1,True,False,False,True
+s_3852,aldehydo-D-ribose 5-phosphate,1,True,False,False,True
+s_3853,R-S-Cysteinylglycine,1,True,False,False,True
+s_3854,S-Substituted L-cysteine,1,True,False,False,True
+s_3855,iron(3+),1,True,False,False,True
+s_3856,Glycyl-tRNA(Ala),1,True,False,False,True
+s_3857,D-tyrosyl-tRNA(Tyr),1,True,False,False,True
+s_3858,D-tyrosine,1,True,False,False,True
+s_3859,4-nitrophenyl phosphate,1,True,False,False,True
+s_3860,4-nitrophenol,1,True,False,False,True
+s_3861,L-iditol,1,True,False,False,True
+s_3862,alpha-D-Galactose,1,True,False,True,True
+s_3863,3-hydroxy-2-methylpropanoyl-CoA,1,True,False,True,True
+s_3864,3-hydroxy-2-methylpropanoate,1,True,True,False,True
+s_3865,sterols,1,True,False,False,True
+s_3866,sterols,1,True,False,False,True
+s_3867,2-Phenylacetamide,1,True,False,False,True
+s_3868,(Indol-3-yl)acetamide,1,True,False,True,True
+s_3871,Acrylic acid,1,True,False,False,True
+s_3872,Acrylamide,1,True,False,False,True
+s_3873,Benzamide,1,True,False,False,True
+s_3874,Benzoate,2,False,False,False,False
+s_3875,D-gluconate,3,False,False,False,False
+s_3876,Protein C-terminal S-farnesyl-L-cysteine,1,True,False,False,True
+s_3877,Protein C-terminal S-farnesyl-L-cysteine methyl ester,1,True,False,False,True
+s_3878,1-phosphatidyl-1D-myo-inositol,1,True,False,False,True
+s_3879,G00143,1,True,False,False,True
+s_3880,Ca(2+),4,False,False,False,False
+s_3881,ATP,2,False,False,False,False
+s_3882,Ca(2+),1,True,True,False,True
+s_3883,ADP,2,False,False,False,False
+s_3884,generic protein,1,True,False,False,True
+s_3885,L-Arginyl-protein,1,True,False,False,True
+s_3887,G00008,1,True,False,False,True
+s_3888,Dolichyl diphosphate,1,True,False,False,True
+s_3889,G00009,1,True,False,False,True
+s_3890,GDP-alpha-D-mannose,5,False,False,False,False
+s_3891,G10694,2,False,False,False,False
+s_3892,GDP,5,False,False,False,False
+s_3893,G01813,1,True,False,False,True
+s_3894,G00003,1,True,False,False,True
+s_3895,G00004,2,False,False,False,False
+s_3896,G00005,2,False,False,False,False
+s_3897,2-O-(6-phospho-alpha-D-mannosyl)-D-glycerate,1,True,False,True,True
+s_3898,D-mannose 6-phosphate,2,False,False,False,False
+s_3899,D-Glycerate,1,True,True,False,True
+s_3900,alpha-D-mannoside,1,True,False,True,True
+s_3901,alpha-D-mannopyranose,1,True,True,False,True
+s_3902,non glycosylated sugar acceptor,1,True,True,False,True
+s_3903,L-Threonylcarbamoyladenylate,1,True,True,False,True
+s_3904,D-Serine,2,False,False,False,False
+s_3905,O-acetyl-L-serine,2,False,False,False,False
+s_3906,hydrogen sulfide,3,False,False,False,False
+s_3907,phosphatidate,1,True,False,False,True
+s_3908,CDP-diacylglycerol,1,True,False,False,True
+s_3909,Sulfur donor,1,True,False,False,True
+s_3910,ADP-5-ethyl-4-methylthiazole-2-carboxylate,3,False,False,False,False
+s_3911,Dolichyl beta-D-glucosyl phosphate,4,False,False,False,False
+s_3912,G10599,2,False,False,False,False
+s_3913,nitric oxide,2,False,False,True,True
+s_3914,nitrate,2,False,True,False,True
+s_3915,(R)-Lipoate,2,False,False,True,True
+s_3916,Lipoyl-AMP,1,True,True,False,True
+s_3917,Apoprotein,1,True,False,True,True
+s_3918,Protein N6-(lipoyl)lysine,1,True,True,False,True
+s_3923,N-(4-oxoglutarate)-L-cysteinylglycine,1,True,False,False,True
+s_3924,N-(4-oxoglutarate)-L-cysteinylglycine,1,True,False,False,True
+s_3925,L-cysteinylglycine,2,False,False,False,False
+s_3926,chloride,1,True,False,False,True
+s_3927,ribonucleoside 5'-triphosphate,1,True,False,True,True
+s_3928,ribonucleoside 5'-phosphate,1,True,True,False,True
+s_3929,2'-deoxyribonucleoside 5'-triphosphate,1,True,False,False,True
+s_3930,2'-deoxyribonucleoside 5'-phosphate,1,True,False,False,True
+s_3931,superoxide,1,True,False,True,True
+s_3932,G00012,1,True,False,False,True
+s_3933,D-mannose,2,False,False,False,False
+s_3934,Ethylnitronate,1,True,False,False,True
+s_3935,Nitrite,1,True,False,False,True
+s_3936,iron(3+),1,True,False,False,True
+s_3937,Acyl-CoA,1,True,False,False,True
+s_3938,1-acyl-sn-glycerol 3-phosphate,1,True,False,False,True
+s_3939,"1,2-diacyl-sn-glycerol 3-phosphate",1,True,False,False,True
+s_3940,Peptide diphthine,1,True,False,True,True
+s_3941,Peptide diphthamide,1,True,True,False,True
+s_3942,8-oxo-dGTP,1,True,False,True,True
+s_3943,8-oxo-dGMP,1,True,True,False,True
+s_3944,Apoprotein,2,False,False,False,False
+s_3945,Protein N6-(octanoyl)lysine,2,False,False,False,False
+s_3946,Lipoyl-[acp],2,False,False,False,False
+s_3947,Protein N6-(lipoyl)lysine,2,False,False,False,False
+s_3948,beta-D-Fructose 6-phosphate,3,False,False,False,False
+s_3949,beta-D-Glucose,2,False,False,False,False
+s_3950,beta-D-Glucose 6-phosphate,2,False,False,False,False
+s_3951,alpha-D-Glucose,4,False,False,False,False
+s_3952,alpha-D-Glucose 6-phosphate,2,False,False,False,False
+s_3953,D-Glucosamine,2,False,False,False,False
+s_3954,beta-D-Fructose,1,True,False,True,True
+s_3958,D-Glycerate,1,True,False,False,True
+s_3959,2-Propynal,1,True,False,False,True
+s_3960,Propynoate,1,True,False,False,True
+s_3961,D-Glucuronolactone,1,True,False,True,True
+s_3962,D-Glucarate,1,True,True,False,True
+s_3963,4-Trimethylammoniobutanal,1,True,False,False,True
+s_3964,4-Trimethylammoniobutanoate,1,True,False,False,True
+s_3965,(S)-Methylmalonate semialdehyde,1,True,False,False,True
+s_3966,Methylmalonate,1,True,False,False,True
+s_3967,Imidazole-4-acetaldehyde,1,True,False,False,True
+s_3968,Imidazole-4-acetate,1,True,False,False,True
+s_3969,"3alpha,7alpha-Dihydroxy-5beta-cholestan-26-al",1,True,False,False,True
+s_3970,"3alpha,7alpha-Dihydroxy-5beta-cholestanate",1,True,False,False,True
+s_3971,5-Hydroxyindoleacetaldehyde,1,True,False,False,True
+s_3972,5-Hydroxyindoleacetate,1,True,False,False,True
+s_3973,N4-Acetylaminobutanal,1,True,False,False,True
+s_3974,4-Acetamidobutanoate,1,True,False,False,True
+s_3975,trans-3-Chloroallyl aldehyde,1,True,False,False,True
+s_3976,trans-3-Chloroacrylic acid,1,True,False,False,True
+s_3977,cis-3-Chloroallyl aldehyde,1,True,False,False,True
+s_3978,cis-3-Chloroacrylic acid,1,True,False,False,True
+s_3979,Chloroacetaldehyde,1,True,False,False,True
+s_3980,Chloroacetic acid,1,True,False,False,True
+s_3981,Perillyl aldehyde,1,True,False,False,True
+s_3982,Perillic acid,1,True,False,False,True
+s_3983,"2-trans,6-trans-Farnesal",1,True,False,False,True
+s_3984,Farnesoic acid,1,True,False,False,True
+s_3985,phospholipid,1,True,False,True,True
+s_3986,phospholipid,1,True,True,False,True
+s_3987,ADP,2,False,False,False,False
+s_3988,1-oleoyl-sn-glycerol,1,True,False,True,True
+s_3989,G10526,2,False,False,False,False
+s_3990,G00006,1,True,False,False,True
+s_3991,carnosine,1,True,False,False,True
+s_3992,anserine,1,True,False,False,True
+s_3993,G10595,1,True,False,False,True
+s_3994,G10596,2,False,False,False,False
+s_3995,G10597,2,False,False,False,False
+s_3996,G00007,2,False,False,False,False
+s_3997,glycolate,2,False,False,False,False
+s_3998,sucrose,2,False,False,False,False
+s_3999,Isomaltose,1,True,False,False,True
+s_4000,Dextrin,1,True,False,False,True
+s_4001,G10598,2,False,False,False,False
+s_4002,G00149,1,True,False,False,True
+s_4003,G00140,1,True,False,False,True
+s_4004,Sulfur donor,2,False,False,False,False
+s_4005,5'-Deoxyadenosine,2,False,False,False,False
+s_4006,S-sulfanyl-[L-cysteine desulfurase],1,True,False,True,True
+s_4007,[disordered-form [Fe-S] cluster scaffold protein],1,True,False,True,True
+s_4008,S-sulfanyl-[cysteine desulfurase]-[disordered-form scaffold protein] complex,1,True,True,False,True
+s_4009,hydrogen cyanide,1,True,False,False,True
+s_4010,thiosulfate,2,False,False,False,False
+s_4011,sulphite,2,False,False,False,False
+s_4012,thiocyanate,1,True,False,False,True
+s_4013,Mg(2+),3,False,False,False,False
+s_4014,Mg(2+),1,True,False,False,True
+s_4015,UDP-D-glucose,2,False,False,False,False
+s_4016,sulphate,1,True,False,False,True
+s_4017,N-Acetyl-D-glucosamine,1,True,False,False,True
+s_4018,polyphosphate,4,False,False,False,False
+s_4019,Cu2(+),3,False,False,False,False
+s_4020,Cu2(+),1,True,True,False,True
+s_4021,2-Oxoglutaramate,1,True,False,False,True
+s_4022,porphyrin,1,True,False,False,True
+s_4023,porphyrin,1,True,False,False,True
+s_4024,Starch,1,True,False,False,True
+s_4025,UDP-N-acetyl-alpha-D-glucosamine,2,False,False,False,False
+s_4026,Zn(2+),1,True,False,False,True
+s_4027,Zn(2+),1,True,False,False,True
+s_4028,RX,1,True,False,False,True
+s_4029,HX,1,True,False,False,True
+s_4030,R-S-glutathione,1,True,False,False,True
+s_4031,iron(3+),1,True,False,False,True
+s_4032,[protein]-L-lysine,1,True,False,False,True
+s_4033,[protein]-N(6)-acetyl-L-lysine,1,True,False,False,True
+s_4034,Ala-Gln,1,True,False,False,True
+s_4035,Ala-Gln,2,False,False,False,False
+s_4036,Ala-Gln,2,False,False,False,False
+s_4037,Ala-Glu,1,True,False,False,True
+s_4038,Ala-Glu,2,False,False,False,False
+s_4039,Ala-Glu,2,False,False,False,False
+s_4040,Ala-Thr,1,True,False,False,True
+s_4041,Ala-Thr,2,False,False,False,False
+s_4042,Ala-Thr,2,False,False,False,False
+s_4043,L-threonine,2,False,False,False,False
+s_4044,thymidine 3'-monophosphate,2,False,False,False,False
+s_4045,thymidine 3'-monophosphate,1,True,False,False,True
+s_4046,thymidine 5'-monophosphate,2,False,False,False,False
+s_4047,thymidine 5'-monophosphate,1,True,False,False,True
+s_4048,glycerol 1-phosphate,2,False,False,False,False
+s_4049,glycerol 1-phosphate,1,True,False,False,True
+s_4050,Ala-His,1,True,False,False,True
+s_4051,Ala-His,2,False,False,False,False
+s_4052,Ala-His,2,False,False,False,False
+s_4053,Gly-Asn,1,True,False,False,True
+s_4054,Gly-Asn,2,False,False,False,False
+s_4055,Gly-Asn,2,False,False,False,False
+s_4056,Gly-Gln,1,True,False,False,True
+s_4057,Gly-Gln,2,False,False,False,False
+s_4058,Gly-Gln,2,False,False,False,False
+s_4059,Gly-Glu,1,True,False,False,True
+s_4060,Gly-Glu,2,False,False,False,False
+s_4061,Gly-Glu,2,False,False,False,False
+s_4062,glycerol 2-phosphate(2-),2,False,False,False,False
+s_4063,glycerol 2-phosphate(2-),1,True,False,False,True
+s_4064,O-phospho-L-threonine,2,False,False,False,False
+s_4065,O-phospho-L-threonine,1,True,False,False,True
+s_4066,guanosine 2'-monophosphate,3,False,False,False,False
+s_4067,guanosine 2'-monophosphate,1,True,False,False,True
+s_4068,3'-GMP,2,False,False,False,False
+s_4069,3'-GMP,1,True,False,False,True
+s_4070,2-phosphoglycolate,1,True,False,False,True
+s_4071,2-phosphoglycolate,2,False,False,False,False
+s_4072,cysteamine S-phosphate,2,False,False,False,False
+s_4073,cysteamine,3,False,False,False,False
+s_4074,cysteamine,1,True,False,False,True
+s_4075,cysteamine S-phosphate,1,True,False,False,True
+s_4076,hypotaurine,2,False,False,False,False
+s_4077,O-phosphonatooxy-D-serine(2-),2,False,False,False,False
+s_4078,O-phosphonatooxy-D-serine(2-),1,True,False,False,True
+s_4079,2-aminobutanoate,2,False,False,False,False
+s_4080,2-aminobutanoate,1,True,False,False,True
+s_4081,uridine 2'-phosphate,3,False,False,False,False
+s_4082,uridine 2'-phosphate,1,True,False,False,True
+s_4083,3'-UMP,2,False,False,False,False
+s_4084,3'-UMP,1,True,False,False,True
+s_4085,Gly-Met,1,True,False,False,True
+s_4086,Gly-Met,2,False,False,False,False
+s_4087,Gly-Met,2,False,False,False,False
+s_4088,N-phosphocreatine,2,False,False,False,False
+s_4089,creatinine,2,False,False,False,False
+s_4090,N-phosphocreatine,1,True,False,False,True
+s_4091,creatinine,1,True,False,False,True
+s_4092,N(omega)-phospho-L-arginine,2,False,False,False,False
+s_4093,N(omega)-phospho-L-arginine,1,True,False,False,True
+s_4094,"2',3'-cyclic GMP",2,False,False,False,False
+s_4095,"2',3'-cyclic GMP",1,True,False,False,True
+s_4096,O(4)-phospho-L-tyrosine,2,False,False,False,False
+s_4097,O(4)-phospho-L-tyrosine,1,True,False,False,True
+s_4098,triphosphate,2,False,False,False,False
+s_4099,triphosphate,1,True,False,False,True
+s_4100,cytidine 2'-phosphate,3,False,False,False,False
+s_4101,cytidine 2'-phosphate,1,True,False,False,True
+s_4102,"2',3'-cyclic UMP",2,False,False,False,False
+s_4103,"2',3'-cyclic UMP",1,True,False,False,True
+s_4104,3-sulfino-L-alanine,2,False,False,False,False
+s_4105,3-sulfino-L-alanine,1,True,False,False,True
+s_4106,3'-AMP,2,False,False,False,False
+s_4107,3'-AMP,1,True,False,False,True
+s_4108,6-O-alpha-D-glucopyranosyl-D-fructofuranose,2,False,False,False,False
+s_4109,6-O-alpha-D-glucopyranosyl-D-fructofuranose,1,True,False,False,True
+s_4110,N-acetyl-L-cysteine,2,False,False,False,False
+s_4111,N-acetyl-L-cysteine,1,True,False,False,True
+s_4112,tetrathionate,2,False,False,False,False
+s_4113,thiosulfate,4,False,False,False,False
+s_4114,tetrathionate,1,True,False,False,True
+s_4115,2-hydroxyethane-1-sulfonate,2,False,False,False,False
+s_4116,2-hydroxyethane-1-sulfonate,1,True,False,False,True
+s_4117,5-dehydro-D-gluconate,2,False,False,False,False
+s_4118,5-dehydro-D-gluconate,1,True,False,False,True
+s_4119,Ala-Asp,1,True,False,False,True
+s_4120,Ala-Asp,2,False,False,False,False
+s_4121,Ala-Asp,2,False,False,False,False
+s_4122,methyl alpha-D-glucopyranoside,2,False,False,False,False
+s_4123,methanol,2,False,False,False,False
+s_4124,methanol,1,True,True,False,True
+s_4125,methyl alpha-D-glucopyranoside,1,True,False,False,True
+s_4126,"2',3'-cyclic CMP",2,False,False,False,False
+s_4127,"2',3'-cyclic CMP",1,True,False,False,True
+s_4128,D-tagatose,2,False,False,False,False
+s_4129,D-tagatofuranose 6-phosphate,2,False,False,False,False
+s_4130,D-tagatose,1,True,False,False,True
+s_4131,turanose,1,True,False,False,True
+s_4132,acetoacetate,3,False,False,False,False
+s_4133,acetoacetate,1,True,False,False,True
+s_4134,N(alpha)-acetyl-L-methionine,2,False,False,False,False
+s_4135,N(alpha)-acetyl-L-methionine,1,True,False,False,True
+s_4136,3-oxalomalate(3-),2,False,False,False,False
+s_4137,3-oxalomalate(3-),1,True,False,False,True
+s_4138,L-cysteate,2,False,False,False,False
+s_4139,L-cysteate,1,True,False,False,True
+s_4140,alpha-maltotriose,1,True,False,True,True
+s_4141,2-phospho-D-glyceric acid,1,True,False,False,True
+s_4142,3-phosphonato-D-glycerate(3-),1,True,False,False,True
+s_4143,Met-Ala,1,True,False,False,True
+s_4144,Met-Ala,2,False,False,False,False
+s_4145,D-glucose 1-phosphate,1,True,False,False,True
+s_4146,carbamoyl phosphate,1,True,False,False,True
+s_4147,3-phospho-serine,1,True,False,False,True
+s_4148,GMP,1,True,False,False,True
+s_4149,myo-inositol hexakisphosphate,1,True,False,False,True
+s_4150,D-glucose 6-phosphate,1,True,False,False,True
+s_4151,UMP,1,True,False,False,True
+s_4152,phosphoenolpyruvate,1,True,False,False,True
+s_4153,D-mannose 6-phosphate,1,True,False,False,True
+s_4154,O-phosphoethanolamine,1,True,False,False,True
+s_4155,6-phospho-D-gluconate,1,True,False,False,True
+s_4156,D-mannose 1-phosphate,1,True,False,False,True
+s_4157,diphosphate,1,True,False,False,True
+s_4158,choline phosphate,1,True,False,False,True
+s_4159,thiosulfate,1,True,False,False,True
+s_4160,AMP,1,True,False,False,True
+s_4161,"2',3'-cyclic AMP",1,True,False,False,True
+s_4162,adenosine 2'-phosphate,1,True,False,False,True
+s_4163,CMP,1,True,False,False,True
+s_4164,D-Glucosamine,1,True,False,False,True
+s_4165,2-deoxy-D-ribose,1,True,False,False,True
+s_4166,L-citrulline,1,True,False,False,True
+s_4167,glycerone,1,True,False,False,True
+s_4168,Ala-Leu,1,True,False,False,True
+s_4169,Ala-Leu,2,False,False,False,False
+s_4170,Ala-Gly,1,True,False,False,True
+s_4171,Ala-Gly,2,False,False,False,False
+s_4172,N-acetyl-L-glutamate,1,True,False,False,True
+s_4173,N-acetyl-L-glutamate,2,False,False,False,False
+s_4174,lipoamide,1,True,False,False,True
+s_4175,lipoamide,1,True,False,False,True
+s_4176,L-Methionine S-oxide,1,True,False,False,True
+s_4177,homogentisate,2,False,False,False,False
+s_4178,4-maleylacetoacetate,2,False,False,False,False
+s_4179,4-fumarylacetoacetate,2,False,False,False,False
+s_4180,L-xylulose,2,False,False,False,False
+s_4181,D-arabinitol,2,False,False,False,False
+s_4182,2-hydroxyglutarate,2,False,False,False,False
+s_4183,propionyl-CoA,3,False,False,False,False
+s_4184,3-oxopropanoate,4,False,False,False,False
+s_4189,"(2R,3S)-3-methylmalate",2,False,False,False,False
+s_4190,"trans-2,cis-9-octadecadienoyl-CoA",2,False,False,False,False
+s_4191,"(9Z,12Z)-octadecadienoate",2,False,False,False,False
+s_4192,stachyose,2,False,False,True,True
+s_4193,raffinose,2,False,True,False,True
+s_4194,4-hydroxyphenyl acetate,2,False,True,False,True
+s_4195,Hydroquinone,1,True,False,True,True
+s_4196,ATP,1,True,False,True,True
+s_4197,Ca(2+),1,True,True,False,True
+s_4198,ADP,1,True,True,False,True
+s_4199,Ca(2+),1,True,False,False,True
+s_4200,chloride,1,True,False,False,True
+s_4201,Cu2(+),1,True,False,False,True
+s_4202,Mn(2+),1,True,False,False,True
+s_4203,Zn(2+),1,True,False,False,True
+s_4204,Mg(2+),1,True,False,False,True
+s_4205,cofactor,2,False,False,False,False
+s_4206,ion,2,False,False,False,False
+s_4207,trans-4-hydroxy-L-proline,2,False,False,False,False
+s_4209,Ferrocytochrome b5,2,False,False,False,False
+s_4210,Ferricytochrome b5,2,False,False,False,False
+s_4211,hexanoyl-CoA,2,False,False,False,False
+s_4212,ethyl hexanoate,2,False,False,False,False
+s_4213,octanoyl-CoA,2,False,False,False,False
+s_4214,ethyl octanoate,2,False,False,False,False
+s_4215,butanoyl-CoA,2,False,False,False,False
+s_4216,ethyl butanoate,2,False,False,False,False
+s_4217,hexanol,1,True,False,False,True
+s_4218,hexyl acetate,2,False,False,False,False
+s_4219,decanoyl-CoA,2,False,False,False,False
+s_4220,ethyl decanoate,2,False,False,False,False
+s_4221,ethyl hexanoate,2,False,False,False,False
+s_4222,ethyl octanoate,2,False,False,False,False
+s_4223,ethyl butanoate,2,False,False,False,False
+s_4224,hexyl acetate,2,False,False,False,False
+s_4225,ethyl decanoate,2,False,False,False,False
+s_4226,ethyl hexanoate,1,True,False,False,True
+s_4227,ethyl octanoate,1,True,False,False,True
+s_4228,ethyl butanoate,1,True,False,False,True
+s_4229,hexyl acetate,1,True,True,False,True
+s_4230,ethyl decanoate,1,True,True,False,True
+s_4231,ethyl acetate,2,False,False,False,False
+s_4232,propanal,5,False,False,False,False
+s_4233,propanol,5,False,False,False,False
+s_4234,propanal,1,True,False,True,True
+s_4235,propanol,2,False,False,False,False
+s_4236,propanal,1,True,False,False,True
+s_4237,propanol,1,True,False,False,True
+s_4238,methional,4,False,False,False,False
+s_4239,methionol,5,False,False,False,False
+s_4240,methional,1,True,False,True,True
+s_4241,methionol,2,False,False,False,False
+s_4242,methional,1,True,False,False,True
+s_4243,methionol,1,True,False,False,True
+s_4244,(4-hydroxyphenyl)acetaldehyde,4,False,False,False,False
+s_4245,tyrosol,5,False,False,False,False
+s_4246,(4-hydroxyphenyl)acetaldehyde,1,True,False,True,True
+s_4247,tyrosol,2,False,False,False,False
+s_4248,(4-hydroxyphenyl)acetaldehyde,1,True,False,False,True
+s_4249,tyrosol,1,True,False,False,True
+s_4250,propionate,2,False,False,False,False
+s_4251,propionate,2,False,False,False,False
+s_4252,propionyl-CoA,2,False,False,False,False
+s_4253,ethyl propionate,2,False,False,False,False
+s_4254,tyrosyl acetate,2,False,False,False,False
+s_4255,tyrosyl acetate,1,True,True,False,True
+s_4256,methionyl acetate,2,False,False,False,False
+s_4257,methionyl acetate,1,True,True,False,True
+s_4258,propyl acetate,2,False,False,False,False
+s_4259,propyl acetate,1,True,True,False,True
+s_4261,ethyl propionate,2,False,False,False,False
+s_4262,ethyl propionate,1,True,True,False,True
+s_4263,hydrogen sulfide,1,True,True,False,True
+s_4264,3-mercaptopyruvate,2,False,False,False,False
+s_4265,alkanesulfonate,2,False,False,False,False
+s_4266,alkanesulfonate,1,True,False,True,True
+s_4267,taurocholate,1,True,True,False,True
+s_4268,taurocholate,1,True,False,True,True
+s_4269,trithionate,1,True,False,False,True
+s_4270,ethyl (2S)-lactate,1,True,False,False,True
+s_4271,ethyl (2S)-lactate,2,False,False,False,False
+s_4272,ethyl (2R)-lactate,1,True,False,False,True
+s_4273,ethyl (2R)-lactate,2,False,False,False,False
+s_4274,diethyl succinate,2,False,False,False,False
+s_4275,diethyl succinate,1,True,False,False,True
+s_4276,monoethyl succinate,2,False,False,False,False
+s_4277,monoethyl succinate,1,True,False,False,True
+s_4278,ethyl benzoate,2,False,False,False,False
+s_4279,ethyl benzoate,1,True,False,False,True
+s_4280,ethyl pyruvate,2,False,False,False,False
+s_4281,ethyl pyruvate,1,True,False,False,True
+s_4282,2-methylbutyrate,2,False,False,False,False
+s_4283,ethyl 2-methylbutyrate,2,False,False,False,False
+s_4284,ethyl 2-methylbutyrate,1,True,False,False,True
+s_4285,isobutyrate,2,False,False,False,False
+s_4286,ethyl isobutyrate,2,False,False,False,False
+s_4287,ethyl isobutyrate,1,True,False,False,True
+s_4288,benzyl acetate,2,False,False,False,False
+s_4289,benzyl acetate,1,True,False,False,True
+s_4290,polyphosphate,3,False,False,False,False
+s_4291,polyphosphate,2,False,False,False,False
+s_4292,polyphosphate,2,False,False,False,False
+s_4293,phosphate,1,True,False,False,True
+s_4294,"4-(2-aminophenyl)-2,4-dioxobutanoate",1,True,True,False,True
+s_4295,dimethylallyl phosphate,1,True,False,False,True
+s_4296,D-phenylalanine,1,True,False,True,True
+s_4297,N-acetyl-D-phenylalanine,1,True,True,False,True
+s_4298,FMNH2,1,True,False,False,True
+s_4299,cadaverine,1,True,False,True,True
+s_4300,aminopropylcadaverine,1,True,True,False,True
+s_4301,2-(2-carboxy-4-methylthiazol-5-yl)ethyl phosphate,1,True,False,False,True
+s_4302,2-hydroxyglutarate,1,True,False,True,True
+s_4303,farnesol,1,True,True,False,True
+s_4304,D-ribulose,1,True,False,False,True
+s_4305,2-deoxy-D-ribose 1-phosphate,1,True,False,False,True
+s_4306,3-hydroxyisobutyryl-CoA,1,True,False,False,True
+s_4307,3-hydroxyisobutyrate,1,True,False,False,True
+s_4308,"meso-2,3-butanediol",1,True,False,False,True
+s_4309,acetoin,1,True,False,False,True
+s_4310,5-methylcytosine,1,True,False,True,True
+s_4311,thymine,1,True,True,False,True
+s_4312,prenylated FMNH2,1,True,False,False,True
+s_4313,ITP,1,True,True,False,True
+s_4314,IDP,1,True,False,True,True
+s_4315,deamido-NAD(+),1,True,False,True,True
+s_4316,nicotinic acid D-ribonucleotide,1,True,True,False,True
+s_4317,"P(1),P(3)-bis(5'-adenosyl) triphosphate",1,True,False,True,True
+s_4318,dATP,1,True,True,False,True
+s_4319,dADP,1,True,False,True,True
+s_4320,dGTP,1,True,True,False,True
+s_4321,dGDP,1,True,False,True,True
+s_4322,CDP,1,True,False,True,True
+s_4323,dCDP,1,True,False,True,True
+s_4324,dCTP,1,True,True,False,True
+s_4325,dTDP,1,True,False,True,True
+s_4326,dTTP,1,True,True,False,True
+s_4327,dIDP,1,True,False,False,True
+s_4328,dITP,1,True,False,False,True
+s_4329,dUDP,1,True,False,False,True
+s_4330,dUTP,1,True,False,False,True
+s_4331,xanthurenate,1,True,True,False,True
+s_4332,heme a,1,True,False,False,True

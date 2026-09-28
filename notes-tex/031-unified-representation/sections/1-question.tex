@@ -1,0 +1,52 @@
+%% notes-tex/031-unified-representation/sections/1-question.tex
+
+\section{The question and the decisions\secstatus{tent}}
+\label{sec:question}
+
+Five chemogenomic datasets are served and together hold 7.48 million records. Training one
+model on them is attractive for an obvious reason and blocked by a less obvious one. The
+attraction is scale and chemical breadth: no single dataset has both a genome-wide gene panel
+and a large compound panel. The block is that a model takes one input format and one output
+format, and the five datasets disagree about what a strain is, what a dose is, and what a
+response is.
+
+Three axes carry the input disagreement. Ploidy runs from haploid single deletions through
+homozygous diploids to heterozygous diploids where one wild-type copy survives. Compound panels
+run from 41 to 5{,}170. Dose runs from an unquantified target inhibition, through a molar
+range spanning nine orders of magnitude, to a single fixed concentration applied to every
+compound. The output disagreement is a fourth axis: the response is a log ratio in two
+datasets, a z score in two, and a sensitivity score in one, read from a pooled barcode assay
+in four and from liquid optical density in one.
+
+The application target is Vanacloig-Pedros 2022 (\texttt{10.1128/spectrum.02017-22}), the
+only served screen that doses the industrial hydrolysate panel at a matched target inhibition
+and the only one in which isobutanol appears as a stress. The others enter as partners:
+Hillenmeyer 2008 (\texttt{10.1126/science.1150021}) and Hoepfner 2014
+(\texttt{10.1016/j.micres.2013.11.004}) for record count and gene coverage, Wildenhain 2015
+(\texttt{10.1016/j.cels.2015.12.003}) for compound diversity.
+
+\notesec{What this document is}
+It is the planning document for the modeling phase, in one place: what the earlier data
+exploration established about ceilings and transfer (Section~\ref{sec:established}), what a
+shared input can absorb on each axis (Sections~\ref{sec:genotype} to \ref{sec:chemistry}),
+which molecular encoders carry compounds into the model and how far they reach
+(Sections~\ref{sec:encoders} and \ref{sec:metabolites}), how the channels enter the cell
+graph transformer and what one decoder over four response scales looks like
+(Section~\ref{sec:model}), and the representation itself with its implementation steps
+(Section~\ref{sec:representation}).
+
+\notesec{Two decisions taken}
+The measurements below left two choices open, and both are now settled. The Hillenmeyer
+homozygous arm is dropped: its 1.09 million records bring one non-exact chemical neighbor
+above 0.5 to the application panel, and its heterozygous sibling keeps the gene coverage. Four
+datasets remain, 6.39 million records. And the per-gene functional dose scales the existing
+cross-attention perturbation operator rather than entering as a separate feature, because
+the operator is already a soft mechanism and a scale factor that equals one for a deletion
+leaves every current dataset's model unchanged.
+
+\notesec{Scope}
+This phase handles two perturbation kinds only: the full deletion and the one-of-two
+copy-number variant, which are the only kinds any of the four datasets contains. Alleles off
+the dosage axis, temperature-sensitive, decreased-abundance-by-mRNA-perturbation (DAmP) and
+CRISPR interference, are not represented here and are not needed by these datasets; the
+representation is written so they can be added without changing what is built now.

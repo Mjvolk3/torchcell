@@ -1,0 +1,88 @@
+%% notes-tex/031-unified-representation/sections/3-established.tex
+
+\section{What the data exploration established\secstatus{tent}}
+\label{sec:established}
+
+The earlier document, \texttt{notes-tex/031-inhibitor-tolerance-data}, compared Vanacloig
+with the two Hillenmeyer arms axis by axis. Three of its results bound everything planned
+here, and the linear and nearest-neighbor baselines run since then say how much of the bound
+a simple model reaches.
+
+\notesec{Replication sets the ceiling, and the served error is honest for one dataset only}
+The reliability index of a condition is one minus the mean squared served standard error over
+the variance of the response, and its square root is the ceiling on the correlation any model
+can reach with the noise-free response. Table~\ref{tab:reliability} places that index beside
+the raw replicate agreement of the same conditions and beside what the Spearman-Brown lift of
+the single-replicate reliability predicts for the mean of $k$ replicates. For Vanacloig the
+index sits 0.04 above the prediction and its median ceiling is 0.84, with three of 41
+conditions carrying no signal at all, 5-hydroxymethylfurfural among them. For both Hillenmeyer
+arms the index sits 0.28 and 0.36 above the prediction, so their served error understates the
+noise and the raw replicate agreement, 0.39 and 0.26, is the number to plan against. Hoepfner
+and Wildenhain serve no uncertainty on most records, so no ceiling exists for them yet.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/replicate_noise_and_ceilings.py
+%% and reliability_reconciliation.py -> results/noise_summary.csv and
+%% results/reliability_reconciliation.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Reliability per dataset, medians over conditions. Replicate rho is the raw
+between-replicate Spearman over genes; rel.\ single is the single-replicate reliability it
+implies; $k$ the replicate count; predicted is the Spearman-Brown reliability of the mean of
+$k$; index is the served-error reliability; ceiling is $\sqrt{\text{index}}$; no signal counts
+conditions whose index is at or below zero.}
+\label{tab:reliability}
+\input{tables/t10-reliability}
+\end{table}
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/replicate_noise_and_ceilings.py ->
+%% vanacloig_ceilings.svg, from results/condition_noise_vanacloig2022.csv, converted by `make plots`.
+\tcfig{figures/vanacloig_ceilings.pdf}{\textbf{Most Vanacloig compounds
+allow a high ceiling, and six allow none at all.} Every compound of the panel, ordered by the
+ceiling it places on any model's correlation with the noise-free response, which is the square
+root of its reliability. Bars are that ceiling, circles the raw agreement between the three
+batch replicates over genes, and squares the between-batch overlap of the bottom-5 percent hit
+sets. A compound with no bar has a reliability index at or below zero, meaning its served error
+is as large as its spread across genes, so no model can be scored on it.}{fig:ceilings}
+
+\notesec{Cross-dataset transfer is a gene prior, not compound-matched transfer}
+Between Vanacloig and the Hillenmeyer homozygous arm the per-gene mean response correlates at
+0.118 and the gene-gene similarity structure agrees eleven null standard deviations from zero,
+while the median Spearman between matched condition profiles is 0.010. The attenuation limit
+set by the two reliabilities is 0.55, so the failed transfer is not a noise artifact. Exactly
+one compound, methyl methanesulfonate, has a per-gene profile that transfers; benomyl, the
+acetate salt against the free acid, and ferulic acid at two doses do not. Chemical similarity
+correlates with response similarity across the two datasets at Spearman 0.09 at best
+(Section~\ref{sec:encoders}).
+
+\notesec{Within Vanacloig, molecule features carry real signal and gene embeddings do not}
+Table~\ref{tab:baselines} gives the best ridge and nearest-neighbor model per split and
+target beside the nulls. On the compound cold-start split, leaving one of the 41 compounds out
+in turn, the centered target subtracts each gene's mean over the training compounds so that
+only compound-specific signal remains. There a ridge map from the FCFP4 fingerprint reaches
+Spearman 0.311 against 0.020 for a random training neighbor, positive in 93 percent of folds,
+which is 42 percent of the 0.835 ceiling. On the raw target the gene mean alone reaches
+0.212 and the best ridge 0.341. On the gene cold-start split, five gene folds by 41 compounds,
+protein-language-model embeddings reach 0.044, real but 8 percent of the ceiling. Ridge beats
+every nearest-neighbor variant, and the encoder ranking does not favor the large pretrained
+models: a plain feature-class fingerprint is best on the centered target.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/baseline_ceilings.py ->
+%% results/baseline_ceilings_summary.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Linear and nearest-neighbor baselines on Vanacloig against the reliability ceiling,
+medians over folds. For each split and target the best feature set per model class is shown.
+Compound cold holds out one compound per fold; gene cold holds out a fifth of the genes per
+fold and scores each compound column. The centered target removes each gene's training mean.}
+\label{tab:baselines}
+\input{tables/t9-baselines}
+\end{table}
+
+Two consequences carry into the plan. More than half the predictable variance on the
+compound-cold target is unclaimed by a linear map, so there is headroom for a model that uses
+the gene graph. And within-dataset chemistry works far better than cross-dataset chemistry,
+0.31 against at most 0.09, which is what one medium, one dose basis and one readout buy; the
+dataset token and the dose basis token in Section~\ref{sec:representation} are how the pooled
+model is told which regime a record came from.

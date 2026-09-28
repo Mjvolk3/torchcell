@@ -1,0 +1,96 @@
+%% notes-tex/031-inhibitor-tolerance-data/sections/4-structure.tex
+
+\section{What Hillenmeyer shares with Vanacloig\secstatus{todo}}
+\label{sec:structure}
+
+Both matrices are oriented so that negative is a defect, Hillenmeyer's doses and
+generation counts are averaged within a compound, and every Vanacloig condition is
+correlated with every partner condition over the shared genes
+(\file{cross\_dataset\_similarity.py}).
+Three statistics ask three different questions. The cross Spearman of two conditions
+asks whether the same genes are sensitive to both. The per-gene mean response across
+all conditions asks whether the datasets agree on which genes are generally sick. The
+Mantel statistic asks whether they agree on which genes move together: the two
+gene-by-gene correlation matrices, built from each dataset's condition profiles, are
+compared entry by entry against a null that shuffles gene identity.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/cross_dataset_similarity.py ->
+%% results/structure_{hom,het}.csv, rendered by notes_tex_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Shared response structure between Vanacloig and each Hillenmeyer arm. The
+cross Spearman columns summarize the full condition-by-condition matrix; the Mantel
+column is the Spearman between the two gene-gene profile-correlation matrices on
+1{,}500 sampled genes, with the mean and SD of 20 gene-permutation nulls.}
+\label{tab:structure}
+\input{tables/t5-structure}
+\end{table}
+
+The shared structure is real and small (Table~\ref{tab:structure}). For HOM the Mantel
+statistic is eleven null standard deviations from zero and the per-gene mean response
+correlates at 0.118, while the median cross Spearman of a condition pair is 0.010 and
+the largest is 0.222. HOM carries about three times the shared structure that HET does
+on every statistic, which is the expected direction: HOM is the same perturbation class
+as Vanacloig, HET is a dosage halving.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/cross_dataset_similarity.py ->
+%% cross_similarity_heatmap_hom.svg, from results/cross_spearman_hom.csv.
+\tcfig{figures/cross_similarity_heatmap_hom.pdf}{\textbf{(a)} Cross Spearman between
+each Vanacloig condition (rows) and the 40 HOM conditions with the largest absolute
+correlation to any row (columns), over the 3{,}550 shared genes. The solvent-like
+inhibitors (ethanol, isobutanol, furfural, gamma-valerolactone) and myclobutanil share
+their best match, basifungin; the phenolic aldehydes and ketones match methyl
+methanesulfonate and mechlorethamine.}{fig:heatmap}
+
+\notesec{The exact-match compounds}
+Two compounds are shared with each arm, and Table~\ref{tab:shared} gives each pair the
+same three tests. The cross Spearman is the correlation of the two per-gene profiles.
+The rank places the true match among all partner conditions: if the same compound in
+the other dataset is the best-correlated condition, the rank is 1. The hit overlap is
+the number of genes in the bottom 5\% of both profiles, against the 8.6 expected by
+chance, with a one-sided Fisher test.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/cross_dataset_similarity.py ->
+%% results/shared_compounds_{hom,het}.csv, doses from dataset_axes_comparison.py ->
+%% results/shared_compounds.csv, rendered by notes_tex_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Transfer of every compound both datasets dose, plus the sodium acetate versus
+acetic acid near-pair, which the graph does not join and which serves as the negative
+control. Rank is the position of the true match among all partner conditions by cross
+Spearman; hits is the overlap of bottom-5\% genes with the chance expectation in
+parentheses.}
+\label{tab:shared}
+\input{tables/t3-shared}
+\end{table}
+
+Figure~\ref{fig:scatter} shows what the table summarizes. Each panel is one shared
+compound; each point is one gene, placed at its Vanacloig response (x) and its HOM
+response (y), both oriented so that lower is sicker. A gene that the compound hurts in
+both screens falls toward the lower left, and the red points are the genes in the
+bottom 5\% of both. Methyl methanesulfonate (panel d) is what transfer looks like: a
+cloud that leans toward the lower left, 39 genes hit in both against 8.6 expected, and
+the true match third of 140 HOM conditions, behind two other DNA-damaging agents.
+Benomyl (panel c) is what a hit-level-only transfer looks like: the cloud is round, the
+correlation is zero, and the 16 doubly hit genes are the only structure. Sodium acetate
+against acetic acid (panel e) is what no transfer looks like: 4 shared hits, fewer than
+chance.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/cross_dataset_similarity.py ->
+%% shared_compound_scatter_hom.svg, from the served responses of the two datasets.
+\tcfig{figures/shared_compound_scatter_hom.pdf}{Per-gene responses for the three HOM
+pairs, one point per shared gene, bottom-5\% hits in both datasets in red.
+\textbf{(c)} Benomyl at 10\,$\mu$g/mL in both. \textbf{(d)} Methyl methanesulfonate,
+fixed dose in Vanacloig against 0.002 and 0.004\% in HOM. \textbf{(e)} Sodium acetate
+at IC30 in anaerobic SynBase against acetic acid in YPD.}{fig:scatter}
+
+\notesec{The best matches group by chemistry without a shared compound}
+The full ranking (\file{results/top\_matches\_hom.csv}) puts basifungin first for
+ethanol, isobutanol, furfural, gamma-valerolactone, sodium glyoxylate and myclobutanil,
+with myriocin second for furfural and glyoxylate; acetovanillone, acetosyringone and
+the phenolic amides match methyl methanesulfonate and mechlorethamine first. Hypothesis
+(untested): the solvent-like inhibitors share a membrane or sphingolipid stress profile
+and the aldehyde and ketone phenolics share a DNA-damage profile. Section~\ref{sec:chemistry}
+asks the general form of this question with molecular encoders.

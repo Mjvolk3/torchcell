@@ -1,0 +1,76 @@
+%% notes-tex/031-unified-representation/sections/2-datasets.tex
+
+\section{The datasets\secstatus{tent}}
+\label{sec:datasets}
+
+Table~\ref{tab:datasets} puts the five served datasets on the axes that matter for a shared
+input. Record counts and gene counts are read from the flattened served records; compound
+counts are distinct InChIKeys with a dosed record; the dose columns are the stored basis and
+the share of records whose unit converts to molar without a molecular weight. The Hillenmeyer
+homozygous arm is kept in the table because the measurements that led to dropping it are made
+against it.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/flatten_records.py and
+%% environment_axis_coverage.py -> results/dose_axis_summary.csv, rendered by
+%% notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The five served chemogenomic datasets. Records and genes come from the flattened
+served records, compounds are distinct InChIKeys with a dosed record, and the last column is
+the share of records whose dose unit converts to molar. The Hillenmeyer homozygous arm is
+dropped from the model (Section~\ref{sec:question}).}
+\label{tab:datasets}
+\input{tables/t1-datasets}
+\end{table}
+
+Three observations set up the rest of the document. Hoepfner is the largest store and the
+only one holding both ploidy arms, 1{,}759{,}255 heterozygous records and 1{,}365{,}064
+homozygous, over a shared gene universe. Wildenhain has eighteen times the compound panel of
+the next largest and a fifth of the gene panel. Vanacloig is the smallest and is the
+application target, and it is the only dataset whose dose is not a number.
+
+Two corrections worth recording, because both were wrong in earlier readings of the raw files.
+The Hoepfner score matrices are genes by screens, not screens by genes: the 6{,}681 rows are
+the genes. And the roughly 5{,}900 columns per file are not experiments run in duplicate. A
+census of every column header (Table~\ref{tab:hoepfnerceiling}) finds 2{,}905 adjusted-score
+columns in the HIP file and 2{,}904 in the HOP file, each carrying a distinct experiment, plus
+a companion gene-wise z score for every one of them. The doubling is the second normalization,
+not a second measurement, and Section~\ref{sec:joinability} takes up what that means for
+Hoepfner's prediction ceiling.
+
+\notesec{The physical and medium fields are dataset identity}
+The served record carries the medium, the temperature, the aerobicity, the duration, the pH
+when it was set, and the solvent. Table~\ref{tab:physical} reads every one of them from the
+records of all five datasets. The result is that none of them varies inside a dataset in a
+way a model could learn from. Temperature is 30~C wherever it is stated and is stated for 1
+to 2 percent of Hillenmeyer records, the few exceptions being its heat and cold arms.
+Aerobicity separates Vanacloig, which is anaerobic, from everything else. Duration is stored
+in hours by two datasets and in generations by three, with no dataset varying it except
+Hillenmeyer's generation arms. pH is stated only by Vanacloig, at 5.0, and by 2 percent of
+Hillenmeyer homozygous records. Across the five, no stated pH or duration in hours appears in
+more than one dataset.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/physical_axis_coverage.py ->
+%% results/physical_axis_summary.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The physical and medium environment fields of every served record, by dataset. A
+cell lists the distinct stated values; where fewer than all records state one, the share that
+do is given.}
+\label{tab:physical}
+\input{tables/t8-physical-axis}
+\end{table}
+
+The consequence for the representation is direct. A temperature channel, an aerobicity
+channel or a pH channel would take a constant value inside each dataset and a different
+constant in each, which makes it the dataset identity written a second way. The representation
+in Section~\ref{sec:representation} therefore gives the physical fields no channel of their own
+and lets the dataset token carry them. The fields stay in the record, and the day a served
+dataset varies temperature within itself the channel is a one-line addition.
+
+The same table shows the output disagreement. The response is a log ratio in Vanacloig and
+Hillenmeyer HET, a z score in Hillenmeyer HOM and Wildenhain, and a sensitivity score in
+Hoepfner; four datasets read it from a pooled barcode competition and Wildenhain from liquid
+optical density. Section~\ref{sec:model} takes this up as the decoder question.

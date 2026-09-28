@@ -1,0 +1,30 @@
+dataset,n_agents,pair,condition,doses,units,n_records,n_genes,n_agents_dosed_alone_same_dose,dose_matched
+hillenmeyer2008_hom,2,lithium chloride + tacrolimus,lithium chloride|tacrolimus,100.0|1.0,mM|ug/mL,4629,4629,2,True
+hillenmeyer2008_hom,2,sodium chloride + tacrolimus,tacrolimus|sodium chloride,0.05|600.0,ug/mL|mM,4093,4093,1,False
+hillenmeyer2008_hom,2,sodium chloride + tacrolimus,tacrolimus|sodium chloride,0.1|600.0,ug/mL|mM,4093,4093,1,False
+hillenmeyer2008_het,2,5-fluorouracil + leucovorin,5-fluorouracil|leucovorin,19.2|500.0,uM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,5-fluorouracil + leucovorin,5-fluorouracil|leucovorin,38.5|500.0,uM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,amphotericin b + flucytosine,amphotericin b|flucytosine,310.0|15.6,nM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,amphotericin b + flucytosine,amphotericin b|flucytosine,620.0|15.6,nM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,fluconazole + flucytosine,fluconazole|flucytosine,31.25|15.6,uM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,fluconazole + flucytosine,flucytosine|fluconazole,15.6|65.3,uM|uM,5677,5677,1,False
+hillenmeyer2008_het,2,flucytosine + ketoconazole,flucytosine|ketoconazole,15.6|4.0,uM|uM,5677,5677,1,False
+hillenmeyer2008_het,2,fluconazole + itraconazole,itraconazole|fluconazole,4.4|31.25,uM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,fluconazole + itraconazole,itraconazole|fluconazole,8.8|31.25,uM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,flucytosine + itraconazole,itraconazole|flucytosine,8.8|15.6,uM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,lithium chloride + tacrolimus,lithium chloride|tacrolimus,150.0|0.1,mM|ug/mL,5704,5704,1,False
+hillenmeyer2008_het,2,5-fluorouracil + methotrexate,methotrexate|5-fluorouracil,125.0|19.2,uM|uM,5704,5704,2,True
+hillenmeyer2008_het,2,5-fluorouracil + methotrexate,methotrexate|5-fluorouracil,125.0|38.4,uM|uM,5704,5704,2,True
+hillenmeyer2008_het,2,5-fluorouracil + methotrexate,methotrexate|5-fluorouracil,125.0|76.8,uM|uM,5704,5704,2,True
+hillenmeyer2008_het,2,5-fluorouracil + methotrexate,methotrexate|5-fluorouracil,250.0|19.2,uM|uM,5704,5704,2,True
+hillenmeyer2008_het,2,5-fluorouracil + methotrexate,methotrexate|5-fluorouracil,250.0|38.4,uM|uM,5704,5704,2,True
+hillenmeyer2008_het,2,5-fluorouracil + methotrexate,methotrexate|5-fluorouracil,250.0|76.8,uM|uM,5704,5704,2,True
+hillenmeyer2008_het,2,5-fluorouracil + methotrexate,methotrexate|5-fluorouracil,500.0|19.2,uM|uM,5704,5704,2,True
+hillenmeyer2008_het,2,5-fluorouracil + methotrexate,methotrexate|5-fluorouracil,500.0|38.4,uM|uM,5704,5704,2,True
+hillenmeyer2008_het,2,5-fluorouracil + methotrexate,methotrexate|5-fluorouracil,500.0|76.8,uM|uM,5704,5704,2,True
+hillenmeyer2008_het,2,leucovorin + methotrexate,methotrexate|leucovorin,125.0|500.0,uM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,leucovorin + methotrexate,methotrexate|leucovorin,250.0|500.0,uM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,leucovorin + methotrexate,methotrexate|leucovorin,500.0|500.0,uM|uM,5677,5677,2,True
+hillenmeyer2008_het,2,sodium chloride + tacrolimus,sodium chloride|tacrolimus,700.0|0.1,mM|ug/mL,5704,5704,1,False
+hillenmeyer2008_het,2,sodium chloride + tacrolimus,tacrolimus|sodium chloride,0.05|600.0,ug/mL|mM,5704,5704,1,False
+hillenmeyer2008_het,2,sodium chloride + tacrolimus,tacrolimus|sodium chloride,0.1|600.0,ug/mL|mM,5704,5704,1,False

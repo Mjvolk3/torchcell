@@ -1,0 +1,6 @@
+dataset,compounds,in_chembl,approved,approved_withdrawn,approved_share
+Vanacloig 2022,41,36,4,1,0.098
+Hillenmeyer HET,290,246,103,13,0.355
+Hoepfner 2014,148,85,39,2,0.264
+Wildenhain 2015,5170,3156,667,94,0.129
+union of the four,5463,3346,720,98,0.132

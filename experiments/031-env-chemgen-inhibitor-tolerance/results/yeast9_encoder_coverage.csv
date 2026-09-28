@@ -1,0 +1,13 @@
+encoder,dim,n_attempted,n_embedded,n_failed,n_rows_with_nan,load_seconds,seconds
+ecfp4_count,2048,894,894,0,0,0.0,0.21
+ecfp4_bit,2048,894,894,0,0,0.0,0.19
+fcfp4_count,2048,894,894,0,0,0.0,0.29
+maccs,167,894,894,0,0,0.0,0.55
+rdkit_2d,217,894,894,0,18,0.0,6.77
+mol2vec,300,894,894,0,0,0.67,0.3
+chemberta2_mlm,384,894,894,0,0,8.49,0.76
+chemberta2_mtr,384,894,894,0,0,0.34,0.55
+molformer_xl,768,894,894,0,0,0.47,1.41
+roberta_zinc_480m,768,894,894,0,0,0.54,1.57
+unimol_v1,512,894,836,58,0,0.95,217.44
+mole_static,1000,894,894,0,0,3.55,0.79

@@ -1,0 +1,6 @@
+dataset,records,genes,compounds,cells,perturbation_types
+vanacloig2022,143218,3598,41,143218,barcoded_kanmx_deletion|marker_deletion|marker_deletion|natmx_deletion|marker_deletion|barcoded_kanmx_deletion|marker_deletion|natmx_deletion|marker_deletion|marker_deletion|barcoded_kanmx_deletion|natmx_deletion|marker_deletion|marker_deletion|natmx_deletion|barcoded_kanmx_deletion
+hillenmeyer2008_hom,875075,4655,114,483279,kanmx_deletion
+hillenmeyer2008_het,2463849,5810,290,1651248,engineered_copy_number
+hoepfner2014,3122800,5839,148,861345,engineered_copy_number|kanmx_deletion
+wildenhain2015,428206,242,5170,428189,barcoded_kanmx_deletion

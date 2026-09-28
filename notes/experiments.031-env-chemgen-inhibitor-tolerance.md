@@ -1,0 +1,576 @@
+---
+id: qse0rkehpqn83yli4tzf09m
+title: 031 Env Chemgen Inhibitor Tolerance
+desc: ''
+updated: 1790375587380
+created: 1790375587380
+---
+
+## 2026.09.25 - Vanacloig 2022 and Hillenmeyer 2008 as a training pair for inhibitor tolerance
+
+**Why these two.** Vanacloig-Pedros 2022 is the one genome-wide screen in the graph that
+doses the industrial inhibitor panel (furfural, 5-HMF, the phenolic aldehydes and acids,
+levulinic acid, ionic liquids, ethanol, isobutanol) at a matched IC30. Isobutanol is dosed
+nowhere else as a stress, so this dataset is the only tolerance signal the isobutanol
+metabolism work can train on. Hillenmeyer 2008 is the only other genome-wide environment
+response compendium of comparable size, and its homozygous (HOM) arm is the same
+perturbation class, a KanMX deletion. The question for a joint model is what Hillenmeyer
+can add to Vanacloig, and along which axes the two disagree so that an environment
+encoding has to carry them.
+
+Everything below is measured on the DEV-tree LMDB builds through the loaders, so every
+number is a served record, not a raw-matrix value. Three scripts:
+[[experiments.031-env-chemgen-inhibitor-tolerance.scripts.flatten_records]] flattens the
+stores to parquet,
+[[experiments.031-env-chemgen-inhibitor-tolerance.scripts.dataset_axes_comparison]]
+writes the axis table and the overlaps, and
+[[experiments.031-env-chemgen-inhibitor-tolerance.scripts.cross_dataset_similarity]]
+measures the shared response structure. Result files are under
+`experiments/031-env-chemgen-inhibitor-tolerance/results/`; the full axis table is
+`axes_table.md` and the overlaps are `overlap.md`.
+
+### Size and the cell axis
+
+| axis | Vanacloig 2022 | Hillenmeyer 2008 HOM | Hillenmeyer 2008 HET |
+|---|---|---|---|
+| records | 143,218 | 1,088,620 | 2,698,797 |
+| distinct queried genes | 3,598 | 4,675 | 5,825 |
+| genes per genotype | 4 | 1 | 1 |
+| constant background | pdr1 (YGL013C), pdr3 (YBL005W), snq2 (YDR011W) | none | none |
+| perturbation type | barcoded KanMX deletion + 2 marker deletions + NatMX deletion | KanMX deletion | engineered copy number 2 to 1 |
+| reference strain | S288C | homozygous diploid deletion collection (Giaever 2002) | heterozygous diploid deletion collection (Giaever 2002) |
+| ploidy | haploid | diploid | diploid |
+
+The Vanacloig genotype is never a single deletion. Every strain is the queried deletion
+on top of the pdr1 pdr3 snq2 drug-sensitized host, which the loader stores as three
+constant background perturbations, so the served record is a quadruple mutant. A model
+that reads the genotype as a gene set sees four genes per Vanacloig strain and one per
+Hillenmeyer strain, and the three background genes are absent from the queried set (the
+strains carrying them were built on that background, so they are not screened). The
+cell representation therefore differs on ploidy, on the background, and on the
+perturbation class all at once, before any environment is considered.
+
+### The environment axis
+
+| axis | Vanacloig 2022 | Hillenmeyer 2008 HOM | Hillenmeyer 2008 HET |
+|---|---|---|---|
+| medium | SynBase (SynH3- minus acetamide, sodium acetate, cellobiose; MSG for ammonium sulfate) | YPD 86%; SC and 13 SC dropouts 8%; SD 5%; YP glycerol 1% | YPD 99%; SD 1%; YP glycerol 0.4% |
+| synthetic medium | yes | 13% of records | 1% of records |
+| state | liquid | liquid | liquid |
+| pH | 5.0 (HCl), on every record | 7.5 or 8.0 on 2% of records, otherwise unstated | unstated |
+| temperature | 30 C on every record | unstated on 98% (a typed provenance gap); 23, 25, 37 C arms | unstated on 99%; 20, 23, 37 C arms |
+| aerobicity | anaerobic | aerobic | aerobic |
+| duration | 48 h, 6.5 generations | 5 to 20 generations, 60% at 20 | 5 to 20 generations, 93% at 20 |
+| distinct compounds (InChIKey) | 41 | 116 | 302 |
+| distinct environments (compound, dose, physical, T, duration, screen) | 41 | 257 | 474 |
+| small molecules per record | always 1 | 0 on 18%, 2 on 1% | 0 on 2%, 2 on 5% |
+| dose basis | IC30 (39 compounds); fixed for benomyl and MMS | numeric dose on 98% | numeric dose on 98% |
+| screens | none (one pool, four batches paired to their own controls) | 13 control sets | 10 control sets |
+
+Two axes are constant within each dataset and different between them: Vanacloig is
+anaerobic in a defined synthetic hydrolysate mimic at pH 5, Hillenmeyer is aerobic in
+YPD. Neither varies inside its own dataset, so nothing in a joint model can learn the
+effect of oxygen or of the base medium from these two alone; they are dataset identity in
+disguise. Temperature is a typed provenance gap on 98% of Hillenmeyer records. Duration
+is in generations on both sides but on different scales (6.5 vs mostly 20).
+
+Dose is the third asymmetry. Vanacloig records an IC30 basis with no molar value for 39
+of its 41 compounds, while Hillenmeyer records a numeric dose on 98% of records, so a
+dose feature is a different kind of number in the two sources.
+
+### The readout axis
+
+| axis | Vanacloig 2022 | Hillenmeyer 2008 HOM | Hillenmeyer 2008 HET |
+|---|---|---|---|
+| measurement type | log2 ratio | z-score | log2 ratio |
+| assay type | pooled competitive growth, barcode | same | same |
+| sign | negative = defect | positive = defect | positive = defect |
+| n_samples | 3 on every record | 1 on 65%, 2 on 24%, 3 to 5 on 10% | 1 on 76%, 2 on 17% |
+| uncertainty | sample SD on every record | sample SD on 35% | sample SD on 24% |
+| response median [5th, 95th pct] | -0.045 [-1.115, 0.535] | 0.013 [-2.312, 3.826] | 0.035 [-0.453, 0.759] |
+| SE median | 0.138 | 0.344 | 0.096 |
+
+The two Hillenmeyer arms carry different statistics (a log2 ratio for HET, a z-score for
+HOM) and the sign convention is opposite to Vanacloig's, so the label must be per
+dataset, or reduced to a sign or a rank, before anything is pooled.
+
+### Overlap
+
+| what | pair | shared |
+|---|---|---|
+| queried genes | Vanacloig and HOM | 3,550 of 3,598 Vanacloig genes (Jaccard 0.75) |
+| queried genes | Vanacloig and HET | 3,577 of 3,598 (Jaccard 0.61) |
+| queried genes | all three | 3,533 |
+| compounds (InChIKey) | Vanacloig and HOM | 2: benomyl, methyl methanesulfonate |
+| compounds (InChIKey) | Vanacloig and HET | 2: benomyl, ferulic acid |
+| compounds (InChIKey) | HOM and HET | 99 |
+
+Genes overlap almost completely and compounds almost not at all. Sodium acetate
+(Vanacloig) and acetic acid (Hillenmeyer) are different compound entities in the graph
+and do not join; the same holds for sodium butyrate against any butyric acid record
+elsewhere. Benomyl is dosed at 10 ug/mL on both sides. Hillenmeyer's ferulic acid is
+3.95 uM in the HET arm only; Vanacloig's is at IC30.
+
+### Reliability of each dataset with itself
+
+`reliability = 1 - mean(SE^2) / var(response)` per condition, over genes, using the
+served SE. It is the share of across-gene variance that replicate noise cannot explain,
+and the ceiling for any correlation with another dataset.
+
+| dataset | conditions with a served SE | median | 25th pct | conditions below 0.1 |
+|---|---|---|---|---|
+| Vanacloig 2022 | 41 | 0.703 | 0.370 | sodium glyoxylate, sodium butyrate, 5-HMF, 4-methylimidazole, 2-methylimidazole, p-coumaric acid |
+| Hillenmeyer HOM | 52 | 0.919 | 0.804 | levodopa |
+| Hillenmeyer HET | 62 | 0.845 | 0.668 | 3,5-dinitrobenzamide, rotenone, hexestrol |
+
+Six Vanacloig compounds carry no measurable across-gene signal at this dose, and 5-HMF
+is one of them (index -0.054, so the replicate noise exceeds the spread between genes).
+The compounds that matter for the isobutanol work are well measured: isobutanol 0.786,
+ethanol 0.828, furfural 0.771, ferulic acid 0.850, methyl methanesulfonate 0.879.
+Vanillin is 0.656 and sodium acetate 0.370.
+
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/reliability_vs_cross_hom.svg)
+
+Panel b. Reliability index per Vanacloig condition (bars) against the best Spearman that
+condition reaches with any HOM condition (markers) and the HOM median (dashed).
+Generated by `experiments/031-env-chemgen-inhibitor-tolerance/scripts/cross_dataset_similarity.py`.
+
+### What Hillenmeyer shares with Vanacloig
+
+Both matrices are oriented so that negative is a defect, Hillenmeyer's doses and
+generation counts are averaged within a compound, and every Vanacloig condition is
+correlated with every partner condition over the shared genes.
+
+| statistic | HOM (140 conditions) | HET (308 conditions) |
+|---|---|---|
+| cross Spearman, median | 0.010 | 0.003 |
+| cross Spearman, 95th percentile | 0.076 | 0.052 |
+| cross Spearman, maximum | 0.222 (myclobutanil vs basifungin) | 0.183 (myclobutanil vs tris(4-methylphenyl)phosphine sulfide) |
+| per-gene mean response across conditions, Spearman | 0.118 (n = 3,550) | 0.036 (n = 3,577) |
+| gene-gene similarity agreement (Mantel Spearman) | 0.068, null -0.003 +/- 0.006 (1,350 genes) | 0.024, null -0.001 +/- 0.007 (1,422 genes) |
+
+The shared structure is real (the Mantel statistic is eleven null standard deviations
+out for HOM) and small. HOM carries about three times the shared structure that HET
+does on every statistic, which is the expected direction: HOM is the same perturbation
+class as Vanacloig, HET is a dosage halving that includes essential genes.
+
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/cross_similarity_heatmap_hom.svg)
+
+Panel a. Spearman between each Vanacloig condition (rows) and the 40 HOM conditions with
+the largest absolute correlation to any row (columns), over the 3,550 shared genes.
+Generated by `experiments/031-env-chemgen-inhibitor-tolerance/scripts/cross_dataset_similarity.py`.
+
+**The shared compounds behave differently from one another.** Hit = the bottom 5% of
+genes in a condition (172 genes); 8.6 are expected to overlap by chance.
+
+| Vanacloig vs partner | rho | rank of the true match | hit overlap | Fisher p |
+|---|---|---|---|---|
+| MMS vs MMS (HOM) | 0.132 | 3 of 140 | 39 | 8.8e-17 |
+| benomyl vs benomyl (HOM) | -0.007 | 88 of 140 | 16 | 0.011 |
+| sodium acetate vs acetic acid (HOM) | -0.027 | 121 of 140 | 4 | 0.97 |
+| benomyl vs benomyl (HET) | 0.024 | 30 of 308 | 5 | 0.94 |
+| ferulic acid vs ferulic acid (HET) | 0.005 | 110 of 308 | 8 | 0.63 |
+
+MMS transfers: its HOM match ranks third of 140, and its best match, 4-nitroquinoline
+1-oxide, is another DNA-damaging agent. Benomyl transfers at the hit level only, and not
+at all into HET. The acetate salt against the free acid does not transfer, and neither
+does ferulic acid at 3.95 uM against ferulic acid at IC30. Hypothesis (untested): the
+acetate result is the dose form, a salt at pH 5 in SynBase against the free acid in YPD,
+and the ferulic acid result is the dose, 3.95 uM being far below an IC30.
+
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/shared_compound_scatter_hom.svg)
+
+Panels c to e. Shared-gene responses for the three HOM pairs, bottom-5% hits in both
+datasets in red. Generated by
+`experiments/031-env-chemgen-inhibitor-tolerance/scripts/cross_dataset_similarity.py`.
+
+**The best matches group by chemistry even without a shared compound.** In HOM, ethanol,
+isobutanol, furfural, gamma-valerolactone, sodium glyoxylate and myclobutanil all match
+basifungin best, with myriocin second for furfural and glyoxylate. Acetovanillone,
+acetosyringone and the phenolic amides match MMS and mechlorethamine best. Hypothesis
+(untested): the solvent-like inhibitors share a membrane or sphingolipid stress profile
+and the aldehyde and ketone phenolics share a DNA-damage profile. The full ranking is in
+`top_matches_hom.csv` and `top_matches_het.csv`.
+
+### What this means for the model
+
+- **HOM is the partner, not HET.** It is the same perturbation class, it shares 3,550 of
+  Vanacloig's 3,598 genes, and it carries three times HET's shared structure. HET adds
+  essential genes Vanacloig cannot query, which is a different use.
+- **What HOM can contribute is a gene-level prior.** The per-gene mean response
+  correlates at 0.118 and the gene-gene co-response structure agrees above the null, so
+  which genes are generally sensitive and which genes move together is partly shared.
+  Compound-matched transfer is available for exactly one compound, MMS.
+- **The two datasets are separated by constant axes** (oxygen, base medium, pH, ploidy,
+  the pdr1 pdr3 snq2 background, the dose basis, the statistic). An environment encoding
+  that carries medium composition, aerobicity, temperature, duration and the dosed
+  compound will represent those differences, but with no within-dataset variation on
+  oxygen or medium the model cannot learn their effect; it can only learn a dataset
+  offset. That is fine for prediction within Vanacloig and is the honest scope.
+- **Evaluate within Vanacloig, held out by compound**, so the score isolates the model
+  from the modality and medium changes. Report the reliability index alongside every
+  per-compound score, because six compounds have none to predict and 5-HMF is one of
+  them. For the isobutanol target the ceiling is 0.786.
+- **Lian 2019** stays the external check for furfural only, restricted to round 1 CRISPRd
+  (about 21,000 guide records over about 5,200 genes before the ORF drop), because the
+  a and i modes have no deletion analog and rounds 2 and 3 carry integrated backgrounds.
+  Furfural's reliability in Vanacloig is 0.771, so there is signal to transfer.
+
+### Next
+
+1. A training config under `experiments/031-env-chemgen-inhibitor-tolerance/conf/` that
+   queries Vanacloig alone, then Vanacloig plus HOM, with the compound-held-out split and
+   the per-compound reliability reported next to every score.
+2. Environment encoding in two stages as planned: one dosed compound per record first,
+   then the medium components and dropouts as the same compound entities, so SynBase and
+   YPD enter as sets of molecules rather than as names.
+3. The metabolism arm is a later ablation on the same split: add it and check that the
+   held-out compound score does not fall.
+
+## 2026.09.25 - Replication, error, ceilings, and the typeset document
+
+**Correction to the numbers above.** The first run labeled every Hillenmeyer record with
+no compound, no physical factor and an unstated temperature as one condition (the SD,
+SC-dropout and YP glycerol media swaps collapsed into a single bucket). The scripts now
+label those conditions by their medium, which takes HOM from 123 to 140 conditions and
+HET from 307 to 308, and the numbers above were corrected in place: the per-gene
+mean-response correlation with HOM is 0.118 (was 0.138), the Mantel statistic 0.068
+against a null SD of 0.006 (was 0.056), and the ranks of the shared compounds are out
+of 140 and 308. Everything else moved by less than a rounding step.
+
+The reliability index is a served-SE quantity, so it was checked against the raw
+replicates the loaders consumed
+([[experiments.031-env-chemgen-inhibitor-tolerance.scripts.replicate_noise_and_ceilings]]).
+
+| dataset | records with one replicate | served SE on | index median | ceiling on r median | raw replicate Spearman median | hit Jaccard median | index vs raw (rank) |
+|---|---|---|---|---|---|---|---|
+| Vanacloig 2022 | 0% | 100% | 0.703 | 0.838 | 0.333 (41 conditions) | 0.237 | 0.87 |
+| Hillenmeyer HOM | 65% | 35% | 0.919 | 0.959 | 0.386 (78 labels) | 0.203 | 0.40 |
+| Hillenmeyer HET | 76% | 24% | 0.845 | 0.919 | 0.255 (108 labels) | 0.146 | 0.43 |
+
+Vanacloig's served SE is an honest per-compound noise estimate: the index tracks the
+raw three-batch agreement at rank 0.87. Hillenmeyer's served SE overstates reliability:
+the index says 0.92 where the replicate arrays agree at 0.39, so for Hillenmeyer the raw
+replicate agreement is the ceiling to quote. Plausible reason, unverified: the served SD
+exists only for the third of records with more than one array and describes scatter
+within one control set, while replicates of a label span control sets and scanners.
+
+Per Vanacloig compound the ceiling on the correlation with the noise-free response is
+`sqrt(rel)`: isobutanol 0.89, ethanol 0.91, furfural 0.88, methyl methanesulfonate 0.94,
+ferulic acid 0.92; sodium glyoxylate, sodium butyrate and 5-HMF have no ceiling at all
+(index at or below zero), and 4-methylimidazole, 2-methylimidazole and p-coumaric acid sit
+below 0.1. Full table in `results/condition_noise_vanacloig2022.csv`.
+
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/noise_distributions.svg)
+
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/reliability_index_vs_replicates.svg)
+
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/vanacloig_ceilings.svg)
+
+Panels a to f generated by
+`experiments/031-env-chemgen-inhibitor-tolerance/scripts/replicate_noise_and_ceilings.py`.
+
+**The typeset document** is `notes-tex/031-inhibitor-tolerance-data/` (build with `make`,
+gate with `make check`, tables from `make tables`, panels from `make plots`). It carries
+the axes, overlap, noise and shared-structure sections, and two sections that wait on the
+molecular-encoder embeddings: encoder coverage
+([[experiments.031-env-chemgen-inhibitor-tolerance.scripts.embed_compounds]]) and whether
+chemical similarity predicts response similarity across the datasets
+([[experiments.031-env-chemgen-inhibitor-tolerance.scripts.chemical_similarity]]).
+The figures now carry stable names (the `--stable` flag of the plotting scripts), which
+is what the document's `make plots` reads.
+
+## 2026.09.25 - Molecular encoders, coverage, and chemistry against response
+
+Twelve small-molecule encoders live in `torchcell/molecule/` ([[torchcell.molecule.encoders]]):
+count and bit ECFP4, FCFP4, MACCS, the 217 RDKit 2D descriptors, Mol2Vec, ChemBERTa-2
+MLM and MTR, MoLFormer-XL, a ZINC RoBERTa, Uni-Mol and MolE. All 343 compounds of the
+three datasets have a SMILES; eleven encoders embed all 343, Uni-Mol 332 because its
+wrapper would otherwise embed eleven Hillenmeyer salts and large molecules from
+substituted coordinates ([[experiments.031-env-chemgen-inhibitor-tolerance.scripts.embed_compounds]]).
+Reaction-aware encoders were deliberately left out: reaction context places a
+metabolite, not an inhibitor.
+
+Chemical neighbors across the datasets ([[experiments.031-env-chemgen-inhibitor-tolerance.scripts.chemical_similarity]]),
+count ECFP4 Tanimoto:
+
+- HOM: the median Vanacloig compound's nearest HOM compound is at 0.33; only the two
+  exact matches and cinnamic acid vs benzaldehyde (0.54) exceed 0.5. Isobutanol's nearest
+  HOM compound is sorbitol at 0.14.
+- HET: ferulic acid is the nearest HET compound of ferulamide (0.77), caffeic acid
+  (0.66), vanillin (0.62), vanillic acid (0.59), sinapic acid (0.56), acetovanillone
+  (0.52) and p-coumaric acid (0.51); 4-hydroxybenzoic acid has 4-aminobenzoic acid (0.64).
+- Cosine nearest-neighbor similarities of the dense encoders (0.8 to 0.95) are not
+  comparable to Tanimoto and say nothing about closeness.
+
+Chemistry vs response, Spearman over all (Vanacloig, HOM) condition pairs (n = 4,674):
+
+| encoder | rho | p | top-decile median response rho | rest |
+|---|---|---|---|---|
+| ecfp4_bit | 0.089 | 1e-9 | 0.011 | 0.012 |
+| ecfp4_count | 0.080 | 5e-8 | 0.014 | 0.011 |
+| molformer_xl | 0.079 | 7e-8 | 0.022 | 0.011 |
+| mol2vec | 0.078 | 9e-8 | 0.020 | 0.011 |
+| chemberta2_mlm | 0.064 | 1e-5 | 0.019 | 0.011 |
+| chemberta2_mtr | 0.054 | 2e-4 | 0.015 | 0.011 |
+| unimol_v1 | 0.042 | 6e-3 | 0.012 | 0.011 |
+| maccs | 0.041 | 5e-3 | 0.014 | 0.011 |
+| fcfp4_count | 0.038 | 1e-2 | 0.010 | 0.012 |
+| rdkit_2d | 0.016 | 0.27 | 0.012 | 0.011 |
+| mole_static | 0.008 | 0.57 | 0.011 | 0.012 |
+| roberta_zinc_480m | -0.028 | 0.06 | 0.009 | 0.012 |
+
+Real and small: chemically close pairs are barely more response-similar than distant
+ones, because almost every cross-dataset pair sits below Tanimoto 0.25 and the pairs
+that would test the prior at high similarity do not exist. Against HET every
+correlation is below 0.04. The transfer test (exact-match HOM vs all-of-HOM with an
+encoder) therefore has a prior of a small positive effect for the fingerprint and
+transformer encoders and none for MolE, and for isobutanol there is no chemical
+neighbor in either arm.
+
+![](./assets/images/031-env-chemgen-inhibitor-tolerance/chemistry_vs_response_hom.svg)
+
+Generated by `experiments/031-env-chemgen-inhibitor-tolerance/scripts/chemical_similarity.py`.
+
+Environment note: installing `unimol_tools` downgraded numpy 2.3.4 to 2.2.6 in the
+torchcell env (it pins numpy below 2.3). The molecule tests and the Vanacloig loader run
+under 2.2.6; the full test suite was not rerun.
+
+## 2026.09.25 - Are these the YKO collection, and does FitDb carry the inhibitors
+
+Both datasets are yeast knockout (YKO) collection derivatives on the BY / S288C
+background, read from the loaders and the mirrored paper:
+
+- Vanacloig 2022 screens the `3DeltaAlpha` drug-sensitized deletion collection, 4,309
+  MATalpha strains of the YKO collection crossed into `pdr1::natMX pdr3::KI.URA3
+  snq2::KI.LEU2` (Andrusiak 2012, Piotrowski 2017; paper.md line 54); validation
+  strains were rebuilt in BY4741.
+- Hillenmeyer 2008 screens the Giaever 2002 heterozygous and homozygous diploid deletion
+  collections, the YKO collection in BY4743.
+
+FitDb (the Hillenmeyer 2008 compendium) condition labels, 333 HET and 160 HOM distinct
+raw labels, matched against the hydrolysate and product panel: acetic acid, ferulic acid,
+H2O2, NaCl, sorbitol and YP glycerol are present; isobutanol, ethanol, furfural, 5-HMF,
+vanillin, syringaldehyde, p-coumaric acid, levulinic acid and the ionic liquids are not
+(`cut -f2 het.txt hom.txt | sort -u | grep`, this session). FitDb therefore cannot supply
+an isobutanol or furfural arm; the served graph's only isobutanol stress is Vanacloig.
+
+Candidate YKO inhibitor screens to bring in, from memory and NOT verified against the
+mirror: Skerker et al. 2013 (Mol Syst Biol, chemogenomic profiling of plant hydrolysates
+on the deletion collection), Gonzalez-Ramos et al. 2013 (Biotechnol Biofuels, deletion
+collection screen for butanol tolerance), Kuroda et al. 2019 (Front Bioeng Biotechnol,
+deletion collection screen for isobutanol tolerance). Each needs the mirror-and-verify
+pass before it can be judged.
+
+## 2026.09.26 - The Avalos isobutanol strains are the key external validator, and their numbers are figure-only
+
+**KEY VALIDATOR.** The isobutanol arm of Vanacloig has no external check inside the graph.
+The nearest one that exists anywhere we can reach is the Avalos lab's own engineered
+strains, and it is worth naming now because the prediction it would test is the one this
+experiment is for: does a tolerance model trained on a deletion-collection chemogenomic
+screen rank a real engineered tolerance gain correctly.
+
+### What is already served
+
+Lopez 2024 is Avalos-lab data and it IS in the built store, contrary to a reading of the
+candidate table (below). Two datasets from Jose de Jesus Montano Lopez's 2024 Princeton
+dissertation, both `built=True`:
+
+- `isobutanol_screen_lopez2024`, 4,554 records, one per resolved ORF.
+- `isobutanol_validated_lopez2024`, 224 records, the triplicate re-screen of strong hits.
+
+Both are single-gene knockouts carrying a constant Leu3p/`LEU1`-promoter yEGFP biosensor,
+and the readout is a median-GFP fold change against the same-plate wild type. So the served
+Avalos data is production proxy on single deletions. It is not tolerance and it is not
+multiplex.
+
+### What the same dissertation holds that we did not ingest
+
+Read from `thesis.txt` in the mirror (`lopezSystemsMetabolicEngineering2024`, sha256-pinned):
+
+- **23 multiplex strains.** Supplementary Table 1 lists strains described as carrying a
+  mitochondrial isobutanol pathway: five heterologous cassettes integrated at `HIS3`
+  (`ILV2`, `ILV3`, `ILV5`, `ARO10`, and a *Lactococcus lactis* `adhA-RE1` variant, two of
+  them carrying a CoxIV mitochondrial targeting sequence), each crossed with ONE
+  mitochondrial-morphology gene deletion. The deletions named are `MDM36`, `MDM35`,
+  `MDM32`, `TOM7`, `FIS1`, `MDM33`, `MDM30`, `MDM10`, `DNM1`, `MDM34`, `MDM12`, `MDV1`,
+  `MDM31`, `MMM1`, `MDM38`, `NUM1`, `FZO1`, `MGM1`, `MDM39`, `MDM37`. A genotype here is
+  one deletion plus five overexpressions, which is the only pathway-plus-deletion genotype
+  in reach on this phenotype.
+- **Two double deletions on the tolerance side.** `gln3` with `gcn4`, and `gln3` with
+  `gnp1`. The dissertation states the tolerance factor was not additive across the two
+  single deletions, which is an explicit epistasis observation on isobutanol tolerance.
+  Both doubles were then evolved under rising isobutanol with whole-genome sequencing;
+  `GNP1` acquired mutations in every background that did not already delete it.
+- **`SPT10`.** A histone-modification deletion reported to raise isobutanol production and
+  the production of other chemicals.
+
+### Why none of it is ingestible today
+
+The mirrored `supplementary_tables.xlsx` carries only `Table S2` and `Table S3`, the two
+single-deletion screens. The titers and tolerance factors for the multiplex strains and the
+doubles live in figures (Supplementary Figures 3 to 5 plot mitochondria number and volume
+against isobutanol titer), there is no released per-strain titer table, and the thesis
+carries no data-availability statement pointing at a deposit. Digitizing bars would violate
+the provenance rule, so the genotypes are documented and machine-readable while the
+phenotype values are not. Requesting the numbers is drafted, NOT sent:
+[[experiments.031-env-chemgen-inhibitor-tolerance.avalos-data-request-draft]].
+
+### The prediction to make without the numbers
+
+Since the values are not available, make and record the prediction first, then check it if
+the data arrives. A model trained on Vanacloig (isobutanol ceiling 0.786) plus HOM as a
+gene prior should, on isobutanol:
+
+1. rank `GLN3` deletion among the strongest tolerance-increasing single deletions;
+2. rank `GNP1` deletion high as well, the dissertation's second most tolerant;
+3. predict `gln3 gcn4` and `gln3 gnp1` as SUB-ADDITIVE against the sum of their singles,
+   which is the direction the dissertation reports.
+
+Point 3 is the informative one, because it needs an interaction and not a ranking. Points 1
+and 2 are single-gene and a per-gene additive ridge can reach them.
+
+### A stale exclusion to fix
+
+The candidate table's excluded list carries a row named "Avalos lab isobutanol-biosensor
+deletion screen", reason "Described only in a PhD thesis and a DOE report. Track for
+publication; not citable as a dataset." That is exactly what the built Lopez 2024 loader
+serves, from the dissertation's sha256-pinned supplementary tables, citing the lab's 2022
+Nature Communications biosensor paper for the construct. The row should move from excluded
+to built. The dissertation itself has no DOI or PMID, only the Princeton DataSpace handle
+`88435/dsp019s161956t`, which is the DOI-less-source problem recorded in memory
+`data-privacy-and-doi-less-sources`.
+
+### The furfural side now has its genome-confirmed set
+
+For the Lian 2019 external check of Section "What follows", the paper's Source Data file was
+retrieved this session and deposited in the raw mirror
+(`41467_2019_13621_MOESM8_ESM.xlsx`, sha256
+`1d2d412cf56f3e4b138cb6698395e0354f90b654ef6f7d044743bae149ac954d`, via
+`torchcell.literature.retrieve.springer_esm`). It carries the per-replicate relative-biomass
+values behind Figures 2, 3, 4, 5b, 5d and Supplementary Figures 1, 4, 6, 7, 9, 10. Sheet
+`Fig. 4` is the fully crossed genome-integrated `SIZ1i` by `NAT1a` by `PDR1i` design, seven
+strains plus wild type, at 7.5, 12.5 and 17.5 mM furfural in biological triplicate. At
+17.5 mM the means are wild type 1.03, `SIZ1i` alone 1.95, `NAT1a` alone 0.77, `PDR1i` alone
+0.48, `SIZ1i NAT1a` 55.7, `SIZ1i PDR1i` 25.7, `NAT1a PDR1i` 0.53, and the triple 142.2. So
+furfural HAS a genome-confirmed combinatorial validator with released numbers, and
+isobutanol does not. That asymmetry is the argument for asking Avalos for the isobutanol
+equivalent.
+
+## 2026.09.26 - Isobutanol literature sweep: what is published, what is released, and what does not exist
+
+A background agent enumerated the Avalos record exhaustively (PubMed `Avalos JL[Author]`
+2021-2026, 28 records; Europe PMC `AUTH:"Avalos JL" AND SRC:PPR`, all 19 preprints) and
+triaged isobutanol datasets by whether per-strain data is actually released. Two files were
+downloaded and opened BY THIS SESSION and their counts are mine; everything else is
+agent-reported and marked as such.
+
+### Publication status of the dissertation chapters
+
+| Chapter | Published | Evidence |
+|---|---|---|
+| GLN3 branched-chain alcohol tolerance | **YES** | Kuroda et al. Cell Syst 2019;9:534-547.e5, PMID 31734159 |
+| `SPT10` boosting isobutanol production | NO, and no preprint | absent from all 28 PubMed and 19 preprint records |
+| Mitochondrial morphology x the 5-cassette pathway | NO, **in review since early 2025** | cited as ref 17 of Kichuk & Avalos, IJMS 2025;26:2152 (PMC11899761) |
+| `gln3 gcn4` / `gln3 gnp1` doubles plus evolution | NO, and no sequence deposit | no S. cerevisiae isobutanol-tolerant evolved-clone BioProject exists |
+
+The in-review paper's title and authors were recovered verbatim from the review's reference
+list: Montano Lopez J; Duran L; Kichuk T; Lampson-Stixrud D; Morillo K; Shende A; Avalos J.
+"The impact of mitochondrial morphology and mtDNA maintenance on compartmentalized
+biosynthetic pathways in Saccharomyces cerevisiae." 2025; in review. So the multiplex strains
+ARE heading for publication, which changes the ask from "please share unpublished data" to
+"please share on publication, or now under embargo."
+
+**CORRECTION to the 2026.09.25 section of this note**, which listed Kuroda 2019 as Frontiers
+in Bioengineering and Biotechnology. It is Cell Systems, PMID 31734159. The candidate table's
+citation was right.
+
+### Kuroda 2019 released a full quantitative per-strain table, and we missed it
+
+VERIFIED THIS SESSION by opening `1-s2.0-S2405471219303825-mmc2.xlsx` (246,902 bytes), one
+sheet `1st screen`, dimension A1:V4792, titled "Table S2. Tolerance factors for strains from
+yeast deletion library in the initial screen (related to Figure 1)". The layout is FOUR
+side-by-side column blocks plus a `BY4741/WT` reference block, each block carrying OD600 at
+0% isobutanol, OD600 at 1.4% isobutanol, and a tolerance factor.
+
+Counts measured by this session's own parse (regex `^Y[A-P][LR]\d{3}[WC](-[A-Z])?$`):
+
+| block | threshold | ORF entries |
+|---|---|---|
+| Sensitive | TF < 0.2 | 1,020 |
+| Normal | 0.2 <= TF <= 0.8 | 2,666 |
+| Tolerant | 0.8 < TF | 514 |
+| N.D. | OD600(0%) < 0.5 | 224 |
+
+Total 4,424 entries, **4,379 distinct ORFs**, 45 ORFs appearing twice. A loader must do its
+own count: the agent's stricter regex gave 4,411 and 4,384, so the three passes disagree at
+the 1% level and none of them is authoritative. Dropping the N.D. block leaves 4,200
+measurable entries.
+
+This is the dataset the isobutanol arm needed. It is a whole-collection quantitative
+isobutanol TOLERANCE screen with a released matrix, against an ethanol comparator, on the
+same knockout collection class as Vanacloig. It moves from "triaged" to "ingest next" and it
+supersedes the plan in this note's earlier sections of having no external isobutanol
+tolerance check. Also released (agent-reported, not opened here): `mmc3.xlsx` RNA-seq FPKM
+and log2FC for wild type and `gln3` at 0% and 1.3%, reads at ENA PRJEB33652.
+
+### A promised Source Data file that was never deposited
+
+Agent-reported, confirmed three ways by the agent: Montano Lopez et al., Nat Commun
+2022;13:270 (DOI 10.1038/s41467-021-27852-x), the biosensor paper our Lopez 2024 loader cites
+for its construct, states in its Data Availability and in every figure caption that source
+data are provided as a Source Data file. No such file exists. The article lists three
+supplements, all PDFs; the Europe PMC package for PMC8755756 holds the same three; probing
+the Springer CDN for further slots returns 403 while the three known ones return 206.
+
+Recoverable from the Supplementary PDF instead: allele-level genotypes for 24 Ilv6p variants,
+24 Leu4p variants, 6 Ll_IlvD variants, and 6 FACS-isolated colonies with ddPCR cassette copy
+numbers. Roughly 54 typed genotypes whose paired isobutanol AND isopentanol titers are
+figure-only. This is now the strongest item in the data request, because the paper committed
+to releasing it.
+
+### Confirmed absent, so stop looking
+
+No genome-wide CRISPRi, CRISPRa, or transposon library has ever been screened under
+isobutanol or any branched-chain alcohol in S. cerevisiae. The yeast genome-scale CRISPRi
+screens use hydrolysate, furfural, HMF and acetic acid. This settles the activation and
+interference question for isobutanol: Lian 2019 furfural remains the only place where all
+three modalities meet an inhibitor, and no isobutanol equivalent exists to transfer to.
+
+### New yeast candidates worth adding, ranked by ingestibility
+
+1. **Steensels et al. AEM 2014;80:6965** (PMID 25192996). VERIFIED THIS SESSION: downloaded
+   `zam022145787sd1.xlsx` (88,143 bytes), sheet `Blad1`, dimension A1:R304, 301 strain rows
+   (236 S. cerevisiae, 29 S. pastorianus, 36 S. paradoxus) with species and origin labels,
+   and ABSOLUTE ppm values per strain for isobutanol, isoamyl alcohol, propanol, butanol and
+   nine esters. Every row carries an isobutanol value. No join-key problem. The largest
+   absolute-unit fusel panel located, and unclaimed.
+2. **Ho et al. Biotechnol Biofuels 2021;14:211**. 1,125 whole-genome-sequenced F6 inbred
+   segregants with isobutanol in ppm, 1,016 rows complete. BLOCKED on a missing join key:
+   phenotype ids are integers while the sequencing aliases are plate wells, and nothing
+   released maps them. The phenotype table ingests standalone today.
+3. **Gallone 2019 Nat Ecol Evol** (102 strains, ppm, two media) and **Gallone 2016 Cell**
+   (154 strains, z-scores that invert exactly from a released statistics footer, with 32
+   strains reconstructing to 0 that must be treated as MISSING, not zero).
+4. **Zavaleta 2024 mSystems** (33 hybrids, mg/L with three replicates and SD, the
+   best-structured file of the set) and **Eder 2018 BMC Genomics** (130 sequenced F2
+   segregants in mg/L, on Dryad behind a token).
+
+Dead ends confirmed by opening the files: Liu 2021 releases a 161-clone hit list, not a
+matrix. Crook 2016 releases strains and primers only. Si 2017's three workbooks cover the
+glycerol and acetic-acid arms; the isobutanol arm is figure-only. The 1,011-genomes panel
+ships one growth-ratio matrix and no volatiles. Every Peltier and Marullo wine paper releases
+fermentation kinetics and esters but never per-strain higher alcohols.
+
+### Off-species, for the record
+
+**Yuan et al. Sci China Life Sci 2024;67:1051** (PMID 38273187) is an E. coli base-editor
+pooled screen: 31,511 guides encoding designed C-to-T point mutations across 462
+stress-response genes, grown in M9 with 4 g/L isobutanol, released as a per-guide fitness
+log2 and false-discovery rate table. More isobutanol genotype-phenotype records than every
+yeast isobutanol dataset combined. Out of species, and the only place where designed
+point mutations meet this stressor at scale.
+
+One naming trap to record: isoprenol (CID 12988) is not isopentanol (CID 31260). Every
+JBEI and Agile BioFoundry machine-learning strain-design set measures isoprenol, so none of
+them is in chemical scope for isobutanol or isopentanol.

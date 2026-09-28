@@ -1,0 +1,61 @@
+dataset,kind,name,role,definition,inchikey,smiles,resolution_status,reason,n_media
+hillenmeyer2008_het,component,D-glucose,carbon_source,defined,WQZGKKKJIJFFOK-GASJEMHNSA-N,C(C1C(C(C(C(O1)O)O)O)O)O,RESOLVED,embeddable,2
+hillenmeyer2008_het,component,ammonium sulfate,nitrogen_source,defined,BFNBIHQBYMNNAN-UHFFFAOYSA-N,[NH4+].[NH4+].[O-]S(=O)(=O)[O-],RESOLVED,embeddable,1
+hillenmeyer2008_het,component,glycerol,carbon_source,defined,PEDCQBHIVMGVHV-UHFFFAOYSA-N,C(C(CO)O)O,RESOLVED,embeddable,1
+hillenmeyer2008_het,component,peptone,complex_ingredient,intrinsically_undefined,,,UNDEFINED_MIXTURE,intrinsically_undefined,2
+hillenmeyer2008_het,component,yeast extract,complex_ingredient,intrinsically_undefined,,,UNDEFINED_MIXTURE,intrinsically_undefined,2
+hillenmeyer2008_het,component,yeast nitrogen base (w/o amino acids),other,composition_deferred,,,UNDEFINED_MIXTURE,composition_deferred,1
+hillenmeyer2008_hom,component,4-aminobenzoic acid,vitamin,defined,ALYNCZNDIQEVRV-UHFFFAOYSA-N,C1=CC(=CC=C1C(=O)O)N,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,D-glucose,carbon_source,defined,WQZGKKKJIJFFOK-GASJEMHNSA-N,C(C1C(C(C(C(O1)O)O)O)O)O,RESOLVED,embeddable,18
+hillenmeyer2008_hom,component,L-alanine,amino_acid,defined,QNAYBMKLOCPYGJ-REOHCLBHSA-N,CC(C(=O)O)N,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-arginine,amino_acid,defined,ODKSFYDXXFIFQN-BYPYZUCNSA-N,C(CC(C(=O)O)N)CN=C(N)N,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,L-asparagine,amino_acid,defined,DCXYFEDJOCDNAF-REOHCLBHSA-N,C(C(C(=O)O)N)C(=O)N,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-aspartic acid,amino_acid,defined,CKLJMWTZIZZHCS-REOHCLBHSA-N,C(C(C(=O)O)N)C(=O)O,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-cysteine,amino_acid,defined,XUJNEKJLAYXESH-REOHCLBHSA-N,C(C(C(=O)O)N)S,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-glutamic acid,amino_acid,defined,WHUUTDBJXJRKMK-VKHMYHEASA-N,C(CC(=O)O)C(C(=O)O)N,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-glutamine,amino_acid,defined,ZDXPYRJPNDTMRX-VKHMYHEASA-N,C(CC(=O)N)C(C(=O)O)N,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-histidine,amino_acid,defined,HNDVDQJCIGZPNO-YFKPBYRVSA-N,C1=C(NC=N1)CC(C(=O)O)N,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-isoleucine,amino_acid,defined,AGPKZVBTJJNPAG-WHFBIAKZSA-N,CCC(C)C(C(=O)O)N,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,L-leucine,amino_acid,defined,ROHFNLRQFUQHCH-YFKPBYRVSA-N,CC(C)CC(C(=O)O)N,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-lysine,amino_acid,defined,KDXKERNSBIXSRK-YFKPBYRVSA-N,C(CCN)CC(C(=O)O)N,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,L-methionine,amino_acid,defined,FFEARJCKVFRZRR-BYPYZUCNSA-N,CSCCC(C(=O)O)N,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-phenylalanine,amino_acid,defined,COLNVLDHVKWLRT-QMMMGPOBSA-N,C1=CC=C(C=C1)CC(C(=O)O)N,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-proline,amino_acid,defined,ONIBWKKTOPOVIA-BYPYZUCNSA-N,C1CC(NC1)C(=O)O,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-serine,amino_acid,defined,MTCFGRXMJLQNBG-REOHCLBHSA-N,C(C(C(=O)O)N)O,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,L-threonine,amino_acid,defined,AYFVYJQAPQTCCC-GBXIJSLDSA-N,CC(C(C(=O)O)N)O,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,L-tryptophan,amino_acid,defined,QIVBCDIJIAJPQS-VIFPVBQESA-N,C1=CC=C2C(=C1)C(=CN2)CC(C(=O)O)N,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,L-tyrosine,amino_acid,defined,OUYCCCASQSFEME-QMMMGPOBSA-N,C1=CC(=CC=C1CC(C(=O)O)N)O,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,L-valine,amino_acid,defined,KZSNJWFQEVHDMF-BYPYZUCNSA-N,CC(C)C(C(=O)O)N,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,adenine,nucleobase,defined,GFFGJBXGBJISGV-UHFFFAOYSA-N,C1=NC2=NC=NC(=C2N1)N,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,ammonium sulfate,nitrogen_source,defined,BFNBIHQBYMNNAN-UHFFFAOYSA-N,[NH4+].[NH4+].[O-]S(=O)(=O)[O-],RESOLVED,embeddable,1
+hillenmeyer2008_hom,component,biotin,vitamin,defined,YBJHBAHKTGYVGT-ZKWXMUAHSA-N,C1C2C(C(S1)CCCCC(=O)O)NC(=O)N2,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,calcium pantothenate,vitamin,defined,FAPWYRCQGJNNSJ-UBKPKTQASA-L,CC(C)(CO)C(C(=O)NCCC(=O)[O-])O.CC(C)(CO)C(C(=O)NCCC(=O)[O-])O.[Ca+2],RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,folic acid,vitamin,defined,OVBPIULPVIDEAO-LBPRGKRZSA-N,C1=CC(=CC=C1C(=O)NC(CCC(=O)O)C(=O)O)NCC2=CN=C3C(=N2)C(=O)NC(=N3)N,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,glycerol,carbon_source,defined,PEDCQBHIVMGVHV-UHFFFAOYSA-N,C(C(CO)O)O,RESOLVED,embeddable,1
+hillenmeyer2008_hom,component,glycine,amino_acid,defined,DHMQDGOQFOQNFH-UHFFFAOYSA-N,C(C(=O)O)N,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,myo-inositol,vitamin,defined,CDAISMWEOUEBRE-UHFFFAOYSA-N,C1(C(C(C(C(C1O)O)O)O)O)O,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,niacin,vitamin,defined,PVNIIMVLHYAWGP-UHFFFAOYSA-N,C1=CC(=CN=C1)C(=O)O,RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,peptone,complex_ingredient,intrinsically_undefined,,,UNDEFINED_MIXTURE,intrinsically_undefined,2
+hillenmeyer2008_hom,component,pyridoxine hydrochloride,vitamin,defined,ZUFQODAHGAHPFQ-UHFFFAOYSA-N,CC1=NC=C(C(=C1O)CO)CO.Cl,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,riboflavin,vitamin,defined,AUNGANRZJHBGPY-SCRDCRAPSA-N,CC1=CC2=C(C=C1C)N(C3=NC(=O)NC(=O)C3=N2)CC(C(C(CO)O)O)O,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,thiamine hydrochloride,vitamin,defined,DPJRMOMPQZCRJU-UHFFFAOYSA-M,CC1=C(SC=[N+]1CC2=CN=C(N=C2N)C)CCO.Cl.[Cl-],RESOLVED,embeddable,15
+hillenmeyer2008_hom,component,uracil,nucleobase,defined,ISAKRJDGNUQOIC-UHFFFAOYSA-N,C1=CNC(=O)NC1=O,RESOLVED,embeddable,16
+hillenmeyer2008_hom,component,yeast extract,complex_ingredient,intrinsically_undefined,,,UNDEFINED_MIXTURE,intrinsically_undefined,2
+hillenmeyer2008_hom,component,yeast nitrogen base (w/o amino acids),other,composition_deferred,,,UNDEFINED_MIXTURE,composition_deferred,1
+hillenmeyer2008_hom,dropout,4-aminobenzoic acid,dropout,defined,ALYNCZNDIQEVRV-UHFFFAOYSA-N,C1=CC(=CC=C1C(=O)O)N,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,L-arginine,dropout,defined,ODKSFYDXXFIFQN-BYPYZUCNSA-N,C(CC(C(=O)O)N)CN=C(N)N,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,L-isoleucine,dropout,defined,AGPKZVBTJJNPAG-WHFBIAKZSA-N,CCC(C)C(C(=O)O)N,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,L-lysine,dropout,defined,KDXKERNSBIXSRK-YFKPBYRVSA-N,C(CCN)CC(C(=O)O)N,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,L-threonine,dropout,defined,AYFVYJQAPQTCCC-GBXIJSLDSA-N,CC(C(C(=O)O)N)O,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,L-tryptophan,dropout,defined,QIVBCDIJIAJPQS-VIFPVBQESA-N,C1=CC=C2C(=C1)C(=CN2)CC(C(=O)O)N,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,L-tyrosine,dropout,defined,OUYCCCASQSFEME-QMMMGPOBSA-N,C1=CC(=CC=C1CC(C(=O)O)N)O,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,adenine,dropout,defined,GFFGJBXGBJISGV-UHFFFAOYSA-N,C1=NC2=NC=NC(=C2N1)N,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,folic acid,dropout,defined,OVBPIULPVIDEAO-LBPRGKRZSA-N,C1=CC(=CC=C1C(=O)NC(CCC(=O)O)C(=O)O)NCC2=CN=C3C(=N2)C(=O)NC(=N3)N,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,myo-inositol,dropout,defined,CDAISMWEOUEBRE-UHFFFAOYSA-N,C1(C(C(C(C(C1O)O)O)O)O)O,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,niacin,dropout,defined,PVNIIMVLHYAWGP-UHFFFAOYSA-N,C1=CC(=CN=C1)C(=O)O,RESOLVED,embeddable,1
+hillenmeyer2008_hom,dropout,thiamine hydrochloride,dropout,defined,DPJRMOMPQZCRJU-UHFFFAOYSA-M,CC1=C(SC=[N+]1CC2=CN=C(N=C2N)C)CCO.Cl.[Cl-],RESOLVED,embeddable,1
+vanacloig2022,component,SynH3- defined hydrolysate base,other,composition_deferred,,,,composition_deferred,1
+vanacloig2022,component,monosodium L-glutamate,nitrogen_source,defined,GJBHGUUFMNITCI-QTNFYWBSSA-M,C(CC(=O)[O-])C(C(=O)O)N.O.[Na+],RESOLVED,embeddable,1
+vanacloig2022,dropout,acetamide,dropout,defined,DLFVBJFMPXGRIB-UHFFFAOYSA-N,CC(=O)N,RESOLVED,embeddable,1
+vanacloig2022,dropout,cellobiose,dropout,defined,,,,absent_from_identity_table,1
+vanacloig2022,dropout,sodium acetate,dropout,defined,VMHLLURERBWHNL-UHFFFAOYSA-M,CC(=O)[O-].[Na+],RESOLVED,embeddable,1

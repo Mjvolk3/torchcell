@@ -1,0 +1,55 @@
+%% notes-tex/031-inhibitor-tolerance-data/sections/1-question.tex
+
+\section{The question\secstatus{todo}}
+\label{sec:question}
+
+A strain-design model for industrial hosts has to predict how a genotype responds to
+the inhibitors a real feedstock carries. Lignocellulosic hydrolysate brings furans
+(furfural, 5-hydroxymethylfurfural), weak acids (acetic, levulinic, formic), phenolics
+from lignin (vanillin, syringaldehyde, ferulic and p-coumaric acid), and the ionic
+liquids left by pretreatment; a producing strain also has to tolerate its own product,
+which for the isobutanol work is isobutanol. Vanacloig-Pedros et al.\ 2022
+(\texttt{10.1093/femsyr/foac036}) screened a barcoded deletion library against exactly
+that panel, and it is the only genome-wide dataset in the served graph that does. The
+question for a model is what other data can help it, and the candidate is the only
+other genome-wide environment-response compendium of comparable size, Hillenmeyer et
+al.\ 2008 (\texttt{10.1126/science.1150021}), in its homozygous (HOM) and heterozygous
+(HET) arms.
+
+Every script named below lives in
+\file{experiments/031-env-chemgen-inhibitor-tolerance/scripts/}. Three things have to
+be known before a model is trained on the pair. First, the axes
+on which the datasets differ, because an environment encoding has to carry every axis
+that changes between them and a cell encoding has to carry every axis that changes
+inside the strain. Second, how well each dataset agrees with itself, because replicate
+agreement is the ceiling on any prediction and it is not the same for every compound.
+Third, how much response structure the two datasets share, because a partner that
+measures different biology adds parameters and no signal.
+
+\notesec{Vocabulary}
+A \term{condition} is one dosed compound, or one physical factor or temperature when no
+compound is dosed; Hillenmeyer's several doses and generation counts of one compound are
+one condition here. The \term{response} is the served number for a strain in a
+condition, oriented throughout so that negative is a fitness defect. A \term{hit} is a
+gene in the bottom 5\% of responses in a condition. The \term{reliability index} of a
+condition is $1 - \overline{\mathrm{SE}^2} / \mathrm{Var}(\text{response})$ over its
+genes, the share of the across-gene variance that the served replicate noise cannot
+produce. \term{Replicate agreement} is the Spearman correlation over genes between two
+raw replicates of a condition, and \term{hit agreement} the Jaccard index of their hit
+sets. The \term{cross Spearman} of a Vanacloig condition and a Hillenmeyer condition is
+the Spearman correlation of their responses over the genes both screened. An
+\term{exact match} is a compound both datasets dose under the same InChIKey;
+\term{chemical similarity} is Tanimoto similarity of fingerprints or cosine similarity of
+a learned embedding between two compounds that are not the same molecule.
+
+\begin{keybox}
+\textbf{Measured.} Every axis of the three datasets from their served records
+(Section~\ref{sec:axes}); replication, served error and per-condition ceilings
+(Section~\ref{sec:noise}); the shared response structure and the transfer of every
+exact-match compound (Section~\ref{sec:structure}); the coverage of every molecular
+encoder over the three compound sets and the relation between chemical similarity and
+response similarity (Sections~\ref{sec:encoders} and \ref{sec:chemistry}).
+
+\textbf{Not measured.} No model has been trained. The linear and nearest-neighbor
+baselines that turn these ceilings into scores are Section~\ref{sec:next}.
+\end{keybox}

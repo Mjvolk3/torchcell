@@ -1,0 +1,9 @@
+pool,grams_per_gdw,percent,n_constituents,n_without_formula,literature_low,literature_high,literature_source
+protein,0.46829,46.829,20,0,40.0,50.0,miloCellBiologyNumbers2016
+carbohydrate,0.38312,38.312,6,0,25.0,25.0,"feldmannYeastMolecularCell2012, cell wall only"
+RNA,0.06404,6.404,4,0,10.0,10.0,miloCellBiologyNumbers2016
+lipid,0.03452,3.452,12,1,10.0,10.0,miloCellBiologyNumbers2016
+cofactor,0.00483,0.483,11,0,,,
+DNA,0.0039,0.39,4,0,,,
+ion,0.00248,0.248,10,0,,,
+unaccounted,0.03882,3.882,1,1,,,

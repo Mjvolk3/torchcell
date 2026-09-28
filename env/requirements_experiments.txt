@@ -10,4 +10,8 @@ cucim-cu12==24.8.0
 pylibraft-cu12==24.8.1
 raft-dask-cu12==24.8.1
 cuvs-cu12==24.8.0
+# torchcell.molecule encoders (mol2vec needs gensim; unimol_v1 needs unimol_tools,
+# which pins numpy<2.3 and downgraded numpy 2.3.4 -> 2.2.6 when installed)
+gensim==4.4.0
+unimol_tools==0.1.6
 

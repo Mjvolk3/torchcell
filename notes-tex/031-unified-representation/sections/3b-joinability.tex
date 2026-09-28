@@ -1,0 +1,265 @@
+%% notes-tex/031-unified-representation/sections/3b-joinability.tex
+
+\section{Can these datasets be joined at all\secstatus{tent}}
+\label{sec:joinability}
+
+Pooling is an assertion about the LABEL, not only about the input. Two records that measure
+the same gene under the same compound have to mean the same thing before one loss can score
+them both. This section tests that assertion on the served records rather than assuming it,
+and the test changes what the pooled target has to look like.
+
+A cell here is one (gene, compound) pair. A record enters only if it doses exactly one
+compound carrying an InChIKey and perturbs exactly one gene, so nothing is averaged across
+combinations; Vanacloig's three host deletions are stripped first, leaving the queried gene.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/dataset_joinability.py ->
+%% results/dataset_distributions.csv and results/cross_dataset_pair_overlap.csv, rendered by
+%% notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{What each dataset measures and reports, and the sign its source declares for a sick
+strain. The standard deviation and skew are of the served response over its cells. The last
+column is the factor the orientation step applies.}
+\label{tab:unification}
+\input{tables/t11-unification}
+\end{table}
+
+\notesec{The scales differ by a factor of twenty}
+The served standard deviations run from 0.38 for Hillenmeyer HET to 7.50 for Wildenhain
+(Table~\ref{tab:unification}, Figure~\ref{fig:joinability}a and b). A pooled squared-error
+loss weights a record by the square of its residual in native units, so without a per-source
+scale the objective is dominated by Wildenhain and by the tail of Hillenmeyer HOM, whatever
+the record counts are. Standardizing each source by its own training-split statistics is
+therefore not a cosmetic step, and the statistics come from the training split alone so that
+no held-out value informs the scale.
+
+\notesec{The polarity is not shared, and this is the finding that matters}
+A more negative number does not mean a sicker strain in every dataset. Each loader records
+its source's own definition verbatim, and those definitions split the five into two groups.
+Vanacloig stores $\log_2(\text{inhibitor}/\text{control})$, so depletion is negative. Hoepfner
+stores an adjusted MADL sensitivity score whose definition reads ``negative = hypersensitive,
+positive = resistant''. Wildenhain stores a growth-inhibition z score where negative is
+inhibition. Both Hillenmeyer arms store a fitness-defect statistic whose definition reads
+``positive = fitness defect''.
+
+Two independent checks confirm the split rather than leaving it as a reading of the
+documentation. First, the heavy tail of each distribution falls on the side its source names:
+the three negative-is-sick datasets have skew $-2.6$, $-4.4$ and $-4.6$, and the two
+positive-is-sick arms have skew $+5.6$ and $+1.2$ (Figure~\ref{fig:joinability}c). Second,
+the declared polarities predict the SIGN of every pairwise correlation between datasets, and
+they get all ten right (Table~\ref{tab:crossoverlap}). Under a null in which the declared
+polarity says nothing about the data, ten correct signs out of ten has probability $0.002$.
+
+The consequence is concrete and large. As served, Hillenmeyer HOM and Hoepfner correlate at
+$-0.198$ over 100{,}276 shared cells, and Hillenmeyer HET and Hoepfner at $-0.118$ over
+170{,}837. Pooling without orienting trains a model on contradictory labels at that scale,
+and the contradiction is worst exactly where the overlap is largest.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/dataset_joinability.py ->
+%% results/cross_dataset_pair_overlap.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Every dataset pair: the genes, compounds and (gene, compound) cells both measure,
+the Spearman correlation on those cells as served, the sign predicted from the two declared
+polarities, and the correlation after orienting. The predicted sign is correct in all ten
+pairs.}
+\label{tab:crossoverlap}
+\input{tables/t12-cross-overlap}
+\end{table}
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/dataset_joinability.py ->
+%% dataset_joinability.svg, converted by `make plots`.
+\tcfig{figures/dataset_joinability.pdf}{\textbf{The five datasets
+disagree about the scale of the response and about which sign means a sick strain.}
+\textbf{a}, Response density per dataset on a log scale, where the phenotype lives; the
+distributions differ in width by a factor of twenty and in which tail is heavy. \textbf{b},
+Standard deviation of the served response, the factor a pooled squared-error loss would weight
+by. \textbf{c}, Skew beside the sign each source declares for a sick strain, an independent
+check on the declared convention; hatching marks the two datasets whose sources use the
+opposite sign. \textbf{d}, Shared (gene, compound) cells for every dataset pair on a log color
+scale, which is where agreement can be observed at all. \textbf{e}, Spearman correlation on
+those shared cells after orienting both datasets to one convention. \textbf{f}, The same pairs
+as served against oriented, point area by shared cells; red points are pairs whose sources
+disagree about the sign, and every pair moves above zero once oriented.}{fig:joinability}
+
+\notesec{Agreement after orienting is real, positive, and small}
+Once oriented, every pair correlates positively, but weakly: the median over the ten pairs is
+$0.068$ and the largest is $0.198$, for Hillenmeyer HOM against Hoepfner over 100{,}276 cells
+(Table~\ref{tab:crossoverlap}, Figure~\ref{fig:joinability}e). The two Hillenmeyer arms, which
+share a laboratory, a medium and a readout family, reach $0.117$ over 407{,}072 cells. Against
+the application target the numbers are smaller still, because Vanacloig shares only two
+compounds with each of the Hillenmeyer arms and with Hoepfner, and ten with Wildenhain.
+
+That is the honest shape of the case for joining. These datasets agree about which genes are
+generally fragile far more than about how a particular gene answers a particular compound. So
+a shared SCALE is justified and a shared RESPONSE is not: pooling should be expected to buy a
+gene prior and a wider compound space, not more labels for the same task. Section~\ref{sec:model}
+turns that into a decoder that gives each source its own token, and Section~\ref{sec:established}
+already measured the alternative, which is that within one dataset, one medium and one dose
+basis, the same molecule features reach $0.31$ where they reach at most $0.09$ across
+datasets.
+
+%% SOURCE: notes/experiments.031-env-chemgen-inhibitor-tolerance.mermaid.dataset-unification.md,
+%% rendered by notes/assets/publish/scripts/mermaid_pdf.sh through `make diagrams`.
+\tcfig{figures/dataset_unification.pdf}{\textbf{Four datasets, one
+input tuple and one continuous target, with two scalars per source doing all the work.} One row
+per kept dataset, read left to right through four layers. \textbf{a}, What the record is: the
+strain, its ploidy and the size of the gene and compound panel. Vanacloig's four deletions are
+the queried gene plus the three efflux regulators that make its host drug-sensitive.
+\textbf{b}, What the source reports, in its own units and sign convention; the two $\log_2$
+ratios point in opposite directions because one is taken treated over control and the other
+control over treated, and MADL is the median absolute deviation logarithmic score.
+\textbf{c}, The transform and the shared form it produces. The orientation factor $o_k$
+multiplies by plus or minus one, so three datasets pass through unchanged and only Hillenmeyer
+HET flips; it is a sign flip on a continuous number and never a threshold, and the median and
+standard deviation come from the training split alone. \textbf{d}, What is given up: the
+homozygous arm of Hillenmeyer 2008, dropped because its heterozygous sibling already covers 80
+percent of its genes, and the measured limit that orienting buys a shared scale rather than a
+shared response. Per-dataset counts are in Table~\ref{tab:unification}.}{fig:unification}
+
+\notesec{Where the datasets overlap on every other axis}
+Figure~\ref{fig:overlap} puts the same question to the genotype, chemistry and dose axes.
+Genes overlap heavily and compounds barely: 98 to 100 percent of Vanacloig's genes appear in
+each of the three genome-wide partners, while at most 24 percent of its compounds appear in
+any one of them. Wildenhain is the exception in both directions, covering 4 percent of the
+other gene universes and contributing by far the most chemistry. The chemical panels show why
+the compound gain is uneven: the partner libraries are drug-like at 20 to 40 heavy atoms, and
+the hydrolysate panel sits at 3 to 15, in a region where a substructure fingerprint is nearly
+empty. The dose panel repeats Section~\ref{sec:dose} visually, with Vanacloig carrying no
+convertible concentration at all.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/exploratory_overlap_panels.py ->
+%% exploratory_overlap.svg, converted by `make plots`.
+\tcfig{figures/exploratory_overlap.pdf}{\textbf{Genes overlap
+heavily, compounds barely, and the application panel sits outside the chemistry the partners
+cover.} \textbf{a}, Share of the row dataset's genes that the column dataset also measures,
+with each dataset's gene count. \textbf{b}, The same for compounds, where the shares collapse.
+\textbf{c}, Molecular weight against calculated logP for every dosed compound, the Vanacloig
+panel outlined; the partner libraries are drug-like and the application panel is small and
+polar. \textbf{d}, Heavy atom count; the shaded band below 8 heavy atoms is where a
+substructure fingerprint carries almost no bits, which is where most of the hydrolysate panel
+sits. \textbf{e}, Each Vanacloig compound's best non-exact Tanimoto in the partner union
+against its size, showing that the compounds without a neighbor are the small ones.
+\textbf{f}, The molar range each dataset spans, 1st to 99th percentile, with the share of
+records stating a convertible dose. \textbf{g}, Distinct compounds against distinct genes, with
+each dataset's measured cell count in its label. \textbf{h}, Perturbation class by
+dataset.}{fig:overlap}
+
+\notesec{Per-dataset baselines, because a pooled claim needs a per-dataset reference}
+Table~\ref{tab:perdataset} runs the compound cold-start baselines of
+Section~\ref{sec:established} on every dataset separately, so that any later pooled result has
+something to be compared against. Leave-one-compound-out is used where the panel allows it and
+ten folds grouped by compound where it does not, and the scheme is recorded per row rather than
+left implicit; the two are not interchangeable and a row scored under one should not be read
+against a row scored under the other as though they were.
+
+Three results matter for the plan. Molecule features carry compound-specific signal in every
+dataset, not only in the one measured before: each beats its own no-feature null on the
+centered target. The best score is 0.394 for Wildenhain, 0.311 for Vanacloig, 0.189 for
+Hoepfner and 0.13 to 0.14 for the two Hillenmeyer arms, though Wildenhain and Vanacloig are
+not scored under the same scheme and its null is also by far the highest, 0.168 against 0.003
+to 0.030 elsewhere, which is what a panel of 5{,}170 compounds does to a random neighbor. And
+which simple model wins is not constant:
+ridge is better on Vanacloig and Hoepfner, while similarity-weighted nearest neighbors is
+better on Wildenhain and both Hillenmeyer arms, by the largest margin on Wildenhain where it
+reaches 0.394 against ridge at 0.249. The earlier finding that ridge beat every
+nearest-neighbor variant was measured on Vanacloig alone and does not generalize.
+
+\textit{Hypothesis (untested):} nearest neighbors wins on Wildenhain because its panel is
+5{,}170 compounds against 41 to 290 elsewhere, so a held-out compound almost always has a
+close analog to copy from, while a linear map has to fit one set of weights across a far more
+heterogeneous library. Two measurements are consistent with that and neither tests it. Its
+no-feature null is 0.168 against 0.003 to 0.030 elsewhere, which is what a dense panel does to
+a randomly chosen neighbor. And its per-fold training set is roughly 4{,}650 compounds against
+40 for Vanacloig. The test would be to subsample the Wildenhain panel down to a few hundred
+compounds and see whether the ordering flips, which is cheap and has not been run.
+
+One limit on the ceilings in that table. The Hillenmeyer and Wildenhain ceilings rest on the
+minority of cells that carry a served standard error, 33, 17 and 1 percent respectively, which
+is the subset measured more than once and therefore not a random sample of the dataset. Only
+the Vanacloig ceiling, at 97 percent of cells, is estimated from substantially the whole
+matrix. Hoepfner serves no uncertainty at all, and the next subsection recovers a ceiling for
+it by a different route.
+
+\notesec{Hoepfner has no served error, and a ceiling is still recoverable}
+The absence is real and typed: the loader records it as a provenance gap because the source
+folds the replicate $t$-test into the adjusted score rather than releasing a per-cell error.
+Two different questions follow, and they have different answers
+(Table~\ref{tab:hoepfnerceiling}).
+
+Are the two technical replicates recoverable? No. Each compound was profiled at two wells in
+the same plate, but a census of every column header in both deposited matrices finds one
+adjusted-score column per experiment and no experiment id appearing twice. The two wells are
+already combined inside that column, and the only other column per experiment is the companion
+z score, which is a second normalization of the same numbers rather than a second measurement.
+
+Is there any repeated measurement at all? Yes, and it is the more useful kind. Fourteen
+compounds were screened at the same concentration in more than one study, and a study is a
+separate screen with its own control set, giving 71 condition pairs across the two arms. Two
+such screens are parallel measurements of the same condition, so their correlation over genes
+estimates the reliability of one served value directly, and the ceiling is its square root.
+The median reliability is 0.611 and the median ceiling 0.781, with the heterozygous arm at
+0.797 and the homozygous arm at 0.758. Against that ceiling the best baseline of
+Table~\ref{tab:perdataset} reaches 24 percent.
+
+This estimate is not the same quantity as the served-error ceilings elsewhere in the document,
+and the difference runs in the conservative direction. A cross-screen repeat carries the batch
+variation that two wells in one plate do not, so it measures reliability against everything
+that changes between screens. That is closer to what a model trained across screens faces, and
+closer to Vanacloig's three-batch replicate agreement than to a within-plate standard error.
+Two cautions on it: the fourteen repeated compounds are the ones a screening campaign repeats,
+which are reference compounds rather than a random sample of the panel, and the pairs are
+spread unevenly, with methotrexate alone contributing 30 of the 71.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/hoepfner_replicate_ceiling.py ->
+%% results/hoepfner_column_audit.csv and results/hoepfner_cross_screen_reliability.csv,
+%% rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Recovering a ceiling for Hoepfner. Experiments deposited and repeated columns come
+from a census of every column header in the two score matrices: no experiment appears twice,
+so the technical replicates are not separately deposited. The condition pairs are the same
+compound at the same concentration in two different studies; for parallel measurements the
+observed correlation estimates the reliability of one value and the ceiling is its square
+root. The last column is the best baseline of Table~\ref{tab:perdataset} as a fraction of that
+ceiling.}
+\label{tab:hoepfnerceiling}
+\input{tables/t14-hoepfner-ceiling}
+\end{table}
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/per_dataset_baselines.py ->
+%% results/per_dataset_baselines_summary.csv, rendered by notes_tex_representation_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Compound cold-start baselines per dataset on the centered target, medians over folds.
+The null is the similarity-weighted mean of randomly chosen training compounds. LOCO is
+leave-one-compound-out; the alternative is ten folds grouped by compound, and the two are not
+directly comparable. A dataset with no served uncertainty has no ceiling and its score is
+reported alone. Eleven of the twelve encoders are scored on the four partner datasets, because
+the three-dimensional encoder cannot embed every compound in them.}
+\label{tab:perdataset}
+\input{tables/t13-per-dataset-baselines}
+\end{table}
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/per_dataset_baselines.py ->
+%% encoder_comparison.svg, converted by `make plots`.
+\tcfig{figures/encoder_comparison.pdf}{\textbf{Molecule features
+carry signal in every dataset, and no single encoder choice is supported across them.}
+Compound cold-start, centered target. \textbf{a}, Every encoder and dataset under ridge.
+\textbf{b}, The best molecule feature against the no-feature null per dataset; every dataset
+clears its null, and Wildenhain's null is by far the highest because a random neighbor among
+5{,}170 compounds is already informative. \textbf{c}, Ridge against nearest-neighbor transfer,
+one point per dataset and encoder; points below the diagonal are datasets where neighbor
+transfer wins, which is every Wildenhain point and most Hillenmeyer points. \textbf{d}, The
+best score against the ceiling. The Hoepfner bar is hatched because its ceiling comes from the
+cross-screen estimator of Table~\ref{tab:hoepfnerceiling} rather than from a served
+uncertainty, so it is not the same quantity as the other four. \textbf{e}, What share of each
+molecule pool an encoder can embed, the 5{,}472 dosed compounds beside the 894
+structure-bearing Yeast9 metabolites; only the three-dimensional encoder falls short, on the
+ions and metal salts it cannot build a conformer for, so coverage is not what separates these
+encoders. \textbf{f}, Each encoder's rank among the twelve on each dataset, the line spanning
+its best and worst rank and the large mark its mean; the spans overlap almost completely.}{fig:encoders}

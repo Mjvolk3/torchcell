@@ -1,0 +1,77 @@
+%% notes-tex/031-inhibitor-tolerance-data/sections/2-axes.tex
+
+\section{The three datasets, axis by axis\secstatus{todo}}
+\label{sec:axes}
+
+Every record of the three stores was flattened to one row through its loader
+(\file{flatten\_records.py}), so each value below is the served pydantic record, not a
+raw-matrix value.
+Table~\ref{tab:axes} holds the axes a cell and environment representation has to encode.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/dataset_axes_comparison.py ->
+%% results/axes_table.csv, rendered by notes_tex_tables.py. Values are distinct values
+%% with record counts; the full table with every axis is results/axes_table.md.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The cell, environment and readout axes of the three datasets, from the served
+records. Each cell lists the distinct values with the number of records carrying them.
+Vanacloig 2022 carries one value on every environment axis; Hillenmeyer varies medium,
+temperature and duration inside the dataset.}
+\label{tab:axes}
+\input{tables/t1-axes}
+\end{table}
+
+\notesec{The cell axis}
+A Vanacloig genotype is never a single deletion. The library is the drug-sensitized
+\emph{3DeltaAlpha} collection, so every strain carries the queried barcoded deletion on
+top of \emph{pdr1}, \emph{pdr3} and \emph{snq2} deletions, which the loader stores as
+three constant background perturbations: four genes per genotype, haploid, on S288C.
+Hillenmeyer HOM is one KanMX deletion in a homozygous diploid; HET is one copy of a gene
+removed from a diploid, a dosage halving that reaches the essential genes HOM cannot. A
+model that reads the genotype as a gene set therefore sees four genes per Vanacloig
+strain and one per Hillenmeyer strain, and the three background genes are absent from
+Vanacloig's queried set. The cell representation differs on background, ploidy and
+perturbation class at once, before any environment is considered.
+
+\notesec{The environment axis}
+Two axes are constant within each dataset and opposite between them. Vanacloig is
+anaerobic in SynBase, a defined synthetic hydrolysate mimic at pH 5.0 set with HCl;
+Hillenmeyer is aerobic in YPD on 86\% of HOM records and 99\% of HET records, with SC
+dropouts, SD and YP glycerol for the rest. Neither oxygen nor base medium varies inside
+its own dataset, so a joint model cannot learn their effect from these two datasets; it
+can only learn a dataset offset. Temperature is 30\,C on every Vanacloig record and a
+typed provenance gap on 98\% of Hillenmeyer records. Duration is in generations on both
+sides on different scales, 6.5 against mostly 20. Dose is the third asymmetry: Vanacloig
+records an IC30 basis with no molar value for 39 of its 41 compounds, Hillenmeyer a
+numeric dose on 98\% of records, so a dose feature is a different kind of number in the
+two sources. Every Vanacloig record carries exactly one dosed compound; 18\% of HOM
+records carry none (media swaps, temperature, radiation, pH) and 1\% carry two.
+
+\notesec{The readout axis}
+All three are pooled competitive-growth barcode assays, but the statistic differs:
+Vanacloig stores a log2 ratio of treated to control CPM, averaged over three batch
+replicates with a sample SD on every record; HOM stores a z-score against a matched
+control set and HET a log2 ratio, with a served SD on 35\% and 24\% of records because
+65\% and 76\% of records come from a single array. The sign is opposite to Vanacloig's
+(positive is a defect in Hillenmeyer). The label must be per dataset, or reduced to a
+sign or a rank, before anything is pooled.
+
+\notesec{Overlap}
+Genes overlap almost completely and compounds almost not at all
+(Table~\ref{tab:overlap}). Sodium acetate (Vanacloig) and acetic acid (Hillenmeyer) are
+different compound entities and do not join; the same holds for sodium butyrate against
+any butyric acid record. Benomyl is dosed at 10\,$\mu$g/mL on both sides.
+Hillenmeyer's ferulic acid is 3.95\,$\mu$M in HET only, against Vanacloig's IC30.
+
+%% SOURCE: experiments/031-env-chemgen-inhibitor-tolerance/scripts/dataset_axes_comparison.py ->
+%% results/gene_overlap.csv and results/compound_overlap.csv, rendered by notes_tex_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Queried-gene and compound overlaps. Queried genes exclude Vanacloig's three
+constant background genes. Compounds are keyed by InChIKey, so a salt and its free acid
+are different entries.}
+\label{tab:overlap}
+\input{tables/t2-overlap}
+\end{table}

@@ -1,0 +1,12 @@
+encoder,family,corpus,objective,band,ref,url
+"ecfp4_count, ecfp4_bit",fingerprint,none; hashed radius-2 atom environments,none,thousands,Rogers and Hahn 2010,https://doi.org/10.1021/ci100050t
+fcfp4_count,fingerprint,none; pharmacophore feature invariants,none,as ECFP,Rogers and Hahn 2010,https://doi.org/10.1021/ci100050t
+maccs,fingerprint,none; 166 curated substructure keys,none,thousands,Durant et al. 2002,https://doi.org/10.1021/ci010132r
+rdkit_2d,descriptors,none; 217 physicochemical descriptors,none,ubiquitous,RDKit 2026.03,https://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors
+mol2vec,fragment embedding,19.9M ZINC and ChEMBL compounds,skip-gram over Morgan identifiers,over 500,"Jaeger, Fulle and Turk 2018",https://doi.org/10.1021/acs.jcim.7b00616
+chemberta2_mlm,SMILES transformer,77M PubChem SMILES,masked language modeling,several hundred,Ahmad et al. 2022,https://arxiv.org/abs/2209.01712
+chemberta2_mtr,SMILES transformer,77M PubChem SMILES,multitask regression on RDKit properties,several hundred,Ahmad et al. 2022,https://arxiv.org/abs/2209.01712
+molformer_xl,SMILES transformer,1.1B PubChem and ZINC SMILES; public checkpoint is the 10 percent subset,"masked language modeling, linear attention",several hundred,Ross et al. 2022,https://doi.org/10.1038/s42256-022-00580-7
+roberta_zinc_480m,SMILES transformer,480M ZINC SMILES,masked language modeling,"community model, uncited",Hugging Face entropy/roberta_zinc_480m,https://huggingface.co/entropy/roberta_zinc_480m
+unimol_v1,3D,209M conformers,"atom masking, coordinate denoising, pair distances",several hundred,Zhou et al. 2023 (ICLR),https://openreview.net/forum?id=6K2RM6wVqKu
+mole_static,graph (GIN),100k PubChem structures,Barlow Twins on masked subgraph views; validated for antimicrobial activity,young (2025),Olayo-Alarcon et al. 2025,https://doi.org/10.1038/s41467-025-58804-4

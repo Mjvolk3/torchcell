@@ -1,0 +1,42 @@
+vanacloig,best,best_rho,second,second_rho
+myclobutanil,basifungin,0.22248371872194145,CID 622648,0.12275826017083374
+sodium glyoxylate,basifungin,0.1741367207866087,myriocin,0.07697013651435507
+nonylacridine orange,medium=SC - thiamine hydrochloride,0.16852444581832537,1-methyl-4-phenylpyridinium,0.14915905869923288
+gamma-valerolactone,basifungin,0.15846517065041937,bleomycin,0.14363412502541734
+sodium butyrate,medium=SC - L-threonine,0.15737054158744682,medium=SC - L-tryptophan,0.14943295519595579
+ethanol,basifungin,0.1530901525692149,CID 622648,0.10982457678943366
+acetovanillone,methyl methanesulfonate,0.14818882121117075,"3,6-diamino-10-methylacridinium chloride",0.1061527078901089
+methyl methanesulfonate,4-nitroquinoline 1-oxide,0.14801323528424642,mitomycin c,0.1354172364529158
+ferulamide,mechlorethamine,0.1466554334231903,mitomycin c,0.13854755313529069
+caffeic acid,nystatin [usp:inn:ban:jan],0.1460509781149518,"benzoic acid, 4-[[(2,5-dihydroxyphenyl)methyl]amino]-, methyl ester",0.11899766065217267
+furfural,basifungin,0.13359393512671702,myriocin,0.11463590132442529
+acetosyringone,methyl methanesulfonate,0.1298249810889069,mechlorethamine,0.10683826415604586
+p-coumaric acid,curcumin,0.12906957317027293,pH=8.0pH,0.12216021062733506
+isobutanol,basifungin,0.12894174583390697,curcumin,0.12268081901101775
+crystal violet,medium=SC - thiamine hydrochloride,0.1285734576063017,methotrexate,0.0969128505134802
+vanillic acid,calyculin a,0.1269956563521649,CID 622648,0.1249199902229405
+1-ethyl-3-methylimidazolium chloride,1-methyl-4-phenylpyridinium,0.11692721990020132,medium=SC - thiamine hydrochloride,0.1020356670189402
+1-butyl-3-methylimidazolium chloride,medium=SC - L-tryptophan,0.11466998665390223,medium=SC - L-threonine,0.11014180470754735
+syringic acid,nystatin [usp:inn:ban:jan],0.11081787453983186,4-nitroquinoline 1-oxide,0.09006370079273084
+azelaic acid,parthenolide,0.10937733171990774,hexestrol,0.1001896230935837
+"2,2'-bipyridine",CID 622648,0.10611965980194722,2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide,0.09734620053756332
+benomyl,potassium metabisulfite,0.10227769116969826,basifungin,0.08856898732034597
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",nocodazole,0.10121098329785067,calyculin a,0.10112680347242896
+benzoic acid,nocodazole,0.09957542714519095,mycophenolic acid,0.08138394143607935
+cinnamic acid,"platinum(ii),1-cyclobutanedicarboxylato)diammine-, cis-",0.09861978362677772,T=37,0.09467438999262495
+methylglyoxal,"medium=SC, partial biotin drop-out",0.09712136394353668,"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione",0.08251260084040467
+sinapic acid,T=37,0.09531926746199978,clotrimazole,0.08352817725676238
+"2,6-dimethylpyrazine",bleomycin,0.08977379452511211,T=37,0.08401049951898677
+4-hydroxybenzaldehyde,nocodazole,0.08721394133518075,methyl methanesulfonate,0.08525525140606496
+sodium acetate,sodium fluoride,0.08674745451684865,"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione",0.08336591933238505
+2-methylimidazole,streptozocin,0.0848296552123651,mechlorethamine,0.07508015587842565
+"2,4-dimethylimidazole",potassium metabisulfite,0.08461775182117579,"medium=SC, partial biotin drop-out",0.07109967503734085
+vanillin,methyl methanesulfonate,0.08424398982701177,paraquat,0.0773111120602442
+4'-hydroxyacetophenone,nocodazole,0.08333382234422776,mechlorethamine,0.08173271529739176
+ferulic acid,"cis-oxalato-trans-l-1,2-diaminocyclohexaneplatinum(ii)",0.0806759503849947,psoralen,0.07654524035227966
+4-methylimidazole,methyl methanesulfonate,0.07995532827721387,"3,6-diamino-10-methylacridinium chloride",0.06286046291189766
+levulinic acid,basifungin,0.07902345837203859,parthenolide,0.06954601852456488
+4-hydroxybenzoic acid,camptothecin,0.07893111499624324,T=37,0.07889323385549955
+acetamide,busulfan,0.07714907966241553,sodium arsenite,0.07204245806379199
+5-(hydroxymethyl)furfural,rotenone,0.06998723311010738,lithium chloride|tacrolimus,0.04213204422005139
+syringaldehyde,T=37,0.05814160975437542,"3,6-dibromo-alpha-((dimethylamino)methyl)-9h-carbazole-9-ethanol",0.057342120283200085

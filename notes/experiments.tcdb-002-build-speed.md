@@ -308,3 +308,42 @@ why it passed the same point. Fix (commit 98797536): the sampler closes the
 environment. A 1,000-record SmfKuzmin2018 subset reproduces the error without the fix
 and pickles cleanly with it (`scratchpad` check, not a committed test). Resubmitted as
 jobs 2930 (b48-g2), 2931 (b128-g2), 2932 (b48-g8), 2933 (b128-g8).
+
+## 2026.09.27 - Full build 2905 died at Bloom again; the byte budget was the wrong fix
+
+Job 2905 (r5 stack plus the 48 MiB budget, 32 CPUs / 128 GB) failed after 7 h 58 min
+at adapter 38 of 51, Bloom2019's single-pass node pass, with `BrokenProcessPool`: the
+same place and the same memory kill as job 2889. The budget had cut Bloom to 2,555
+records per chunk, and anonymous memory still went from 36.4 GB to 121.3 GB in about
+150 s with the container at 4 cores.
+
+<https://wandb.ai/zhao-group/tcdb/runs/x3rwj56o>
+
+Per adapter (`scripts/full_build_compare.py`, `results/2905_vs_2032.csv`): 31 adapters
+in 7.86 h against 20.42 h on job 2032, 2.6x. Over the 29 adapters both full builds
+completed, job 2905 took 7.82 h and job 2889 5.18 h; the difference is the two Costanzo
+adapters, dmf 11,180 s against 6,462 s and dmi 13,496 s against 8,843 s. The budget
+made the build slower and did not prevent the kill.
+
+What one chunk costs (`scripts/chunk_memory_probe.py`, one single-pass node chunk run
+in-process in the dev tree, BioCypher objects, not rendered lines):
+
+| dataset | records | peak over baseline | resolved JSON per record |
+|---|---|---|---|
+| Bloom2019 | 500 | 0.09 GB | 19,738 B |
+| Bloom2019 | 2,555 | 0.12 GB | 19,713 B |
+
+So a Bloom chunk's records and node objects are about a tenth of a gigabyte, and 32 of
+them are not an 85 GB climb. What does grow is the parent: the lowest anonymous memory
+seen during each adapter rises from 2.5 GB at Costanzo dmf to 20.9 GB at dmi, 24 to
+28 GB through the Kuzmin sets and 36.4 GB at Bloom (job 2889: 35.9 GB at Bloom), and
+never comes back down. Hypothesis (untested): the fast writer's global dedup sets
+(every node id written, plus the duplicated-experiment set and the per-type edge
+sets) are that growth, and 32 workers forked from a 36 GB parent, plus their loader
+children, need more than the 92 GB left. The loader children and the row rendering in
+the workers are not covered by the probe, so they are the other candidate.
+
+Test: `kg_bench_bloom.yaml` runs Bloom alone with job 2905's settings, so the parent
+starts small. Job 2934 (`r8 bloom-alone`, commit c3f6b940, 32 CPUs / 128 GB). The r7
+arms 2930 to 2933 are held (my jobs only) so 2934 runs first. If Bloom passes alone,
+the parent's dedup state is the thing to shrink; if it dies alone, the workers are.

@@ -62,3 +62,41 @@ and the whole build one slurm job ([[experiments.033-env-chemgen-pooled.scripts.
 no ploidy and no environment field reaches the model (section 11 of the 031 document). The
 processed entries carry all of it in their JSON, so the processor changes in the 031
 implementation order are read-side work on this store, not another build.
+
+## 2026.09.28 - Build 001 complete
+
+Slurm 2929, COMPLETED in 7 h 48 m, finished 06:00 CDT, 16 CPUs and 64 GB from the detached
+worktree `033-build` at commit 1200cedb2. Root
+`/db/experiments/033-env-chemgen-pooled-001-pooled-build`. Summary in
+`results/dataset_index_summary.json`.
+
+**6,394,540 experiments became 6,042,771 cells, and nothing was lost.** The returned count
+equals the served count for all four datasets, so the gene filter dropped no record: every
+gene these screens measure is in the S288C gene set.
+
+| dataset | served | returned | cells | measurements folded |
+|---|---|---|---|---|
+| Vanacloig 2022 | 143,218 | 143,218 | 143,218 | 0 |
+| Hillenmeyer HET | 2,698,797 | 2,698,797 | 2,591,199 | 107,598 |
+| Hoepfner 2014 | 3,124,319 | 3,124,319 | 2,880,165 | 244,154 |
+| Wildenhain 2015 | 428,206 | 428,206 | 428,189 | 17 |
+
+**No cell mixes two datasets.** The per-dataset entry counts sum to 6,042,771, exactly the
+store length, so no environment is shared across sources. That was predicted from the media,
+duration and dose-unit differences and is now measured.
+
+**Measurements per cell**, the multi-measurement structure a read-time label policy chooses
+among: 5,764,190 cells hold one, 237,264 hold two, 30,380 three, 604 four, 36 five, 10,246
+six, one holds ten and 50 hold twelve. The folded excess totals 351,769 and reconciles with
+the table above. Hoepfner supplies 69 percent of it, which is the expected direction: it is
+the dataset whose campaign repeats reference compounds across studies. Wildenhain supplies 17
+because the paper already averages its replicate screens into one z score per cell, and
+Vanacloig none because it reports one measurement per gene-by-compound cell.
+
+**Cost.** Raw query 2 h 15 m at about 790 records per second, beating the 630 projected from
+the 025 build. Stage sizes are raw 108 GB, aggregation 106 GB and processed 106 GB, 320 GB in
+total against the 350 GB the preflight demanded. The index and label-table stages took the
+balance of the run, in the middle of the 2-to-4-hour projection.
+
+**Disk.** `/db` is at 95 percent with 441 GB free. The raw and aggregation stages hold 214 GB
+and are regenerable from the query; deleting them is the user's action, not this note's.

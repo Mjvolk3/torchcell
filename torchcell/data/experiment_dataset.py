@@ -233,6 +233,16 @@ class InternedDict(dict):  # type: ignore[type-arg]  # a plain dict that remembe
         self.ref = ref
 
 
+_INTERNED_BY_DIR: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+"""Per-process cache of each ``interned`` env: (raw table, validated instances).
+
+Keyed by the env's directory, filled by ``ExperimentDataset._load_interned``. Datasets
+drop their references when pickled or copied (``__getstate__``) and re-attach from
+here, so pool workers forked after the first load share the parent's table
+copy-on-write instead of each unpickling its own.
+"""
+
+
 def resolve_interned(obj: Any, interned: dict[str, Any]) -> Any:
     """Recursively splice interned sub-objects back into a record dict.
 
@@ -491,8 +501,12 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
         """
         if self._interned is not None:
             return
-        interned: dict[str, Any] = {}
         interned_dir = self._interned_dir()
+        shared = _INTERNED_BY_DIR.get(interned_dir)
+        if shared is not None:
+            self._interned, self._validated_interned = shared
+            return
+        interned: dict[str, Any] = {}
         if osp.isdir(interned_dir):
             ienv = lmdb.open(
                 interned_dir, readonly=True, lock=False, readahead=False, meminit=False
@@ -508,6 +522,24 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
                     )
             ienv.close()
         self._interned = interned
+        _INTERNED_BY_DIR[interned_dir] = (self._interned, self._validated_interned)
+
+    def __getstate__(self) -> dict[str, Any]:
+        """Pickle and copy WITHOUT the interned table and its validated instances.
+
+        Both are per-directory constants held in ``_INTERNED_BY_DIR`` and re-attached
+        by ``_load_interned`` on first use. Carrying them in the object meant every
+        chunk view (PyG slices are ``copy.copy``) and every pool submission pickled the
+        whole table: 152 MB per Bloom2019 chunk (13,992 entries, about 1 GB loaded),
+        unpickled again by every worker and loader child. Full builds 2889 and 2905
+        were OOM-killed at Bloom's node pass; Bloom alone peaked at 70.5 GB (job 2934).
+        A forked worker finds the table in the module cache it inherited; a spawned
+        process loads it from disk once.
+        """
+        state = self.__dict__.copy()
+        state["_interned"] = None
+        state["_validated_interned"] = {}
+        return state
 
     def _open_write_lmdb(self, path: str) -> tuple[Any, Any]:
         """Open the records WRITE env and a SEPARATE `interned` WRITE env (sibling).

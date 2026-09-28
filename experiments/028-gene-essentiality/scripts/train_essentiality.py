@@ -672,6 +672,25 @@ class BxCell(BaseModel):
             "Selection and scoring stay betaxanthin-only."
         ),
     )
+    aux_betaxanthin: bool = Field(
+        default=False,
+        description=(
+            "The reverse co-head (2026-09-28): with --head mulleder19 as the primary, train "
+            "a width-1 betaxanthin head jointly on the same pooled representation. "
+            "INDUCTIVE for the amino-acid target: betaxanthin is a training target, never "
+            "an input, and every pinned gene's betaxanthin record sits in the test block. "
+            "Selection and scoring stay on the amino acids."
+        ),
+    )
+    aux_weight: float = Field(
+        default=1.0,
+        description=(
+            "Weight of the co-head's masked MSE in the training loss (--aux-mulleder and "
+            "--aux-betaxanthin). 1.0 is what 019's head_weights carried; on the first "
+            "co-head cells (w242 to w244, 2026-09-28) the co-head term was about twice the "
+            "CRPS data term at epoch 0, so the weight is what balances the two."
+        ),
+    )
 
     attention_mask: bool = Field(
         default=False,
@@ -2364,6 +2383,8 @@ def build_cell(
     graph_reg: bool = False,
     abort_on_collapse: bool = False,
     aux_mulleder: bool = False,
+    aux_betaxanthin: bool = False,
+    aux_weight: float = 1.0,
     attention_mask: bool = False,
     attention_mask_layers: list[int] | None = None,
     graph_reg_lambda: float | None = None,
@@ -2561,6 +2582,8 @@ def build_cell(
         graph_reg=graph_reg,
         abort_on_collapse=abort_on_collapse,
         aux_mulleder=aux_mulleder,
+        aux_betaxanthin=aux_betaxanthin,
+        aux_weight=aux_weight,
         attention_mask=attention_mask,
         attention_mask_layers=list(attention_mask_layers or [1]),
         graph_reg_lambda=(
@@ -5007,6 +5030,10 @@ def build_model_for_cell(
         "--head mulleder19 makes the amino-acid head the PRIMARY supervised head; "
         "--aux-mulleder would then declare it twice."
     )
+    assert not (cell.aux_betaxanthin and cell.head != AUX_HEAD), (
+        "--aux-betaxanthin is the reverse co-head and needs --head mulleder19 as the "
+        f"primary; got --head {cell.head!r}."
+    )
     assert not (cell.dist == "quantile" and arm["flux"]), (
         "--dist quantile is defined for the MLP heads only. A flux readout predicts the "
         "layer's own quantity (its turnover or its concentration), so a quantile fan would "
@@ -5314,6 +5341,14 @@ def build_model_for_cell(
         # between arms stays on the betaxanthin readout alone.
         head_specs[AUX_HEAD] = {"label": "metabolite_level", "width": AUX_WIDTH}
         heads_config[AUX_HEAD] = {"kind": "vector", "output_dim": AUX_WIDTH}
+    if cell.aux_betaxanthin:
+        # The reverse co-head: a width-1 metabolite_level spec matches the betaxanthin
+        # records exactly as the betaxanthin primary does, and the standardization pass
+        # below covers every head in head_specs, so it gets its own train-split mean and
+        # sd. A Mulleder-only genotype matches nothing there and arrives masked False.
+        assert HEAD not in head_specs and HEAD not in heads_config
+        head_specs[HEAD] = {"label": "metabolite_level", "width": 1}
+        heads_config[HEAD] = {"kind": "scalar", "output_dim": 1, "param_dim": param_dim}
 
     graph_reg_kwargs: dict[str, Any] = (
         {
@@ -5975,6 +6010,11 @@ def run_cell(
             s = torch.nanmean(centered * centered, dim=0).sqrt().clamp(min=1e-6)
             stats[name] = (mu.to(device), s.to(device))
     mean, sd = stats[main_head]
+    # THE CO-HEADS trained jointly, each with its own train-split statistics from the
+    # pass above; empty for every cell before 2026-09-28's co-head rounds.
+    aux_heads = ([AUX_HEAD] if cell.aux_mulleder else []) + (
+        [HEAD] if cell.aux_betaxanthin else []
+    )
     # THE SUPERVISED COLUMNS. None is all of them and is what every cell before wave 9 ran,
     # so `supervised` is then the identity and every tensor below is unchanged. A subset
     # masks the LOSS and the epoch-selection metric; the test scorer still reports all 19
@@ -6097,22 +6137,26 @@ def run_cell(
             m = m & column_mask.unsqueeze(0)
             data_loss = (loss_fn(pred, z) * m).sum() / m.sum().clamp(min=1)
             loss = data_loss + reps["graph_reg_loss"]
-            if cell.aux_mulleder:
-                # Masked per-feature MSE on the standardized amino-acid vector, weight 1,
-                # as 019's head_weights had it. Never permuted: the null is on betaxanthin.
+            for aux_head in aux_heads:
+                # Masked per-feature MSE on the standardized co-target, weighted by
+                # cell.aux_weight (1.0 is what 019's head_weights had). Never permuted:
+                # the null is on the primary target. Under CRPS the head emits
+                # (mu, log_sigma) and the co-head reads mu.
                 t_aux, m_aux = targets_in_space(
                     batch, head_specs, cell.target_log10_molar
-                )[AUX_HEAD]
+                )[aux_head]
                 t_aux, m_aux = t_aux.to(device), m_aux.to(device)
-                mu_aux, sd_aux = stats[AUX_HEAD]
+                mu_aux, sd_aux = stats[aux_head]
                 z_aux = (t_aux - mu_aux) / sd_aux
-                p_aux = reps["head_outputs"][AUX_HEAD]
+                p_aux = reps["head_outputs"][aux_head]
                 if p_aux.dim() == 3:
                     p_aux = p_aux[..., 0]
+                if p_aux.dim() == 1:
+                    p_aux = p_aux.unsqueeze(1)
                 aux_loss = (
                     nn.functional.mse_loss(p_aux, z_aux, reduction="none") * m_aux
                 ).sum() / m_aux.sum().clamp(min=1)
-                loss = loss + aux_loss
+                loss = loss + cell.aux_weight * aux_loss
                 feas["aux_loss"] = feas.get("aux_loss", 0.0) + float(aux_loss.detach())
             train_data_loss += float(data_loss.detach())
             if "flux" in reps:
@@ -7387,6 +7431,17 @@ def main() -> None:
         help="Train the 19-amino-acid Mulleder head jointly, as the 019 recipe did.",
     )
     parser.add_argument(
+        "--aux-betaxanthin",
+        action="store_true",
+        help="With --head mulleder19: train a betaxanthin head jointly (the reverse co-head).",
+    )
+    parser.add_argument(
+        "--aux-weight",
+        type=float,
+        default=1.0,
+        help="Weight of the co-head's loss term (default 1.0, the 019 head weight).",
+    )
+    parser.add_argument(
         "--attention-mask",
         action="store_true",
         help="The 020 grid's hard graph masking, one relation per attention head.",
@@ -7804,6 +7859,8 @@ def main() -> None:
         graph_reg=args.graph_reg,
         abort_on_collapse=args.abort_on_collapse,
         aux_mulleder=args.aux_mulleder,
+        aux_betaxanthin=args.aux_betaxanthin,
+        aux_weight=args.aux_weight,
         attention_mask=args.attention_mask,
         attention_mask_layers=args.attention_mask_layers,
         graph_reg_lambda=args.graph_reg_lambda,

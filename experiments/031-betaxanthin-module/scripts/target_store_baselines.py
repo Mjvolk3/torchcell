@@ -41,6 +41,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import os.path as osp
 import sys
 import time
@@ -195,6 +196,38 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
             "block": "v_deletion",
             "flux": True,
         },
+        # The graphs' one-hop propagation of a gene's OWN features
+        # (target_graph_feature_store.py, 2026-09-28), the INDUCTIVE analogue of the
+        # label store: per graph (coexpression, union) the neighbor mean of the base
+        # feature and log1p of the covered-neighbor count. No label enters.
+        "go_nbr": {"store": "YPD_bx_gonbr", "block": "v_deletion", "flux": False},
+        "pfba_nbr": {"store": "YPD_bx_pfbanbr", "block": "v_deletion", "flux": True},
+        # Its decomposition: one graph's block at a time, and the two degree columns
+        # alone (the control: a read from how many neighbors a gene has, not which).
+        "go_nbr_coexpression": {
+            "store": "YPD_bx_gonbr",
+            "block": "v_deletion",
+            "flux": False,
+            "select": "^string12_0_coexpression_",
+        },
+        "go_nbr_union": {
+            "store": "YPD_bx_gonbr",
+            "block": "v_deletion",
+            "flux": False,
+            "select": "^union_of_9_",
+        },
+        "go_nbr_degree": {
+            "store": "YPD_bx_gonbr",
+            "block": "v_deletion",
+            "flux": False,
+            "select": "_log1p_covered_neighbors$",
+        },
+        "pfba_nbr_degree": {
+            "store": "YPD_bx_pfbanbr",
+            "block": "v_deletion",
+            "flux": False,
+            "select": "_log1p_covered_neighbors$",
+        },
     },
     "amino_acids": {
         "pfba_highs": {"store": "SM_gem", "block": "v_deletion", "flux": True},
@@ -283,11 +316,26 @@ def load_store(spec: dict[str, Any]) -> tuple[dict[str, np.ndarray], np.ndarray,
                 wild[i] = p["wild_type_btx_at_own_growth_floor"]
     if "columns" in spec:
         block, wild = block[:, : spec["columns"]], wild[: spec["columns"]]
+    if "select" in spec:
+        # A regular expression over the store's column names (2026-09-28): the
+        # neighbor-feature stores are decomposed into one graph's block and into their
+        # degree columns alone, the control for a read that is only the gene's degree.
+        keep = np.array([bool(re.search(spec["select"], str(c))) for c in z["rxn_ids"]])
+        assert keep.any(), spec["select"]
+        block, wild = block[:, keep], wild[keep]
     if spec["flux"]:
         block, wild = np.log1p(np.abs(block)), np.log1p(np.abs(wild))
     genes = [str(g) for g in z["genes"]]
     return {g: block[i] for i, g in enumerate(genes)}, wild, int(block.shape[1])
 
+
+#: In-script concatenations, name -> (left representation, right representation).
+CONCAT: dict[str, dict[str, tuple[str, str]]] = {
+    "betaxanthin": {
+        "go+go_nbr": ("go", "go_nbr"),
+        "pfba+pfba_nbr": ("pfba_highs", "pfba_nbr"),
+    },
+}
 
 #: The arm whose dump the pinned targets are checked against, per target.
 REFERENCE_ARM = {
@@ -328,7 +376,17 @@ def main() -> None:
     ap.add_argument("--threads", type=int, default=8)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default=None)
+    ap.add_argument(
+        "--only",
+        nargs="+",
+        default=None,
+        help=(
+            "read only these representations (and the concatenations they complete); "
+            "requires --out so the study's full ladder file is never overwritten by a subset"
+        ),
+    )
     args = ap.parse_args()
+    assert args.only is None or args.out, "--only requires --out"
     from sklearn.ensemble import RandomForestRegressor
 
     started = time.time()
@@ -485,6 +543,8 @@ def main() -> None:
     reps: dict[str, dict[str, Any]] = {}
     not_built: list[str] = []
     for rep_name, rep_spec in REPRESENTATIONS[args.target].items():
+        if args.only is not None and rep_name not in args.only:
+            continue
         if not osp.isfile(
             osp.join(TABLE_DIR, f"ess_solve_encodings_{rep_spec['store']}.npz")
         ):
@@ -542,15 +602,28 @@ def main() -> None:
         "filled_wild_type": {},
         "store": None,
     }
-    primary = reps[PRIMARY_STORE[args.target]]
-    reps[f"{PRIMARY_STORE[args.target]}+prot_T5_all"] = {
-        "p": {n: np.concatenate([primary["p"][n], p_emb[n]], axis=1) for n in y},
-        "ok": ok_emb,
-        "covered": {n: primary["covered"][n] & ok_emb[n] for n in y},
-        "dim": primary["dim"] + dim,
-        "filled_wild_type": primary["filled_wild_type"],
-        "store": primary["store"],
-    }
+    if PRIMARY_STORE[args.target] in reps:
+        primary = reps[PRIMARY_STORE[args.target]]
+        reps[f"{PRIMARY_STORE[args.target]}+prot_T5_all"] = {
+            "p": {n: np.concatenate([primary["p"][n], p_emb[n]], axis=1) for n in y},
+            "ok": ok_emb,
+            "covered": {n: primary["covered"][n] & ok_emb[n] for n in y},
+            "dim": primary["dim"] + dim,
+            "filled_wild_type": primary["filled_wild_type"],
+            "store": primary["store"],
+        }
+    # A gene's own feature beside its neighbors' mean of it (2026-09-28): both halves
+    # present, the concatenation is read as one representation.
+    for name, (left, right) in CONCAT.get(args.target, {}).items():
+        if left in reps and right in reps:
+            reps[name] = {
+                "p": {n: np.concatenate([reps[left]["p"][n], reps[right]["p"][n]], axis=1) for n in y},
+                "ok": {n: reps[left]["ok"][n] & reps[right]["ok"][n] for n in y},
+                "covered": {n: reps[left]["covered"][n] & reps[right]["covered"][n] for n in y},
+                "dim": reps[left]["dim"] + reps[right]["dim"],
+                "filled_wild_type": reps[left]["filled_wild_type"],
+                "store": f"{reps[left]['store']}+{reps[right]['store']}",
+            }
 
     ranks = [k for k in RANK_GRID if k <= len(columns)]
     payload: dict[str, Any] = {

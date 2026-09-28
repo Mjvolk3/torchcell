@@ -1,0 +1,29 @@
+{
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_graph_feature_store.py",
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_pfbanbr.npz",
+  "shape": [
+    6607,
+    8356
+  ],
+  "n_columns": 8356,
+  "provenance": {
+    "method": "one-hop feature propagation: the mean base feature over a gene's neighbors that carry a base row in each graph and log1p of their count; written by target_graph_feature_store.py",
+    "base_store": "YPD_bx_pfba",
+    "base_sha256": "5f0c701b6232b4e0f761946a5dd8dd7f1170aa94b5f1b93ff2529c1e7e22bf50",
+    "n_base_genes": 1155,
+    "n_base_columns": 4177,
+    "graphs": [
+      "string12_0_coexpression",
+      "union_of_9"
+    ],
+    "n_genes": 6607,
+    "n_columns": 8356,
+    "column_layout": "per graph: <graph>_nbr_mean_<base column> ..., <graph>_log1p_covered_neighbors",
+    "self_excluded": true,
+    "fill_for_no_covered_neighbor": "the base store's wild-type row; count 0",
+    "labels_read": false,
+    "python_hash_seed": "0",
+    "flux_sha256": "985c0a809331e37119c64b83b3e8932296b56ab49a8f1caed0bae8ccb2b298ea"
+  },
+  "seconds": 19.618398666381836
+}

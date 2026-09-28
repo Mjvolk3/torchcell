@@ -45,9 +45,13 @@ the two smallest weights are above no penalty (0.880, 0.878), which the title's 
 onto its target'': 0.782 at $10^{-5}$ against 0.006 at 0. (d) ``Divergence floors near
 300 from $\lambda = 0.01$'': 300, 297, 298. (e) ``Penalty dominates the gradient from
 $\lambda = 0.01$'': ratio 15 to 24 at $10^{-2}$ by epoch 20 against 1.1 to 1.5 at
-$10^{-3}$. (f) ``$\lambda = 0.001$: random target equals no penalty'': $0.420 \pm 0.012$
-against $0.425 \pm 0.000$, three seeds, paired differences $-0.008$, $+0.008$ and
-$-0.015$ ($p = 0.56$), and the biological graphs at $0.432 \pm 0.005$. (g)
+$10^{-3}$. (f) ``Random graphs at the best $\lambda$: queued'': at the
+minimum-validation-loss reading the best $\lambda$ is 0.1 ($0.453$, against $0.440$
+with no penalty, $p = 0.08$) and at epoch 29 it is 1 ($0.447$ against $0.425$,
+$p = 0.001$); neither random arm has run. At $10^{-3}$ the random graphs read
+$0.444$ against $0.444$ biological and $0.440$ none at minimum validation loss
+($p = 0.66$ against none), and at epoch 29 $0.420 \pm 0.012$ against $0.425 \pm
+0.000$ ($p = 0.56$). (g)
 ``Strong prior removes the decline after epoch 16'': seed-mean 0.441 to 0.425 with no
 penalty against 0.435 to 0.447 at $\lambda = 1$ and 0.441 to 0.445 at $10^{-1}$. (h)
 ``Strong priors fit training like no penalty'': 0.625 and 0.624 against 0.624. (i)

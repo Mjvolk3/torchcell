@@ -499,77 +499,106 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
     e.set_title("Penalty dominates the gradient from λ = 0.01")
     _box(e)
 
-    # f: the random-graph control at lambda 1e-3
+    # f: biological against degree-matched random graphs at the best lambda. The best
+    # lambda is read from the data, not chosen in advance: the KL arm with the highest
+    # seed mean at the minimum-validation-loss reading, and the one highest at epoch 29
+    # if that differs. lambda 0.001 stays beside them as the control measured first.
+    # Bars and points are the minimum-validation-loss reading; stars are its paired t
+    # against no penalty by seed.
     f = ax[5]
-    arms = [
-        ("kl_0.001", "biological\ngraphs", ORANGE),
-        (RANDOM, "random,\ndegree-matched", PURPLE),
-        ("kl_0", "none\n(λ = 0)", GRAY),
-    ]
-    # The seed count is printed only while an arm is short of the three-seed design;
-    # once every arm has three, the stars (paired t against no penalty, epoch-29 reading,
-    # the convention of panel a) are the annotation.
-    all_three = all(len(done[done.arm == arm]) == 3 for arm, _, _ in arms)
-    for i, (arm, _, color) in enumerate(arms):
+    col = "val_pearson_at_min_loss"
+    kl_arms = [a for a in LADDER if a.startswith("kl_") and a != "kl_0"]
+    means_min = {a: done[done.arm == a][col].mean() for a in kl_arms}
+    means_fix = {a: done[done.arm == a].val_pearson_fixed.mean() for a in kl_arms}
+    best_min = max(means_min, key=lambda a: means_min[a])
+    best_fix = max(means_fix, key=lambda a: means_fix[a])
+    groups = sorted(
+        {"kl_0.001", best_min, best_fix}, key=lambda a: float(a.split("_")[1])
+    )
+
+    def _bar(x: float, arm: str, color: str) -> None:
         sub = done[done.arm == arm]
-        part = runs[(runs.arm == arm) & ~runs.complete]
-        star = _stars(pvals.get((arm, "fixed")))
+        star = _stars(pvals.get((arm, "min_loss")))
         if star:
-            f.text(i, 0.4565, star, ha="center", va="center", fontsize=5.5)
-        if len(sub):
-            f.bar(
-                i,
-                sub.val_pearson_fixed.mean(),
-                width=0.62,
-                facecolor=color,
-                edgecolor="black",
-                linewidth=0.5,
-                zorder=2,
-            )
-            f.scatter(
-                i + np.linspace(-0.12, 0.12, len(sub)),
-                sub.val_pearson_fixed.to_numpy(),
-                s=9,
-                facecolor="black",
-                edgecolor="black",
-                linewidth=0.4,
-                zorder=4,
-            )
-            if not all_three:
-                f.text(
-                    i,
-                    0.4015,
-                    f"n = {len(sub)}",
-                    ha="center",
-                    va="bottom",
-                    fontsize=5,
-                    color="white",
-                )
-        for r in part.to_dict("records"):
-            f.scatter(
-                [i + 0.42],
-                [float(r["val_pearson_max"])],
-                s=12,
-                marker="x",
-                color=color,
-                linewidth=0.6,
-                zorder=4,
-            )
+            f.text(x, 0.4625, star, ha="center", va="center", fontsize=5.5)
+        if not len(sub):
             f.text(
-                i + 0.42,
-                float(r["val_pearson_max"]) + 0.003,
-                f"seed {int(r['seed'])}\nmax, ep {int(r['epochs_logged']) - 1}\n(running)",
+                x,
+                0.4225,
+                "queued,\nround 1b",
                 ha="center",
                 va="bottom",
                 fontsize=5,
+                rotation=90,
                 color=color,
             )
-    f.set_xticks(range(len(arms)))
-    f.set_xticklabels([t[1] for t in arms])
-    f.set_xlim(-0.6, len(arms) - 0.3)
-    f.set_ylim(0.40, 0.46)
-    f.set_ylabel("Held-out Pearson, epoch 29")
-    f.set_title("λ = 0.001: random target equals no penalty")
+            return
+        f.bar(
+            x,
+            sub[col].mean(),
+            width=0.5,
+            facecolor=color,
+            edgecolor="black",
+            linewidth=0.5,
+            zorder=2,
+        )
+        f.scatter(
+            x + np.linspace(-0.1, 0.1, len(sub)),
+            sub[col].to_numpy(),
+            s=7,
+            facecolor="black",
+            edgecolor="black",
+            linewidth=0.4,
+            zorder=4,
+        )
+
+    _bar(0.0, "kl_0", GRAY)
+    ticks, labels = [0.0], ["none"]
+    for g, arm in enumerate(groups):
+        lam = arm.split("_")[1]
+        base = 1.2 + 1.35 * g
+        _bar(base, arm, ARM_COLOR[arm])
+        _bar(base + 0.55, f"random_{lam}", PURPLE)
+        tag = []
+        if arm == best_min:
+            tag.append("best,\nmin loss")
+        if arm == best_fix:
+            tag.append("best,\nepoch 29")
+        ticks.append(base + 0.275)
+        labels.append(f"λ = {float(lam):g}" + ("\n" + "\n".join(tag) if tag else ""))
+    f.set_xticks(ticks)
+    f.set_xticklabels(labels, fontsize=5)
+    f.set_xlim(-0.5, ticks[-1] + 0.65)
+    f.set_ylim(0.42, 0.466)
+    f.set_ylabel("Held-out Pearson, at min validation loss")
+    f.set_title("Random graphs at the best λ: queued")
+    f.scatter(
+        [],
+        [],
+        marker="s",
+        s=12,
+        color=ARM_COLOR[best_min],
+        edgecolor="black",
+        linewidth=0.4,
+        label="biological graphs (ladder color)",
+    )
+    f.scatter(
+        [],
+        [],
+        marker="s",
+        s=12,
+        color=PURPLE,
+        edgecolor="black",
+        linewidth=0.4,
+        label="random, degree-matched",
+    )
+    f.legend(
+        loc="upper left",
+        fontsize=5,
+        frameon=False,
+        handletextpad=0.3,
+        borderaxespad=0.3,
+    )
     _pearson_grid(f)
     _box(f)
 

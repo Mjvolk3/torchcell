@@ -1,0 +1,12 @@
+{
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_SM_aa_gogonbr.npz",
+  "base": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_SM_gem_go.npz",
+  "append": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_SM_aa_gonbr.npz",
+  "n_genes": 6607,
+  "n_genes_with_appended_row": 6607,
+  "n_columns": 7088,
+  "column_layout": "SM_gem_go (2362) | SM_aa_gonbr (4726)",
+  "flux_fields_from": "base",
+  "seconds": 0.8571760654449463,
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_store_concat.py"
+}

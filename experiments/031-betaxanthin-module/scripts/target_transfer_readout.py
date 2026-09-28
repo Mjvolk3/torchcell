@@ -1376,6 +1376,12 @@ PAIRS = [
         "w232_aadelauxbx_h12l1p1_e200",
         "w225_aadelbxscoremlp256_h12l1p1_e200",
     ),
+    (
+        "amino acids: GO with its neighbor propagation appended (inductive) against GO alone",
+        "mulleder19",
+        "w233_aadelgogonbr_h12l1p1_e200",
+        "w170_aadelgo_h12l1p1_e200",
+    ),
 ]
 
 

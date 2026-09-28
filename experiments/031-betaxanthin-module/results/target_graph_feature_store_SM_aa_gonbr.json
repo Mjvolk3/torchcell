@@ -1,0 +1,29 @@
+{
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_graph_feature_store.py",
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_SM_aa_gonbr.npz",
+  "shape": [
+    6607,
+    4726
+  ],
+  "n_columns": 4726,
+  "provenance": {
+    "method": "one-hop feature propagation: the mean base feature over a gene's neighbors that carry a base row in each graph and log1p of their count; written by target_graph_feature_store.py",
+    "base_store": "SM_gem_go",
+    "base_sha256": "d85a78ab4bfca6382c6052bb603c3694641ac75b67725145ff740a5b986018c1",
+    "n_base_genes": 6607,
+    "n_base_columns": 2362,
+    "graphs": [
+      "string12_0_coexpression",
+      "union_of_9"
+    ],
+    "n_genes": 6607,
+    "n_columns": 4726,
+    "column_layout": "per graph: <graph>_nbr_mean_<base column> ..., <graph>_log1p_covered_neighbors",
+    "self_excluded": true,
+    "fill_for_no_covered_neighbor": "the base store's wild-type row; count 0",
+    "labels_read": false,
+    "python_hash_seed": "0",
+    "flux_sha256": "8cf5998867b0dd64795deb1d5fa9b6f5d2b74548490462385a138e77feb88706"
+  },
+  "seconds": 13.187235116958618
+}

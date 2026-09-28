@@ -256,6 +256,15 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
             "flux": True,
         },
         "go": {"store": "SM_gem_go", "block": "v_deletion", "flux": False},
+        # The graphs' one-hop propagation of GO (target_graph_feature_store.py,
+        # 2026-09-28), inductive; its degree columns alone are the control.
+        "go_nbr": {"store": "SM_aa_gonbr", "block": "v_deletion", "flux": False},
+        "go_nbr_degree": {
+            "store": "SM_aa_gonbr",
+            "block": "v_deletion",
+            "flux": False,
+            "select": "_log1p_covered_neighbors$",
+        },
         "gopfba": {"store": "SM_gem_gopfba", "block": "v_deletion", "flux": True},
         # The reverse of the betaxanthin pool read (target_pool_store.py --source
         # cachera): the strain's own Cachera betaxanthin score, signed, so standardized
@@ -335,6 +344,7 @@ CONCAT: dict[str, dict[str, tuple[str, str]]] = {
         "go+go_nbr": ("go", "go_nbr"),
         "pfba+pfba_nbr": ("pfba_highs", "pfba_nbr"),
     },
+    "amino_acids": {"go+go_nbr": ("go", "go_nbr")},
 }
 
 #: The arm whose dump the pinned targets are checked against, per target.

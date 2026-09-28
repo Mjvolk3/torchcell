@@ -376,3 +376,31 @@ a fresh process; `tests/torchcell/data` and `test_validated_cache.py` pass. Hypo
 cores rise, since the parent no longer serializes 152 MB per chunk.
 
 Job 2935 (`r8 bloom-shared-interned`, commit dffbe79d) repeats job 2934 with the fix.
+
+### Bloom with the shared interned table (job 2935): 70.5 GB to 14.3 GB, 6.2x faster
+
+Same config, box and settings as job 2934; only commit dffbe79d differs.
+
+| Bloom2019 alone | job 2934 (before) | job 2935 (shared table) |
+|---|---|---|
+| peak anonymous memory | 70.5 GB | 14.3 GB |
+| mean container cores | 4.5 | 17.8 |
+| node pass | 401 s | 61 s |
+| edge pass | 417 s | 70 s |
+| node / edge rows | 1,049,814 / 3,180,715 | 1,049,814 / 3,180,715 |
+
+Every one of the 46 output files has the same row count and byte size in both runs
+(`csv_inventory.tsv`, 12,910,914,385 bytes each; the `csv_total_bytes` totals differ
+only by the telemetry directory inside the output folder). The hypothesis from the
+previous section held: most of the 70 GB and the low core count were the per-chunk
+interned table.
+
+<https://wandb.ai/zhao-group/tcdb/runs/1i3sghy2>
+
+Ladder r7 so far: job 2930 (`b48-g2`, 48 MiB budget, old code) 1,106 s against 724 s
+for job 2883 (same box, no budget), same 29,736,977 rows. The budget costs 53% on the
+ladder, matching its cost on Costanzo in the full build, so the next full build runs
+without it (`single_pass_chunk_budget_mb` large enough to leave the chunk at the
+memory-reduction-factor size).
+
+<https://wandb.ai/zhao-group/tcdb/runs/98421zna>

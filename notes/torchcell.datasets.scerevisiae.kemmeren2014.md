@@ -319,3 +319,7 @@ for gene, values in grouped_values.items():
 This approach enables validation (compare computed vs expected to detect issues) while ensuring data integrity.
 
 Related: [[torchcell.datamodels.schema#20260129---philosophy-around-n_replicates]]
+
+## 2026.09.27 - The channel assignment contradicts GEO's labels (audit finding, not yet fixed)
+
+The Phase 8 audit of [[tests.torchcell.datasets.scerevisiae.test_kemmeren2014_synthetic]] read `label_ch1` and `source_name_ch1` from the dev-tree GEO pickles for GSE42527 and GSE42526. On "-a" arrays GEO puts the reference pool in Cy5 and the deletion in Cy3, the reverse on "-b" arrays; the loader assumes the opposite (kemmeren2014.py line 902, repeated at 951, 1342, 1412 and 1512). Of 2633 deletion arrays the loader reads the reference pool as the deletion on 2594 and the true deletion channel on 39 (mostly "-c" and "-d" titles that fall to the Cy5 default, plus GSM1107979, `yil014c-a-del-1-b`, whose gene name contains "-a"). From the code, not measured in the LMDB: line 2152 negates the ratio against its own comment, so the 2594 arrays end up with log2(deletion / reference pool) by double inversion, which would fit the +0.599 cross-study correlation recorded earlier; the linear `expression` then holds reference-pool intensities and the reference `expression` holds deletion intensities, and the 39 arrays carry the opposite log2 sign and are averaged with their siblings. This assumes GEO's own channel metadata is correct. The tests pin the current behavior; a fix waits for a decision (weekly note).

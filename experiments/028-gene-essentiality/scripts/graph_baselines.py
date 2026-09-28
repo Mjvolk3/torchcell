@@ -789,7 +789,15 @@ def main() -> None:
             )
         # A non-default seed list writes its own file, so the three-seed read stays.
         suffix = ("" if seeds == SEEDS else f"_s{len(seeds)}") + split_tag
-        suffix += "" if args.go_dir is None else "_go006"
+        if args.go_dir is not None:
+            # The 006 store keeps its historical suffix; an evidence-cut store
+            # (go_evidence_store.py) is named by its cut, so the runs do not collide.
+            store = osp.basename(osp.dirname(osp.normpath(args.go_dir)))
+            suffix += (
+                "_go006"
+                if store == "go_term_hot_dcell006"
+                else "_" + store.removeprefix("go_term_hot_")
+            )
         out = osp.join(RESULTS, f"graph_baselines_{args.arms}{suffix}.json")
     elif args.arms == "go_solve":
         # ONE MODEL THAT HOLDS BOTH (the open item of the family averages): the

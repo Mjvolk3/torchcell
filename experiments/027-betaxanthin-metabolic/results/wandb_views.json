@@ -511,9 +511,9 @@
   },
   "esssize": {
     "title": "027 wave 11: model size against curve stability on gene essentiality",
-    "n_runs": 13,
+    "n_runs": 17,
     "tags_any": [
-      "w11esssize_h45p2",
+      "w11esssize_h54p2",
       "w11esssize_h24p1",
       "w11esssize_h12p1",
       "w9esspool"
@@ -545,6 +545,14 @@
     ],
     "metrics_not_logged_by_any_run": [],
     "groups": {
+      "w11esssize_h12p1": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w11esssize_h12p1",
+        "run_ids": [
+          "bjlk7m7g",
+          "0ojod7g4",
+          "ixk44vrk"
+        ]
+      },
       "w11esssize_h12p1_smoke": {
         "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w11esssize_h12p1_smoke",
         "run_ids": [
@@ -554,7 +562,16 @@
       "w11esssize_h24p1": {
         "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w11esssize_h24p1",
         "run_ids": [
-          "dqlt6h1c"
+          "dqlt6h1c",
+          "w7cc2x38",
+          "su5zilbk"
+        ]
+      },
+      "w11esssize_h54p2": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w11esssize_h54p2",
+        "run_ids": [
+          "08ogqh8l",
+          "o7mop2xg"
         ]
       },
       "w9esspool": {

@@ -6110,9 +6110,10 @@ def run_cell(
             batch = batch.to(device)
             optimizer.zero_grad(set_to_none=True)
             _, reps = model(dataset.cell_graph.to(device), batch)
-            # Extracted ONCE per batch for every head (2026-09-28): the co-head rounds
-            # w242 to w244 ran at 1.8 min an epoch against 1.07 without a co-head, and
-            # the second extraction per batch was the difference.
+            # Extracted ONCE per batch for every head (2026-09-28). Measured: the co-head
+            # rounds w242 to w244 ran at 1.8 min an epoch against 1.07 for the same recipe
+            # without a co-head. Hypothesis (untested): the second extraction per batch
+            # was the difference; w232 (job 2954) is the first cell on this path.
             batch_targets = targets_in_space(batch, head_specs, cell.target_log10_molar)
             t, m = batch_targets[main_head]
             t, m = t.to(device), m.to(device)

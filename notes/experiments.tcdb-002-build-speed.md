@@ -404,3 +404,64 @@ without it (`single_pass_chunk_budget_mb` large enough to leave the chunk at the
 memory-reduction-factor size).
 
 <https://wandb.ai/zhao-group/tcdb/runs/98421zna>
+
+## 2026.09.28 - Full build 2936 reaches adapter 48 of 51 at 5.3x, then the parent's size kills a worker pool
+
+Job 2936 (`r8 full-51-shared-interned`, commit b3f95cae: r5 stack, shared interned
+table, 128 MiB budget, 32 CPUs / 128 GB, `kg_uncapped`) started 03:16 after the
+backfill fix and failed after 4 h 32 min with `BrokenProcessPool` at adapter 48 of 51,
+EnvChemgenWildenhain2015. It passed Bloom2019 in 238 s.
+
+<https://wandb.ai/zhao-group/tcdb/runs/xw7hq4it>
+
+Per adapter (`scripts/full_build_compare.py`, `results/2936_vs_2032.csv`): the 37
+completed adapters that job 2032 also built took 4.32 h against 22.88 h, 5.3x. Over the
+29 adapters that jobs 2889 and 2936 both completed, 5.18 h became 4.19 h.
+
+| adapter | job 2032 | job 2936 | speedup |
+|---|---|---|---|
+| DmfCostanzo2016 | 15,931 s | 5,615 s | 2.8x |
+| DmiCostanzo2016 | 17,761 s | 6,251 s | 2.8x |
+| CaudalPanTranscriptome2024 | 6,248 s | 1,004 s | 6.2x |
+| Bloom2019 | 2,056 s | 238 s | 8.7x |
+
+Why Wildenhain died: anonymous memory went from 32.9 GB to 124.0 GB inside its node
+pass. Its interned table is 10,346 entries, 0.49 GB loaded, and its chunk views now
+pickle to 0.001 MB, so the per-chunk table is no longer the cost. The same pattern is in
+Bloom: alone with a fresh parent (job 2935) it peaked at 14.3 GB; inside job 2936, with
+a 36 GB parent, it went from 36.0 GB to 92.1 GB. Worker memory scales with the size of
+the process the pool forks from. Hypothesis (untested): workers privatize the parent's
+pages copy-on-write, both through reference-count writes to shared objects and through
+new allocations landing in partly used pages of the parent's fragmented heap, so each
+of 32 workers ends up with gigabytes of private copies of a 33 to 39 GB parent.
+`gc.freeze()` stops the collector's writes, not these.
+
+Two directions, neither run yet:
+
+1. Fork the pool from a small process: `multiprocessing` `forkserver` started at the
+   top of the build, before the parent grows, with torchcell modules preloaded. Each
+   worker then loads its dataset's interned table itself (0.5 to 1 GB for the two big
+   tables), a bounded cost independent of the parent.
+2. Shrink the parent: measure what the 36 GB is (hypothesis: the fast writer's global
+   dedup sets) and store it compactly.
+
+The first is the direct test of the mechanism: rerun `kg_bench_bloom` with a large
+ballast allocated in the parent, with and without forkserver.
+
+## 2026.09.28 - Where the 48-hour run ended
+
+Measured:
+
+- Ladder (8 datasets, Costanzo capped at 2M, same 29,736,977 rows in every arm):
+  5,496 s (job 2856) to 591 s at 48 CPUs (job 2881, 9.3x) and 653 s at 32 CPUs
+  (job 2931, 8.4x).
+- Full 51-dataset build: not yet completed. Best partial, job 2936: 47 adapters in
+  4.4 h, the 37 comparable ones 5.3x faster than job 2032.
+- Bloom2019 alone: 70.5 GB and 818 s (job 2934) to 14.3 GB and 131 s (job 2935) from the
+  shared interned table, same rows and bytes in every file.
+- The chunk byte budget (r7) was a regression: 1,106 s at 48 MiB against 653 s at 128 MiB
+  and 724 s without it on the ladder.
+- Scheduling: bench arms need honest `--time` to backfill beside the GPU packs.
+
+Open: the parent-size memory blowup above; the r6/r7 group-size arms (jobs 2932 and
+2933) never ran and were cancelled; production configs still run the old path.

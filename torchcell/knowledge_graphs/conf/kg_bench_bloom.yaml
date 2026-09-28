@@ -1,0 +1,51 @@
+# torchcell/knowledge_graphs/conf/kg_bench_bloom.yaml
+# [[torchcell.knowledge_graphs.conf.kg_bench_bloom.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_bench_bloom.yaml
+# Bloom2019 alone, same production adapter settings as kg_bench_ladder.yaml. Full
+# builds 2889 and 2905 were both OOM-killed at Bloom's single-pass node pass with a
+# 36 GB parent (the fast writer's dedup sets after 37 adapters); this config runs the
+# same pass with a fresh parent to separate the parent's size from Bloom's workers.
+
+defaults:
+  - default
+  - _self_
+
+wandb:
+  mode: online
+  project: tcdb
+  tags: [tcdb-002, bloom]
+
+# The adapter settings are the PRODUCTION build's (kg_uncapped.yaml). An arm that
+# deviates does so through hydra overrides on the launcher's KG_OVERRIDES, recorded
+# in the run's arm.tsv and in the W&B config, so the config file itself never drifts
+# from production. Job 2851 ran chunk_size 4e5 copied from kg_small.yaml: a 410k-record
+# dataset then splits into 3 chunks and 3 of 43 workers do the work, which is why it
+# is scored as a chunk-size arm rather than the baseline.
+adapters:
+  io_to_total_worker_ratio: 0.1
+  chunk_size: 1e5
+  loader_batch_size: 1e3
+  # r1 arm: adapters.inprocess_max_records=25000 (datasets up to that many records
+  # run every method in-process, no pool, no loader forks). 0 is production.
+  inprocess_max_records: 0
+  # r3 arm: adapters.single_pass=true (one traversal per adapter for all chunked
+  # node methods, one for all chunked edge methods). false is production.
+  single_pass: false
+  # r5 arm: adapters.fast_writer=true (rows rendered in the chunk workers, the main
+  # process only dedups and appends; torchcell.fast_csv). false is production.
+  fast_writer: false
+  # r6 arm: adapters.chunks_per_worker=N (pool group = workers x N chunks; the pool is
+  # torn down and re-forked every group). 2 is production.
+  chunks_per_worker: 2
+  # r7 arm: adapters.single_pass_chunk_budget_mb=N (resolved-record MiB per
+  # single-pass chunk; sets the chunk length per adapter). 48 is the module default.
+  single_pass_chunk_budget_mb: 48
+
+datasets:
+  - Bloom2019Dataset # the adapter that OOM-killed full builds 2889 and 2905
+
+subset:
+  size: null
+  seed: 42
+  per_dataset: {}
+  prefilter: {}

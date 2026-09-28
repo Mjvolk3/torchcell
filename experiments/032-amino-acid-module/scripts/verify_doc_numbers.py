@@ -364,6 +364,28 @@ def homophily(target: str, graph: str, hops: int, key: str):
     return run
 
 
+def label_medium(kind: str, name: str, key: str):
+    """A value of the rounds 208 to 211 readout (aa_label_medium_readout.py): ``pair``
+    reads one paired statistic by pair name; ``arm`` reads an arm's level by stem
+    (``mean_spearman``, ``sd_spearman``, ``min_spearman``, ``max_spearman``,
+    ``ensemble_six_spearman``, ``slurm_job``, or ``min:``/``max:`` of a cell field)."""
+
+    def run() -> float:
+        import json
+
+        d = json.load(open(osp.join(RESULTS, "aa_label_medium_readout.json")))
+        if kind == "pair":
+            return float(next(q for q in d["pairs"] if q["name"] == name)[key])
+        a = d["arms"][name]
+        if key.startswith("min:"):
+            return float(min(c[key[4:]] for c in a["cells"]))
+        if key.startswith("max:"):
+            return float(max(c[key[4:]] for c in a["cells"]))
+        return float(a[key])
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:cross-target -- the betaxanthin score against the amino-acid pool.
     Check(
@@ -5075,6 +5097,563 @@ CHECKS: list[Check] = [
             ]["graph_label"][m]["selected_on_val"]["test_pinned"]["mean_spearman"]
         ),
         tolerance=0.0006,
+    ),
+    # sec:rounds -- rounds 208 to 211, the medium controls and the label stores (2026-09-28).
+    Check(
+        claim="rounds 208 to 211: SM store affine level",
+        stated=0.04,
+        recompute=label_medium("arm", "w143_aadelstore_h12l1p1_e200", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="rounds 208 to 211: control over the same six seeds",
+        stated=0.049,
+        recompute=label_medium("arm", "w141_aadel_h12l1p1_e200", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: arm",
+        stated=0.042,
+        recompute=label_medium("arm", "w228_aadelstore4m_h12l1p1_e200", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: arm sd",
+        stated=0.007,
+        recompute=label_medium("arm", "w228_aadelstore4m_h12l1p1_e200", "sd_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: ensemble",
+        stated=0.052,
+        recompute=label_medium("arm", "w228_aadelstore4m_h12l1p1_e200", "ensemble_six_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: seed min",
+        stated=0.031,
+        recompute=label_medium("arm", "w228_aadelstore4m_h12l1p1_e200", "min_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: seed max",
+        stated=0.051,
+        recompute=label_medium("arm", "w228_aadelstore4m_h12l1p1_e200", "max_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: select epoch min",
+        stated=97,
+        recompute=label_medium("arm", "w228_aadelstore4m_h12l1p1_e200", "min:select_epoch"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 208: select epoch max",
+        stated=193,
+        recompute=label_medium("arm", "w228_aadelstore4m_h12l1p1_e200", "max:select_epoch"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 208: select val pearson min",
+        stated=0.054,
+        recompute=label_medium("arm", "w228_aadelstore4m_h12l1p1_e200", "min:select_val_pearson"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: select val pearson max",
+        stated=0.123,
+        recompute=label_medium("arm", "w228_aadelstore4m_h12l1p1_e200", "max:select_val_pearson"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: slurm job",
+        stated=2939,
+        recompute=label_medium("arm", "w228_aadelstore4m_h12l1p1_e200", "slurm_job"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 208: vs SM ratio control level",
+        stated=0.04,
+        recompute=label_medium("pair", "four media's growth ratios against the SM ratio", "control_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: vs SM ratio paired",
+        stated=0.002,
+        recompute=label_medium("pair", "four media's growth ratios against the SM ratio", "mean_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: vs SM ratio paired sd",
+        stated=0.006,
+        recompute=label_medium("pair", "four media's growth ratios against the SM ratio", "sd_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: vs SM ratio seeds above",
+        stated=5,
+        recompute=label_medium("pair", "four media's growth ratios against the SM ratio", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 208: vs control control level",
+        stated=0.049,
+        recompute=label_medium("pair", "four media's growth ratios against the control", "control_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: vs control paired",
+        stated=-0.007,
+        recompute=label_medium("pair", "four media's growth ratios against the control", "mean_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: vs control paired sd",
+        stated=0.013,
+        recompute=label_medium("pair", "four media's growth ratios against the control", "sd_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 208: vs control seeds above",
+        stated=2,
+        recompute=label_medium("pair", "four media's growth ratios against the control", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 209: arm",
+        stated=0.046,
+        recompute=label_medium("arm", "w229_aadelstoredef_h12l1p1_e200", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: arm sd",
+        stated=0.005,
+        recompute=label_medium("arm", "w229_aadelstoredef_h12l1p1_e200", "sd_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: ensemble",
+        stated=0.051,
+        recompute=label_medium("arm", "w229_aadelstoredef_h12l1p1_e200", "ensemble_six_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: seed min",
+        stated=0.04,
+        recompute=label_medium("arm", "w229_aadelstoredef_h12l1p1_e200", "min_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: seed max",
+        stated=0.051,
+        recompute=label_medium("arm", "w229_aadelstoredef_h12l1p1_e200", "max_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: select epoch min",
+        stated=57,
+        recompute=label_medium("arm", "w229_aadelstoredef_h12l1p1_e200", "min:select_epoch"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 209: select epoch max",
+        stated=181,
+        recompute=label_medium("arm", "w229_aadelstoredef_h12l1p1_e200", "max:select_epoch"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 209: select val pearson min",
+        stated=0.068,
+        recompute=label_medium("arm", "w229_aadelstoredef_h12l1p1_e200", "min:select_val_pearson"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: select val pearson max",
+        stated=0.098,
+        recompute=label_medium("arm", "w229_aadelstoredef_h12l1p1_e200", "max:select_val_pearson"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: slurm job",
+        stated=2942,
+        recompute=label_medium("arm", "w229_aadelstoredef_h12l1p1_e200", "slurm_job"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 209: vs zero init control level",
+        stated=0.04,
+        recompute=label_medium("pair", "default affine initialization against zero initialization", "control_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: vs zero init paired",
+        stated=0.006,
+        recompute=label_medium("pair", "default affine initialization against zero initialization", "mean_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: vs zero init paired sd",
+        stated=0.006,
+        recompute=label_medium("pair", "default affine initialization against zero initialization", "sd_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: vs zero init seeds above",
+        stated=5,
+        recompute=label_medium("pair", "default affine initialization against zero initialization", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 209: vs four media control level",
+        stated=0.042,
+        recompute=label_medium("pair", "default affine initialization against four media", "control_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: vs four media paired",
+        stated=0.004,
+        recompute=label_medium("pair", "default affine initialization against four media", "mean_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: vs four media paired sd",
+        stated=0.006,
+        recompute=label_medium("pair", "default affine initialization against four media", "sd_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: vs four media seeds above",
+        stated=4,
+        recompute=label_medium("pair", "default affine initialization against four media", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 209: vs control control level",
+        stated=0.049,
+        recompute=label_medium("pair", "default affine initialization against the control", "control_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: vs control paired",
+        stated=-0.003,
+        recompute=label_medium("pair", "default affine initialization against the control", "mean_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: vs control paired sd",
+        stated=0.011,
+        recompute=label_medium("pair", "default affine initialization against the control", "sd_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 209: vs control seeds above",
+        stated=3,
+        recompute=label_medium("pair", "default affine initialization against the control", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 210: arm",
+        stated=0.026,
+        recompute=label_medium("arm", "w230_aadelgraphlabel_h12l1p1_e200", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: arm sd",
+        stated=0.01,
+        recompute=label_medium("arm", "w230_aadelgraphlabel_h12l1p1_e200", "sd_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: ensemble",
+        stated=0.034,
+        recompute=label_medium("arm", "w230_aadelgraphlabel_h12l1p1_e200", "ensemble_six_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: seed min",
+        stated=0.017,
+        recompute=label_medium("arm", "w230_aadelgraphlabel_h12l1p1_e200", "min_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: seed max",
+        stated=0.043,
+        recompute=label_medium("arm", "w230_aadelgraphlabel_h12l1p1_e200", "max_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: select epoch min",
+        stated=75,
+        recompute=label_medium("arm", "w230_aadelgraphlabel_h12l1p1_e200", "min:select_epoch"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 210: select epoch max",
+        stated=197,
+        recompute=label_medium("arm", "w230_aadelgraphlabel_h12l1p1_e200", "max:select_epoch"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 210: select val pearson min",
+        stated=0.08,
+        recompute=label_medium("arm", "w230_aadelgraphlabel_h12l1p1_e200", "min:select_val_pearson"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: select val pearson max",
+        stated=0.101,
+        recompute=label_medium("arm", "w230_aadelgraphlabel_h12l1p1_e200", "max:select_val_pearson"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: slurm job",
+        stated=2943,
+        recompute=label_medium("arm", "w230_aadelgraphlabel_h12l1p1_e200", "slurm_job"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 210: vs SM store control level",
+        stated=0.04,
+        recompute=label_medium("pair", "label propagation alone against the SM store", "control_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: vs SM store paired",
+        stated=-0.014,
+        recompute=label_medium("pair", "label propagation alone against the SM store", "mean_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: vs SM store paired sd",
+        stated=0.012,
+        recompute=label_medium("pair", "label propagation alone against the SM store", "sd_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: vs SM store seeds above",
+        stated=1,
+        recompute=label_medium("pair", "label propagation alone against the SM store", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 210: vs control control level",
+        stated=0.049,
+        recompute=label_medium("pair", "label propagation alone against the control", "control_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: vs control paired",
+        stated=-0.023,
+        recompute=label_medium("pair", "label propagation alone against the control", "mean_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: vs control paired sd",
+        stated=0.01,
+        recompute=label_medium("pair", "label propagation alone against the control", "sd_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: vs control seeds above",
+        stated=0,
+        recompute=label_medium("pair", "label propagation alone against the control", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: arm",
+        stated=0.021,
+        recompute=label_medium("arm", "w231_aadelgraphlabelpfba_h12l1p1_e200", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: arm sd",
+        stated=0.007,
+        recompute=label_medium("arm", "w231_aadelgraphlabelpfba_h12l1p1_e200", "sd_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: ensemble",
+        stated=0.027,
+        recompute=label_medium("arm", "w231_aadelgraphlabelpfba_h12l1p1_e200", "ensemble_six_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: seed min",
+        stated=0.009,
+        recompute=label_medium("arm", "w231_aadelgraphlabelpfba_h12l1p1_e200", "min_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: seed max",
+        stated=0.031,
+        recompute=label_medium("arm", "w231_aadelgraphlabelpfba_h12l1p1_e200", "max_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: select epoch min",
+        stated=85,
+        recompute=label_medium("arm", "w231_aadelgraphlabelpfba_h12l1p1_e200", "min:select_epoch"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: select epoch max",
+        stated=196,
+        recompute=label_medium("arm", "w231_aadelgraphlabelpfba_h12l1p1_e200", "max:select_epoch"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: select val pearson min",
+        stated=0.077,
+        recompute=label_medium("arm", "w231_aadelgraphlabelpfba_h12l1p1_e200", "min:select_val_pearson"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: select val pearson max",
+        stated=0.118,
+        recompute=label_medium("arm", "w231_aadelgraphlabelpfba_h12l1p1_e200", "max:select_val_pearson"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: slurm job",
+        stated=2944,
+        recompute=label_medium("arm", "w231_aadelgraphlabelpfba_h12l1p1_e200", "slurm_job"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: vs SM store control level",
+        stated=0.04,
+        recompute=label_medium("pair", "label propagation with the SM store against the SM store", "control_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs SM store paired",
+        stated=-0.019,
+        recompute=label_medium("pair", "label propagation with the SM store against the SM store", "mean_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs SM store paired sd",
+        stated=0.012,
+        recompute=label_medium("pair", "label propagation with the SM store against the SM store", "sd_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs SM store seeds above",
+        stated=0,
+        recompute=label_medium("pair", "label propagation with the SM store against the SM store", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: vs labels alone control level",
+        stated=0.026,
+        recompute=label_medium("pair", "label propagation with the SM store against label propagation alone", "control_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs labels alone paired",
+        stated=-0.006,
+        recompute=label_medium("pair", "label propagation with the SM store against label propagation alone", "mean_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs labels alone paired sd",
+        stated=0.008,
+        recompute=label_medium("pair", "label propagation with the SM store against label propagation alone", "sd_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs labels alone seeds above",
+        stated=1,
+        recompute=label_medium("pair", "label propagation with the SM store against label propagation alone", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 211: vs control control level",
+        stated=0.049,
+        recompute=label_medium("pair", "label propagation with the SM store against the control", "control_mean"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs control paired",
+        stated=-0.028,
+        recompute=label_medium("pair", "label propagation with the SM store against the control", "mean_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs control paired sd",
+        stated=0.008,
+        recompute=label_medium("pair", "label propagation with the SM store against the control", "sd_difference"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 211: vs control seeds above",
+        stated=0,
+        recompute=label_medium("pair", "label propagation with the SM store against the control", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round 210: ladder forest over the label store",
+        stated=0.054,
+        recompute=store_baseline("amino_acids", "graph_label", "forest", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: ladder ridge over the label store",
+        stated=0.02,
+        recompute=store_baseline("amino_acids", "graph_label", "ridge", "mean_spearman"),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="round 210: betaxanthin's label store alone (reference)",
+        stated=0.182,
+        recompute=transfer(
+            "betaxanthin: the graphs' one-hop label-propagation store through 256 against the control",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="standing: the pool's lift on betaxanthin, twelve seeds",
+        stated=0.20,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 against the control, twelve seeds",
+            "mean_difference",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="standing: the pool arm on betaxanthin, twelve seeds",
+        stated=0.278,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 against the control, twelve seeds",
+            "mean_spearman",
+            "arm",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="standing: the betaxanthin control, twelve seeds",
+        stated=0.076,
+        recompute=transfer(
+            "betaxanthin: measured amino-acid pool through a hidden layer of 256 against the control, twelve seeds",
+            "mean_spearman",
+            "control",
+        ),
+        tolerance=0.0006,
+    ),
+    Check(
+        claim="standing: the score's lift on the profile over the control (0.078 against 0.049)",
+        stated=0.03,
+        recompute=lambda: (
+            transfer(
+                "amino acids: the betaxanthin score through a hidden layer of 256 against GO alone",
+                "mean_spearman",
+                "arm",
+            )()
+            - label_medium("arm", "w141_aadel_h12l1p1_e200", "mean_spearman")()
+        ),
+        tolerance=0.006,
     ),
 ]
 

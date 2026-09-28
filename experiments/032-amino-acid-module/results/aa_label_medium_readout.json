@@ -1,0 +1,474 @@
+{
+  "generated_by": "experiments/032-amino-acid-module/scripts/aa_label_medium_readout.py",
+  "statistic": "mean per-amino-acid pinned-test Spearman over the 19 columns at the epoch selected on validation Pearson (centered five-epoch moving average); pairs over seeds 2700 to 2705; ensembles score the mean prediction over the six seeds on the pinned records",
+  "arms": {
+    "w141_aadel_h12l1p1_e200": {
+      "stem": "w141_aadel_h12l1p1_e200",
+      "round": null,
+      "label": "the control (deletion-only graphs, no store)",
+      "cells": [
+        {
+          "seed": 2700,
+          "select_epoch": 135,
+          "select_val_pearson": 0.1142109035151263,
+          "spearman": 0.04204816526285334,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2701,
+          "select_epoch": 148,
+          "select_val_pearson": 0.08574005407526304,
+          "spearman": 0.042611093359299974,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2702,
+          "select_epoch": 88,
+          "select_val_pearson": 0.07451615168860085,
+          "spearman": 0.05905778505729476,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2703,
+          "select_epoch": 75,
+          "select_val_pearson": 0.08738300369709338,
+          "spearman": 0.044800597051616514,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2704,
+          "select_epoch": 37,
+          "select_val_pearson": 0.06556358654052019,
+          "spearman": 0.053243590258249075,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2705,
+          "select_epoch": 197,
+          "select_val_pearson": 0.07702322706188026,
+          "spearman": 0.053568475263222476,
+          "n_records_with_any_feature": 564
+        }
+      ],
+      "mean_spearman": 0.04922161770875602,
+      "sd_spearman": 0.007021744764877032,
+      "min_spearman": 0.04204816526285334,
+      "max_spearman": 0.05905778505729476,
+      "ensemble_six_spearman": 0.06157679155644393,
+      "slurm_job": null,
+      "elapsed": null
+    },
+    "w143_aadelstore_h12l1p1_e200": {
+      "stem": "w143_aadelstore_h12l1p1_e200",
+      "round": null,
+      "label": "the SM parsimonious store affine",
+      "cells": [
+        {
+          "seed": 2700,
+          "select_epoch": 77,
+          "select_val_pearson": 0.0826005816925317,
+          "spearman": 0.03874148836376571,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2701,
+          "select_epoch": 95,
+          "select_val_pearson": 0.08085832410908647,
+          "spearman": 0.050041687576018144,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2702,
+          "select_epoch": 193,
+          "select_val_pearson": 0.08220892443664764,
+          "spearman": 0.03681063702000857,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2703,
+          "select_epoch": 146,
+          "select_val_pearson": 0.06176280101614171,
+          "spearman": 0.04006438357442472,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2704,
+          "select_epoch": 99,
+          "select_val_pearson": 0.0708588006412978,
+          "spearman": 0.039712959336125,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2705,
+          "select_epoch": 146,
+          "select_val_pearson": 0.07128871928924989,
+          "spearman": 0.0359380508374111,
+          "n_records_with_any_feature": 564
+        }
+      ],
+      "mean_spearman": 0.040218201117958874,
+      "sd_spearman": 0.005077236952331321,
+      "min_spearman": 0.0359380508374111,
+      "max_spearman": 0.050041687576018144,
+      "ensemble_six_spearman": 0.04304770627121674,
+      "slurm_job": null,
+      "elapsed": null
+    },
+    "w228_aadelstore4m_h12l1p1_e200": {
+      "stem": "w228_aadelstore4m_h12l1p1_e200",
+      "round": 208,
+      "label": "the SM store with four media's growth ratios (control)",
+      "cells": [
+        {
+          "seed": 2700,
+          "select_epoch": 193,
+          "select_val_pearson": 0.0838383239154753,
+          "spearman": 0.04852574622887879,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2701,
+          "select_epoch": 97,
+          "select_val_pearson": 0.08225142434974642,
+          "spearman": 0.051096665882412295,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2702,
+          "select_epoch": 193,
+          "select_val_pearson": 0.09175159958632369,
+          "spearman": 0.043992912538527204,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2703,
+          "select_epoch": 108,
+          "select_val_pearson": 0.054281242363350954,
+          "spearman": 0.042943458642249945,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2704,
+          "select_epoch": 192,
+          "select_val_pearson": 0.12284084875136614,
+          "spearman": 0.031318920814976,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2705,
+          "select_epoch": 118,
+          "select_val_pearson": 0.08676269405374401,
+          "spearman": 0.03710487897114522,
+          "n_records_with_any_feature": 564
+        }
+      ],
+      "mean_spearman": 0.04249709717969824,
+      "sd_spearman": 0.007304266389218429,
+      "min_spearman": 0.031318920814976,
+      "max_spearman": 0.051096665882412295,
+      "ensemble_six_spearman": 0.05185468452144132,
+      "slurm_job": 2939,
+      "elapsed": "3 h 31 min"
+    },
+    "w229_aadelstoredef_h12l1p1_e200": {
+      "stem": "w229_aadelstoredef_h12l1p1_e200",
+      "round": 209,
+      "label": "the SM store under default affine initialization, own medium",
+      "cells": [
+        {
+          "seed": 2700,
+          "select_epoch": 57,
+          "select_val_pearson": 0.08410527282639553,
+          "spearman": 0.0503036828765295,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2701,
+          "select_epoch": 181,
+          "select_val_pearson": 0.07216274561850648,
+          "spearman": 0.048645481068669075,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2702,
+          "select_epoch": 89,
+          "select_val_pearson": 0.09821480061662824,
+          "spearman": 0.040992226266610005,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2703,
+          "select_epoch": 108,
+          "select_val_pearson": 0.07424068120369491,
+          "spearman": 0.051473832454154246,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2704,
+          "select_epoch": 90,
+          "select_val_pearson": 0.06783098308369517,
+          "spearman": 0.039886721394743245,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2705,
+          "select_epoch": 94,
+          "select_val_pearson": 0.0735829052466311,
+          "spearman": 0.047037451246603655,
+          "n_records_with_any_feature": 564
+        }
+      ],
+      "mean_spearman": 0.04638989921788495,
+      "sd_spearman": 0.00485998452428253,
+      "min_spearman": 0.039886721394743245,
+      "max_spearman": 0.051473832454154246,
+      "ensemble_six_spearman": 0.05079947246368388,
+      "slurm_job": 2942,
+      "elapsed": "3 h 33 min"
+    },
+    "w230_aadelgraphlabel_h12l1p1_e200": {
+      "stem": "w230_aadelgraphlabel_h12l1p1_e200",
+      "round": 210,
+      "label": "the graphs' label propagation of the profile (transductive)",
+      "cells": [
+        {
+          "seed": 2700,
+          "select_epoch": 94,
+          "select_val_pearson": 0.09303185243257567,
+          "spearman": 0.016871063705779586,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2701,
+          "select_epoch": 75,
+          "select_val_pearson": 0.08360399036227088,
+          "spearman": 0.026034626138228736,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2702,
+          "select_epoch": 87,
+          "select_val_pearson": 0.08190618646576216,
+          "spearman": 0.019186382335974948,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2703,
+          "select_epoch": 185,
+          "select_val_pearson": 0.07967354337635793,
+          "spearman": 0.02107921368161591,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2704,
+          "select_epoch": 197,
+          "select_val_pearson": 0.10077104202814792,
+          "spearman": 0.0323936135790359,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2705,
+          "select_epoch": 137,
+          "select_val_pearson": 0.09145614642980754,
+          "spearman": 0.04306119831358376,
+          "n_records_with_any_feature": 564
+        }
+      ],
+      "mean_spearman": 0.02643768295903647,
+      "sd_spearman": 0.009846741438199478,
+      "min_spearman": 0.016871063705779586,
+      "max_spearman": 0.04306119831358376,
+      "ensemble_six_spearman": 0.03413541185132528,
+      "slurm_job": 2943,
+      "elapsed": "3 h 29 min"
+    },
+    "w231_aadelgraphlabelpfba_h12l1p1_e200": {
+      "stem": "w231_aadelgraphlabelpfba_h12l1p1_e200",
+      "round": 211,
+      "label": "the label propagation with the SM store appended (transductive)",
+      "cells": [
+        {
+          "seed": 2700,
+          "select_epoch": 85,
+          "select_val_pearson": 0.08539487012220841,
+          "spearman": 0.023391818320303157,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2701,
+          "select_epoch": 196,
+          "select_val_pearson": 0.08250025058728888,
+          "spearman": 0.009170442104256469,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2702,
+          "select_epoch": 136,
+          "select_val_pearson": 0.08260031674044992,
+          "spearman": 0.01732579699958592,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2703,
+          "select_epoch": 154,
+          "select_val_pearson": 0.08202124626902667,
+          "spearman": 0.019280883588021994,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2704,
+          "select_epoch": 133,
+          "select_val_pearson": 0.11750484664777391,
+          "spearman": 0.024805634402274117,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2705,
+          "select_epoch": 196,
+          "select_val_pearson": 0.07741050370723794,
+          "spearman": 0.03074633289482537,
+          "n_records_with_any_feature": 564
+        }
+      ],
+      "mean_spearman": 0.020786818051544503,
+      "sd_spearman": 0.007366349742632556,
+      "min_spearman": 0.009170442104256469,
+      "max_spearman": 0.03074633289482537,
+      "ensemble_six_spearman": 0.02667612461888083,
+      "slurm_job": 2944,
+      "elapsed": "3 h 32 min"
+    }
+  },
+  "pairs": [
+    {
+      "name": "four media's growth ratios against the SM ratio",
+      "arm": "w228_aadelstore4m_h12l1p1_e200",
+      "control": "w143_aadelstore_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.04249709717969824,
+      "arm_sd": 0.007304266389218429,
+      "control_mean": 0.040218201117958874,
+      "control_sd": 0.005077236952331321,
+      "mean_difference": 0.0022788960617393696,
+      "sd_difference": 0.006282992966652341,
+      "n_positive": 5
+    },
+    {
+      "name": "four media's growth ratios against the control",
+      "arm": "w228_aadelstore4m_h12l1p1_e200",
+      "control": "w141_aadel_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.04249709717969824,
+      "arm_sd": 0.007304266389218429,
+      "control_mean": 0.04922161770875602,
+      "control_sd": 0.007021744764877032,
+      "mean_difference": -0.0067245205290577805,
+      "sd_difference": 0.012843593097616034,
+      "n_positive": 2
+    },
+    {
+      "name": "default affine initialization against zero initialization",
+      "arm": "w229_aadelstoredef_h12l1p1_e200",
+      "control": "w143_aadelstore_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.04638989921788495,
+      "arm_sd": 0.00485998452428253,
+      "control_mean": 0.040218201117958874,
+      "control_sd": 0.005077236952331321,
+      "mean_difference": 0.00617169809992608,
+      "sd_difference": 0.005966283349044279,
+      "n_positive": 5
+    },
+    {
+      "name": "default affine initialization against the control",
+      "arm": "w229_aadelstoredef_h12l1p1_e200",
+      "control": "w141_aadel_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.04638989921788495,
+      "arm_sd": 0.00485998452428253,
+      "control_mean": 0.04922161770875602,
+      "control_sd": 0.007021744764877032,
+      "mean_difference": -0.00283171849087107,
+      "sd_difference": 0.011387820986715315,
+      "n_positive": 3
+    },
+    {
+      "name": "default affine initialization against four media",
+      "arm": "w229_aadelstoredef_h12l1p1_e200",
+      "control": "w228_aadelstore4m_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.04638989921788495,
+      "arm_sd": 0.00485998452428253,
+      "control_mean": 0.04249709717969824,
+      "control_sd": 0.007304266389218429,
+      "mean_difference": 0.00389280203818671,
+      "sd_difference": 0.005866523906339795,
+      "n_positive": 4
+    },
+    {
+      "name": "label propagation alone against the SM store",
+      "arm": "w230_aadelgraphlabel_h12l1p1_e200",
+      "control": "w143_aadelstore_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.02643768295903647,
+      "arm_sd": 0.009846741438199478,
+      "control_mean": 0.040218201117958874,
+      "control_sd": 0.005077236952331321,
+      "mean_difference": -0.013780518158922403,
+      "sd_difference": 0.011752459066371774,
+      "n_positive": 1
+    },
+    {
+      "name": "label propagation alone against the control",
+      "arm": "w230_aadelgraphlabel_h12l1p1_e200",
+      "control": "w141_aadel_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.02643768295903647,
+      "arm_sd": 0.009846741438199478,
+      "control_mean": 0.04922161770875602,
+      "control_sd": 0.007021744764877032,
+      "mean_difference": -0.022783934749719553,
+      "sd_difference": 0.009915410154319779,
+      "n_positive": 0
+    },
+    {
+      "name": "label propagation with the SM store against the SM store",
+      "arm": "w231_aadelgraphlabelpfba_h12l1p1_e200",
+      "control": "w143_aadelstore_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.020786818051544503,
+      "arm_sd": 0.007366349742632556,
+      "control_mean": 0.040218201117958874,
+      "control_sd": 0.005077236952331321,
+      "mean_difference": -0.019431383066414367,
+      "sd_difference": 0.011843937890742296,
+      "n_positive": 0
+    },
+    {
+      "name": "label propagation with the SM store against label propagation alone",
+      "arm": "w231_aadelgraphlabelpfba_h12l1p1_e200",
+      "control": "w230_aadelgraphlabel_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.020786818051544503,
+      "arm_sd": 0.007366349742632556,
+      "control_mean": 0.02643768295903647,
+      "control_sd": 0.009846741438199478,
+      "mean_difference": -0.005650864907491968,
+      "sd_difference": 0.008381603734927861,
+      "n_positive": 1
+    },
+    {
+      "name": "label propagation with the SM store against the control",
+      "arm": "w231_aadelgraphlabelpfba_h12l1p1_e200",
+      "control": "w141_aadel_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.020786818051544503,
+      "arm_sd": 0.007366349742632556,
+      "control_mean": 0.04922161770875602,
+      "control_sd": 0.007021744764877032,
+      "mean_difference": -0.02843479965721152,
+      "sd_difference": 0.008215735711306613,
+      "n_positive": 0
+    }
+  ]
+}

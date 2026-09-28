@@ -376,4 +376,65 @@ transformer's slot do not reach M\"ulleder's concentrations at all, where the fo
 over the same columns reads 0.093 and beats every input on this target. The two screens
 agree in a tree and not in a trained head.
 
+Rounds 208 to 211 (2026-09-28) carry two essentiality recipes to the profile, the
+growth ratio's medium and the graphs' label propagation of the target, each on the SM
+store affine of round 143 (w143, 0.040) and paired against it and against the control
+(0.049 over the same six seeds); Table~\ref{tab:aa-label-medium} pairs them and
+Table~\ref{tab:aa-label-medium-levels} gives their seed levels and ensembles.
+
+Round 208 is read (job 2939, 3 h 31 min): the four-media control, the shipped, SM, SC
+and YPD growth ratios of every yeast-GEM gene in place of SM's alone, zero
+initialization kept. Four media do not describe the screen's own medium, so this is a
+control for the recipe and not a candidate. It reads 0.042 (sd 0.007) against the SM
+ratio alone at 0.040 ($+0.002$ paired, sd 0.006, five of six) and against the control
+at 0.049 ($-0.007$, sd 0.013, two of six), ensembled 0.052; the seeds read 0.031 to
+0.051 and select at epochs 97 to 193 on validation Pearson 0.054 to 0.123. Three more
+growth columns move the store affine by a fifth of its seed spread.
+
+Round 209 is read (job 2942, 3 h 33 min): the essentiality incumbent's default affine
+initialization on the screen's own medium, the SM store and SM's growth ratio unchanged
+and the zero initialization of the slot removed. It reads 0.046 (sd 0.005) against
+zero initialization at 0.040 ($+0.006$ paired, sd 0.006, five of six), against the
+four-media control at 0.042 ($+0.004$, sd 0.006, four of six) and against the control
+at 0.049 ($-0.003$, sd 0.011, three of six), ensembled 0.051; the seeds read 0.040 to
+0.051 and select at epochs 57 to 181 on validation Pearson 0.068 to 0.098. Default
+initialization returns the store affine to the control's level, which is where the
+parsimonious store sat on every other form it was read in; on the screen's own medium
+the metabolic module carries nothing on the profile through this slot, and the four
+media add nothing to that.
+
+Round 210 is read (job 2943, 3 h 29 min): the graphs' one-hop label propagation of the
+nineteen amino acids as the affine store (\texttt{SM\_aa\_graphlabel}, per graph the
+labeled-neighbor means and the count, 200 columns over every genome gene, leave-one-out
+on the labeled genes, no pinned label read), on the round-143 recipe with the SM ratio.
+TRANSDUCTIVE: every column is another strain's measured profile, so a strain can be
+scored only with its neighbors' labels in hand, and the arm bounds what the graphs
+carry rather than what a model generalizes to a strain nobody's neighbors measured. It
+reads 0.026 (sd 0.010) against the SM store at 0.040 ($-0.014$ paired, sd 0.012, one
+of six) and against the control at 0.049 ($-0.023$, sd 0.010, zero of six), ensembled
+0.034; the seeds read 0.017 to 0.043 and select at epochs 75 to 197 on validation
+Pearson 0.080 to 0.101. The transformer reads the label store under the control on
+every seed, under the ladder's forest over the same columns (0.054) and at its ridge
+(0.020), where on betaxanthin the same store read 0.182 alone and lifted the pool: the
+graphs carry the profile at a quarter of betaxanthin's smoothness
+(Section~\ref{sec:homophily}, 0.063 against 0.244 on coexpression), and two hundred
+columns of that, given to the affine, cost the control what a weak input in the slot
+costs everywhere on this target.
+
+Round 211 is read (job 2944, 3 h 32 min): the label store with the SM parsimonious
+vector appended (\texttt{SM\_aa\_graphlabelpfba}, the label store's gene axis, so a
+gene outside the model carries the wild-type flux), the analog of the recipe that
+lifted essentiality. TRANSDUCTIVE, as round 210. It reads 0.021 (sd 0.007) against the
+SM store at 0.040 ($-0.019$ paired, sd 0.012, zero of six), against the label store
+alone at 0.026 ($-0.006$, sd 0.008, one of six) and against the control at 0.049
+($-0.028$, sd 0.008, zero of six), ensembled 0.027; the seeds read 0.009 to 0.031 and
+select at epochs 85 to 196 on validation Pearson 0.077 to 0.118. The lowest transformer
+read of any store on this target: the flux vector appended to the label store takes
+from it as it took from the annotation (round 160), and the two inputs that together
+lifted essentiality together read under either alone here. The label stores need the
+neighbors' labels at inference, so even where they lift a target they bound the
+transductive case; on this target they lift nothing.
+
+\input{tables/aa_label_medium_rounds}
+
 \input{tables/target_transfer}

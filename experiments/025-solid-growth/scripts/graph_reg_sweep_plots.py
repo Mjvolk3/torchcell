@@ -569,7 +569,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
     f.set_xticks(ticks)
     f.set_xticklabels(labels, fontsize=5)
     f.set_xlim(-0.5, ticks[-1] + 0.65)
-    f.set_ylim(0.42, 0.466)
+    f.set_ylim(0.42, 0.482)
     f.set_ylabel("Held-out Pearson, at min validation loss")
     f.set_title("Random graphs at the best λ: queued")
     f.scatter(
@@ -596,8 +596,12 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
         loc="upper left",
         fontsize=5,
         frameon=False,
-        handletextpad=0.3,
-        borderaxespad=0.3,
+        handletextpad=0.4,
+        labelspacing=0.6,
+        borderaxespad=0.5,
+        title="paired t vs none: * p < 0.05, ** < 0.01, *** < 0.001",
+        title_fontsize=5,
+        alignment="left",
     )
     _pearson_grid(f)
     _box(f)

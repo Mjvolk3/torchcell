@@ -1,0 +1,60 @@
+{
+  "generated_by": "experiments/028-gene-essentiality/scripts/fba_ratio_all_gem_genes.py",
+  "csv": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/results/fba_ratio_all_gem_genes.csv",
+  "n_genes": 1161,
+  "media": {
+    "shipped": {
+      "wild_type_growth": 0.08584396972646902,
+      "n_genes": 1161,
+      "n_lethal": 188,
+      "n_exchange_bounds": 0,
+      "seconds": 20.92631697654724
+    },
+    "SM": {
+      "wild_type_growth": 0.31378145740164565,
+      "n_genes": 1161,
+      "n_lethal": 161,
+      "n_exchange_bounds": 25,
+      "seconds": 3.450652599334717
+    },
+    "SC": {
+      "wild_type_growth": 0.5427815290195271,
+      "n_genes": 1161,
+      "n_lethal": 92,
+      "n_exchange_bounds": 47,
+      "seconds": 3.9657747745513916
+    },
+    "YPD": {
+      "wild_type_growth": 0.5427815290195271,
+      "n_genes": 1161,
+      "n_lethal": 92,
+      "n_exchange_bounds": 47,
+      "seconds": 3.936356782913208
+    }
+  },
+  "n_checked_against_existing": 1121,
+  "max_abs_difference_on_checked": 1.0,
+  "disagreements_confirmed_by_fresh_solve": [
+    {
+      "medium": "shipped",
+      "gene": "YGR144W",
+      "new": 1.0,
+      "fresh": 1.0,
+      "existing": 0.0
+    },
+    {
+      "medium": "shipped",
+      "gene": "YPL214C",
+      "new": 0.0,
+      "fresh": 0.0,
+      "existing": 1.0
+    }
+  ],
+  "n_below_0_99": {
+    "shipped": 231,
+    "SM": 206,
+    "SC": 156,
+    "YPD": 156
+  },
+  "seconds": 48.4784734249115
+}

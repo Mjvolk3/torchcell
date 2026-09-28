@@ -93,3 +93,11 @@ such as `1.0` is looked up in the release nodes, and an unknown name raises. The
 resolved name is logged beside the version. Callers that pass uri/user/password are
 unchanged; pinning a query to a release is `version="2026.09.17-7715ee35"` or one line
 in `.env`.
+
+## 2026.09.27 - Three fixes from the Phase 7 exact tests
+
+Phase 7 of [[plan.test-suite-buildout.2026.09.25]] pinned three defects in [[tests.torchcell.data.test_neo4j_query_raw]] and the audit confirmed them against the source; this entry records the fixes (user go-ahead "fix the raw query bugs").
+
+- `compute_phenotype_label_index` read `record["experiment"].phenotype.label`; the schema field is `label_name`, so `phenotype_label_index` raised `AttributeError` whenever it had to compute (only a JSON file from an earlier build was ever read). It now reads `label_name`; three fitness records index to `{"fitness": [0, 1, 2]}` and the file is written.
+- The parallel reference-index path (`parallel_hash_computation` and this module's `compute_experiment_reference_index_parallel`) read the key `"reference"`, while raw-query records carry `"experiment_reference"` (the key the sequential path reads), so `compute_experiment_reference_index(records, num_workers > 0)` raised `KeyError`. Both now read `experiment_reference`, and the sequential, `num_workers=1` and helper results are equal. The helper of the same name that `torchcell.data` exports comes from `experiment_dataset.py`, whose items use `reference`, and is unchanged.
+- `__len__` returned inside its transaction, so the `close_lmdb()` after it never ran and the environment stayed open. It now reads the count and closes. `_get_records_by_slice` calls `len` and then reads through the environment on a thread pool, so it now reopens with `_init_lmdb()` after taking the length.

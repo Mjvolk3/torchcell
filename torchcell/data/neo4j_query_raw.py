@@ -36,8 +36,11 @@ def parallel_hash_computation(data: tuple[int, Any]) -> tuple[int, str]:
     Returns a tuple of the original index in the dataset and the computed hash.
     """
     idx, data_item = data
+    # Raw-query records carry the reference under "experiment_reference" (the key the
+    # sequential branch of compute_experiment_reference_index reads), not "reference"
+    # (the ExperimentDataset item key).
     return idx, compute_sha256_hash(
-        json.dumps((data_item["reference"].model_dump()), sort_keys=True)
+        json.dumps((data_item["experiment_reference"].model_dump()), sort_keys=True)
     )
 
 
@@ -69,7 +72,7 @@ def compute_experiment_reference_index_parallel(
 
     reference_indices_list = []
     for hash_val, indices in unique_hashes_to_indices.items():
-        reference_obj = dataset[indices[0]]["reference"].model_dump()
+        reference_obj = dataset[indices[0]]["experiment_reference"].model_dump()
         exp_ref_index = ExperimentReferenceIndex(
             reference=reference_obj, member_indices=indices
         )
@@ -338,6 +341,8 @@ class Neo4jQueryRaw:
     def _get_records_by_slice(self, slice_obj: slice) -> list[dict[str, Any]]:
         start, stop, step = slice_obj.indices(len(self))
         data_keys = [f"data_{i}".encode() for i in range(start, stop, step)]
+        # ``len`` closes the environment; the threaded reads below need it open.
+        self._init_lmdb()
 
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.io_workers
@@ -351,8 +356,9 @@ class Neo4jQueryRaw:
         if self.env is None:
             self._init_lmdb()
         with self.env.begin() as txn:
-            return cast(int, txn.stat()["entries"])
+            entries = cast(int, txn.stat()["entries"])
         self.close_lmdb()
+        return entries
 
     @staticmethod
     def extract_systematic_gene_names(genotype: dict[str, Any]) -> list[str]:
@@ -419,7 +425,7 @@ class Neo4jQueryRaw:
         phenotype_labels: list[tuple[int, str]] = []
         for i in range(len(self)):
             record: dict[str, Any] = self[i]
-            phenotype_labels.append((i, record["experiment"].phenotype.label))
+            phenotype_labels.append((i, record["experiment"].phenotype.label_name))
 
         # Initialize the phenotype label index dictionary
         phenotype_label_index: dict[str, list[int]] = {}

@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/data/test_neo4j_query_raw.py
 """``Neo4jQueryRaw`` over an LMDB written by hand under ``tmp_path``, no Neo4j.
 
-``__attrs_post_init__`` (neo4j_query_raw.py:159-162) runs the query only when
+``__attrs_post_init__`` runs the query only when
 ``<root>/raw/lmdb/data.mdb`` is absent, so the fixture writes that store first and the
 constructor opens it read-only without touching a driver. ``process()`` is reached by
 replacing ``fetch_data`` on the class with an iterator over dict records (the class is
@@ -193,14 +193,14 @@ def test_constructor_skips_the_query_when_data_mdb_exists_and_opens_read_only(
     assert sorted(p.name for p in (store_root / "raw").iterdir()) == ["lmdb"]
 
 
-def test_len_counts_entries_and_leaves_the_environment_open(
-    store_root: Path, view: Neo4jQueryRaw
-) -> None:
-    """Finding: ``__len__`` returns inside the transaction, so the ``close_lmdb()`` after
-    it (line 355) never runs and the environment stays open.
+def test_len_counts_entries_and_closes_the_environment(view: Neo4jQueryRaw) -> None:
+    """``__len__`` reads the entry count and then closes the environment (before the fix
+    it returned inside the transaction and the close never ran). A slice after ``len``
+    reopens it for the threaded reads.
     """
     assert len(view) == 3
-    assert view.env.path() == str(store_root / "raw" / "lmdb")
+    assert view.env is None
+    assert view[0:2] == [RECORDS[0], RECORDS[1]]
 
 
 def test_getitem_by_int_slice_and_list_rebuilds_the_pydantic_records(
@@ -247,21 +247,19 @@ def test_experiment_reference_index_streams_the_store_and_persists_json(
     ] == [("toy_b", [2])]
 
 
-def test_phenotype_label_index_raises_because_phenotypes_carry_label_name_not_label(
+def test_phenotype_label_index_groups_records_by_label_name_and_persists_json(
     store_root: Path, view: Neo4jQueryRaw
 ) -> None:
-    """Finding: ``compute_phenotype_label_index`` reads ``phenotype.label`` (line 422) but
-    the schema field is ``label_name``, so the property raises and writes no JSON.
+    """All three records are ``FitnessPhenotype`` with ``label_name`` "fitness", so the
+    index is ``{"fitness": [0, 1, 2]}`` and is written to ``phenotype_label_index.json``
+    (before the fix it read ``phenotype.label`` and raised ``AttributeError``). A file
+    already on disk is read back in preference to recomputing.
     """
-    with pytest.raises(
-        AttributeError, match="'FitnessPhenotype' object has no attribute 'label'"
-    ):
-        view.phenotype_label_index
-    path = store_root / "raw" / "phenotype_label_index.json"
-    assert not path.exists()
-    # a file written by an earlier build is read back without recomputing
-    path.write_text('{"fitness": [0, 1, 2]}', encoding="utf-8")
     assert view.phenotype_label_index == {"fitness": [0, 1, 2]}
+    path = store_root / "raw" / "phenotype_label_index.json"
+    assert json.loads(path.read_text(encoding="utf-8")) == {"fitness": [0, 1, 2]}
+    path.write_text('{"fitness": [2]}', encoding="utf-8")
+    assert view.phenotype_label_index == {"fitness": [2]}
 
 
 def test_gene_set_is_computed_from_perturbations_and_the_setter_writes_sorted_json(
@@ -298,8 +296,9 @@ def test_extract_systematic_gene_names_lists_every_perturbation_in_order() -> No
 def test_close_lmdb_is_idempotent_and_a_closed_view_pickles_and_reopens(
     store_root: Path, view: Neo4jQueryRaw
 ) -> None:
-    """Attrs' slotted ``__getstate__`` is the field dict with ``env`` None; the copy reopens
-    the same LMDB directory on its first ``len``.
+    """Attrs' slotted ``__getstate__`` is the field dict with ``env`` None; the copy counts
+    the same store (``len`` opens and closes it) and reopens the same LMDB directory on its
+    first record read.
     """
     view.close_lmdb()
     view.close_lmdb()
@@ -324,6 +323,8 @@ def test_close_lmdb_is_idempotent_and_a_closed_view_pickles_and_reopens(
     copy = pickle.loads(pickle.dumps(view))
     assert copy.__getstate__()["env"] is None
     assert len(copy) == 3
+    assert copy.__getstate__()["env"] is None
+    assert copy[2] == RECORDS[2]
     assert copy.env.path() == str(store_root / "raw" / "lmdb")
     copy.close_lmdb()
 
@@ -403,22 +404,21 @@ def test_compute_experiment_reference_index_groups_records_by_reference_hash() -
     assert index[1].reference == RECORDS[2]["experiment_reference"]
 
 
-def test_parallel_hash_path_reads_a_different_record_key_than_the_sequential_path(
+def test_parallel_and_sequential_paths_give_the_same_index(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Finding: ``parallel_hash_computation`` reads ``data_item["reference"]`` (line 40)
-    while the sequential branch reads ``"experiment_reference"`` (line 90), so
-    ``num_workers=1`` on the same records raises KeyError. ``compute_experiment_
-    reference_index_parallel`` takes the ``reference`` key throughout. ``mp.cpu_count``
-    is patched to 1 so the parallel path forks one worker, not one per core.
+    """Both paths read ``experiment_reference``, so ``num_workers=1``, ``num_workers=None``
+    and ``compute_experiment_reference_index_parallel`` agree exactly: toy_a -> [0, 1],
+    toy_b -> [2] (before the fix the parallel path read ``"reference"`` and raised
+    ``KeyError`` on these records). ``mp.cpu_count`` is patched to 1 so the parallel
+    helper forks one worker, not one per core.
     """
     monkeypatch.setattr(multiprocessing, "cpu_count", lambda: 1)
-    with pytest.raises(KeyError, match="'reference'"):
-        compute_experiment_reference_index(RECORDS, num_workers=1)
-    index = compute_experiment_reference_index_parallel(
-        [{"reference": r["experiment_reference"]} for r in RECORDS]
-    )
-    assert [(e.reference.dataset_name, e.member_indices) for e in index] == [
-        ("toy_a", [0, 1]),
-        ("toy_b", [2]),
-    ]
+    sequential = compute_experiment_reference_index(RECORDS)
+    parallel = compute_experiment_reference_index(RECORDS, num_workers=1)
+    helper = compute_experiment_reference_index_parallel(RECORDS)
+    expected = [("toy_a", [0, 1]), ("toy_b", [2])]
+    for index in (sequential, parallel, helper):
+        assert [(e.reference.dataset_name, e.member_indices) for e in index] == expected
+    assert [e.model_dump() for e in parallel] == [e.model_dump() for e in sequential]
+    assert [e.model_dump() for e in helper] == [e.model_dump() for e in sequential]

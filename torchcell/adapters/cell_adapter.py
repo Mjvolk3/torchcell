@@ -518,6 +518,12 @@ class CellAdapter:
         sizes = sorted(
             len(json.dumps(self.dataset[i], default=str)) for i in range(0, n, step)
         )
+        # get() leaves the LMDB environment open. A full dataset closes it again on
+        # the next slice (its len() runs through indices()), but a subset view has
+        # stored indices, so every chunk view below would shallow-copy the open
+        # environment and the pool's feeder could not pickle it (jobs 2918-2921,
+        # Costanzo capped to 2M: "cannot pickle 'Environment' object").
+        self.dataset.close_lmdb()
         return max(1, sizes[len(sizes) // 2])
 
     def _pack_chunk(self, datas: list[Any]) -> list[Any]:

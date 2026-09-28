@@ -1,0 +1,94 @@
+%% notes-tex/034-isobutanol-wetlab/sections/3-rnaseq.tex
+%% SOURCE: hand-authored, resting on tables/t1-strain-panel.tex,
+%% tables/t3-genotypes.tex and the two mirrored documents cited in
+%% sections/1-panel.tex and sections/2-yko.tex.
+%% The design fact that drives the selection, that Ll_ilvD in YZy452 sits behind
+%% P_GAL10 and is therefore off in glucose, is quoted below.
+
+\section{The First Sequencing Round\secstatus{todo}}
+\label{sec:rnaseq}
+
+The ask is a low-flux anchor, the best producer, and steps in between. The panel
+supplies two independent versions of that, both for isobutanol, and one sentence
+in the Methods is what turns the first of them into three points rather than
+two.
+
+\notesec{The promoter that makes a ladder} The dehydratase in YZy452 is not
+constitutive.
+
+\begin{quote}\small
+Because the wild-type copy of \gene{Ll\_ilvD} in YZy452 is expressed from a
+P$_{\text{GAL10}}$ promoter, growing the library in glucose ensures this
+wild-type copy is repressed, and only the \gene{Ll\_ilvD} variants from the CEN
+plasmid library (inserted downstream of a P$_{\text{TDH3}}$ promoter) are
+expressed.
+\end{quote}
+
+\noindent
+YZy452 also carries \gene{ilv3}$\Delta$, so the native dihydroxyacid dehydratase
+is gone. In glucose, C0049 therefore has no dehydratase at all, C0050 supplies
+the wild-type bacterial enzyme from a CEN plasmid, and C0051 supplies the
+improved allele from the same backbone. Three levels of one step, one host, one
+carbon source.
+
+\notesec{Round one, five strains} Two matched contrasts, on two different steps
+of the pathway.
+
+\begin{enumerate}\setlength\itemsep{0.2em}
+  \item \textbf{C0049 YZy452} -- floor. The cytosolic pathway with its
+    dehydratase step switched off by the carbon source.
+  \item \textbf{C0050 YZy454} -- wild-type \gene{Ll\_ilvD} restored. The
+    unimproved-allele anchor.
+  \item \textbf{C0051 YZy469} -- \gene{Ll\_ilvD}$^{\text{I433V}}$, 227 $\pm$ 13
+    mg/L, 3.1-fold over C0050 on the same medium. One point mutation from the
+    row above.
+  \item \textbf{C0044 YZy313} -- wild-type \gene{ILV6} in the
+    mitochondrial-pathway host, Strain C of Fig.~3c.
+  \item \textbf{C0045 YZy314} -- \gene{ILV6}$^{\text{V110E}}$ in that same host,
+    Strain D, 1.6-fold over C0044. A second one-mutation contrast, on the
+    upstream acetolactate synthase regulator rather than the dehydratase.
+\end{enumerate}
+
+\noindent
+Adding \textbf{C0053 YZy502} as a sixth is worth its slot for one reason: it is
+the direct parent of YZy505, the paper's best isobutanol strain at 681 $\pm$ 29
+mg/L, so sequencing it now is the baseline that makes the YZy505 comparison
+possible later.
+
+\notesec{Grow the first three on glucose, and measure titer alongside} The paper
+measured C0049 on 15 percent galactose and C0050 and C0051 on 15 percent
+glucose. Glucose is the right pick for the round, because it is what makes the
+ladder a ladder, and the consequence is that C0049 will not reproduce its
+published 310 $\pm$ 15 mg/L: that was a galactose number, and in glucose its
+dehydratase is repressed. Titer belongs in the same experiment as the
+sequencing rather than carried across from the paper.
+
+\notesec{What is not in the round} The isopentanol arm, C0046 through C0048, is
+the cleanest three-point series in the box and C0048 holds the highest titer of
+anything here at 842 $\pm$ 23 mg/L. It is the leucine branch. This program is
+the valine branch, so those three are round two, and they move up only if a
+dose-response in $\alpha$-isopropylmalate flux is wanted for its own sake.
+
+C0043 YZy311 sits out because its nearest neighbor in the panel, C0044, differs
+from it by both host and pathway, so a contrast between them would not isolate
+anything. C0052 YZy91 sits out because it is the plasmid-free host of C0043
+rather than a producer.
+
+\notesec{Three requests worth making with the next shipment}
+
+\begin{itemize}\setlength\itemsep{0.15em}
+  \item \textbf{YZy121}, which Supplementary Table 1 gives as CEN.PK2-1C
+    carrying the isobutanol-configured biosensor and nothing else. It is the
+    reference every strain in this panel is missing: same lineage, same
+    reporter, no deletions and no pathway.
+  \item \textbf{YZy312}, Strain B, which completes the Fig.~3c 2$\times$2 that
+    C0043, C0044 and C0045 are three quarters of. It is one transformation of
+    C0052 with pYZ228.
+  \item \textbf{YZy453}, YZy452 carrying an empty CEN URA3 plasmid. C0049
+    carries no plasmid while C0050 and C0051 do, so the plasmid itself and its
+    selection marker are currently confounded with the dehydratase.
+\end{itemize}
+
+\noindent
+None of the three connects this panel to the knockout screen; for that reason
+\cref{sec:yko} names yJM1 instead.

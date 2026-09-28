@@ -3245,6 +3245,71 @@ def pattern_ladder() -> str | None:
 
 
 
+GO_EVIDENCE_CUTS = [
+    ("all", "every G\\_go annotation"),
+    ("no_imp", "IMP removed"),
+    ("no_mutant", "IMP, IGI, HMP, HGI removed"),
+    ("random_matched", "as many removed at random"),
+    ("no_experimental", "computational and statement codes only"),
+]
+
+
+def go_evidence() -> str | None:
+    """GO cut by evidence code: the store sizes and the GO models' held-out reads."""
+    src = osp.join(RESULTS, "go_evidence_store.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    stores = {r["name"]: r for r in d["stores"]}
+    rows = []
+    for name, label in GO_EVIDENCE_CUTS:
+        gcn = osp.join(RESULTS, f"graph_baselines_go400_evidence_{name}.json")
+        if not osp.isfile(gcn):
+            return None
+        with open(gcn) as fh:
+            g = {r["inputs"]: r for r in json.load(fh)["rows"]}
+        st = stores[name]
+        cells = [
+            f"{g[k]['mean']:.3f} $\\pm$ {g[k]['sd']:.3f}"
+            for k in ("GO (400 epochs)", "GO+FBA ratios (400 epochs)", "ProtT5+GO+FBA ratios (400 epochs)")
+        ]
+        rows.append(
+            f"    {label} & {st['n_pairs_kept']:,} & {st['n_columns']:,} & "
+            f"{st['logistic_test_auroc']:.3f} & " + " & ".join(cells) + " \\\\"
+        )
+    share = d["code_share_by_class"]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[GO cut by evidence code]{The GO multi-hot rebuilt from SGD's "
+        "per-annotation evidence codes (\\texttt{SCerevisiaeGraph.G\\_go}), with the "
+        "mutant-derived evidence removed, a count-matched random removal as the control, "
+        "and only computational and statement evidence kept; every store propagated "
+        "through \\emph{is\\_a} and \\emph{part\\_of}, roots dropped, a column kept at ten "
+        "genes. Held-out AUROC on the released 195 genes: L2 logistic regression (one "
+        "fit), and graph convolution over the union of the nine graphs at 400 epochs, "
+        "three seeds (mean $\\pm$ sd), on GO alone, GO with the four FBA ratios, and "
+        "ProtT5 with both. IMP is "
+        f"{100 * share['essential'].get('IMP', 0):.1f} percent of the labeled essential "
+        f"genes' annotations and {100 * share['nonessential'].get('IMP', 0):.1f} percent "
+        "of the non-essential genes'. Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/go\\_evidence\\_store.json} and "
+        "\\texttt{results/graph\\_baselines\\_go400\\_evidence\\_*.json} "
+        "(\\texttt{go\\_evidence\\_store.py}, \\texttt{graph\\_baselines.py --arms go400 "
+        "--go-dir}).}\n"
+        "  \\label{tab:go-evidence}\n"
+        "  \\begin{tabular}{@{}p{50mm}rrrrrr@{}}\n    \\hline\n"
+        "    evidence & pairs & columns & logistic & GCN GO & GCN GO+FBA & GCN ProtT5+GO+FBA \\\\\n"
+        "    \\hline\n" + "\n".join(rows) + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "go_evidence",
+        body,
+        "results/go_evidence_store.json, results/graph_baselines_go400_evidence_*.json",
+    )
+
+
+
 def main() -> None:
     paths = [
         wl_test(),
@@ -3269,6 +3334,7 @@ def main() -> None:
         graph_baselines(),
         graph_label_propagation(),
         pattern_ladder(),
+        go_evidence(),
         graph_baselines_relational(),
         graph_baselines_split(),
         graph_baselines_go(),

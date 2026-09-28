@@ -520,6 +520,17 @@ def ladder_pair(name: str, key: str, side: str | None = None) -> Callable[[], fl
     return run
 
 
+
+def go_evidence_gcn(cut: str, key: str = "mean") -> Callable[[], float]:
+    """Graph convolution on GO alone at 400 epochs on one evidence-cut store."""
+
+    def run() -> float:
+        rows = json.load(open(osp.join(RESULTS, f"graph_baselines_go400_evidence_{cut}.json")))["rows"]
+        return float(next(r for r in rows if r["inputs"] == "GO (400 epochs)")[key])
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:store-discriminability -- the stores and the two cuts.
     Check(
@@ -3636,6 +3647,59 @@ CHECKS: list[Check] = [
         claim="pattern ladder: w138 select epoch max",
         stated=132,
         recompute=ladder_pair("hard mask on the second and third blocks against on the second", "max_select_epoch", "arm"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="go evidence: IMP share essential",
+        stated=6.2,
+        recompute=lambda: 100 * json.load(open(osp.join(RESULTS, "go_evidence_store.json")))["code_share_by_class"]["essential"]["IMP"],
+        tolerance=0.06,
+    ),
+    Check(
+        claim="go evidence: IMP share nonessential",
+        stated=8.0,
+        recompute=lambda: 100 * json.load(open(osp.join(RESULTS, "go_evidence_store.json")))["code_share_by_class"]["nonessential"]["IMP"],
+        tolerance=0.06,
+    ),
+    Check(
+        claim="go evidence: GCN all",
+        stated=0.906,
+        recompute=go_evidence_gcn("all"),
+    ),
+    Check(
+        claim="go evidence: GCN no_imp",
+        stated=0.91,
+        recompute=go_evidence_gcn("no_imp"),
+    ),
+    Check(
+        claim="go evidence: GCN no_mutant",
+        stated=0.907,
+        recompute=go_evidence_gcn("no_mutant"),
+    ),
+    Check(
+        claim="go evidence: GCN random_matched",
+        stated=0.9,
+        recompute=go_evidence_gcn("random_matched"),
+    ),
+    Check(
+        claim="go evidence: GCN no_experimental",
+        stated=0.906,
+        recompute=go_evidence_gcn("no_experimental"),
+    ),
+    Check(
+        claim="go evidence: sd min",
+        stated=0.001,
+        recompute=lambda: min(go_evidence_gcn(c, "sd")() for c in ("all", "no_imp", "no_mutant", "random_matched", "no_experimental")),
+    ),
+    Check(
+        claim="go evidence: sd max",
+        stated=0.005,
+        recompute=lambda: max(go_evidence_gcn(c, "sd")() for c in ("all", "no_imp", "no_mutant", "random_matched", "no_experimental")),
+    ),
+    Check(
+        claim="go evidence: largest cut effect under 0.01",
+        stated=1,
+        recompute=lambda: float(max(abs(go_evidence_gcn(c)() - go_evidence_gcn("all")()) for c in ("no_imp", "no_mutant", "random_matched", "no_experimental")) < 0.01),
         tolerance=0.5,
     ),
 ]

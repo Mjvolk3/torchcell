@@ -1,0 +1,80 @@
+{
+  "protocol": "transductive node classification on one gene graph, no perturbation; class-weighted BCE, Adam 1e-3, 200 epochs, width 64, dropout 0.2; epoch selected by a five-epoch moving average of the validation AUROC; scored once on the 195 held-out genes",
+  "rows": [
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO (400 epochs)",
+      "dim_in": 2017,
+      "n_parameters": 133377,
+      "test_auroc": [
+        0.9118804091266719,
+        0.9091266719118803,
+        0.9008654602675059
+      ],
+      "val_auroc": [
+        0.8273684210526316,
+        0.826766917293233,
+        0.8276691729323309
+      ],
+      "select_epoch": [
+        379,
+        397,
+        390
+      ],
+      "mean": 0.9072908471020193,
+      "sd": 0.0046804532645094874,
+      "seconds": 2864.5180308818817
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO+FBA ratios (400 epochs)",
+      "dim_in": 2021,
+      "n_parameters": 133633,
+      "test_auroc": [
+        0.9069630212431157,
+        0.8900472069236822,
+        0.8973249409913454
+      ],
+      "val_auroc": [
+        0.8243609022556391,
+        0.8087218045112783,
+        0.8159398496240602
+      ],
+      "select_epoch": [
+        397,
+        381,
+        396
+      ],
+      "mean": 0.8981117230527144,
+      "sd": 0.006928225507851032,
+      "seconds": 2898.857743740082
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+GO+FBA ratios (400 epochs)",
+      "dim_in": 3045,
+      "n_parameters": 199169,
+      "test_auroc": [
+        0.9018489378442172,
+        0.9077498033044846,
+        0.9067663257277734
+      ],
+      "val_auroc": [
+        0.8126315789473685,
+        0.8147368421052631,
+        0.8129323308270676
+      ],
+      "select_epoch": [
+        395,
+        397,
+        384
+      ],
+      "mean": 0.9054550222921584,
+      "sd": 0.0025813033943127986,
+      "seconds": 2859.141811609268
+    }
+  ]
+}

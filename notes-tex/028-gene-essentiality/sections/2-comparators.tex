@@ -196,6 +196,30 @@ w138, is the first read of them).
 
 \input{tables/graph_label_propagation}
 
+\subsection{Does GO carry essentiality through its mutant-phenotype evidence?\secstatus{todo}}
+\label{sec:go-evidence}
+
+The GO multi-hot is built from the SGD GFF, which carries no evidence codes, so
+annotations SGD inferred from a mutant's phenotype are in it (Section~\ref{sec:endpoint});
+for an essential gene the mutant is usually a conditional allele, so an IMP annotation is
+knowledge obtained by crippling the gene. SGD's per-annotation records in
+\texttt{SCerevisiaeGraph.G\_go} carry the codes, so the vector is rebuilt with and without
+them (\texttt{go\_evidence\_store.py}, Table~\ref{tab:go-evidence}). IMP is not
+concentrated on the essential genes: it is 6.2 percent of their annotations and 8.0
+percent of the non-essential genes'. Graph convolution on the rebuilt vectors reads the
+same with every cut: 0.906 on all the evidence, 0.910 with IMP removed, 0.907 with every
+mutant-derived code removed, 0.900 with as many annotations removed at random, and 0.906
+with every experimental code removed, keeping only electronic, phylogenetic and
+statement evidence, three seeds each, sd 0.001 to 0.005. No cut moves the read by more
+than 0.01, and the mutant-derived cut sits above its random control, so GO's read of
+essentiality on this split is not carried by its mutant-phenotype annotations: the
+electronic and phylogenetic annotations alone read it at 0.906. The rebuilt store holds
+one evidence record per gene and term, so a pair supported by both a mutant phenotype
+and a direct assay carries one of the two codes, and a cut removes the pairs whose stored
+code it names.
+
+\input{tables/go_evidence}
+
 The transformer's inputs move these cells the way they move the transformer, and the
 comparison says where the transformer's number comes from. Given the chromosome-pathway
 indicator and the four FBA ratios as node features beside ProtT5, the MLP with no graph

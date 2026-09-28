@@ -6110,9 +6110,11 @@ def run_cell(
             batch = batch.to(device)
             optimizer.zero_grad(set_to_none=True)
             _, reps = model(dataset.cell_graph.to(device), batch)
-            t, m = targets_in_space(batch, head_specs, cell.target_log10_molar)[
-                main_head
-            ]
+            # Extracted ONCE per batch for every head (2026-09-28): the co-head rounds
+            # w242 to w244 ran at 1.8 min an epoch against 1.07 without a co-head, and
+            # the second extraction per batch was the difference.
+            batch_targets = targets_in_space(batch, head_specs, cell.target_log10_molar)
+            t, m = batch_targets[main_head]
             t, m = t.to(device), m.to(device)
             if cell.permute_train_targets:
                 # THE NULL: target and mask permuted TOGETHER, so the genotype-to-phenotype
@@ -6142,9 +6144,7 @@ def run_cell(
                 # cell.aux_weight (1.0 is what 019's head_weights had). Never permuted:
                 # the null is on the primary target. Under CRPS the head emits
                 # (mu, log_sigma) and the co-head reads mu.
-                t_aux, m_aux = targets_in_space(
-                    batch, head_specs, cell.target_log10_molar
-                )[aux_head]
+                t_aux, m_aux = batch_targets[aux_head]
                 t_aux, m_aux = t_aux.to(device), m_aux.to(device)
                 mu_aux, sd_aux = stats[aux_head]
                 z_aux = (t_aux - mu_aux) / sd_aux

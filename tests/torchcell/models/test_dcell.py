@@ -120,8 +120,6 @@ def test_subsystem_is_linear_batchnorm_tanh_with_dcell_init() -> None:
     expected = torch.tanh(subsystem.linear(x) / (1 + subsystem.batch_norm.eps) ** 0.5)
     torch.testing.assert_close(subsystem(x), expected)
     assert subsystem(x).abs().max().item() < 1.0
-    training = DCellSubsystem(3, 2)
-    assert training(x).shape == (2, 2)  # train mode normalizes over the 2 rows
 
 
 def test_default_subsystem_size_is_twenty(dcell_graph: HeteroData) -> None:
@@ -146,3 +144,126 @@ def test_stratum_to_terms_missing_the_root_raises() -> None:
     assert model.strata_order == [1]
     with pytest.raises(ValueError, match="No root terms found in stratum 0"):
         model(graph, make_dcell_batch([[0], []]))
+
+
+def test_root_input_is_child_activations_then_the_gene_placeholder(
+    dcell_graph: HeteroData, dcell_batch: HeteroData
+) -> None:
+    """The root's [2, 5] input is cat(act_1, act_2, zeros[2, 1]) in child order, and its
+    activation is exactly its subsystem on that input. Term 2 sees genes 2 and 3: [1, 1]
+    for sample 0 and [0, 0] for sample 1 (both knocked out); the gene-less root sees [0].
+    """
+    model = _model(dcell_graph)
+    _, outputs = model(dcell_graph, dcell_batch)
+    activations = outputs["term_activations"]
+    assert model._extract_gene_states_for_term(2, dcell_batch).tolist() == [
+        [1.0, 1.0],
+        [0.0, 0.0],
+    ]
+    assert model._extract_gene_states_for_term(0, dcell_batch).tolist() == [
+        [0.0],
+        [0.0],
+    ]
+    root_input = torch.cat([activations[1], activations[2], torch.zeros(2, 1)], dim=1)
+    assert root_input.shape == (2, 5)
+    torch.testing.assert_close(activations[0], model.subsystems["0"](root_input))
+    torch.testing.assert_close(
+        model._prepare_term_input(0, dcell_batch, activations), root_input
+    )
+
+
+def test_list_valued_stratum_to_terms_predicts_identically(
+    dcell_batch: HeteroData,
+) -> None:
+    """Python-int term ids take the non-tensor branch and give the same predictions."""
+    from tests.torchcell.conftest import make_dcell_graph  # noqa: PLC0415
+
+    tensor_graph = make_dcell_graph()
+    list_graph = make_dcell_graph()
+    list_graph["gene_ontology"].stratum_to_terms = {0: [0], 1: [1, 2]}
+    predictions, _ = _model(tensor_graph)(tensor_graph, dcell_batch)
+    list_predictions, outputs = _model(list_graph)(list_graph, dcell_batch)
+    assert torch.equal(list_predictions, predictions)
+    assert set(outputs["linear_outputs"]) == {"GO:0", "GO:1", "GO:2", "GO:ROOT"}
+
+
+def test_empty_root_stratum_raises_at_forward(dcell_batch: HeteroData) -> None:
+    """Stratum 0 present but empty builds, then fails with the root-terms-empty message."""
+    from tests.torchcell.conftest import make_dcell_graph  # noqa: PLC0415
+
+    graph = make_dcell_graph()
+    graph["gene_ontology"].stratum_to_terms = {
+        0: torch.tensor([], dtype=torch.long),
+        1: torch.tensor([1, 2]),
+    }
+    model = _model(graph)
+    assert model.strata_order == [1, 0]
+    with pytest.raises(ValueError, match="Root terms tensor is empty"):
+        model(graph, dcell_batch)
+
+
+def test_stratum_removed_after_construction_raises_at_forward(
+    dcell_graph: HeteroData, dcell_batch: HeteroData
+) -> None:
+    """``strata_order`` is fixed at init, so a stratum missing from the shared dict is a bug."""
+    model = _model(dcell_graph)
+    del model.stratum_to_terms[1]
+    assert model.strata_order == [1, 0]
+    with pytest.raises(ValueError, match="Stratum 1 not found in stratum_to_terms"):
+        model(dcell_graph, dcell_batch)
+
+
+def test_without_child_edges_a_gene_less_root_still_runs_on_its_placeholder(
+    dcell_batch: HeteroData,
+) -> None:
+    """Finding: the "no children and no genes" ValueError (``dcell.py:386``) is unreachable.
+
+    ``_extract_gene_states_for_term`` returns a [batch, 1] zero placeholder for a
+    gene-less term, so the root with no edges gets input dim 1 and activation
+    ``subsystem_0(zeros[2, 1])``. Parameters: Linear(1, 2) + BatchNorm1d(2) = 2 + 2 + 4 = 8
+    for the root, 10 per leaf, 9 for the heads: 37.
+    """
+    from tests.torchcell.conftest import make_dcell_graph  # noqa: PLC0415
+
+    graph = make_dcell_graph()
+    del graph["gene_ontology", "is_child_of", "gene_ontology"]
+    model = _model(graph)
+    assert model.child_to_parents == {}
+    assert model.parent_to_children == {}
+    assert model.term_input_dims == {0: 1, 1: 2, 2: 2}
+    assert model.num_parameters["subsystems"] == 28
+    assert model.num_parameters["total"] == 37
+    predictions, outputs = model(graph, dcell_batch)
+    assert predictions.shape == (2,)
+    torch.testing.assert_close(
+        outputs["term_activations"][0], model.subsystems["0"](torch.zeros(2, 1))
+    )
+
+
+def test_subsystem_in_training_mode_normalizes_over_the_batch() -> None:
+    """Train-mode output is tanh((z - mean_0 z) / sqrt(var_0 z + eps)) with z = Wx + b."""
+    torch.manual_seed(0)
+    subsystem = DCellSubsystem(3, 2)
+    x = torch.tensor([[1.0, 2.0, 3.0], [-1.0, 0.0, 1.0]])
+    z = subsystem.linear(x)
+    expected = torch.tanh(
+        (z - z.mean(0))
+        / torch.sqrt(z.var(0, unbiased=False) + subsystem.batch_norm.eps)
+    )
+    torch.testing.assert_close(subsystem(x), expected)
+    # two rows normalized over the batch are exact negatives of each other
+    torch.testing.assert_close(subsystem(x)[0], -subsystem(x)[1])
+
+
+def test_two_seeded_constructions_share_every_parameter(
+    dcell_graph: HeteroData,
+) -> None:
+    """Same seed, same state dict, key by key."""
+    first = _model(dcell_graph, seed=7)
+    second = _model(dcell_graph, seed=7)
+    assert list(first.state_dict()) == list(second.state_dict())
+    for name, value in first.state_dict().items():
+        assert torch.equal(value, second.state_dict()[name]), name
+    # per term: linear W, b + BatchNorm w, b, running_mean, running_var, num_batches_tracked
+    # (7) and the head's W, b (2)
+    assert len(first.state_dict()) == 3 * 7 + 3 * 2

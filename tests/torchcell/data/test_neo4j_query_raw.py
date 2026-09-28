@@ -1,0 +1,424 @@
+# tests/torchcell/data/test_neo4j_query_raw.py
+# [[tests.torchcell.data.test_neo4j_query_raw]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/data/test_neo4j_query_raw.py
+"""``Neo4jQueryRaw`` over an LMDB written by hand under ``tmp_path``, no Neo4j.
+
+``__attrs_post_init__`` (neo4j_query_raw.py:159-162) runs the query only when
+``<root>/raw/lmdb/data.mdb`` is absent, so the fixture writes that store first and the
+constructor opens it read-only without touching a driver. ``process()`` is reached by
+replacing ``fetch_data`` on the class with an iterator over dict records (the class is
+attrs-slotted, so the method cannot be set on an instance).
+
+Three fitness records, one per key ``data_<i>``:
+
+* 0: ``toy_a``, YAL001C deleted, fitness 0.9.
+* 1: ``toy_a``, YAL002W and YAL003W deleted, fitness 0.4.
+* 2: ``toy_b``, YAL003W deleted, fitness 0.7.
+
+Derived by hand: ``len`` 3; the reference index groups by dataset name since the
+reference differs only there, ``toy_a`` -> [0, 1], ``toy_b`` -> [2]; the gene set is the
+three deleted genes sorted; the value ``process()`` stores under ``data_0`` is exactly
+the JSON written out literally in ``EXPECTED_RECORD_0``.
+"""
+
+import json
+import multiprocessing
+import pickle
+from collections.abc import Iterator
+from pathlib import Path
+from typing import Any
+
+import lmdb
+import pytest
+
+from torchcell.data.neo4j_query_raw import (
+    Neo4jQueryRaw,
+    compute_experiment_reference_index,
+    compute_experiment_reference_index_parallel,
+)
+from torchcell.datamodels.schema import (
+    Environment,
+    FitnessExperiment,
+    FitnessExperimentReference,
+    FitnessPhenotype,
+    Genotype,
+    KanMxDeletionPerturbation,
+    Media,
+    ReferenceGenome,
+)
+
+ENVIRONMENT = Environment(media=Media(name="YPD", state="solid", is_synthetic=False))
+GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+URI = "bolt://example.invalid:7687"
+QUERY = "MATCH (e:Experiment)<-[:ExperimentReferenceOf]-(ref) RETURN e, ref"
+
+
+def _record(name: str, genes: list[str], fitness: float) -> dict[str, Any]:
+    perturbations: list[Any] = [
+        KanMxDeletionPerturbation(systematic_gene_name=g, perturbed_gene_name=g)
+        for g in genes
+    ]
+    return {
+        "experiment": FitnessExperiment(
+            dataset_name=name,
+            genotype=Genotype(perturbations=perturbations),
+            environment=ENVIRONMENT,
+            phenotype=FitnessPhenotype(fitness=fitness),
+        ),
+        "experiment_reference": FitnessExperimentReference(
+            dataset_name=name,
+            genome_reference=GENOME,
+            environment_reference=ENVIRONMENT,
+            phenotype_reference=FitnessPhenotype(fitness=1.0),
+        ),
+    }
+
+
+RECORDS = [
+    _record("toy_a", ["YAL001C"], 0.9),
+    _record("toy_a", ["YAL002W", "YAL003W"], 0.4),
+    _record("toy_b", ["YAL003W"], 0.7),
+]
+
+_ENV_JSON: dict[str, Any] = {
+    "provenance_gaps": [],
+    "media": {
+        "name": "YPD",
+        "state": "solid",
+        "is_synthetic": False,
+        "base_medium": None,
+        "components": [],
+        "dropouts": [],
+        "provenance": [],
+    },
+    "temperature": None,
+    "perturbations": [],
+    "aerobicity": "aerobic",
+    "duration_hours": None,
+    "duration_generations": None,
+}
+
+
+def _fitness_json(fitness: float) -> dict[str, Any]:
+    return {
+        "provenance_gaps": [],
+        "graph_level": "global",
+        "label_name": "fitness",
+        "label_statistic_name": "fitness_se",
+        "fitness": fitness,
+        "fitness_se": None,
+        "fitness_std": None,
+        "n_samples": None,
+        "fitness_uncertainty": None,
+        "fitness_uncertainty_type": None,
+        "sample_unit": None,
+    }
+
+
+EXPECTED_RECORD_0 = {
+    "experiment": {
+        "experiment_type": "fitness",
+        "dataset_name": "toy_a",
+        "genotype": {
+            "perturbations": [
+                {
+                    "systematic_gene_name": "YAL001C",
+                    "perturbed_gene_name": "YAL001C",
+                    "provenance": "engineered",
+                    "state": "absent",
+                    "mechanism_so_id": "SO:0000159",
+                    "mechanism_so_name": "deletion",
+                    "description": "Deletion via KanMX or NatMX gene replacement",
+                    "perturbation_type": "kanmx_deletion",
+                    "deletion_description": "Deletion via KanMX gene replacement.",
+                    "deletion_type": "KanMX",
+                }
+            ]
+        },
+        "environment": _ENV_JSON,
+        "phenotype": _fitness_json(0.9),
+    },
+    "experiment_reference": {
+        "experiment_reference_type": "fitness",
+        "dataset_name": "toy_a",
+        "genome_reference": {
+            "species": "Saccharomyces cerevisiae",
+            "strain": "S288C",
+            "ploidy": "haploid",
+        },
+        "environment_reference": _ENV_JSON,
+        "phenotype_reference": _fitness_json(1.0),
+    },
+}
+
+
+def _serialize(record: dict[str, Any]) -> bytes:
+    return json.dumps(record, default=lambda o: o.model_dump()).encode()
+
+
+@pytest.fixture
+def store_root(tmp_path: Path) -> Path:
+    """``<root>/raw/lmdb`` holding RECORDS under ``data_0..2``; the env is closed."""
+    lmdb_dir = tmp_path / "raw" / "lmdb"
+    lmdb_dir.mkdir(parents=True)
+    env = lmdb.open(str(lmdb_dir), map_size=10**8)
+    with env.begin(write=True) as txn:
+        for i, record in enumerate(RECORDS):
+            txn.put(f"data_{i}".encode(), _serialize(record))
+    env.close()
+    return tmp_path
+
+
+@pytest.fixture
+def view(store_root: Path) -> Iterator[Neo4jQueryRaw]:
+    """A ``Neo4jQueryRaw`` opened over the pre-written store; closed at teardown."""
+    raw = Neo4jQueryRaw(
+        uri=URI, username="u", password="p", root_dir=str(store_root), query=QUERY
+    )
+    yield raw
+    raw.close_lmdb()
+
+
+def test_constructor_skips_the_query_when_data_mdb_exists_and_opens_read_only(
+    store_root: Path, view: Neo4jQueryRaw
+) -> None:
+    """Paths derive from root_dir; the env is open on the LMDB dir; repr names uri, root, query."""
+    assert view.raw_dir == str(store_root / "raw")
+    assert view.lmdb_dir == str(store_root / "raw" / "lmdb")
+    assert view.env.path() == str(store_root / "raw" / "lmdb")
+    assert view.env.flags()["readonly"] is True
+    assert repr(view) == (
+        f"Neo4jQueryRaw(uri={URI}, root_dir={store_root}, query={QUERY})"
+    )
+    assert sorted(p.name for p in (store_root / "raw").iterdir()) == ["lmdb"]
+
+
+def test_len_counts_entries_and_leaves_the_environment_open(
+    store_root: Path, view: Neo4jQueryRaw
+) -> None:
+    """Finding: ``__len__`` returns inside the transaction, so the ``close_lmdb()`` after
+    it (line 355) never runs and the environment stays open.
+    """
+    assert len(view) == 3
+    assert view.env.path() == str(store_root / "raw" / "lmdb")
+
+
+def test_getitem_by_int_slice_and_list_rebuilds_the_pydantic_records(
+    view: Neo4jQueryRaw,
+) -> None:
+    """Each access equals the record written; a missing key is IndexError, a str TypeError."""
+    assert view[0] == RECORDS[0]
+    assert type(view[0]["experiment"]) is FitnessExperiment
+    assert type(view[0]["experiment_reference"]) is FitnessExperimentReference
+    assert view[0:3:2] == [RECORDS[0], RECORDS[2]]
+    assert view[[2, 0]] == [RECORDS[2], RECORDS[0]]
+    with pytest.raises(IndexError, match="Record not found at index: 5"):
+        view[5]
+    with pytest.raises(TypeError, match=r"Invalid index type: <class 'str'>"):
+        view["data_0"]  # type: ignore[index]  # the error path under test
+
+
+def test_experiment_reference_index_streams_the_store_and_persists_json(
+    store_root: Path, view: Neo4jQueryRaw
+) -> None:
+    """Groups by reference: toy_a -> [0, 1], toy_b -> [2]; the JSON file is the model dumps
+    and is read back in preference to recomputing.
+    """
+    index = view.experiment_reference_index
+    assert [(e.reference.dataset_name, e.member_indices) for e in index] == [
+        ("toy_a", [0, 1]),
+        ("toy_b", [2]),
+    ]
+    assert index[0].reference == RECORDS[0]["experiment_reference"]
+    assert view.env is None
+    path = store_root / "raw" / "experiment_reference_index.json"
+    assert json.loads(path.read_text(encoding="utf-8")) == [
+        e.model_dump() for e in index
+    ]
+    path.write_text(
+        json.dumps(
+            [{"reference": index[1].reference.model_dump(), "member_indices": [2]}]
+        ),
+        encoding="utf-8",
+    )
+    assert [
+        (e.reference.dataset_name, e.member_indices)
+        for e in view.experiment_reference_index
+    ] == [("toy_b", [2])]
+
+
+def test_phenotype_label_index_raises_because_phenotypes_carry_label_name_not_label(
+    store_root: Path, view: Neo4jQueryRaw
+) -> None:
+    """Finding: ``compute_phenotype_label_index`` reads ``phenotype.label`` (line 422) but
+    the schema field is ``label_name``, so the property raises and writes no JSON.
+    """
+    with pytest.raises(
+        AttributeError, match="'FitnessPhenotype' object has no attribute 'label'"
+    ):
+        view.phenotype_label_index
+    path = store_root / "raw" / "phenotype_label_index.json"
+    assert not path.exists()
+    # a file written by an earlier build is read back without recomputing
+    path.write_text('{"fitness": [0, 1, 2]}', encoding="utf-8")
+    assert view.phenotype_label_index == {"fitness": [0, 1, 2]}
+
+
+def test_gene_set_is_computed_from_perturbations_and_the_setter_writes_sorted_json(
+    store_root: Path, view: Neo4jQueryRaw
+) -> None:
+    """The getter computes without writing; the setter writes ``indent=0`` JSON that the
+    getter then reads back; an empty value is refused.
+    """
+    gene_set_path = store_root / "raw" / "gene_set.json"
+    assert list(view.gene_set) == ["YAL001C", "YAL002W", "YAL003W"]
+    assert view.env is None
+    assert not gene_set_path.exists()
+    view.gene_set = view.compute_gene_set()
+    assert gene_set_path.read_text(encoding="utf-8") == (
+        '[\n"YAL001C",\n"YAL002W",\n"YAL003W"\n]'
+    )
+    gene_set_path.write_text('["YZZ999W"]', encoding="utf-8")
+    assert list(view.gene_set) == ["YZZ999W"]
+    with pytest.raises(
+        ValueError, match="Cannot set an empty or None value for gene_set"
+    ):
+        view.gene_set = view.gene_set.__class__()
+
+
+def test_extract_systematic_gene_names_lists_every_perturbation_in_order() -> None:
+    """Two deletions give two names in genotype order."""
+    genotype = RECORDS[1]["experiment"].genotype.model_dump()
+    assert Neo4jQueryRaw.extract_systematic_gene_names(genotype) == [
+        "YAL002W",
+        "YAL003W",
+    ]
+
+
+def test_close_lmdb_is_idempotent_and_a_closed_view_pickles_and_reopens(
+    store_root: Path, view: Neo4jQueryRaw
+) -> None:
+    """Attrs' slotted ``__getstate__`` is the field dict with ``env`` None; the copy reopens
+    the same LMDB directory on its first ``len``.
+    """
+    view.close_lmdb()
+    view.close_lmdb()
+    assert view.env is None
+    assert view.__getstate__() == {
+        "uri": URI,
+        "username": "u",
+        "password": "p",
+        "root_dir": str(store_root),
+        "query": QUERY,
+        "io_workers": None,
+        "num_workers": None,
+        "_experiment_reference_index": None,
+        "_phenotype_label_index": None,
+        "lmdb_dir": str(store_root / "raw" / "lmdb"),
+        "raw_dir": str(store_root / "raw"),
+        "env": None,
+        "_gene_set": None,
+        "cypher_kwargs": {},
+        "version": None,
+    }
+    copy = pickle.loads(pickle.dumps(view))
+    assert copy.__getstate__()["env"] is None
+    assert len(copy) == 3
+    assert copy.env.path() == str(store_root / "raw" / "lmdb")
+    copy.close_lmdb()
+
+
+def test_write_to_lmdb_puts_one_key_in_a_writable_environment(
+    store_root: Path, view: Neo4jQueryRaw
+) -> None:
+    """``_init_lmdb(readonly=False)`` reopens writable; the put is visible in the next txn."""
+    view._init_lmdb(readonly=False)
+    assert view.env.flags()["readonly"] is False
+    view.write_to_lmdb(b"data_3", b"x")
+    with view.env.begin() as txn:
+        assert txn.get(b"data_3") == b"x"
+    assert len(view) == 4
+
+
+def test_process_accepts_both_record_shapes_and_builds_the_indices(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A property-shape record (``e_serialized``) and a node-shape record (``e`` with
+    ``serialized_data``) both land as ``data_<i>``; the reference index and gene set are
+    written beside the store. The bytes ``process()`` wrote under ``data_0`` are exactly
+    ``json.dumps(EXPECTED_RECORD_0)``, the literal JSON spelled out above.
+    """
+    property_shape = {
+        "e_serialized": json.dumps(RECORDS[0]["experiment"].model_dump()),
+        "ref_serialized": json.dumps(RECORDS[0]["experiment_reference"].model_dump()),
+    }
+    node_shape = {
+        "e": {"serialized_data": json.dumps(RECORDS[2]["experiment"].model_dump())},
+        "ref": {
+            "serialized_data": json.dumps(
+                RECORDS[2]["experiment_reference"].model_dump()
+            )
+        },
+    }
+    monkeypatch.setattr(
+        Neo4jQueryRaw, "fetch_data", lambda self: iter([property_shape, node_shape])
+    )
+    raw = Neo4jQueryRaw(
+        uri=URI, username="u", password="p", root_dir=str(tmp_path), query=QUERY
+    )
+    assert len(raw) == 2
+    assert raw[0] == RECORDS[0]
+    assert raw[1] == RECORDS[2]
+    assert sorted(p.name for p in (tmp_path / "raw").iterdir()) == [
+        "experiment_reference_index.json",
+        "gene_set.json",
+        "lmdb",
+    ]
+    assert (tmp_path / "raw" / "gene_set.json").read_text(encoding="utf-8") == (
+        '[\n"YAL001C",\n"YAL003W"\n]'
+    )
+    stored_index = json.loads(
+        (tmp_path / "raw" / "experiment_reference_index.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert [
+        (e["reference"]["dataset_name"], e["member_indices"]) for e in stored_index
+    ] == [("toy_a", [0]), ("toy_b", [1])]
+    raw.close_lmdb()
+    env = lmdb.open(str(tmp_path / "raw" / "lmdb"), readonly=True)
+    with env.begin() as txn:
+        stored = txn.get(b"data_0")
+    env.close()
+    assert stored == json.dumps(EXPECTED_RECORD_0).encode()
+
+
+def test_compute_experiment_reference_index_groups_records_by_reference_hash() -> None:
+    """Sequential path: toy_a -> [0, 1], toy_b -> [2], references taken from the first member."""
+    index = compute_experiment_reference_index(RECORDS)
+    assert [(e.reference.dataset_name, e.member_indices) for e in index] == [
+        ("toy_a", [0, 1]),
+        ("toy_b", [2]),
+    ]
+    assert index[1].reference == RECORDS[2]["experiment_reference"]
+
+
+def test_parallel_hash_path_reads_a_different_record_key_than_the_sequential_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Finding: ``parallel_hash_computation`` reads ``data_item["reference"]`` (line 40)
+    while the sequential branch reads ``"experiment_reference"`` (line 90), so
+    ``num_workers=1`` on the same records raises KeyError. ``compute_experiment_
+    reference_index_parallel`` takes the ``reference`` key throughout. ``mp.cpu_count``
+    is patched to 1 so the parallel path forks one worker, not one per core.
+    """
+    monkeypatch.setattr(multiprocessing, "cpu_count", lambda: 1)
+    with pytest.raises(KeyError, match="'reference'"):
+        compute_experiment_reference_index(RECORDS, num_workers=1)
+    index = compute_experiment_reference_index_parallel(
+        [{"reference": r["experiment_reference"]} for r in RECORDS]
+    )
+    assert [(e.reference.dataset_name, e.member_indices) for e in index] == [
+        ("toy_a", [0, 1]),
+        ("toy_b", [2]),
+    ]

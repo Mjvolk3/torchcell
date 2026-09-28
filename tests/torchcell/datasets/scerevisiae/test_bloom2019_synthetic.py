@@ -756,8 +756,10 @@ def test_one_mosaic_is_interned_per_segregant_not_per_condition(
         str(Path(dataset.processed_dir) / "lmdb"), readonly=True, lock=False
     )
     with env.begin() as txn:
-        raw = [pickle.loads(txn.get(f"{i}".encode())) for i in range(39)]
+        values = [txn.get(f"{i}".encode()) for i in range(39)]
     env.close()
+    assert all(value is not None for value in values)
+    raw = [pickle.loads(value) for value in values if value is not None]
     pointers = {r["experiment"]["genotype"]["name"] for r in raw[:38]}
     assert pointers == {"375_seg1"}
     assert len({r["experiment"]["genotype"]["$ref"] for r in raw[:38]}) == 1

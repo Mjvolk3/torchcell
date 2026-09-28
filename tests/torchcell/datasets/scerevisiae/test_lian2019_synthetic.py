@@ -354,7 +354,7 @@ _EXPECTED_ROUNDS = [1, 2, 3, 1, 1, 3, 1, 2]
 def _interned_entries(root: Path) -> int:
     env = lmdb.open(str(root / "processed" / "interned"), readonly=True, lock=False)
     with env.begin() as txn:
-        entries = cast(int, txn.stat()["entries"])
+        entries: int = txn.stat()["entries"]
     env.close()
     return entries
 

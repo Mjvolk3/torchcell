@@ -228,7 +228,7 @@ _EXPECTED = [_experiment(common, rfp) for _, rfp, _, common in mo.TABLE_1]
 def _interned_entries(root: Path) -> int:
     env = lmdb.open(str(root / "processed" / "interned"), readonly=True, lock=False)
     with env.begin() as txn:
-        entries = cast(int, txn.stat()["entries"])
+        entries: int = txn.stat()["entries"]
     env.close()
     return entries
 

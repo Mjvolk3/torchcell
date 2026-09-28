@@ -294,3 +294,17 @@ workers, job 2889) and Costanzo (6,250 of 21.4 KB, 43 GB mean anonymous memory
 across 32 workers, job 2889). 128 MiB puts Costanzo back at 6,250 and Bloom at
 6,800 records, about 1.25 GB per worker; whether Bloom survives that at 32 workers
 is the full build's question, not the ladder's.
+
+### Round 7 arms failed on the capped Costanzo subset; fixed and resubmitted
+
+All four r7 arms (jobs 2918 to 2921) failed about 2 min in, at the first pool
+submission of Costanzo's single-pass node pass, with `TypeError: cannot pickle
+'Environment' object`. The byte budget's record sampler (commit e48ffe2f) reads
+records through `get()`, which leaves the LMDB environment open. A full dataset
+closes it again on the next slice, because its length runs through `len()`. The
+ladder's Costanzo is a 2M-record subset view with stored indices, so the handle stayed
+open and every chunk view shallow-copied it. Job 2905 builds full datasets, which is
+why it passed the same point. Fix (commit 98797536): the sampler closes the
+environment. A 1,000-record SmfKuzmin2018 subset reproduces the error without the fix
+and pickles cleanly with it (`scratchpad` check, not a committed test). Resubmitted as
+jobs 2930 (b48-g2), 2931 (b128-g2), 2932 (b48-g8), 2933 (b128-g8).

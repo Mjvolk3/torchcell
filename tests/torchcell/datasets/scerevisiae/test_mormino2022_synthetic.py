@@ -396,6 +396,9 @@ def test_store_reopens_without_a_genome_and_serves_the_getters(
     subset = reopened[[0, 11]]
     assert len(subset) == 2
     assert [subset[0], subset[1]] == [records[0], records[11]]
+    # PyG's list index is a shallow copy that opens its own handle on the same store;
+    # py-lmdb refuses a second open of one path in a process, so close it first.
+    subset.close_lmdb()
     assert reopened.transform_item(reopened[11]) == {
         "experiment": _EXPECTED[11],
         "reference": _REFERENCE,

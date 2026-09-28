@@ -1314,6 +1314,68 @@ PAIRS = [
         "w160_aadelsampled_h12l1p1_e200",
         "w143_aadelstore_h12l1p1_e200",
     ),
+    # The inductive program (2026-09-28): co-heads and feature propagation.
+    (
+        "betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds",
+        "betaxanthin",
+        "w242_bxdelgopfbamomaaux_h12l1p1_e200",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+        tuple(range(2700, 2712)),
+    ),
+    (
+        "betaxanthin: GO alone with the Mulleder co-head against without",
+        "betaxanthin",
+        "w243_bxdelgoaux_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the genotype-only control with the Mulleder co-head against without",
+        "betaxanthin",
+        "w244_bxdelaux_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the GO neighbor-propagation store (inductive) against GO alone",
+        "betaxanthin",
+        "w245_bxdelgonbr_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: GO with its neighbor propagation appended against GO alone",
+        "betaxanthin",
+        "w246_bxdelgogonbr_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: GO with its neighbor propagation appended against the propagation alone",
+        "betaxanthin",
+        "w246_bxdelgogonbr_h12l1p1_e200",
+        "w245_bxdelgonbr_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the GO neighbor-propagation store through 256 against the linear affine",
+        "betaxanthin",
+        "w247_bxdelgonbrmlp256_h12l1p1_e200",
+        "w245_bxdelgonbr_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the GO neighbor-propagation store through 256 against the pool through 256",
+        "betaxanthin",
+        "w247_bxdelgonbrmlp256_h12l1p1_e200",
+        "w206_bxdelaapoolmlp256_h12l1p1_e200",
+    ),
+    (
+        "amino acids: the control with the betaxanthin co-head (inductive) against without",
+        "mulleder19",
+        "w232_aadelauxbx_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
+        "amino acids: the control with the betaxanthin co-head against the betaxanthin score as an input",
+        "mulleder19",
+        "w232_aadelauxbx_h12l1p1_e200",
+        "w225_aadelbxscoremlp256_h12l1p1_e200",
+    ),
 ]
 
 

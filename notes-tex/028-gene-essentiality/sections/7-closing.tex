@@ -472,11 +472,14 @@ unmasked block as the width control (w134), two unmasked blocks as the depth con
 the second (w137), and three with the mask on the second and third (w138). Beside it
 the one-hop propagation of Section~\ref{sec:mp-architectures}'s neighbor read enters
 the affine as a store, per graph the essential fraction among the gene's labeled
-neighbors and the log count, alone (w139) and appended to the pFBA vector (w140). That store is transductive: its columns are the training and validation genes'
-essentiality calls (a gene's own call never, the held-out genes' never, validation
-calls entering the training genes' features), so what it adds is a semi-supervised
-gain, available only where the neighbors were screened, and not a gain of the
-genotype encoding or the metabolic module.
+neighbors and the log count, alone (w139) and appended to the pFBA vector (w140). That store is transductive: its
+columns are the training and validation genes' essentiality calls (a gene's own call
+never, the held-out genes' never, validation calls entering the training genes'
+features), so what it adds is a semi-supervised gain, available only where the
+neighbors were screened, and not a gain of the genotype encoding or the metabolic
+module. A gene whose neighbors carry no call reads the zero row, so the store cannot
+be carried to a screen, an organism or a strain background whose neighbors have not
+been called, which is the setting a model over the database has to serve.
 
 The width control is read (job 2906, 27 min): one block of width 36 with nine heads,
 83,373 parameters against the incumbent's 22,773, reads 0.913 (sd 0.006) against the
@@ -502,6 +505,35 @@ and third, 115,413 parameters) reads 0.887 (sd 0.015) against the one masked blo
 0.903 ($-0.016$ paired, sd 0.015, two of six) and the width control's 0.913 ($-0.025$,
 sd 0.016, none of six), the seeds 0.863 to 0.906 selecting at epochs 43 to 132: each
 masked block costs about as much as the last, and the seed spread triples.
+The regularizer (w136; seeds 2700 to 2702 from job 2908, 2703 to 2705 from job 2922,
+75 to 77 min a cell, three cells to a card because the regularized block materializes
+its attention at about 14.5 GB a seed) is live for the first time on this target, its
+loss at most 0.974 in any epoch of any seed against 0.0 on every one-block cell, and
+it reads 0.904 (sd 0.005) against the two unmasked blocks' 0.913, $-0.009$ paired (sd
+0.007, one of six above), the seeds 0.899 to 0.913 selecting at epochs 29 to 38. The
+soft pull toward the graphs costs what the hard mask costs, within a seed deviation,
+so neither way of making the second block attend along the nine relations reads
+anything the free block does not.
+
+The propagated label is a different matter. The store alone (w139, job 2916, 31 min
+a cell), twenty columns for every one of the 6,607 genome genes in place of the 4,131
+solve columns and so 18,662 parameters against the incumbent's 22,773, reads 0.912
+(sd 0.014) against the incumbent's 0.908, $+0.003$ paired (sd 0.019, three of six),
+the seeds 0.892 to 0.926 selecting at epochs 31 to 90: the transformer reading the
+neighbors' calls through the affine is level with the transformer reading the solve,
+and the spread across seeds is twice the incumbent's. Appended to the solve (w140,
+job 2917, 31 min a cell; 4,151 columns on the 1,121 labeled genes, 22,793 parameters)
+the two add: 0.925 (sd 0.006), $+0.017$ over the incumbent (sd 0.010, six of six) and
+$+0.014$ over the store alone (sd 0.013, five of six), the seeds 0.916 to 0.933
+selecting at epochs 35 to 51. That is the highest single-cell read of the study on the
+released split, and the propagation enters the affine as a store, so the model reads a
+number that already carries 0.902 on its own
+(Section~\ref{sec:mp-architectures}), and adds the solve's 0.02 to it. The gain is
+transductive in the sense above: on the 195 held-out genes the model reads the calls
+of their 118 labeled coexpression neighbors a gene, and those calls came from the same
+screen that produced the labels it is scored on. It is the best cell of the study and
+it is not the best inductive cell, which stays round 33's layer-free solve at 0.908 on
+these six seeds (Section~\ref{sec:round33}).
 
 \input{tables/pattern_ladder}
 

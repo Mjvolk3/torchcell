@@ -112,6 +112,20 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
     genes, with the average fixed in advance, the average beats the better single model
     on nine (mean $+0.023$) and graph convolution on GO beats the transformer on nine
     (Section~\ref{sec:round75}).
+  \item[The highest single cell is transductive, and the best inductive cell is the
+    layer-free solve.] The graphs' one-hop propagation of the training and validation
+    genes' calls, per graph the essential fraction among a gene's labeled neighbors and
+    the log count, reads 0.902 on the held-out genes with nothing fitted
+    (Section~\ref{sec:mp-architectures}); as a store beside the solve it lifts the
+    layer-free cell from 0.908 to 0.925 on six of six seeds, and alone it reads 0.912
+    (Section~\ref{sec:pattern-ladder}). No held-out gene's call is read, but the
+    neighbors' calls come from the screen the model is scored on and a gene whose
+    neighbors were never called reads the zero row, so the number holds only inside a
+    called screen. Against that, the layer-free solve at 0.908 on the same six seeds
+    (0.911 on nine) reads nothing but the genotype and yeast-GEM, and it is the cell
+    that carries to a strain or an organism with no screen behind it. Making the
+    transformer attend along the graphs instead, by regularizer or by hard mask on a
+    second block, reads 0.010 to 0.025 under the same blocks left free.
   \item[The module form that helps is the one with no layer, and the rules help beside
     it.] On one backbone the cell
     with no metabolism reads 0.858 on six seeds, FBA's growth ratios on the logit 0.890,

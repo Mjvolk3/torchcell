@@ -191,8 +191,11 @@ MLP with the transformer's three inputs (0.870), and 0.01 to 0.02 under the tran
 on this split (0.912 to 0.920, Section~\ref{sec:round84-98}): what the convolution reads
 from the edges is a part of what the neighbors' labels say outright, and the transformer
 reaches its number without either, since its regularizer and its hard mask index a
-second block that no one-block cell has (the layer-pattern ladder now queued, w134 to
-w138, is the first read of them).
+second block that no one-block cell has. The ladder that reads them
+(Section~\ref{sec:pattern-ladder}) finds the second block worth nothing whether
+regularized or masked, and the same propagation handed to the transformer as a store
+reads 0.912 alone and 0.925 beside the solve, the study's highest single cell and a
+transductive one.
 
 \input{tables/graph_label_propagation}
 

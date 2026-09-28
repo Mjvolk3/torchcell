@@ -152,9 +152,22 @@ EX_REV = {
 
 
 def _hyperedges(gem: YeastGEM) -> dict[str, tuple[list[str], dict[str, Any]]]:
+    """Edge members and the properties yeast_GEM sets on each hyperedge.
+
+    hypernetx adds its own underscore-prefixed bookkeeping to the property dict in some
+    versions (2.4.3 adds ``_level``; 2.4.0 does not), so those keys are dropped; every
+    property the module writes is still compared exactly.
+    """
     hg = gem.reaction_map
     return {
-        eid: (list(hg.edges.elements[eid]), dict(hg.edges[eid].properties))
+        eid: (
+            list(hg.edges.elements[eid]),
+            {
+                key: value
+                for key, value in dict(hg.edges[eid].properties).items()
+                if not key.startswith("_")
+            },
+        )
         for eid in hg.edges
     }
 

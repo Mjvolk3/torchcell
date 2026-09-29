@@ -9,11 +9,12 @@ one row per served record, and mostly on the (gene, compound) pair. The model tr
 the built store, one entry per (genotype, environment) cell. This script reads the cell
 table ``flatten_cells.py`` wrote and re-measures each plan claim on the store itself.
 
-Twelve tables, each one question:
+Thirteen tables, each one question:
 
 ``store_axes.csv``            what each source holds on the genotype, environment and
                               dose axes of the representation.
 ``pool_totals.csv``           the pool as one row, shared genes and compounds counted once.
+``vectorless_environments.csv`` the environments no compound vector can describe.
 ``unit_of_analysis.csv``      the store's cell against the plan's (gene, compound) pair:
                               counts, spread and skew at both units.
 ``ploidy_pairs.csv``          how many Hoepfner cells are measured in both ploidy arms,
@@ -221,6 +222,37 @@ def pool_totals(table: pd.DataFrame, pairs: pd.DataFrame) -> pd.DataFrame:
                 "cells_with_molar": int(table["log10_molar"].notna().sum()),
             }
         ]
+    )
+
+
+def vectorless_environments(table: pd.DataFrame) -> pd.DataFrame:
+    """Every environment that doses no compound or a compound without an InChIKey."""
+    t = table[
+        (table["n_compounds"] == 0) | (table["n_with_inchikey"] < table["n_compounds"])
+    ]
+    out = (
+        t.groupby(
+            [
+                "dataset",
+                "environment_id",
+                "compound_names",
+                "conc_values",
+                "conc_units",
+                "base_medium",
+                "temperature_c",
+                "duration_generations",
+            ],
+            dropna=False,
+        )
+        .size()
+        .rename("cells")
+        .reset_index()
+    )
+    out["dataset"] = out["dataset"].map(DISPLAY)
+    out["kind"] = np.where(out["compound_names"] == "", "no compound", "no InChIKey")
+    return out.sort_values(
+        ["kind", "base_medium", "temperature_c", "duration_generations", "conc_values"],
+        ignore_index=True,
     )
 
 
@@ -612,6 +644,7 @@ def main() -> None:
     outputs = {
         "store_axes": store_axes(table, plan_dose),
         "pool_totals": pool_totals(table, pairs),
+        "vectorless_environments": vectorless_environments(table),
         "unit_of_analysis": unit_of_analysis(table, meas, plan_dist),
         "ploidy_pairs": ploidy_pairs(meas, reliability),
         "label_policy": label_policy(table),

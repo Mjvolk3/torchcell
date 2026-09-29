@@ -72,9 +72,10 @@ def main(cfg: DictConfig) -> None:
         )
         index_file, details_file = dm._cache_files()
         assert osp.exists(index_file) and osp.exists(details_file), index_file
+        n_val_ess = len(dm.extra_val_datasets["val_ess"]) if arm.has_holdout else 0
         print(
             f"seed {seed}: train={len(dm.index.train)} val={len(dm.index.val)} "
-            f"test={len(dm.index.test)} val_ess={len(dm.extra_val_datasets['val_ess'])}\n"
+            f"test={len(dm.index.test)} val_ess={n_val_ess}\n"
             f"  {index_file}\n  {details_file}"
         )
     print("finished: split cache warm")

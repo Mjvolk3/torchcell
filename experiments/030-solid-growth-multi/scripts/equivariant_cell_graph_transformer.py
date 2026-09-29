@@ -16,7 +16,9 @@ datasets projected to a small learnable vector (``model.dataset_token``).
   names); the model's ``vocab_size`` is derived from it, never typed into a config.
 - ``subset.exclude`` names the essentiality holdout: its records leave the pool and are
   served as the second validation loader, on which the task logs the AUROC of predicted
-  single-deletion fitness against essentiality (``val_ess/*``).
+  single-deletion fitness against essentiality (``val_ess/*``). ``null`` holds nothing
+  out (the apples-to-apples arm against 025's S3); then there is no second loader and
+  ``regression_task.essentiality`` is not read.
 - ``transforms.fit_stats`` names the committed normalization constants fitted on the
   arm's training ENTRY rows (``make_normalization_stats_030.py``); the script recomputes
   the training set and refuses a file fitted on another one.
@@ -46,6 +48,7 @@ import os.path as osp
 import socket
 import sys
 import uuid
+from typing import Any
 
 import hydra
 import lightning as L
@@ -285,9 +288,12 @@ def main(cfg: DictConfig) -> None:
     data_module = make_data_module(
         dataset, arm, seed, dict(wandb.config.data_module), follow_batch
     )
+    n_val_ess = (
+        len(data_module.extra_val_datasets["val_ess"]) if arm.has_holdout else 0
+    )
     print(
         f"splits: train={len(data_module.index.train)} val={len(data_module.index.val)} "
-        f"test={len(data_module.index.test)} val_ess={len(data_module.extra_val_datasets['val_ess'])}"
+        f"test={len(data_module.index.test)} val_ess={n_val_ess}"
     )
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -361,16 +367,18 @@ def main(cfg: DictConfig) -> None:
     else:
         raise ValueError(f"Unknown loss type: {loss_type}")
 
-    ess_cfg = wandb_cfg["regression_task"]["essentiality"]
-    node_labels = arm.essentiality_node_labels(
-        [str(g) for g in cell_graph["gene"].node_ids]
-    )
-    essentiality_eval = {
-        "token_smf": str(ess_cfg["token_smf"]),
-        "token_sgd": str(ess_cfg["token_sgd"]),
-        "released": node_labels["released"],
-        "matched": node_labels["matched"],
-    }
+    essentiality_eval: dict[str, Any] | None = None
+    if arm.has_holdout:
+        ess_cfg = wandb_cfg["regression_task"]["essentiality"]
+        node_labels = arm.essentiality_node_labels(
+            [str(g) for g in cell_graph["gene"].node_ids]
+        )
+        essentiality_eval = {
+            "token_smf": str(ess_cfg["token_smf"]),
+            "token_sgd": str(ess_cfg["token_sgd"]),
+            "released": node_labels["released"],
+            "matched": node_labels["matched"],
+        }
     task = RegressionTask(
         model=model,
         cell_graph=cell_graph,

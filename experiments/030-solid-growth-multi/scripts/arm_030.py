@@ -14,7 +14,10 @@ An arm is:
 - ``subset.indices``: the record pool (S3, ``subset_S3_indices.json.gz``).
 - ``subset.exclude``: the essentiality holdout (``essentiality_holdout_030.json.gz``);
   its ``excluded_record_indices`` leave the pool and are served as the second
-  validation loader ``val_ess`` (``CellDataModule.extra_val_indices``).
+  validation loader ``val_ess`` (``CellDataModule.extra_val_indices``). ``null`` (or
+  absent) means no holdout: the pool is the whole subset, there is no second loader
+  and no essentiality readout. That is the apples-to-apples arm against 025's S3, whose
+  pool held every single.
 - ``subset.split_file`` / ``split_key``: the pinned 010 random split over the triples,
   carried to 030 by gene-set identity; with ``unpinned_to_train`` every other pool
   record trains.
@@ -78,14 +81,21 @@ class Arm030(BaseModel):
     subset_name: str
     split_file: str
     split_key: str
-    exclude_name: str
+    exclude_name: str | None = Field(
+        description="the holdout artifact, or None when the arm holds nothing out"
+    )
     unpinned_to_train: bool
     pool: list[int] = Field(description="subset minus the excluded holdout records")
     pinned: dict[str, list[int]]
     excluded: list[int]
-    released: EssentialitySet
-    matched: EssentialitySet
+    released: EssentialitySet | None
+    matched: EssentialitySet | None
     dataset_vocabulary: list[str]
+
+    @property
+    def has_holdout(self) -> bool:
+        """Whether an essentiality holdout leaves the pool and is scored."""
+        return self.exclude_name is not None
 
     def train_records(self) -> list[int]:
         """Records that train: the pinned train plus, with ``unpinned_to_train``,
@@ -107,6 +117,8 @@ class Arm030(BaseModel):
         self, node_ids: list[str]
     ) -> dict[str, dict[int, int]]:
         """``{"released": {node_index: label}, "matched": {...}}`` over the cell graph."""
+        if self.released is None or self.matched is None:
+            raise ValueError("the arm has no essentiality holdout")
         position = {gene: i for i, gene in enumerate(node_ids)}
         out: dict[str, dict[int, int]] = {}
         for name, held in (("released", self.released), ("matched", self.matched)):
@@ -131,14 +143,21 @@ def resolve_arm(
     subset_name = str(subset_cfg["indices"])
     split_file = str(subset_cfg["split_file"])
     split_key = str(subset_cfg["split_key"])
-    exclude_name = str(subset_cfg["exclude"])
+    exclude_raw = subset_cfg.get("exclude")
+    exclude_name = None if exclude_raw is None else str(exclude_raw)
     vocab_name = str(subset_cfg["vocabulary"])
 
     subset = [int(i) for i in load_json_artifact(subset_name)]
     pinned_raw = load_json_artifact(split_file)[split_key]
     pinned = {k: [int(i) for i in pinned_raw[k]] for k in ("train", "val", "test")}
-    holdout = load_json_artifact(exclude_name)
-    excluded = [int(i) for i in holdout["excluded_record_indices"]]
+    excluded: list[int] = []
+    released: EssentialitySet | None = None
+    matched: EssentialitySet | None = None
+    if exclude_name is not None:
+        holdout = load_json_artifact(exclude_name)
+        excluded = [int(i) for i in holdout["excluded_record_indices"]]
+        released = EssentialitySet(**holdout["released"])
+        matched = EssentialitySet(**holdout["matched"])
     vocabulary = list(load_json_artifact(vocab_name)["dataset_vocabulary"])
     if vocabulary != sorted(set(vocabulary)):
         raise ValueError("dataset_vocabulary must be sorted and unique")
@@ -165,8 +184,8 @@ def resolve_arm(
         pool=sorted(subset_set - excluded_set),
         pinned=pinned,
         excluded=sorted(excluded_set),
-        released=EssentialitySet(**holdout["released"]),
-        matched=EssentialitySet(**holdout["matched"]),
+        released=released,
+        matched=matched,
         dataset_vocabulary=vocabulary,
     )
 
@@ -178,7 +197,7 @@ class NormalizationStats030(BaseModel):
     entries_parquet: str
     subset_name: str
     split_file: str
-    exclude_name: str
+    exclude_name: str | None
     unpinned_to_train: bool
     n_train_records: int
     train_index_sha256: str
@@ -255,7 +274,9 @@ def make_data_module(
     dm_cfg: Mapping[str, Any],
     follow_batch: list[str],
 ) -> Any:
-    """``CellDataModule`` over the arm: pool, pinned split, holdout loader."""
+    """``CellDataModule`` over the arm: pool, pinned split, and the holdout loader
+    when the arm has one.
+    """
     from torchcell.datamodules import CellDataModule
 
     data_module = CellDataModule(
@@ -265,7 +286,7 @@ def make_data_module(
         index_subset=arm.pool,
         pinned_split_indices=arm.pinned,
         unpinned_to_train=arm.unpinned_to_train,
-        extra_val_indices={"val_ess": arm.excluded},
+        extra_val_indices={"val_ess": arm.excluded} if arm.has_holdout else None,
         batch_size=int(dm_cfg["batch_size"]),
         random_seed=seed,
         num_workers=int(dm_cfg["num_workers"]),

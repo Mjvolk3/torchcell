@@ -100,3 +100,48 @@ balance of the run, in the middle of the 2-to-4-hour projection.
 
 **Disk.** `/db` is at 95 percent with 441 GB free. The raw and aggregation stages hold 214 GB
 and are regenerable from the query; deleting them is the user's action, not this note's.
+
+## 2026.09.29 - What the store holds, and why the four sources do not pool
+
+Measured from the built label table by
+[[experiments.033-env-chemgen-pooled.scripts.pooled_response_profile]], which reads only
+`processed/label_df.parquet` and `processed/dataset_name_index.json` and never opens the
+106 GB LMDB.
+
+**The label surface is one float per cell.** The store carries a single phenotype label,
+`environment_response`, over 6,042,771 cells, and `label_df.parquet` has exactly two
+columns, the entry index and that float. Every cell is either 1 perturbation (5,899,553) or
+4 (143,218, the Vanacloig sensitized host). The union of perturbed genes is 6,607.
+
+**The four sources do not share a scale, and two of them do not share a sign.**
+
+| dataset | cells | polarity | mean | sd | q01 | median | q99 | skew |
+|---|---|---|---|---|---|---|---|---|
+| Vanacloig 2022 | 143,218 | smaller is sicker | -0.1449 | 0.6994 | -3.2481 | -0.0446 | 1.1805 | -2.57 |
+| Hillenmeyer HET | 2,591,199 | larger is sicker | 0.0795 | 0.4406 | -0.9223 | 0.0347 | 1.5305 | 1.56 |
+| Hoepfner 2014 | 2,880,165 | smaller is sicker | -0.1116 | 1.6162 | -6.0902 | 0.0000 | 3.6754 | -4.58 |
+| Wildenhain 2015 | 428,189 | smaller is sicker | -2.1489 | 7.5018 | -44.0425 | -0.2698 | 2.3039 | -4.61 |
+
+The spread differs by a factor of 17 between Hillenmeyer (sd 0.44) and Wildenhain (sd 7.50),
+and Wildenhain's 1st percentile is -44.04 against a Hillenmeyer range about 7 wide. The skew
+column confirms the polarity independently of the recorded convention: Hillenmeyer is the
+only source with a positive skew, because its long tail is the sick tail, while the other
+three carry their sick tail to the left. A decoder trained on the pooled column without
+orienting and standardizing per source is fitting two opposed definitions of the same word.
+
+**No missing data and no floor artifact.** There are zero NaNs in all four sources.
+Hoepfner's median of exactly 0.0000 and negative fraction of exactly 0.5000 looked like a
+pile of imputed zeros, and they are not: only 0.01 percent of its values are exactly zero,
+so those two statistics are rounding of a well-centered distribution.
+
+![](assets/images/033-env-chemgen-pooled/pooled_response_distributions_2026-09-29-01-29-14.svg)
+
+A shared axis is the wrong display for this figure, so each panel carries its own x-range.
+On one axis, Wildenhain's tail collapses the other three into a spike at zero.
+
+**Disk, resolved.** The 025, 029, 030 and 033 intermediates are archived to
+`/bulk/experiments/<build>-intermediates/` as zstd tarballs with sha256 sidecars; 033's raw
+compressed 115 GB to 881 MB and its aggregation 114 GB to 1.1 GB (slurm 2957, 6 m 28 s).
+`gh_reclaim_db_stages.slurm` removes an archived stage only after re-verifying that sha256
+in the same job, and removes a directory from an unfinished build only when it holds an LMDB
+and carries no `STAGE_COMPLETE`. Removals are recorded in `/db/deprecated/<date>/MANIFEST.tsv`.

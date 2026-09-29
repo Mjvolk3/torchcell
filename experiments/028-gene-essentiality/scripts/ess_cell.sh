@@ -32,7 +32,15 @@ ARGS=()
 
 echo "cell $OUT: arm $ARM h$HIDDEN l$LAYERS p$PREPROC seed $SEED epochs $EPOCHS tag $TAG"
 # shellcheck disable=SC2086
-python experiments/028-gene-essentiality/scripts/train_essentiality.py \
+# THE ENTRY POINT FOLLOWS THE STUDY (2026-09-28): one shared trainer, run under the name
+# of the study whose cell this is, so a betaxanthin or amino-acid cell is not listed on
+# the node as an essentiality process. The two study files import the shared trainer.
+case "${ESS_STUDY:-028-gene-essentiality}" in
+    031-betaxanthin-module) ENTRY=experiments/031-betaxanthin-module/scripts/train_betaxanthin_module.py ;;
+    032-amino-acid-module) ENTRY=experiments/032-amino-acid-module/scripts/train_amino_acid_module.py ;;
+    *) ENTRY=experiments/028-gene-essentiality/scripts/train_essentiality.py ;;
+esac
+python "$ENTRY" \
     --arm "$ARM" --head "${ESS_HEAD:-essentiality}" \
     --seed "$SEED" --epochs "$EPOCHS" \
     --hidden "$HIDDEN" --attention-heads "$HEADS" --layers "$LAYERS" \

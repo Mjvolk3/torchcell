@@ -31,6 +31,7 @@ $$
 $$
 
 **Interpretation:**
+
 - **High entropy (→ log N):** Uniform attention (no focus)
 - **Low entropy (→ 0):** Concentrated attention (potentially one-hot collapse)
 - **Healthy range:** Moderate entropy indicating selective but distributed attention
@@ -50,6 +51,7 @@ $$
 $$
 
 **Interpretation:**
+
 - **EffRank = 1:** One-hot attention (collapsed)
 - **EffRank = N:** Uniform attention (no selectivity)
 - **Healthy range:** Typically 5-50 depending on task
@@ -65,11 +67,13 @@ $$
 where $T_k(i)$ = indices of top-$k$ attention weights for query $i$.
 
 **Variants tracked:**
+
 - **Top-5:** $k=5$
 - **Top-10:** $k=10$
 - **Top-50:** $k=50$
 
 **Interpretation:**
+
 - **Top-5 ≈ 1.0:** Extremely concentrated (potential collapse)
 - **Top-50 ≈ 0.5:** Attention spread across many positions
 - **Useful for:** Detecting if attention is too sharp or too diffuse
@@ -83,6 +87,7 @@ $$
 $$
 
 **Interpretation:**
+
 - **MaxRowWeight → 1.0:** One-hot collapse (attention puts all weight on single token)
 - **MaxRowWeight → 1/N:** Uniform attention
 - **Healthy range:** 0.1-0.5 depending on sequence length
@@ -104,6 +109,7 @@ H_{\text{col}} = -\sum_{j=1}^{N} \tilde{c}_j \log(\tilde{c}_j)
 $$
 
 **Interpretation:**
+
 - **High col entropy:** Attention received uniformly across positions
 - **Low col entropy:** Sink token formation (few tokens receive most attention)
 - **Sink collapse:** Single token becomes attention sink for all queries
@@ -117,6 +123,7 @@ $$
 $$
 
 **Interpretation:**
+
 - **High value (→ N):** Sink token present (one position receives attention from all queries)
 - **Healthy value (→ 1):** Each position receives roughly equal total attention
 - **Complements column entropy:** Direct measure of sink severity
@@ -132,6 +139,7 @@ $$
 where $\Delta \mathbf{x}^{(l)} = \text{TransformerBlock}^{(l)}(\mathbf{x}^{(l)}) - \mathbf{x}^{(l)}$ is the residual update.
 
 **Interpretation:**
+
 - **Ratio ≈ 0:** Layer has no effect (vanishing gradients/dead layer)
 - **Ratio >> 1:** Layer dominates the residual stream (unstable)
 - **Healthy range:** 0.1-1.0 (layer contributes meaningfully but doesn't dominate)
@@ -143,6 +151,7 @@ where $\Delta \mathbf{x}^{(l)} = \text{TransformerBlock}^{(l)}(\mathbf{x}^{(l)})
 Creates a 3×2 grid of diagnostic plots for all metrics.
 
 **Inputs:**
+
 - `attention_stats`: Dict mapping `layer_idx → {entropy, effective_rank, top5, top10, top50, max_row_weight, col_entropy, max_col_sum}`
 - `residual_ratios`: Optional dict mapping `layer_idx → residual_update_ratio`
 - `qk_logit_stats`: Optional dict mapping `layer_idx → {logit_mean, logit_std, saturation_ratio}` (not currently plotted)
@@ -151,6 +160,7 @@ Creates a 3×2 grid of diagnostic plots for all metrics.
 - `stage`: Stage name (e.g., "val")
 
 **Output:** 6-panel figure showing:
+
 1. Attention Entropy per Layer
 2. Effective Rank per Layer (log scale)
 3. Top-K Concentration (5, 10, 50)
@@ -215,3 +225,7 @@ vis.plot_attention_diagnostics(
 
 - [[torchcell.viz.graph_recovery]] - Edge recovery metrics for graph regularization
 - [[torchcell.trainers.int_hetero_cell]] - Trainer that computes and logs these metrics
+
+## 2026.09.28 - Zero residual ratios on the log axis (finding, not yet fixed)
+
+With `residual_ratios=None` (the default, and what `int_transformer_cell.py` line 573 passes whenever its accumulator is empty) `plot_attention_diagnostics` plots 0.0 for every layer on the log-scaled sixth panel and labels it with `ax6.text(layer, 0.0, ...)` (lines 329 to 380). Matplotlib clips log10(0) to -1000 decades, so the text lands about 3000 figure inches below the axes. Under matplotlib 3.10.7 `savefig(bbox_inches="tight", dpi=300)` includes it: the PNG is 4842 by 929,480 pixels (4.55 gigapixels, 20 MB) and `PIL.Image.open` raises `DecompressionBombError`; reproduced end to end by the Phase 9 audit. Under matplotlib 3.11 (the CI runner) the tight bbox stays at figure size (14.685 in for the 15 in figure) and the bomb does not fire. The fix is to skip the ratio panel, or the label, when no ratios were recorded; pinned by [[tests.torchcell.viz.test_transformer_diagnostics]] per matplotlib version. The color comments at lines 296 ("Teal" for `#775A9F`) and 340 ("Purple" for `#A05B2C`) are wrong; the fallback palette at line 59 differs from `torchcell.mplstyle` at 8 of 22 indices.

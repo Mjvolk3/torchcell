@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pytest  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
+from packaging.version import Version  # noqa: E402
 
 from torchcell.viz.transformer_diagnostics import TransformerDiagnostics  # noqa: E402
 
@@ -247,10 +248,14 @@ def test_zero_residual_ratio_on_the_log_axis_blows_up_the_tight_bbox(
     """Finding: the default ``residual_ratios=None`` (and any layer missing from the
     dict) plots ``0.0`` on a log-scaled axis and labels it with ``ax6.text(layer, 0.0,
     ...)``. Matplotlib clips ``log10(0)`` to -1000 decades, which puts that text about
-    3000 figure-inches below the axes; ``bbox_inches="tight"`` then includes it, so the
-    300-dpi PNG in ``save_and_log_figure`` is several gigapixels and ``PIL.Image.open``
-    raises ``DecompressionBombError``. The trainer passes ``None`` whenever its residual
-    accumulator is empty. Saving is bypassed here; the geometry is asserted instead.
+    3000 figure-inches below the axes. Under matplotlib 3.10 (the torchcell env, 3.10.7)
+    ``bbox_inches="tight"`` includes that text, so the 300-dpi PNG in
+    ``save_and_log_figure`` is several gigapixels and ``PIL.Image.open`` raises
+    ``DecompressionBombError``. Under matplotlib 3.11 (the CI runner) the tight bbox
+    stays at figure size (measured 14.685 in for the 15 in figure), although the text
+    still sits far below the axes, so the bomb does not fire there. The trainer passes
+    ``None`` whenever its residual accumulator is empty. Saving is bypassed here; the
+    geometry is asserted per matplotlib version.
     """
     figures: list[Figure] = []
     monkeypatch.setattr(
@@ -265,7 +270,10 @@ def test_zero_residual_ratio_on_the_log_axis_blows_up_the_tight_bbox(
     assert label_y < -100 * FIGURE_HEIGHT_IN * fig.dpi
     bbox = fig.get_tightbbox()
     assert bbox is not None
-    assert bbox.height > 100 * FIGURE_HEIGHT_IN
+    if Version(matplotlib.__version__) < Version("3.11"):
+        assert bbox.height > 100 * FIGURE_HEIGHT_IN
+    else:
+        assert bbox.height <= FIGURE_HEIGHT_IN
 
 
 def test_empty_stats_print_and_return(

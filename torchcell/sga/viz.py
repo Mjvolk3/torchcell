@@ -12,9 +12,12 @@ repo figure standard; heatmaps are exploratory PNGs (timestamped by the caller).
 
 from __future__ import annotations
 
+from typing import Any
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from matplotlib.colors import Colormap
 from matplotlib.figure import Figure
@@ -39,7 +42,7 @@ plt.rcParams.update(
 )
 
 
-def _grid(df: pd.DataFrame, value_col: str) -> np.ndarray:
+def _grid(df: pd.DataFrame, value_col: str) -> npt.NDArray[np.float64]:
     n_rows, n_cols = int(df["row"].max()), int(df["col"].max())
     grid = np.full((n_rows, n_cols), np.nan)
     grid[df["row"].to_numpy() - 1, df["col"].to_numpy() - 1] = df[value_col].to_numpy()
@@ -176,8 +179,9 @@ def colony_shape_by_volume(
         nogash[nogash["volume_nl"] == v]["circularity"].dropna().to_numpy()
         for v in vols
     ]
+    # tick_labels (matplotlib 3.9+): the labels keyword was removed in 3.11.
     bp = axb.boxplot(
-        data, labels=[f"{v} nL" for v in vols], patch_artist=True, widths=0.6
+        data, tick_labels=[f"{v} nL" for v in vols], patch_artist=True, widths=0.6
     )
     for i, box in enumerate(bp["boxes"]):
         box.set(facecolor=PLOT_PALETTE[i], edgecolor="black", linewidth=0.5)
@@ -294,7 +298,7 @@ def plate_labels(op: str, n_rows: int, n_cols: int) -> tuple[list[str], list[str
 
 
 def label_plate_overlay(
-    overlay_path: str, nodes: np.ndarray, op: str = "identity"
+    overlay_path: str, nodes: npt.NDArray[Any], op: str = "identity"
 ) -> None:
     """Add 384-well axis labels to a detection overlay, matplotlib-style.
 

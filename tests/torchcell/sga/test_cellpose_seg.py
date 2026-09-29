@@ -151,9 +151,10 @@ def test_category_and_instance_colors() -> None:
 
 def test_load_cellpose_model_constructs_cpsam(monkeypatch: pytest.MonkeyPatch) -> None:
     """The loader is ``models.CellposeModel(gpu=gpu)`` and nothing else; a stand-in
-    class records the call so no weights are touched.
+    class records the call so no weights are touched. Skipped where ``cellpose`` is
+    not installed (the CI runner); every other test in this file runs without it.
     """
-    import cellpose.models as cm
+    cm = pytest.importorskip("cellpose.models")
 
     calls: list[dict[str, Any]] = []
 

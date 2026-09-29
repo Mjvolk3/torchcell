@@ -42,7 +42,7 @@
     # visualization stack and logging
     wandb>=0.22.0
     wandb_osh>=1.2.2
-    matplotlib>=3.7.2
+    matplotlib>=3.9  # boxplot(tick_labels=); the labels keyword was removed in 3.11
     # adjustTest used with with matplotlib
     adjustText>=0.8
     #pydot Don't think I am using this... outdate

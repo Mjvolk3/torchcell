@@ -32,36 +32,44 @@ improved allele from the same backbone. Three levels of one step, one host, one
 carbon source.
 
 \notesec{Round one, five strains} Two matched contrasts, on two different steps
-of the pathway.
+of the pathway: \gene{Ll\_ilvD} wild type against I433V at 3.1-fold, and
+\gene{ILV6} wild type against V110E at 1.6-fold, with C0049 as the floor beneath
+the first. \Cref{tab:roundone} gives the five, and what every tube needs if it is
+picked up at all.
 
-\begin{enumerate}\setlength\itemsep{0.2em}
-  \item \textbf{C0049 YZy452} -- floor. The cytosolic pathway with its
-    dehydratase step switched off by the carbon source.
-  \item \textbf{C0050 YZy454} -- wild-type \gene{Ll\_ilvD} restored. The
-    unimproved-allele anchor.
-  \item \textbf{C0051 YZy469} -- \gene{Ll\_ilvD}$^{\text{I433V}}$, 227 $\pm$ 13
-    mg/L, 3.1-fold over C0050 on the same medium. One point mutation from the
-    row above.
-  \item \textbf{C0044 YZy313} -- wild-type \gene{ILV6} in the
-    mitochondrial-pathway host, Strain C of Fig.~3c.
-  \item \textbf{C0045 YZy314} -- \gene{ILV6}$^{\text{V110E}}$ in that same host,
-    Strain D, 1.6-fold over C0044. A second one-mutation contrast, on the
-    upstream acetolactate synthase regulator rather than the dehydratase.
-\end{enumerate}
+\input{tables/t4-round-one}
+
+\notesec{No sorting anywhere in this} The protocol that produced every titer in
+the paper is a single colony into 1 mL of SC or SC-ura with 2 percent glucose
+overnight, 10 $\mu$L of that into 1 mL of the same in a 24-well plate, 20 h, then
+a spin and a resuspension into 1 mL of the same medium with 15 percent sugar,
+sealed, 48 h at 30 $^{\circ}$C and 200 rpm, then OD$_{600}$ on a plate reader and
+HPLC on the supernatant. A shaker, a plate reader and an HPLC. Fluorescence-activated
+cell sorting appears only in the path that isolates strains out of pooled
+libraries, and those isolations are already done.
+
+\notesec{Two conditions that are not free choices} C0049 ferments on galactose,
+not glucose, for the P$_{\text{GAL10}}$ reason above, and on glucose it will read
+as a dead strain rather than as a floor. C0053 is the one tube that is not pick
+and use at all: its overnight needs constant blue light before production can run
+in the dark, which is an illuminated-plate setup rather than a shaker.
+
+Leucine has to be in the medium for all of them. The SI is direct about why:
+"LEU2 deletion also causes leucine auxotrophy, requiring supplementation of this
+amino acid in the growth medium". Standard SC supplies it, and a leucine dropout
+would kill the panel.
+
+\notesec{Measure titer alongside, do not carry it across} C0049's published
+310 $\pm$ 15 mg/L is a galactose number. Whichever carbon source the round
+settles on, the titer for each strain belongs in the same experiment as the
+sequencing rather than taken from the paper, because the media here will not
+match the media there well enough for the numbers to transfer.
 
 \noindent
-Adding \textbf{C0053 YZy502} as a sixth is worth its slot for one reason: it is
-the direct parent of YZy505, the paper's best isobutanol strain at 681 $\pm$ 29
-mg/L, so sequencing it now is the baseline that makes the YZy505 comparison
-possible later.
-
-\notesec{Grow the first three on glucose, and measure titer alongside} The paper
-measured C0049 on 15 percent galactose and C0050 and C0051 on 15 percent
-glucose. Glucose is the right pick for the round, because it is what makes the
-ladder a ladder, and the consequence is that C0049 will not reproduce its
-published 310 $\pm$ 15 mg/L: that was a galactose number, and in glucose its
-dehydratase is repressed. Titer belongs in the same experiment as the
-sequencing rather than carried across from the paper.
+C0053 stays out of round one on the light grounds above, but it is worth
+sequencing eventually for one reason: it is the direct parent of YZy505, the
+paper's best isobutanol strain at 681 $\pm$ 29 mg/L, so a baseline taken now is
+what makes that comparison possible later.
 
 \notesec{What is not in the round} The isopentanol arm, C0046 through C0048, is
 the cleanest three-point series in the box and C0048 holds the highest titer of

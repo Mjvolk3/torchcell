@@ -106,6 +106,31 @@ class Strain(BaseModel):
     role: str
     parent: str
     plasmid: Plasmid | None = None
+    production_carbon: str = Field(
+        description=(
+            "Carbon source the 48 h fermentation step uses for this strain. "
+            "Not a free choice: YZy452 and its unplasmided self make no "
+            "isobutanol on glucose because their Ll_ilvD sits behind PGAL10."
+        )
+    )
+    pick_and_use: bool = Field(
+        default=True,
+        description=(
+            "True when the strain runs on the paper's ordinary 24-well "
+            "protocol: single colony, shaker, plate reader, HPLC, no sorting "
+            "and no special illumination."
+        ),
+    )
+    round_one: str = Field(
+        default="",
+        description="Call for the first sequencing round, empty when not in it.",
+    )
+
+    @property
+    def medium(self) -> str:
+        """Uracil dropout exactly when a CEN URA3 plasmid has to be held."""
+        return "SC-ura" if self.plasmid else "SC"
+
     genotype: str = Field(
         description=(
             "Verbatim from Supplementary Table 1, 'Yeast strains used in this "
@@ -129,6 +154,7 @@ STRAINS: list[Strain] = [
     # The missing cell is YZy312, Strain B.
     Strain(
         collection_id="C0043",
+        production_carbon="15% glucose",
         tube_label="Yzy311",
         paper_strain="YZy311",
         color_group="green",
@@ -145,6 +171,8 @@ STRAINS: list[Strain] = [
     ),
     Strain(
         collection_id="C0044",
+        production_carbon="15% glucose",
+        round_one="yes -- ILV6 wild type, low arm of the 1.6-fold pair",
         tube_label="YZy313",
         paper_strain="YZy313",
         color_group="green",
@@ -162,6 +190,8 @@ STRAINS: list[Strain] = [
     ),
     Strain(
         collection_id="C0045",
+        production_carbon="15% glucose",
+        round_one="yes -- ILV6V110E, high arm of the 1.6-fold pair",
         tube_label="YZy314",
         paper_strain="YZy314",
         color_group="green",
@@ -181,6 +211,7 @@ STRAINS: list[Strain] = [
     ),
     Strain(
         collection_id="C0046",
+        production_carbon="15% glucose",
         tube_label="YZy148",
         paper_strain="YZy148",
         color_group="blue",
@@ -205,6 +236,7 @@ STRAINS: list[Strain] = [
     ),
     Strain(
         collection_id="C0047",
+        production_carbon="15% glucose",
         tube_label="YZy148+LEU4WT",
         paper_strain="YZy148 + LEU4 (wild type)",
         color_group="blue",
@@ -231,6 +263,7 @@ STRAINS: list[Strain] = [
     ),
     Strain(
         collection_id="C0048",
+        production_carbon="15% glucose",
         tube_label="YZy148+LEU4deltaS547",
         paper_strain="YZy148 + LEU4DS547",
         color_group="blue",
@@ -255,6 +288,8 @@ STRAINS: list[Strain] = [
     ),
     Strain(
         collection_id="C0049",
+        production_carbon="15% galactose",
+        round_one="yes -- ladder floor, dehydratase off on glucose",
         tube_label="YZy452",
         paper_strain="YZy452",
         color_group="orange",
@@ -285,6 +320,8 @@ STRAINS: list[Strain] = [
     ),
     Strain(
         collection_id="C0050",
+        production_carbon="15% glucose",
+        round_one="yes -- wild-type allele anchor",
         tube_label="YZy454",
         paper_strain="YZy454",
         color_group="orange",
@@ -312,6 +349,8 @@ STRAINS: list[Strain] = [
     ),
     Strain(
         collection_id="C0051",
+        production_carbon="15% glucose",
+        round_one="yes -- Ll_ilvDI433V, 3.1-fold over C0050",
         tube_label="YZy469",
         paper_strain="YZy469",
         color_group="orange",
@@ -341,6 +380,7 @@ STRAINS: list[Strain] = [
     ),
     Strain(
         collection_id="C0052",
+        production_carbon="15% glucose",
         tube_label="YZy91",
         paper_strain="YZy91",
         color_group="gray",
@@ -371,6 +411,8 @@ STRAINS: list[Strain] = [
     ),
     Strain(
         collection_id="C0053",
+        production_carbon="2% glucose, dark",
+        pick_and_use=False,
         tube_label="YZy502",
         paper_strain="YZy502",
         color_group="gray",
@@ -638,6 +680,52 @@ def write_gap_table(path: str) -> None:
         f.write("\n".join(lines))
 
 
+def write_round_one_table(path: str) -> None:
+    """Round one, and how every tube is grown if it is picked up at all.
+
+    Ordered so the five in the round come first, then the rest in ID order,
+    because the table answers two questions and the first one is "what do I
+    inoculate on Monday".
+    """
+    lines = [
+        f"%% SOURCE: experiments/{EXPERIMENT}/scripts/strain_panel.py",
+        f"%% Growth conditions from the Methods of {CITATION_KEY}:",
+        "%% single colony -> 1 mL SC or SC-ura + 2% glucose overnight -> 10 uL into",
+        "%% 1 mL of the same in a 24-well plate -> 20 h -> spin, resuspend in 1 mL",
+        "%% of the same + 15% sugar -> seal -> 48 h, 30 C, 200 rpm -> OD600, HPLC.",
+        "\\begin{table}[htbp]",
+        "\\centering",
+        "\\caption{\\textbf{Round one, and how each tube is grown.} Medium is "
+        "uracil dropout exactly when a CEN \\gene{URA3} plasmid has to be held, "
+        "and the fermentation carbon source is not a free choice for C0049. "
+        "Every strain marked yes runs on the paper's ordinary 24-well protocol: "
+        "single colony, shaker, plate reader, HPLC, with no sorting and no "
+        "special illumination. Leucine must be present in all cases, because "
+        "\\gene{leu2}$\\Delta$ makes these strains leucine auxotrophs; standard "
+        "SC supplies it.}",
+        "\\label{tab:roundone}",
+        "\\footnotesize",
+        "\\begin{tabular}{@{}lllll >{\\raggedright\\arraybackslash}p{50mm}@{}}",
+        "\\toprule",
+        "ID & Strain & Medium & Fermentation & Pick and use & Round one \\\\",
+        "\\midrule",
+    ]
+    ordered = sorted(STRAINS, key=lambda s: (s.round_one == "", s.collection_id))
+    in_round = sum(1 for s in STRAINS if s.round_one)
+    for i, s in enumerate(ordered):
+        if i == in_round:
+            lines.append("\\midrule")
+        lines.append(
+            f"{s.collection_id} & {_tex_escape(s.tube_label)} & {s.medium} & "
+            f"{_tex_escape(s.production_carbon)} & "
+            f"{'yes' if s.pick_and_use else '\\textbf{no}'} & "
+            f"{_tex_escape(s.round_one) if s.round_one else '--'} \\\\"
+        )
+    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}", ""]
+    with open(path, "w") as f:
+        f.write("\n".join(lines))
+
+
 def write_csv(path: str) -> None:
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
@@ -649,6 +737,10 @@ def write_csv(path: str) -> None:
                 "color_group",
                 "configuration",
                 "parent",
+                "medium",
+                "production_carbon",
+                "pick_and_use",
+                "round_one",
                 "plasmid",
                 "plasmid_cargo",
                 "genotype",
@@ -673,6 +765,10 @@ def write_csv(path: str) -> None:
                     s.color_group,
                     s.configuration,
                     s.parent,
+                    s.medium,
+                    s.production_carbon,
+                    s.pick_and_use,
+                    s.round_one,
                     s.plasmid.name if s.plasmid else "",
                     s.plasmid.cargo if s.plasmid else "",
                     s.genotype,
@@ -696,6 +792,7 @@ def main() -> None:
     write_panel_table(osp.join(TABLES_DIR, "t1-strain-panel.tex"))
     write_gap_table(osp.join(TABLES_DIR, "t2-one-step-away.tex"))
     write_genotype_table(osp.join(TABLES_DIR, "t3-genotypes.tex"))
+    write_round_one_table(osp.join(TABLES_DIR, "t4-round-one.tex"))
     write_csv(osp.join(RESULTS_DIR, "strain_panel.csv"))
 
     print(f"wrote {len(STRAINS)} strains, {len(NOT_HELD)} one step away")

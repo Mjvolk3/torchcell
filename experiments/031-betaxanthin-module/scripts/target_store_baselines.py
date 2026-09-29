@@ -299,6 +299,20 @@ PRIMARY_STORE = {
 }
 FOREST_LEAF_GRID = [1, 5, 20]
 FOREST_TREES = 300
+#: Gradient-boosted trees, opt-in (--models xgb): 500 rounds at a 0.05 learning rate,
+#: row subsampling 0.8 and column subsampling 0.5 per tree, histogram method; the grid
+#: selects the depth and the minimum child weight on the validation Pearson as the
+#: forest's leaf size is selected.
+XGB_FIXED: dict[str, Any] = {
+    "n_estimators": 500,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.5,
+    "tree_method": "hist",
+    "multi_strategy": "multi_output_tree",
+}
+XGB_DEPTH_GRID = (3, 6)
+XGB_CHILD_GRID = (1, 5)
 TOP_K = 50
 TOP_FRAC = 0.1
 
@@ -395,8 +409,22 @@ def main() -> None:
             "requires --out so the study's full ladder file is never overwritten by a subset"
         ),
     )
+    ap.add_argument(
+        "--models",
+        nargs="+",
+        default=["ridge", "knn", "forest"],
+        choices=["ridge", "knn", "forest", "xgb"],
+        help=(
+            "which models to fit; the default is the ladder as published, and 'xgb' "
+            "(gradient-boosted trees, 2026-09-28) is opt-in so the study's ladder file "
+            "keeps its three columns"
+        ),
+    )
     args = ap.parse_args()
     assert args.only is None or args.out, "--only requires --out"
+    assert set(args.models) == {"ridge", "knn", "forest"} or args.out, (
+        "a model set other than the published three requires --out"
+    )
     from sklearn.ensemble import RandomForestRegressor
 
     started = time.time()
@@ -719,16 +747,17 @@ def main() -> None:
             return cell
 
         # ridge / bilinear
-        cells = [
-            evaluate(
-                lambda q, k=k, r=r: bilinear(r_tr, p_tr, q, k, r),
-                {"k_gene": k, "ridge": r},
-            )
-            for k in ranks
-            if k <= min(r_tr.shape)
-            for r in RIDGE_GRID
-        ]
-        out["ridge"] = select(cells, ["k_gene", "ridge"])
+        if "ridge" in args.models:
+            cells = [
+                evaluate(
+                    lambda q, k=k, r=r: bilinear(r_tr, p_tr, q, k, r),
+                    {"k_gene": k, "ridge": r},
+                )
+                for k in ranks
+                if k <= min(r_tr.shape)
+                for r in RIDGE_GRID
+            ]
+            out["ridge"] = select(cells, ["k_gene", "ridge"])
         # cosine nearest neighbors
         e_tr = p_tr / (np.linalg.norm(p_tr, axis=1, keepdims=True) + 1e-12)
 
@@ -743,28 +772,54 @@ def main() -> None:
             weights = (sims >= kth - 1e-9).astype(float)
             return (weights @ r_tr) / weights.sum(axis=1, keepdims=True)
 
-        cells = [evaluate(lambda q, k=k: knn(q, k), {"k": k}) for k in KNN_GRID]
-        out["knn"] = select(cells, ["k"])
+        if "knn" in args.models:
+            cells = [evaluate(lambda q, k=k: knn(q, k), {"k": k}) for k in KNN_GRID]
+            out["knn"] = select(cells, ["k"])
         # random forest, the Flux Cone Learning form on one point per deletion
-        cells = []
-        for leaf in FOREST_LEAF_GRID:
-            forest = RandomForestRegressor(
-                n_estimators=FOREST_TREES,
-                max_features="sqrt",
-                min_samples_leaf=leaf,
-                n_jobs=args.threads,
-                random_state=args.seed,
-            ).fit(p_tr, r_tr if r_tr.shape[1] > 1 else r_tr[:, 0])
-            cells.append(
-                evaluate(
-                    lambda q, f=forest: np.atleast_2d(f.predict(q)).reshape(len(q), -1),
-                    {"min_samples_leaf": leaf, "n_estimators": FOREST_TREES},
+        if "forest" in args.models:
+            cells = []
+            for leaf in FOREST_LEAF_GRID:
+                forest = RandomForestRegressor(
+                    n_estimators=FOREST_TREES,
+                    max_features="sqrt",
+                    min_samples_leaf=leaf,
+                    n_jobs=args.threads,
+                    random_state=args.seed,
+                ).fit(p_tr, r_tr if r_tr.shape[1] > 1 else r_tr[:, 0])
+                cells.append(
+                    evaluate(
+                        lambda q, f=forest: np.atleast_2d(f.predict(q)).reshape(len(q), -1),
+                        {"min_samples_leaf": leaf, "n_estimators": FOREST_TREES},
+                    )
                 )
-            )
-        out["forest"] = select(cells, ["min_samples_leaf", "n_estimators"])
+            out["forest"] = select(cells, ["min_samples_leaf", "n_estimators"])
+        # gradient-boosted trees (2026-09-28): the same inputs and the same selection
+        # rule as the forest, a grid over depth and the minimum child weight, the other
+        # settings fixed (XGB_FIXED). Multi-column targets are fit as one multi-output
+        # model (xgboost's native multi-target trees).
+        if "xgb" in args.models:
+            from xgboost import XGBRegressor
+
+            cells = []
+            for depth in XGB_DEPTH_GRID:
+                for child in XGB_CHILD_GRID:
+                    booster = XGBRegressor(
+                        max_depth=depth,
+                        min_child_weight=child,
+                        n_jobs=args.threads,
+                        random_state=args.seed,
+                        **XGB_FIXED,
+                    ).fit(p_tr, r_tr)
+                    cells.append(
+                        evaluate(
+                            lambda q, b=booster: np.atleast_2d(b.predict(q)).reshape(len(q), -1),
+                            {"max_depth": depth, "min_child_weight": child, **XGB_FIXED},
+                        )
+                    )
+            out["xgb"] = select(cells, ["max_depth", "min_child_weight"])
         payload["representations"][rep_name] = out
         line = f"  {rep_name:<28s} dim {rep['dim']:>5d}"
-        for model in ("ridge", "knn", "forest"):
+        for model in args.models:
             tp = out[model]["selected_on_val"]["test_pinned"]
             line += f" | {model} rho {tp['mean_spearman']:+.4f}"
             if "top50_enrichment" in tp:

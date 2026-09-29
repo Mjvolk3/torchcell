@@ -1,5 +1,10 @@
 # CHANGELOG
 
+> **2026.09.29:** This file stops at v0.2.8. Releases from v1.0.0 onward are listed on
+> the [GitHub Releases page](https://github.com/Mjvolk3/torchcell/releases), with their
+> notes; semantic-release did not write them to this file. The entries below are kept
+> as they were.
+
 ## v0.2.8 (2024-09-20)
 
 ### Fix

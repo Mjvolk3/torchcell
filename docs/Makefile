@@ -1,9 +1,9 @@
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = pytorch_geometric
+SPHINXPROJ    = torchcell
 SOURCEDIR     = source
 BUILDDIR      = build
 
 .PHONY: help Makefile
 
 %: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(0)
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

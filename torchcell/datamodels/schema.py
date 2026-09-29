@@ -719,8 +719,10 @@ class CopyNumberVariantPerturbation(GenePerturbation, ModelStrict):
     ``NaturalGeneAbsencePerturbation`` leaf; "you don't copy from zero"). Presence of an
     accessory ORF is likewise the presence/absence ``NaturalGenePresencePerturbation``
     leaf, not a CNV. This leaf is for a genuine dosage difference:
+
       - AMPLIFICATION -> ``copy_number`` > ``reference_copy_number``;
       - REDUCTION (still present) -> ``reference_copy_number`` > ``copy_number`` > 0.
+
     Contrast the ENGINEERED ``EngineeredCopyNumberPerturbation`` (same dosage axis, lab
     origin). ``origin`` annotates an accessory ORF's provenance with the field's
     mechanism vocabulary (``ancestral | introgression | hgt``). For a non-reference ORF
@@ -2409,6 +2411,7 @@ class PseudobulkExpressionPhenotype(Phenotype, ModelStrict):
 
     The single-cell origin is preserved by two per-genotype scalars -- the WHOLE POINT of a
     pseudobulk+dispersion (rather than per-cell) representation:
+
       - ``dispersion``: the genotype's transcriptional HETEROGENEITY, the standard deviation
         of the scaled SVD leverage score across the genotype's cells
         (``sd_lvscore_scaledFU2``; the leverage score is z-scored against WT cells, so WT

@@ -23,7 +23,8 @@ def time_method(func: Callable[..., Any]) -> Callable[..., Any]:
     Works with functions, instance methods, class methods, and static methods.
     Zero overhead when disabled (single boolean check).
 
-    Usage:
+    Usage::
+
         @time_method
         def my_function():
             pass

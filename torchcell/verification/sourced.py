@@ -187,7 +187,7 @@ class ProvenanceGap(BaseModel):
 
 
 class ProvenanceGapCensus(BaseModel):
-    """Aggregate view of the ``ProvenanceGap``s across a built dataset -- the worklist.
+    r"""Aggregate view of the ``ProvenanceGap``\ s across a built dataset -- the worklist.
 
     A documented gap is a PASS, not a failure: this census is informational. Its
     payoff is ``worklist_fields`` -- the distinct fields carrying a

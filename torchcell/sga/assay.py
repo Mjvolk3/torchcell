@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from torchcell.sga.models import NormalizationConfig
@@ -71,11 +72,14 @@ def volume_position_confound(df: pd.DataFrame) -> dict[str, Any]:
     """
     out = {"confounded": False, "axis": None, "detail": ""}
     for axis in ("col", "row"):
-        spans = {
-            v: (int(sub[axis].min()), int(sub[axis].max()))
-            for v, sub in df.groupby("volume_nl")
+        vols: list[float] = sorted(float(v) for v in df["volume_nl"].unique())
+        spans: dict[float, tuple[int, int]] = {
+            v: (
+                int(df.loc[df["volume_nl"] == v, axis].min()),
+                int(df.loc[df["volume_nl"] == v, axis].max()),
+            )
+            for v in vols
         }
-        vols = sorted(spans)
         if len(vols) != 2:
             continue
         (a0, a1), (b0, b1) = spans[vols[0]], spans[vols[1]]
@@ -94,10 +98,10 @@ def volume_position_confound(df: pd.DataFrame) -> dict[str, Any]:
     return out
 
 
-def zfactor(a: np.ndarray, b: np.ndarray) -> float:
+def zfactor(a: npt.NDArray[np.float64], b: npt.NDArray[np.float64]) -> float:
     """Z'-factor between two colony populations (assay separation window).
 
-    Z' = 1 - 3*(sd_a + sd_b) / |mean_a - mean_b|. >0.5 excellent, 0-0.5 usable,
+    ``Z' = 1 - 3*(sd_a + sd_b) / |mean_a - mean_b|``. >0.5 excellent, 0-0.5 usable,
     <0 no separation. Uses the two most-separated groups to measure the window
     the assay actually offers.
     """
@@ -142,7 +146,9 @@ def volume_assay_metrics(
                 "median_within_strain_cv": float(cvs.median()),
                 "weakest_strain": weakest,
                 "dynamic_range": float(strain_med.max() / strain_med.min()),
-                "zfactor_wt_vs_weakest": zfactor(wt.to_numpy(), weak_vals.to_numpy())
+                "zfactor_wt_vs_weakest": zfactor(
+                    wt.to_numpy(dtype=np.float64), weak_vals.to_numpy(dtype=np.float64)
+                )
                 if len(wt) >= 2 and len(weak_vals) >= 2
                 else np.nan,
             }

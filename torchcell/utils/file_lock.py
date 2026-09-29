@@ -237,13 +237,12 @@ class FileLockHelper:
         Returns:
             FileLock instance
 
-        Example:
-            ```python
+        Example::
+
             with FileLockHelper.with_file_lock("data.txt") as lock:
                 # Perform thread-safe operations
                 with open("data.txt", 'a') as f:
                     f.write("new data\\n")
-            ```
         """
         lock_path = cls._get_lock_path(file_path)
         timeout = timeout or cls.default_timeout

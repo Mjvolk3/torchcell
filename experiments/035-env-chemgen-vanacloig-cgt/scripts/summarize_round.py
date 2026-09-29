@@ -5,9 +5,11 @@
 
 Reads ``results/<round>/<arm>/fold<k>_seed<s>_{scores,history}.csv`` as the trainer
 wrote them and ``results/baselines_same_folds.csv``. A fold counts as FINISHED only when
-its history holds the run's full epoch budget, read from the largest epoch count any fold
-of that arm reached; a fold still training is reported as partial and left out of the
-medians, because its selected epoch can still change.
+its history holds the full epoch budget, given as ``--epoch-budget``; a fold still
+training is reported as partial and left out of the medians, because its selected epoch
+can still change. The budget is an argument and is not inferred from the runs: inferred
+from the longest history, every fold of an arm whose first fold was three epochs in read
+as finished.
 
 The comparison with a baseline is paired: both are scored on the same held-out
 compounds, those of the arm's finished folds, so an arm with three folds done is
@@ -19,6 +21,7 @@ Writes ``results/round_summary.csv`` (one row per round, arm and target) and
 
 from __future__ import annotations
 
+import argparse
 import glob
 import os
 import os.path as osp
@@ -33,7 +36,7 @@ RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "035-env-chemgen-vanacloig-cgt", "result
 RUN = re.compile(r"fold(?P<fold>\d+)_seed(?P<seed>\d+)_scores\.csv$")
 
 
-def load_runs() -> pd.DataFrame:
+def load_runs(epoch_budget: int) -> pd.DataFrame:
     """Test-compound scores of every fold, with how far its training got."""
     frames = []
     for path in sorted(glob.glob(osp.join(RESULTS_DIR, "*", "*", "fold*_scores.csv"))):
@@ -51,12 +54,17 @@ def load_runs() -> pd.DataFrame:
             )
         )
     runs = pd.concat(frames, ignore_index=True)
-    budget = runs.groupby(["round", "arm"])["epochs_run"].transform("max")
-    return runs.assign(epoch_budget=budget, finished=runs["epochs_run"] == budget)
+    assert (runs["epochs_run"] <= epoch_budget).all(), "a fold ran past the budget"
+    return runs.assign(
+        epoch_budget=epoch_budget, finished=runs["epochs_run"] == epoch_budget
+    )
 
 
 def main() -> None:
-    runs = load_runs()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--epoch-budget", type=int, required=True)
+    args = parser.parse_args()
+    runs = load_runs(args.epoch_budget)
     baselines = pd.read_csv(osp.join(RESULTS_DIR, "baselines_same_folds.csv"))
     baselines = baselines[baselines["split"] == "test"]
     reference = baselines.pivot_table(
@@ -81,6 +89,9 @@ def main() -> None:
                 "epoch_budget": int(g["epoch_budget"].iloc[0]),
                 "folds_finished": done["fold"].nunique(),
                 "folds_partial": g.loc[~g["finished"], "fold"].nunique(),
+                "partial_epochs_run": "|".join(
+                    str(e) for e in sorted(g.loc[~g["finished"], "epochs_run"].unique())
+                ),
                 "compounds_scored": len(scored),
                 "spearman_median": scored["spearman"].median(),
                 "pearson_median": scored["pearson"].median(),

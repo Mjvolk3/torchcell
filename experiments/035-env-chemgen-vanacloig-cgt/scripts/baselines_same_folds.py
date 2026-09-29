@@ -78,8 +78,11 @@ def main() -> None:
             "gene_mean": np.repeat(gene_mean[:, None], measured.shape[1], axis=1),
             "ridge": np.full(measured.shape, np.nan),
         }
-        predictions["ridge"][np.ix_(fit, held_out)] = ridge.predict(
-            (cells.compound_features[held_out] - mu) / sd
+        # the training columns are predicted too: the centered score subtracts the
+        # model's own mean over them
+        columns = fold.train + held_out
+        predictions["ridge"][np.ix_(fit, columns)] = ridge.predict(
+            (cells.compound_features[columns] - mu) / sd
         ).T
         for model, prediction in predictions.items():
             for split, columns in (("val", fold.val), ("test", fold.test)):

@@ -202,20 +202,23 @@ def predict(
 def evaluate(
     cells: VanacloigCells,
     fold: Fold,
-    standardized: dict[str, np.ndarray],
-    index: dict[str, torch.Tensor],
+    standardized: np.ndarray,
     mean: float,
     sd: float,
+    has_environment: bool,
 ) -> tuple[pd.DataFrame, dict[str, float]]:
-    """Score the validation and test compounds from standardized predictions."""
+    """Score the validation and test compounds from a prediction for EVERY cell."""
+    prediction = cells.matrix(standardized * sd + mean)
     frames = []
     summary: dict[str, float] = {}
     for split, compounds in (("val", fold.val), ("test", fold.test)):
-        prediction = np.full(len(cells.response), np.nan)
-        prediction[index[split].numpy()] = standardized[split] * sd + mean
-        scores = score_compounds(
-            cells, cells.matrix(prediction), fold.train, compounds
-        ).assign(split=split)
+        scores = score_compounds(cells, prediction, fold.train, compounds).assign(
+            split=split
+        )
+        if not has_environment:
+            # with no compound input the prediction is one value per gene, so its
+            # centered form is numerical noise around zero and carries no score
+            scores.loc[scores["target"] == "centered", ["spearman", "pearson"]] = np.nan
         frames.append(scores)
         for target, g in scores.groupby("target"):
             summary[f"{split}/{target}_spearman_mean"] = float(g["spearman"].mean())
@@ -348,19 +351,21 @@ def main(cfg: DictConfig) -> None:
             penalty_sum += float(penalty)
         train_seconds = time.time() - started
 
-        standardized = {
-            split: predict(
-                model,
-                cell_graph,
-                strain,
-                features,
-                index[split],
-                cfg.trainer.eval_batch_size,
-                device,
-            )
-            for split in ("val", "test")
-        }
-        scores, summary = evaluate(cells, fold, standardized, index, mean, sd)
+        started = time.time()
+        everything = predict(
+            model,
+            cell_graph,
+            strain,
+            features,
+            torch.arange(len(target)),
+            cfg.trainer.eval_batch_size,
+            device,
+        )
+        standardized = {split: everything[index[split].numpy()] for split in index}
+        scores, summary = evaluate(
+            cells, fold, everything, mean, sd, has_environment=cfg.arm != "cgt_genes"
+        )
+        eval_seconds = time.time() - started
         row = {
             "epoch": epoch,
             "train/mse": loss_sum / steps_per_epoch,
@@ -373,6 +378,7 @@ def main(cfg: DictConfig) -> None:
             ),
             "lr": scheduler.get_last_lr()[0],
             "train_seconds": train_seconds,
+            "eval_seconds": eval_seconds,
             **summary,
         }
         history.append(row)
@@ -383,7 +389,7 @@ def main(cfg: DictConfig) -> None:
             f"val centered rho {summary['val/centered_spearman_mean']:+.4f}  "
             f"test centered rho (median) {summary['test/centered_spearman_median']:+.4f}  "
             f"test raw rho (median) {summary['test/raw_spearman_median']:+.4f}  "
-            f"{train_seconds:.0f} s",
+            f"train {train_seconds:.0f} s  eval {eval_seconds:.0f} s",
             flush=True,
         )
 

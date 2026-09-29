@@ -35,6 +35,9 @@ VANACLOIG = "EnvChemgenVanacloig2022Dataset"
 HOST_GENES: tuple[str, str, str] = ("YGL013C", "YBL005W", "YDR011W")
 #: A compound is scored only over at least this many genes.
 MIN_GENES = 10
+#: A prediction whose spread over genes is below this is a constant and is not scored.
+#: Rounding leaves about 1e-17 on a prediction that is exactly its own training mean.
+CONSTANT_SD = 1e-10
 
 
 class VanacloigCells(BaseModel):
@@ -143,6 +146,8 @@ def make_folds(n_compounds: int, n_folds: int, n_val: int, seed: int) -> list[Fo
 def ceiling(response: NDArray[np.float64], se: NDArray[np.float64]) -> float:
     """Square root of 1 - mean(SE^2) / Var(response); zero where that is negative."""
     ok = np.isfinite(response) & np.isfinite(se)
+    if ok.sum() < MIN_GENES:
+        return float("nan")
     reliability = 1.0 - float(np.mean(se[ok] ** 2)) / float(
         np.var(response[ok], ddof=1)
     )
@@ -157,21 +162,31 @@ def score_compounds(
 ) -> pd.DataFrame:
     """One row per held-out compound and target.
 
-    ``prediction`` is genes by compounds in the units of the served response; only the
-    ``held_out`` columns are read. The gene mean that centers both sides is taken over
-    the ``train`` columns of the MEASURED matrix, never the prediction.
+    ``prediction`` is genes by compounds in the units of the served response, and it
+    must cover the ``train`` columns as well as the ``held_out`` ones.
+
+    EACH SIDE IS CENTERED BY ITS OWN TRAINING MEAN: the measurement by the measured gene
+    mean over the training compounds, the prediction by the PREDICTED gene mean over the
+    same compounds. Subtracting the measured mean from both sides is wrong, and the smoke
+    run (slurm 3009) showed how: a model 60 steps into training, whose output barely
+    depended on the gene, scored 0.356 centered and -0.001 raw. A prediction that is
+    constant in the gene becomes minus the gene mean once the measured mean is subtracted
+    from it, and the centered measurement contains that same term. Centering the
+    prediction by its own mean leaves a model with no compound-specific output with a
+    constant, which is unscored, as it should be.
     """
     measured = cells.matrix(cells.response)
     se = cells.matrix(cells.response_se)
-    gene_mean = np.nanmean(measured[:, train], axis=1)
+    measured_mean = np.nanmean(measured[:, train], axis=1)
+    predicted_mean = np.nanmean(prediction[:, train], axis=1)
+    zero = np.zeros_like(measured_mean)
     rows = []
     for j in held_out:
         for target in ("raw", "centered"):
-            shift = gene_mean if target == "centered" else np.zeros_like(gene_mean)
-            obs = measured[:, j] - shift
-            pred = prediction[:, j] - shift
+            obs = measured[:, j] - (measured_mean if target == "centered" else zero)
+            pred = prediction[:, j] - (predicted_mean if target == "centered" else zero)
             ok = np.isfinite(obs) & np.isfinite(pred)
-            constant = ok.sum() < MIN_GENES or np.std(pred[ok]) == 0
+            constant = ok.sum() < MIN_GENES or np.std(pred[ok]) < CONSTANT_SD
             rows.append(
                 {
                     "compound": cells.compounds[j],

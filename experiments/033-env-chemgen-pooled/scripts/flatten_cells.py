@@ -250,6 +250,13 @@ def main() -> None:
         default=1,
         help="read every stride-th entry; 1 is the full store, larger is a smoke run",
     )
+    parser.add_argument("--start", type=int, default=0)
+    parser.add_argument(
+        "--stop",
+        type=int,
+        default=None,
+        help="with --start, a contiguous range of entries for a smoke run",
+    )
     args = parser.parse_args()
 
     env = lmdb.open(
@@ -257,7 +264,8 @@ def main() -> None:
     )
     length = env.stat()["entries"]
     env.close()
-    indices = list(range(0, length, args.stride))
+    stop = length if args.stop is None else args.stop
+    indices = list(range(args.start, stop, args.stride))
     print(f"store length {length:,}; reading {len(indices):,} entries", flush=True)
 
     parts_dir = osp.join(args.out, "parts")

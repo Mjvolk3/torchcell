@@ -1424,6 +1424,24 @@ PAIRS = [
         "w253_bxdelgopfbamomacompesm_h12l1p1_e200",
         "w252_bxdelgopfbamomacomp_h12l1p1_e200",
     ),
+    (
+        "betaxanthin: the forest's read of the GO neighbor mean as a one-column store (inductive) against GO alone",
+        "betaxanthin",
+        "w254_bxdelgonbrforest_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the forest's read as a one-column store against the neighbor mean through the linear affine",
+        "betaxanthin",
+        "w254_bxdelgonbrforest_h12l1p1_e200",
+        "w245_bxdelgonbr_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the inductive incumbent with the forest's read appended against without",
+        "betaxanthin",
+        "w255_bxdelgopfbamomaforest_h12l1p1_e200",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+    ),
 ]
 
 

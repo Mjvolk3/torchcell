@@ -616,11 +616,13 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         processing time.
 
         Returns:
-            dict with cache build timing: {
-                'total_time_ms': float,
-                'num_edge_types': int,
-                'total_edges': int
-            }
+            dict with cache build timing::
+
+                {
+                    'total_time_ms': float,
+                    'num_edge_types': int,
+                    'total_edges': int
+                }
         """
         import time
 
@@ -1300,11 +1302,13 @@ class LazySubgraphRepresentation(GraphProcessor):
         processing time.
 
         Returns:
-            dict with cache build timing: {
-                'total_time_ms': float,
-                'num_edge_types': int,
-                'total_edges': int
-            }
+            dict with cache build timing::
+
+                {
+                    'total_time_ms': float,
+                    'num_edge_types': int,
+                    'total_edges': int
+                }
         """
         import time
 

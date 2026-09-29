@@ -143,7 +143,7 @@ ANCESTOR_DIAMETER_PX = 35
 
 
 class NodeRule(BaseModel):
-    """One ``node.<Label> { ... }`` block."""
+    """One ``node.<Label> {...}`` block."""
 
     label: str
     fill: str = Field(pattern=r"^#[0-9A-F]{6}$")
@@ -167,7 +167,7 @@ class NodeRule(BaseModel):
 
 
 class RelationshipRule(BaseModel):
-    """The single ``relationship { ... }`` block: every edge is a membership edge."""
+    """The single ``relationship {...}`` block: every edge is a membership edge."""
 
     color: str = Field(default=PLOT_PALETTE[5], pattern=r"^#[0-9A-F]{6}$")
     shaft_width_px: int = 1

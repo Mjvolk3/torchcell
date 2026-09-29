@@ -658,10 +658,12 @@ class EquivariantPerturbationTransform(nn.Module):
             batch_assignment: [total_pert_genes] - batch index for each perturbed gene
 
         Returns:
-            H_genes_pert: [batch, N, d] - perturbed gene embeddings (EQUIVARIANT!)
-            context: [batch, N, d] - the attended perturbation context, returned
-                separately so downstream heads can condition on it directly (the
-                concat/bilinear/FiLM arms all need c_b, not only h_i + c_b).
+            A tuple ``(H_genes_pert, context)``:
+
+            - ``H_genes_pert``: [batch, N, d] - perturbed gene embeddings (EQUIVARIANT!)
+            - ``context``: [batch, N, d] - the attended perturbation context, returned
+              separately so downstream heads can condition on it directly (the
+              concat/bilinear/FiLM arms all need c_b, not only h_i + c_b).
         """
         batch_size = int(batch_assignment.max().item()) + 1
         N, d = H_genes.shape
@@ -743,7 +745,7 @@ class PerturbationGraphPropagation(nn.Module):
 
     WHY THIS EXISTS. The encoder runs at batch 1 on the WILDTYPE graph, so ``H_genes``
     and ``h_CLS`` are identical for every strain; the only strain-dependent step is
-    :class:`EquivariantPerturbationTransform`, whose K/V set is just the |S_b| perturbed
+    :class:`EquivariantPerturbationTransform`, whose K/V set is just the ``|S_b|`` perturbed
     tokens.  For a SINGLE deletion the softmax is over one key, so the attention weight
     is exactly 1 for every query gene and the attended vector is query-INDEPENDENT:
 
@@ -772,7 +774,7 @@ class PerturbationGraphPropagation(nn.Module):
     so the module starts as an exact identity and this is a clean ablation: any gain is
     attributable to propagation, not to the extra parameters.
 
-    Cost is a sparse mat-vec per (graph, hop), i.e. O(|E|) -- negligible next to the
+    Cost is a sparse mat-vec per (graph, hop), i.e. O(``|E|``) -- negligible next to the
     encoder's dense attention over 6,607 tokens.
     """
 
@@ -1681,7 +1683,7 @@ class PerMetaboliteHead(nn.Module):
     TODO(ws7): the pooling here is a mean over the catalyzing genes / participating
     reactions using the sha-normalized incidence built from cell_graph. Stoichiometry
     (edge weights on the metabolite<->reaction hyperedge) is ignored for now; a future
-    version can weight the reaction->metabolite pool by |stoichiometric coefficient|.
+    version can weight the reaction->metabolite pool by ``|stoichiometric coefficient|``.
     """
 
     def __init__(self, hidden_dim: int, output_dim: int = 1, dropout: float = 0.1):

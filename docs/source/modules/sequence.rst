@@ -1,34 +1,40 @@
 torchcell.sequence
-====================
+==================
+
+.. module:: torchcell.sequence
+
+.. currentmodule:: torchcell.sequence
+
+Genome and sequence data structures. :class:`~torchcell.sequence.Genome` is the abstract genome interface (lazy gene-set and sequence access), :class:`~torchcell.sequence.Gene` a gene within it, and :class:`~torchcell.sequence.DnaWindowResult` and :class:`~torchcell.sequence.DnaSelectionResult` the sequence windows the embedding datasets consume. The *S. cerevisiae* S288C implementation lives in ``torchcell.sequence.genome.scerevisiae``, and ``torchcell.sequence.genome.registry`` resolves the sha256-pinned reference genome files.
 
 .. contents:: Contents
     :local:
 
-Data Objects
-------------
-
-.. currentmodule:: torchcell.sequence
+Classes
+-------
 
 .. autosummary::
    :nosignatures:
    :toctree: ../generated
-   :template: autosummary/inherited_class.rst
+   :template: autosummary/class.rst
 
-   {% for name in torchcell.sequence.data_classes %}
-     {{ name }}
-   {% endfor %}
+   DnaSelectionResult
+   DnaWindowResult
+   Gene
+   GeneSet
+   Genome
+   ParsedGenome
 
-
-Helper Functions
-----------------
-
-.. currentmodule:: torchcell.sequence
+Functions
+---------
 
 .. autosummary::
    :nosignatures:
    :toctree: ../generated
 
-    torchcell.sequence.DnaSelectionResult
-   {% for name in torchcell.sequence.helper_functions %}
-     {{ name }}
-   {% endfor %}
+   calculate_window_bounds
+   calculate_window_bounds_symmetric
+   compute_codon_frequency
+   get_chr_from_description
+   mismatch_positions
+   roman_to_int

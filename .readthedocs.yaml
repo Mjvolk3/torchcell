@@ -9,14 +9,17 @@ version: 2
 build:
   os: ubuntu-22.04
   tools:
-    python: "3.11"
+    python: "3.13"
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: docs/source/conf.py
 
-# Optional but recommended, declare the Python requirements required
-# to build your documentation
+# The docs requirements first, then this checkout itself (a regular, non-editable pip
+# install; the config file has no editable option), so autodoc imports the local
+# torchcell and not a PyPI release. conf.py also puts the checkout first on sys.path.
 python:
   install:
     - requirements: docs/requirements.txt
+    - method: pip
+      path: .

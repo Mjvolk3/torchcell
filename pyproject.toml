@@ -35,7 +35,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Mjvolk3/Dendron-Template"
+Homepage = "https://github.com/Mjvolk3/torchcell"
+Documentation = "https://mjvolk3.github.io/torchcell/"
+Database = "https://torchcell-database.ncsa.illinois.edu:7473/browser/"
+Issues = "https://github.com/Mjvolk3/torchcell/issues"
 
 [project.scripts]
 torchcell = "torchcell.__main__:main"

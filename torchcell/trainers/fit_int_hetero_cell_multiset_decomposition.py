@@ -471,13 +471,14 @@ class RegressionTask(L.LightningModule):
                     – [f₍ⱼₖ₎ – f₍ⱼ₎·f₍ₖ₎]·f₍ᵢ₎.
 
         Here f(T) is obtained by:
+
         1. For each nonempty subset T ⊆ S, create a dummy experiment
-            using _create_dummy_data_for_subset (with each gene’s identifier used as strain_id).
+           using _create_dummy_data_for_subset (with each gene’s identifier used as strain_id).
         2. Process each dummy experiment individually via self.graph_processor.process.
         3. Batch the processed HeteroData objects with PyG’s Batch.from_data_list.
         4. Run the model inference on the batch (self(...)) to obtain predictions,
-            and then apply the inverse transform to the predictions so that the
-            fitness values are on the correct scale.
+           and then apply the inverse transform to the predictions so that the
+           fitness values are on the correct scale.
 
         This implementation only supports 1-, 2-, and 3-gene combinations.
         """

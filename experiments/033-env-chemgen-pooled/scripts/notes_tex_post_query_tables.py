@@ -101,7 +101,10 @@ def tex_table(df: pd.DataFrame, align: str) -> str:
     body = "\n".join(
         " & ".join(esc(v) for v in row) + r" \\" for row in df.itertuples(index=False)
     )
+    # 3 pt between columns rather than 6: the float scopes it, and it buys the width
+    # that lets a one-word header such as "environments" sit on one line
     return (
+        "\\setlength{\\tabcolsep}{3pt}\n"
         f"\\begin{{tabular}}{{{align}}}\n\\toprule\n{head}\n\\midrule\n"
         f"{body}\n\\bottomrule\n\\end{{tabular}}\n"
     )
@@ -282,7 +285,7 @@ def t1_axes(results: str) -> None:
     out = pd.DataFrame(
         {
             "dataset": axes["dataset"],
-            "measurements": axes["measurements"].map(n),
+            "records": axes["measurements"].map(n),
             "cells": axes["cells"].map(n),
             "genes": axes["genes"].map(n),
             "environments": axes["environments"].map(n),
@@ -305,7 +308,19 @@ def t1_axes(results: str) -> None:
         n(pool["cells_compound_without_inchikey"]),
     ]
     write(
-        "t1-store-axes", tex_table(out, left(2.6) + right(1.45) * 8), "store_axes.csv"
+        "t1-store-axes",
+        tex_table(
+            out,
+            left(2.4)
+            + right(1.5) * 2
+            + right(1.2)
+            + right(2.0)
+            + right(1.7)
+            + right(1.5)
+            + right(1.7)
+            + right(1.6),
+        ),
+        "store_axes.csv",
     )
 
 
@@ -397,9 +412,9 @@ def t6_reliability(results: str) -> None:
             "arm": arm,
             "environments": rel["environments"].map(n),
             "screen pairs": rel["screen_pairs"].map(n),
-            "Pearson, median": rel["pearson_median"].map(lambda v: f(v, 3)),
+            "Pearson median": rel["pearson_median"].map(lambda v: f(v, 3)),
             "quartiles": rel["pearson_q25"].map(f) + " to " + rel["pearson_q75"].map(f),
-            "Spearman, median": rel["spearman_median"].map(lambda v: f(v, 3)),
+            "Spearman median": rel["spearman_median"].map(lambda v: f(v, 3)),
             "ceiling": rel["ceiling_r_truth"].map(lambda v: f(v, 3)),
             "largest contributor": rel["top_compound"]
             + " ("
@@ -410,13 +425,13 @@ def t6_reliability(results: str) -> None:
     align = (
         left(2.4)
         + left(1.9)
-        + right(1.3)
-        + right(1.0)
+        + right(2.0)
         + right(1.1)
-        + left(1.6)
+        + right(1.4)
+        + left(1.8)
+        + right(1.6)
         + right(1.2)
-        + right(1.0)
-        + left(2.4)
+        + left(2.6)
     )
     write("t6-reliability", tex_table(out, align), "within_cell_reliability.csv")
 
@@ -455,7 +470,7 @@ def t8_ploidy(results: str) -> None:
     out = pd.DataFrame(
         {
             "matched on": ploidy["level"],
-            "cells in both arms": ploidy["cells_both"].map(n),
+            "cells in both": ploidy["cells_both"].map(n),
             "Spearman": ploidy["spearman"].map(lambda v: f(v, 3)),
             "Pearson": ploidy["pearson"].map(lambda v: f(v, 3)),
             "limit": ploidy["attenuation_limit"].map(lambda v: f(v, 3)),
@@ -463,14 +478,26 @@ def t8_ploidy(results: str) -> None:
             "per compound": ploidy["spearman_per_compound_median"].map(
                 lambda v: f(v, 3)
             ),
-            "homozygous hits": ploidy["hom_hits"].map(count),
-            "also heterozygous hits": ploidy["hom_hits_also_het_hits"].map(count),
-            "expected by chance": ploidy["hom_hits_expected_by_chance"].map(count),
+            "hits": ploidy["hom_hits"].map(count),
+            "shared hits": ploidy["hom_hits_also_het_hits"].map(count),
+            "shared by chance": ploidy["hom_hits_expected_by_chance"].map(count),
         }
     )
     write(
         "t8-ploidy",
-        tex_table(out, left(3.0) + right(1.3) + right(1.15) * 8),
+        tex_table(
+            out,
+            left(3.0)
+            + right(1.5)
+            + right(1.6)
+            + right(1.4)
+            + right(1.0)
+            + right(1.4)
+            + right(1.6)
+            + right(1.2)
+            + right(1.2)
+            + right(1.4),
+        ),
         "ploidy_pairs.csv",
     )
 
@@ -582,7 +609,16 @@ def t12_vocabulary(results: str) -> None:
     )
     write(
         "t12-vocabulary",
-        tex_table(out, left(2.5) + right(1.8) * 6),
+        tex_table(
+            out,
+            left(2.5)
+            + right(1.9)
+            + right(3.2)
+            + right(1.7)
+            + right(2.0)
+            + right(2.2)
+            + right(2.0),
+        ),
         "environment_vocabulary.csv",
     )
 

@@ -147,3 +147,48 @@ compressed 115 GB to 881 MB and its aggregation 114 GB to 1.1 GB (slurm 2957, 6 
 `gh_reclaim_db_stages.slurm` removes an archived stage only after re-verifying that sha256
 in the same job, and removes a directory from an unfinished build only when it holds an LMDB
 and carries no `STAGE_COMPLETE`. Removals are recorded in `/db/deprecated/<date>/MANIFEST.tsv`.
+
+## 2026.09.29 - Post-query analysis: the 031 plan against the built store
+
+Typeset as `notes-tex/033-post-query-analysis/033-post-query-analysis.pdf`. Every number is
+from the full store: [[experiments.033-env-chemgen-pooled.scripts.flatten_cells]] (slurm
+2988) wrote one row per cell, and
+[[experiments.033-env-chemgen-pooled.scripts.store_against_plan]] (slurm 3004) re-measured
+each plan claim against the 031 result files at commit bf1884c46. Figures in
+[[experiments.033-env-chemgen-pooled.scripts.post_query_figures]].
+
+**The pool.** 6,394,540 measurements, 6,042,771 cells, 5,863 perturbed genes, 6,229
+environments, 5,463 compounds (`results/pool_totals.csv`).
+
+**What holds, exactly.** All served records are present. The 648,977 Hoepfner pairs measured
+in both ploidy arms are there. All 41 Vanacloig reliability indexes equal the plan's to
+floating-point error, median ceiling 0.84, three compounds without signal. The 71 repeated
+Hoepfner screen pairs give a median Pearson of 0.611. All 5,463 compounds have an FCFP4
+vector. Five of six cross-source correlations are identical and the sixth differs in the
+third decimal.
+
+**Five things the plan did not have.**
+
+1. The store's row is a cell, the plan's statistics are on (gene, compound) pairs: 6.04
+   million cells against 3.08 million pairs. Spread at the cell is 0.44 against 0.38 for
+   Hillenmeyer and 1.62 against 1.29 for Hoepfner.
+2. `label_df` holds the LAST measurement of each of 278,581 repeated cells, because the
+   label loop in `neo4j_cell.py` overwrites per measurement. The measurements of a repeated
+   cell differ by a median of 0.49 sd (Hillenmeyer) and 0.36 sd (Hoepfner).
+3. No Hoepfner cell is paired across ploidy inside one environment. The heterozygous arm ran
+   20 generations and the homozygous arm 5 generations over 16 h, so ploidy and duration are
+   one variable there. Matched on compound and concentration, 1,140,517 cells correlate at
+   Pearson 0.127 against a noise limit of 0.607.
+4. 80,332 Hillenmeyer cells have no complete compound vector: 57,388 in ten environments
+   that dose no compound (medium or temperature is the condition) and 22,944 in four that
+   dose tunicamycin. These ten are also the only Hillenmeyer cells off YPD or with a stated
+   temperature.
+5. After per-source standardizing, 1.7 to 3.1 percent of each source's cells lie beyond 3 sd
+   and carry 41 to 80 percent of its squared error. Unstandardized, Wildenhain is 7.1
+   percent of cells and 74.9 percent of the squared error.
+
+**Recommendations, none run.** Label a repeated cell by the mean of its measurements; leave
+the 80,332 vectorless cells out of round one by a read-time selection; tokenize source and
+arm (five tokens) and give the generation count a scalar channel; read a learned gamma as
+ploidy and duration together; log the loss split within and beyond 3 sd before choosing a
+Huber arm.

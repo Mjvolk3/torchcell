@@ -1,0 +1,51 @@
+%% notes-tex/033-post-query-analysis/sections/2-scorecard.tex
+
+\section{The plan against the store\secstatus{todo}}
+\label{sec:scorecard}
+
+Table~\ref{tab:scorecard} puts fifteen statements of the plan beside the store's value for
+the same quantity. The reading is computed, not judged: a row holds when the store's value
+is within the row's tolerance of the plan's, it differs when it is not, and it is new when
+the plan did not measure the quantity.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/*.csv, rendered by notes_tex_post_query_tables.py (t0_scorecard). Plan values
+%% stated only in prose are PLAN_STATED in that script, with their section.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The plan's statements against the built store. Counts are exact; the tolerance
+is zero for counts, 2 percent for the ceiling and the reliability, 10 percent for the
+spread ratio and 15 percent for the Vanacloig share. The plan's row count is the sum of
+its four (gene, compound) pair counts.}
+\label{tab:scorecard}
+\input{tables/t0-scorecard}
+\end{table}
+
+\notesec{What holds}
+Nine rows hold, and the ones that matter most hold exactly. The store carries all
+6{,}394{,}540 served records. The 648{,}977 Hoepfner pairs measured in both ploidy arms are
+there. All 41 Vanacloig reliability indexes agree with the plan's to within floating-point
+error, so the median ceiling of 0.84 and the three compounds without signal are properties
+of the store and not only of the dev-tree records. The 71 repeated Hoepfner screen pairs
+and their median reliability of 0.611 are recovered from the folded measurements alone,
+without the raw score matrices the plan read them from. Every one of the 5{,}463 dosed
+compounds has a fingerprint vector. The dev-tree loaders and the served graph therefore
+describe the same data, which the plan assumed and had not tested.
+
+\notesec{What differs}
+Three rows differ and all three come from one cause, the unit of a row. The plan's
+statistics describe 3{,}084{,}000 (gene, compound) pairs. The store holds 6{,}042{,}771
+cells, because a cell keeps the dose, the duration and the ploidy arm that a pair averages
+away (Section~\ref{sec:units}). The spread ratio falls from 19.6 to 17.0 for the same
+reason. And two sources vary a physical or medium field inside themselves, which the plan
+noted for Hillenmeyer's generation arms and did not carry into the representation
+(Section~\ref{sec:environment}).
+
+\notesec{What is new}
+Three rows are quantities the plan did not measure, and each one blocks or changes a step
+of the implementation order. No Hoepfner cell is paired across ploidy inside one
+environment (Section~\ref{sec:genotype}). The label table holds the last measurement of
+each of the 278{,}581 repeated cells (Section~\ref{sec:label}). And 80{,}332 cells have no
+complete compound vector, so the processor step that raises on a missing vector would
+raise on them (Section~\ref{sec:environment}).

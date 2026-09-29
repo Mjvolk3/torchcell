@@ -186,7 +186,7 @@ def recommend_volume(metrics: pd.DataFrame) -> tuple[float, str]:
         + 0.15 * _lo(m["median_within_strain_cv"])
         + 0.15 * (_hi(z) if (z > 0).any() else z * 0)
     )
-    best = m.loc[m["score"].idxmax()]
+    best = m.loc[int(m["score"].idxmax())]
     zbest = best["zfactor_wt_vs_weakest"]
     sep = (
         "no strain separation at either volume (Z'<0)"

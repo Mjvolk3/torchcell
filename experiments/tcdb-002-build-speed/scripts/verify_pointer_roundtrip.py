@@ -62,8 +62,11 @@ def main() -> None:
     kinds: Counter[str] = Counter()
     constant_bytes: Counter[str] = Counter()
     for row in _iter_rows(constants_group.part_paths):
+        # csv.reader already strips the quotes and un-doubles the embedded ones; a
+        # second un-doubling corrupted a payload holding a real '' (a compound name,
+        # job 2959) and reported the store as corrupt.
         ref = _unquote(row[id_col])
-        payload = _unquote(row[data_col]).replace("''", "'")
+        payload = _unquote(row[data_col])
         store[ref] = verified_constant(ref, payload)
         kind = _unquote(row[kind_col])
         kinds[kind] += 1
@@ -80,7 +83,7 @@ def main() -> None:
     for row in _iter_rows(experiment_group.part_paths):
         n_rows += 1
         node_id = _unquote(row[id_col])
-        blob = _unquote(row[data_col]).replace("''", "'")
+        blob = _unquote(row[data_col])
         blob_bytes += len(blob)
         data = json.loads(blob)
         refs: set[str] = set()

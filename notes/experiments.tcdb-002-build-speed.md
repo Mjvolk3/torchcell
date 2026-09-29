@@ -544,3 +544,75 @@ segregant genotypes on the ladder), so Bloom and Caudal are first exercised by t
 build. Wall is not comparable to 2931 across CPU counts; per adapter Costanzo dmf took
 614 s at 24 CPUs against 463 s at 32, so the pointer change is not a speed lever on the
 ladder either way.
+
+## 2026.09.29 - The full build completes at 64 CPUs / 256 GB; round 10 targets utilization
+
+### Full build 2959: first complete 51-dataset generation inside the box
+
+Job 2959 (commit e783fa14, r5 stack plus pointers, `kg_uncapped`, 64 CPUs / 256 GB,
+`KEEP_CSV=1`) completed in 4 h 29 min 38 s. Per adapter against job 2032
+(`scripts/full_build_compare.py`, `results/2959_vs_2032.csv`): the 42 comparable
+adapters took 4.40 h against 26.27 h, 6.0x.
+
+<https://wandb.ai/zhao-group/tcdb/runs/28shd8ko>
+
+| | job 2936 (partial, 48 of 51 adapters, inline blobs) | job 2959 (complete, pointers) |
+|---|--:|--:|
+| Experiment CSV | 521 GB | 97.9 GB (52,743,047 rows) |
+| InternedConstant CSV | | 2.9 GB (21,025 rows) |
+| all CSVs | 578 GB | 215 GB (461,629,588 rows) |
+| container memory high-water mark | 124 GB at 32 workers (killed) | 211 GB at 64 workers |
+
+The census projected 90 GB of Experiment blobs; the measured 97.9 GB includes the
+CSV's quoting and the id columns. The round-trip verifier over all 52.7M rows is
+recorded below when it finishes; its first run reported a corrupt constant, which was
+the verifier un-doubling embedded quotes a second time after `csv.reader` already had
+(a compound name holding `''`), fixed in the script, the CSV itself was right.
+
+### Utilization: where the 64 cores sit idle
+
+From job 2959's cgroup telemetry (`scripts/profile_summary.py` style pass over
+`telemetry/resource_samples.csv`): 35% of the wall ran under 4 cores, 11% at 4 to 16,
+49% at 16 to 32, and 5% above 32. Costanzo dmf and dmi averaged 18.6 and 17.7 cores
+over 166 min with peaks at 50, while the parent averaged 0.7 cores, so neither side
+was saturated. Caudal (943 records of 3 MB), Kemmeren (1,484 of 780 KB), Messner and
+Nadal-Ribelles ran in-process on one core for 39 min in total under the 25,000-record
+rule. The 33 adapters under 5 min took 25 min in total at 8.7 mean cores.
+
+Mechanism (from the code, `get_data_by_type`): results were consumed in submission
+order and a replacement chunk submitted only after the oldest result was consumed, so
+one slow chunk idled the rest of the pool, and every group of chunks ended in a
+barrier plus a pool re-fork.
+
+### Round 10 arms (commit a0b30e3b)
+
+Two knobs: `adapters.completion_order=true` consumes whichever chunk finishes first
+and refills the window at once; `adapters.inprocess_max_mb=N` keeps the in-process
+path for a dataset only when its resolved bytes also fit. Ladder arms at 24 CPUs /
+96 GB against job 2958; expression arms on `kg_bench_expr.yaml` (Zelezniak proteome,
+Caudal, Kemmeren, Messner, Nadal-Ribelles) at 16 CPUs / 64 GB.
+
+| job | arm | wall | mean cores | peak GB | rows |
+|--:|---|--:|--:|--:|--:|
+| 2958 | r9 pointer ladder (reference) | 861 s | 14.5 | 65.5 | 29,736,985 |
+| 2994 | completion order | 752 s | 11.9 | 67.6 | 29,736,985 |
+| 2995 | chunks_per_worker 8 | failed at 2 min, `BrokenProcessPool` | | | |
+| 2996 | chunks_per_worker 8 + completion order | failed at 2 min, `BrokenProcessPool` | | | |
+| 2997 | expression, in-process by records | 2,320 s | 8.0 | 24.2 | 173,100 |
+| 2998 | expression, in-process by bytes (256 MiB) | 974 s | 7.9 | 43.2 | 173,100 |
+
+<https://wandb.ai/zhao-group/tcdb/runs/lf06tqhu>
+<https://wandb.ai/zhao-group/tcdb/runs/y5i40iqa>
+<https://wandb.ai/zhao-group/tcdb/runs/vz1e8hce>
+
+Completion order is 13% faster on the ladder at the same rows and bytes, and the
+bytes rule is 2.4x faster on the expression datasets (Kemmeren 10 min in-process
+became a pool pass) at 19 GB more peak memory. The group-size arms died two minutes
+in, inside Costanzo's first single-pass group, with a worker terminated abruptly; no
+telemetry survived because the run directory is written at the end, so whether the
+container's 96 GB limit killed it is unmeasured. Hypothesis (untested): it did, since
+recycling the pool exists because worker heaps ratchet across the chunks they handle
+(job 1545). Group size is then a memory-per-worker knob, not a free speed knob.
+
+<https://wandb.ai/zhao-group/tcdb/runs/g58g8qw1>
+<https://wandb.ai/zhao-group/tcdb/runs/m55ntcs2>

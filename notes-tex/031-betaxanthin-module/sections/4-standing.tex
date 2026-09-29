@@ -221,19 +221,28 @@ the document states both wherever a pool arm is read.
 What is inductive. Every pool arm reads a measurement of the held-out strain from
 another screen, and every label-store arm reads its neighbors' labels; neither is
 available for a strain nobody has measured, and neither scales past the deletion
-collection. The inductive reads, from the gene's annotation and the model's own
-solutions, stand at 0.217 for the three families in one affine (GO with both flux
-programs, twelve seeds), 0.203 for GO alone and 0.13 to 0.16 for the flux store, and
-the ladder puts the same ceiling on the inductive inputs by every CPU model (forest over
-GO with the HiGHS vector 0.204). Against them the profile alone reads 0.280 by forest
-and 0.285 by nearest neighbors on the ladder, and the transformer over the same
-columns reads 0.278 to 0.291: the pool CGT does not beat a forest on its own input, so
-the transformer's contribution on the measured side is nil and the profile's
-contribution is the 0.06 to 0.08 between 0.217 and 0.28. The program now is the
-inductive one, the only design that scales: the amino-acid profile as a training target
-rather than an input, the trainer's nineteen-column M\"ulleder co-head
-(\texttt{--aux-mulleder}) beside the betaxanthin head with selection and scoring on
-betaxanthin alone, on the three-family affine, on GO alone and on the affine-free
-control (rounds 223 to 225, jobs 2945 to 2948, queued 2026-09-28, pending). Every
-pinned gene's M\"ulleder record sits in the test block with its betaxanthin record, so
-the co-head reads nothing of a held-out strain.
+collection. The inductive reads of the transformer, from the gene's annotation and the
+model's own solutions, stand at 0.217 for the three families in one affine (GO with
+both flux programs, twelve seeds, round 190), 0.203 for GO alone and 0.13 to 0.16 for
+the flux store. Against them the profile alone reads 0.280 by forest on the ladder and
+0.278 to 0.291 through the transformer, so the pool CGT does not beat a forest on its
+own input. The best inductive reads of betaxanthin are now on the CPU, from the
+deleted gene's graph neighborhood and nothing else (Section~\ref{sec:inductive}): the
+neighbor mean of GO over coexpression and the union by forest, 0.279, and the two-hop
+ego net over the union, 0.265, both at the level of the measured pool and above the
+transformer's 0.217 with the same annotation, with the degree control at zero. The
+amino-acid profile as a joint training target is null: the co-head adds $+0.001$,
+$+0.003$ and $+0.017$ on the three-family affine, on GO alone and on the control
+(rounds 223 to 225), each within its paired spread. The transformer arms that carry
+the neighborhood in are queued and unread: the neighbor mean of GO as a store, linear
+and through 256, and GO with its neighbor mean appended (rounds B86 to B88, w245 to
+w247, jobs 2962 to 2964); the perturbation operator with two ReZero blocks, with the
+Hadamard pair term, with the null sink, and with all three (rounds B89 to B92, w248 to
+w251, jobs 2967 to 2970); and the species language-model composite sequence embedding,
+FUDT upstream and downstream, ProtT5 and CaLM, with and without ESM2, in place of
+ProtT5 alone (rounds B93 and B94, w252 and w253, jobs 2971 and 2972). The operator
+arms rest on the model's own documented and verified note about its perturbation
+transform: on a single deletion the cross-attention has one key, so its context is a
+linear map of the deleted gene's embedding with no dependence on the querying gene,
+and the pair term and the null sink are the two constructions that make it query
+dependent; whether that lifts betaxanthin is unmeasured until the packs land.

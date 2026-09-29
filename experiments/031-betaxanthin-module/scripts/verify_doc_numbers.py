@@ -697,6 +697,69 @@ def uncovered_percentile_range(which: str):
     return run
 
 
+def cells_stat(stem: str, key: str, what: str, seeds: tuple[int, ...] = tuple(range(2700, 2706))):
+    """``min`` or ``max`` over the seeds of one per-cell value: ``select_epoch``,
+    ``select_val_pearson`` or the pinned ``spearman``."""
+
+    def run() -> float:
+        vals = []
+        for seed in seeds:
+            d = json.load(open(osp.join(RESULTS, f"{stem}_s{seed}.json")))
+            vals.append(
+                float(d["test"]["pinned"]["spearman"]) if key == "spearman" else float(d[key])
+            )
+        return float(min(vals) if what == "min" else max(vals))
+
+    return run
+
+
+def ladder_file(fname: str, rep: str, model: str, key: str = "mean_spearman"):
+    """A pinned read of one representation in a ladder subset file
+    (store_baselines_betaxanthin_<suffix>.json, 2026-09-28)."""
+
+    def run() -> float:
+        d = json.load(open(osp.join(RESULTS, fname)))
+        return float(d["representations"][rep][model]["selected_on_val"]["test_pinned"][key])
+
+    return run
+
+
+def gcn(arm: str, what: str, budget: str = "e600"):
+    """One arm of the message-passing readout: ``mean``, ``sd``, ``n_edges``,
+    ``n_nodes``, ``n_parameters``, ``epoch_min`` or ``epoch_max``."""
+
+    def run() -> float:
+        fname = (
+            "target_gcn_readout_betaxanthin.json"
+            if budget == "e200"
+            else f"target_gcn_readout_betaxanthin_{budget}.json"
+        )
+        d = json.load(open(osp.join(RESULTS, fname)))
+        a = next(x for x in d["arms"] if x["name"] == arm)
+        if what == "epoch_min":
+            return float(min(a["select_epoch"]))
+        if what == "epoch_max":
+            return float(max(a["select_epoch"]))
+        return float(a[what])
+
+    return run
+
+
+def job_hours(job: int):
+    """Elapsed hours of a slurm job from sacct, for the round headers."""
+
+    def run() -> float:
+        import subprocess
+
+        out = subprocess.run(
+            ["sacct", "-j", str(job), "-X", "-n", "-o", "Elapsed"], capture_output=True, text=True
+        ).stdout.strip()
+        h, m, sec = out.split(":")
+        return int(h) + int(m) / 60 + int(sec) / 3600
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:standing -- the comparators on the same split and the cross-target read.
     Check(
@@ -14980,6 +15043,120 @@ CHECKS: list[Check] = [
         recompute=lambda: max(r["spearman"] for r in json.load(open(osp.join(RESULTS, "target_prediction_agreement_w237_vs_w232.json")))["seeds"]),
         tolerance=0.006,
     ),
+    Check(claim='round 223: arm mean', stated=0.219, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 223: arm sd', stated=0.006, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 223: control mean', stated=0.217, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'mean_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 223: control sd', stated=0.005, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'sd_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 223: paired diff', stated=0.001, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 223: paired sd', stated=0.007, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 223: positive', stated=8, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'n_positive'), tolerance=0.5),
+    Check(claim='round 223: n', stated=12, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'n'), tolerance=0.5),
+    Check(claim='round 223: arm top-50', stated=4.91, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 223: control top-50', stated=4.94, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'mean_top50_enrichment', 'control'), tolerance=0.006),
+    Check(claim='round 223: ensemble first six', stated=0.218, recompute=ensemble('w242_bxdelgopfbamomaaux_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 223: control ensemble first six', stated=0.217, recompute=ensemble('w190_bxdelgopfbamoma_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 223: ensemble twelve', stated=0.22, recompute=ensemble('w242_bxdelgopfbamomaaux_h12l1p1_e200', 'spearman', 'all_seeds'), tolerance=0.0006),
+    Check(claim='round 223: control ensemble twelve', stated=0.218, recompute=ensemble('w190_bxdelgopfbamoma_h12l1p1_e200', 'spearman', 'all_seeds'), tolerance=0.0006),
+    Check(claim='round 223: seed min', stated=0.207, recompute=cells_stat('w242_bxdelgopfbamomaaux_h12l1p1_e200', 'spearman', 'min', tuple(range(2700, 2712))), tolerance=0.0006),
+    Check(claim='round 223: seed max', stated=0.226, recompute=cells_stat('w242_bxdelgopfbamomaaux_h12l1p1_e200', 'spearman', 'max', tuple(range(2700, 2712))), tolerance=0.0006),
+    Check(claim='round 223: epoch min', stated=6, recompute=cells_stat('w242_bxdelgopfbamomaaux_h12l1p1_e200', 'select_epoch', 'min', tuple(range(2700, 2712))), tolerance=0.5),
+    Check(claim='round 223: epoch max', stated=14, recompute=cells_stat('w242_bxdelgopfbamomaaux_h12l1p1_e200', 'select_epoch', 'max', tuple(range(2700, 2712))), tolerance=0.5),
+    Check(claim='round 223: val min', stated=0.24, recompute=cells_stat('w242_bxdelgopfbamomaaux_h12l1p1_e200', 'select_val_pearson', 'min', tuple(range(2700, 2712))), tolerance=0.006),
+    Check(claim='round 223: val max', stated=0.26, recompute=cells_stat('w242_bxdelgopfbamomaaux_h12l1p1_e200', 'select_val_pearson', 'max', tuple(range(2700, 2712))), tolerance=0.006),
+    Check(claim='round 223: loss at epoch 0', stated=1.55, recompute=pack_log('w242_bxdelgopfbamomaaux_h12l1p1_e200', 2700, 0, 'loss'), tolerance=0.006),
+    Check(claim='round 223: data at epoch 0', stated=0.53, recompute=pack_log('w242_bxdelgopfbamomaaux_h12l1p1_e200', 2700, 0, 'data'), tolerance=0.006),
+    Check(claim='round 223: co-head over data at epoch 0', stated=1.9, recompute=pack_log('w242_bxdelgopfbamomaaux_h12l1p1_e200', 2700, 0, 'ratio'), tolerance=0.06),
+    Check(claim='round 223: job 2945 hours', stated=6.65, recompute=job_hours(2945), tolerance=0.01),
+    Check(claim='round 223: job 2946 hours', stated=6.86, recompute=job_hours(2946), tolerance=0.01),
+    Check(claim='round 224: arm mean', stated=0.205, recompute=transfer('betaxanthin: GO alone with the Mulleder co-head against without', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 224: arm sd', stated=0.003, recompute=transfer('betaxanthin: GO alone with the Mulleder co-head against without', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 224: control mean', stated=0.202, recompute=transfer('betaxanthin: GO alone with the Mulleder co-head against without', 'mean_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 224: control sd', stated=0.001, recompute=transfer('betaxanthin: GO alone with the Mulleder co-head against without', 'sd_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 224: paired diff', stated=0.003, recompute=transfer('betaxanthin: GO alone with the Mulleder co-head against without', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 224: paired sd', stated=0.004, recompute=transfer('betaxanthin: GO alone with the Mulleder co-head against without', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 224: positive', stated=4, recompute=transfer('betaxanthin: GO alone with the Mulleder co-head against without', 'n_positive'), tolerance=0.5),
+    Check(claim='round 224: arm top-50', stated=5.06, recompute=transfer('betaxanthin: GO alone with the Mulleder co-head against without', 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 224: control top-50', stated=5.03, recompute=transfer('betaxanthin: GO alone with the Mulleder co-head against without', 'mean_top50_enrichment', 'control'), tolerance=0.006),
+    Check(claim='round 224: ensemble', stated=0.206, recompute=ensemble('w243_bxdelgoaux_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 224: control ensemble', stated=0.202, recompute=ensemble('w167_bxdelgo_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 224: seed min', stated=0.201, recompute=cells_stat('w243_bxdelgoaux_h12l1p1_e200', 'spearman', 'min'), tolerance=0.0006),
+    Check(claim='round 224: seed max', stated=0.208, recompute=cells_stat('w243_bxdelgoaux_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='round 224: epoch min', stated=5, recompute=cells_stat('w243_bxdelgoaux_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 224: epoch max', stated=12, recompute=cells_stat('w243_bxdelgoaux_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 224: val min', stated=0.25, recompute=cells_stat('w243_bxdelgoaux_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 224: val max', stated=0.26, recompute=cells_stat('w243_bxdelgoaux_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 224: job hours', stated=6.88, recompute=job_hours(2947), tolerance=0.01),
+    Check(claim='round 225: arm mean', stated=0.075, recompute=transfer('betaxanthin: the genotype-only control with the Mulleder co-head against without', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 225: arm sd', stated=0.035, recompute=transfer('betaxanthin: the genotype-only control with the Mulleder co-head against without', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 225: control mean', stated=0.058, recompute=transfer('betaxanthin: the genotype-only control with the Mulleder co-head against without', 'mean_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 225: control sd', stated=0.075, recompute=transfer('betaxanthin: the genotype-only control with the Mulleder co-head against without', 'sd_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 225: paired diff', stated=0.017, recompute=transfer('betaxanthin: the genotype-only control with the Mulleder co-head against without', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 225: paired sd', stated=0.096, recompute=transfer('betaxanthin: the genotype-only control with the Mulleder co-head against without', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 225: positive', stated=3, recompute=transfer('betaxanthin: the genotype-only control with the Mulleder co-head against without', 'n_positive'), tolerance=0.5),
+    Check(claim='round 225: arm top-50', stated=4.43, recompute=transfer('betaxanthin: the genotype-only control with the Mulleder co-head against without', 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 225: control top-50', stated=3.39, recompute=transfer('betaxanthin: the genotype-only control with the Mulleder co-head against without', 'mean_top50_enrichment', 'control'), tolerance=0.006),
+    Check(claim='round 225: ensemble', stated=0.108, recompute=ensemble('w244_bxdelaux_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 225: control ensemble', stated=0.082, recompute=ensemble('w137_bxdel_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 225: seed min', stated=0.024, recompute=cells_stat('w244_bxdelaux_h12l1p1_e200', 'spearman', 'min'), tolerance=0.0006),
+    Check(claim='round 225: seed max', stated=0.125, recompute=cells_stat('w244_bxdelaux_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='round 225: epoch min', stated=32, recompute=cells_stat('w244_bxdelaux_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 225: epoch max', stated=147, recompute=cells_stat('w244_bxdelaux_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 225: val min', stated=0.23, recompute=cells_stat('w244_bxdelaux_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 225: val max', stated=0.31, recompute=cells_stat('w244_bxdelaux_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 225: job hours', stated=6.82, recompute=job_hours(2948), tolerance=0.01),
+    Check(claim='inductive: go_nbr forest', stated=0.279, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go_nbr', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: go_nbr knn', stated=0.221, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go_nbr', 'knn'), tolerance=0.0006),
+    Check(claim='inductive: go_nbr ridge', stated=0.183, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go_nbr', 'ridge'), tolerance=0.0006),
+    Check(claim='inductive: go forest', stated=0.187, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: pool forest', stated=0.28, recompute=ladder_file('store_baselines_betaxanthin.json', 'aa_pool', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: coexpression block forest', stated=0.251, recompute=ladder_file('store_baselines_betaxanthin_nbr_decomp.json', 'go_nbr_coexpression', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: union block forest', stated=0.258, recompute=ladder_file('store_baselines_betaxanthin_nbr_decomp.json', 'go_nbr_union', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: go+go_nbr forest', stated=0.271, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go+go_nbr', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: degree forest', stated=-0.003, recompute=ladder_file('store_baselines_betaxanthin_nbr_decomp.json', 'go_nbr_degree', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: degree ridge', stated=-0.009, recompute=ladder_file('store_baselines_betaxanthin_nbr_decomp.json', 'go_nbr_degree', 'ridge'), tolerance=0.0006),
+    Check(claim='inductive: degree knn', stated=-0.011, recompute=ladder_file('store_baselines_betaxanthin_nbr_decomp.json', 'go_nbr_degree', 'knn'), tolerance=0.0006),
+    Check(claim='inductive: pfba_nbr forest', stated=0.182, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'pfba_nbr', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: pfba forest', stated=0.116, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'pfba_highs', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: pfba degree forest', stated=0.02, recompute=ladder_file('store_baselines_betaxanthin_nbr_decomp.json', 'pfba_nbr_degree', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: pfba+pfba_nbr forest', stated=0.189, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'pfba+pfba_nbr', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: xgb aa_pool', stated=0.224, recompute=ladder_file('store_baselines_betaxanthin_xgb.json', 'aa_pool', 'xgb'), tolerance=0.0006),
+    Check(claim='inductive: forest aa_pool beside xgb', stated=0.28, recompute=ladder_file('store_baselines_betaxanthin.json', 'aa_pool', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: xgb aapool_graphlabel', stated=0.275, recompute=ladder_file('store_baselines_betaxanthin_xgb.json', 'aapool_graphlabel', 'xgb'), tolerance=0.0006),
+    Check(claim='inductive: forest aapool_graphlabel beside xgb', stated=0.284, recompute=ladder_file('store_baselines_betaxanthin.json', 'aapool_graphlabel', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: xgb go_nbr', stated=0.228, recompute=ladder_file('store_baselines_betaxanthin_xgb.json', 'go_nbr', 'xgb'), tolerance=0.0006),
+    Check(claim='inductive: forest go_nbr beside xgb', stated=0.279, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go_nbr', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: xgb go+go_nbr', stated=0.249, recompute=ladder_file('store_baselines_betaxanthin_xgb.json', 'go+go_nbr', 'xgb'), tolerance=0.0006),
+    Check(claim='inductive: forest go+go_nbr beside xgb', stated=0.271, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go+go_nbr', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: xgb graph_label', stated=0.21, recompute=ladder_file('store_baselines_betaxanthin_xgb.json', 'graph_label', 'xgb'), tolerance=0.0006),
+    Check(claim='inductive: forest graph_label beside xgb', stated=0.254, recompute=ladder_file('store_baselines_betaxanthin.json', 'graph_label', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: xgb go', stated=0.18, recompute=ladder_file('store_baselines_betaxanthin_xgb.json', 'go', 'xgb'), tolerance=0.0006),
+    Check(claim='inductive: forest go beside xgb', stated=0.187, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: xgb prot_T5_all', stated=0.13, recompute=ladder_file('store_baselines_betaxanthin_xgb.json', 'prot_T5_all', 'xgb'), tolerance=0.0006),
+    Check(claim='inductive: forest prot_T5_all beside xgb', stated=0.143, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'prot_T5_all', 'forest'), tolerance=0.0006),
+    Check(claim='inductive: mlp_go', stated=0.199, recompute=gcn('mlp_go', 'mean'), tolerance=0.0006),
+    Check(claim='inductive: gcn union', stated=0.265, recompute=gcn('gcn_union_go', 'mean'), tolerance=0.0006),
+    Check(claim='inductive: gcn union edges', stated=1514071, recompute=gcn('gcn_union_go', 'n_edges'), tolerance=0.5),
+    Check(claim='inductive: gcn union epoch min', stated=564, recompute=gcn('gcn_union_go', 'epoch_min'), tolerance=0.5),
+    Check(claim='inductive: gcn union epoch max', stated=592, recompute=gcn('gcn_union_go', 'epoch_max'), tolerance=0.5),
+    Check(claim='inductive: gcn coexpression', stated=0.259, recompute=gcn('gcn_coexpression_go', 'mean'), tolerance=0.0006),
+    Check(claim='inductive: gcn coexpression edges', stated=996199, recompute=gcn('gcn_coexpression_go', 'n_edges'), tolerance=0.5),
+    Check(claim='inductive: gcn coexpression epoch min', stated=419, recompute=gcn('gcn_coexpression_go', 'epoch_min'), tolerance=0.5),
+    Check(claim='inductive: gcn coexpression epoch max', stated=552, recompute=gcn('gcn_coexpression_go', 'epoch_max'), tolerance=0.5),
+    Check(claim='inductive: gcn union at 200', stated=0.237, recompute=gcn('gcn_union_go', 'mean', 'e200'), tolerance=0.0006),
+    Check(claim='inductive: gcn union at 200 epoch min', stated=199, recompute=gcn('gcn_union_go', 'epoch_min', 'e200'), tolerance=0.5),
+    Check(claim='inductive: gcn coexpression at 200', stated=0.251, recompute=gcn('gcn_coexpression_go', 'mean', 'e200'), tolerance=0.0006),
+    Check(claim='inductive: incidence nodes', stated=8969, recompute=gcn('gcn_go_incidence', 'n_nodes'), tolerance=0.5),
+    Check(claim='inductive: incidence edges', stated=271088, recompute=gcn('gcn_go_incidence', 'n_edges'), tolerance=0.5),
+    Check(claim='inductive: incidence dag edges', stated=52830, recompute=gcn('gcn_go_incidence_dag', 'n_edges'), tolerance=0.5),
+    Check(claim='inductive: incidence', stated=0.168, recompute=gcn('gcn_go_incidence', 'mean'), tolerance=0.0006),
+    Check(claim='inductive: incidence epoch min', stated=188, recompute=gcn('gcn_go_incidence', 'epoch_min'), tolerance=0.5),
+    Check(claim='inductive: incidence epoch max', stated=223, recompute=gcn('gcn_go_incidence', 'epoch_max'), tolerance=0.5),
+    Check(claim='inductive: incidence dag', stated=0.141, recompute=gcn('gcn_go_incidence_dag', 'mean'), tolerance=0.0006),
+    Check(claim='inductive: incidence dag epoch min', stated=62, recompute=gcn('gcn_go_incidence_dag', 'epoch_min'), tolerance=0.5),
+    Check(claim='inductive: incidence dag epoch max', stated=73, recompute=gcn('gcn_go_incidence_dag', 'epoch_max'), tolerance=0.5),
+    Check(claim='inductive: incidence ones', stated=0.014, recompute=gcn('gcn_go_incidence_ones', 'mean'), tolerance=0.0006),
+    Check(claim='inductive: incidence dag ones', stated=-0.031, recompute=gcn('gcn_go_incidence_dag_ones', 'mean'), tolerance=0.0006),
+    Check(claim='standing: transformer inductive incumbent', stated=0.217, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'mean_spearman', 'control'), tolerance=0.0006),
 ]
 
 

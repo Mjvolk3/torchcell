@@ -499,3 +499,76 @@ measured strains (0.219 against 0.212), the tightest band and the highest ensemb
 (0.318) of any pool arm. Both reads are transductive.
 
 \input{tables/graph_homophily}
+
+
+\subsection{Inductive reads of the neighborhood\secstatus{todo}}
+\label{sec:inductive}
+
+Every read in this section is inductive: a gene's row is built from what exists for any
+gene of the genome, its annotation, its deletion's flux solution and its position in
+the graphs, and no label of a neighbor and no measurement of the strain enters it. The
+label store of Section~\ref{sec:homophily} showed that the coexpression neighborhood of
+a deleted gene carries betaxanthin; the question here is whether the same neighborhood
+carries it through the genes' own features, which a strain nobody has screened would
+still have.
+
+The neighbor mean of a feature is, per graph, the mean of that feature over a gene's
+one-hop neighbors that carry it, with $\log(1 + n)$ of their count as one more column
+(\texttt{target\_graph\_feature\_store.py}, over STRING coexpression and the union of
+the nine graphs, a gene with no covered neighbor carrying the base store's wild-type
+row). Table~\ref{tab:neighborhood-reads} reads it on the ladder. The neighbor mean of
+the GO multi-hot reads 0.279 by forest, 0.221 by nearest neighbors and 0.183 by ridge,
+against 0.187 by forest for the gene's own multi-hot: the annotation of a gene's
+neighbors reads betaxanthin better than the gene's own annotation by 0.09, and by
+forest it reads at the level of the measured amino-acid pool (0.280), from no
+measurement. The coexpression block alone reads 0.251 and the union alone 0.258, so
+the two graphs add a little to each other. Appending the gene's own multi-hot to its
+neighbors' mean reads 0.271, under the neighbor mean alone. The two count columns
+alone, the degree control, read $-0.003$ by forest, $-0.009$ by ridge and $-0.011$ by
+nearest neighbors: how many neighbors a gene has carries nothing, so the lift is which
+neighbors it has. The same propagation of the parsimonious flux vector reads 0.182 by
+forest against 0.116 for the gene's own vector, with its degree columns at 0.020, and
+appended to the vector 0.189: the neighborhood lifts the flux store too, from a lower
+base to a lower ceiling.
+
+Gradient-boosted trees do not change the order. XGBoost on the rows that carry a value
+(500 rounds at rate 0.05, row subsample 0.8, column subsample 0.5, depth 3 or 6 and
+minimum child weight 1 or 5 selected on validation Pearson, slurm job 2961) reads under
+the forest on every input: the pool 0.224 against 0.280, the pool with the label store
+0.275 against 0.284, the neighbor mean of GO 0.228 against 0.279, GO with its neighbor
+mean 0.249 against 0.271, the label store 0.210 against 0.254, GO 0.180 against 0.187
+and ProtT5 0.130 against 0.143. The gap is widest on the narrow inputs, where boosting
+selected the shallowest trees and still trailed by 0.05, and the ranking of the inputs
+is the forest's under both learners.
+
+The learned form of the neighbor mean is message passing read out at the deleted gene
+(\texttt{target\_gcn\_readout.py}, Table~\ref{tab:message-passing}): two
+graph-convolution layers of width 64 over a gene graph with the multi-hot as input,
+the prediction at the deleted gene's node, which makes the read a function of its
+two-hop neighborhood, an ego net around the perturbation. Trained full batch on the
+training genes' targets with the pinned genes' targets masked from the loss, three
+seeds, the epoch selected on validation Pearson, it reads 0.265 on the union of the
+nine (1,514,071 undirected edges, epochs 564 to 592 of 600) and 0.259 on STRING
+coexpression (996,199 edges, epochs 419 to 552), against 0.199 for the same two layers
+with no graph, a two-layer perceptron on the multi-hot. At the 200-epoch budget the
+union arm read 0.237 with every seed selecting epoch 199, so that read was
+unconverged, and the coexpression arm 0.251. The ego net therefore lands between the
+neighbor mean by nearest neighbors (0.221) and by forest (0.279), and above the
+transformer's inductive incumbent (0.217, round 190) by 0.05, with the same input.
+
+GO as a graph rather than a vector does not read. The incidence graph has a node per
+gene and per GO term, 8,969 in all, and an edge per annotation: either the propagated
+pairs of the multi-hot (271,088 edges) or the direct annotations with the ontology's
+\texttt{is\_a} and \texttt{part\_of} edges between terms (52,830 edges), so that
+propagation is what message passing does rather than what the store did. Two hops from
+a gene reach the genes that share its terms, a co-annotation neighborhood. With the
+gene nodes carrying the multi-hot and the term nodes their identity it reads 0.168 on
+the propagated pairs (epochs 188 to 223 of 600) and 0.141 with the ontology's edges
+(epochs 62 to 73), both under the flat multi-hot's 0.199; with every node a single one,
+so that the read is structure alone, 0.014 and $-0.031$. The annotation carries its
+signal as the gene's own terms and as its neighbors' terms on the gene graphs, not as
+the co-annotation structure, at this depth and budget.
+
+\input{tables/neighborhood_reads}
+
+\input{tables/message_passing}

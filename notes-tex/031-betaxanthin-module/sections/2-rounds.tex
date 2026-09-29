@@ -1194,4 +1194,41 @@ betaxanthin stays at 0.13 to 0.16: under GO alone (0.203), a half of the profile
 where a gene's growth ratio is the label's own quantity, it does not carry to a
 production level the flux balance does not represent.
 
+Round 223 is read (jobs 2945 and 2946, 6 h 39 min and 6 h 52 min for six seeds each),
+the first arm of the inductive program: the three-family affine of round 190 (GO with
+the HiGHS parsimonious vector and the MOMA vector) with the trainer's nineteen-column
+M\"ulleder amino-acid head trained beside the betaxanthin head
+(\texttt{--aux-mulleder}, the 019 co-head, a masked mean-squared error on the
+standardized profile at weight 1), selection and scoring on betaxanthin alone. The
+co-head is INDUCTIVE at the gene level: the profile is a training target, never an
+input, and every pinned gene's M\"ulleder record sits in the test block beside its
+betaxanthin record, so nothing of a held-out strain is read. Over twelve seeds paired
+with round 190's twelve it reads 0.219 (sd 0.006) against 0.217 (sd 0.005), $+0.001$
+paired (sd 0.007, eight of twelve), top-50 4.91 against 4.94, ensembled 0.218 against
+0.217 on the first six seeds and 0.220 against 0.218 on all twelve; the seeds read
+0.207 to 0.226 and select at epochs 6 to 14 on validation Pearson 0.24 to 0.26, the
+same early epochs as the control. The co-head's term is not small: at epoch 0 the
+training loss is 1.55 against a data term of 0.53, so the profile's error is 1.9 times
+the betaxanthin error, and the network is fit to the profile as much as to the target.
+It moves nothing. A weight other than 1 (\texttt{--aux-weight}, added with this round)
+has not been run.
+
+Round 224 is read (job 2947, 6 h 53 min): the same co-head on GO alone, the round-167
+recipe. It reads 0.205 (sd 0.003) against 0.202 (sd 0.001) on the same six seeds
+($+0.003$ paired, sd 0.004, four of six), top-50 5.06 against 5.03, ensembled 0.206
+against 0.202; the seeds read 0.201 to 0.208 and select at epochs 5 to 12 on validation
+Pearson 0.25 to 0.26. Nothing again, on the tightest arm of the study.
+
+Round 225 is read (job 2948, 6 h 49 min): the co-head on the affine-free control, the
+round-137 recipe, the arm on which a shared representation had the most room. It reads
+0.075 (sd 0.035) against 0.058 (sd 0.075) on the same six seeds ($+0.017$ paired, sd
+0.096, three of six), top-50 4.43 against 3.39, ensembled 0.108 against 0.082; the seeds
+read 0.024 to 0.125 and select at epochs 32 to 147 on validation Pearson 0.23 to 0.31.
+The validation Pearson is the highest of the three co-head arms and the pinned read is
+the control's: the profile as a co-target fits the validation genes and carries nothing
+to the pin. Across the three rounds the amino-acid profile as a joint training target
+adds $+0.001$, $+0.003$ and $+0.017$, each within its paired spread, so the 0.06 to
+0.08 the profile adds as an input (rounds 206 to 220) is not reachable through the
+representation the two heads share, at least at weight 1.
+
 \input{tables/target_transfer}

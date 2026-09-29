@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 load_dotenv()
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 sys.path.insert(0, osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "scripts"))
-from notes_tex_tables import fit_columns  # noqa: E402
+from notes_tex_tables import BEST_NOTE, fit_columns, fmt  # noqa: E402
 
 NOTES_TEX = osp.join(osp.dirname(EXPERIMENT_ROOT), "notes-tex")
 STUDY = {
@@ -1307,6 +1307,169 @@ def graph_homophily(target: str) -> str | None:
 
 
 
+#: The inductive neighborhood ladder (2026-09-28): which file each representation is
+#: read from, and how it is labeled. The pool and label-store rows come from the study
+#: ladder for reference; every other row is inductive.
+NEIGHBORHOOD_ROWS = [
+    ("aa_pool", "store_baselines_betaxanthin.json", "measured amino-acid pool (phenotype of the strain)"),
+    ("aapool_graphlabel", "store_baselines_betaxanthin.json", "pool with the label store appended (transductive)"),
+    ("graph_label", "store_baselines_betaxanthin.json", "label store alone (transductive)"),
+    ("go", "store_baselines_betaxanthin_nbr.json", "GO multi-hot of the deleted gene"),
+    ("go_nbr", "store_baselines_betaxanthin_nbr.json", "neighbor mean of GO, coexpression and union"),
+    ("go_nbr_coexpression", "store_baselines_betaxanthin_nbr_decomp.json", "neighbor mean of GO, coexpression alone"),
+    ("go_nbr_union", "store_baselines_betaxanthin_nbr_decomp.json", "neighbor mean of GO, union alone"),
+    ("go+go_nbr", "store_baselines_betaxanthin_nbr.json", "GO with its neighbor mean appended"),
+    ("go_nbr_degree", "store_baselines_betaxanthin_nbr_decomp.json", "the two neighbor-count columns alone (degree control)"),
+    ("pfba_highs", "store_baselines_betaxanthin_nbr.json", "HiGHS parsimonious flux of the deletion"),
+    ("pfba_nbr", "store_baselines_betaxanthin_nbr.json", "neighbor mean of the parsimonious flux"),
+    ("pfba+pfba_nbr", "store_baselines_betaxanthin_nbr.json", "flux with its neighbor mean appended"),
+    ("pfba_nbr_degree", "store_baselines_betaxanthin_nbr_decomp.json", "flux neighbor-count columns alone (degree control)"),
+    ("prot_T5_all", "store_baselines_betaxanthin_nbr.json", "ProtT5 embedding of the deleted gene"),
+]
+
+
+def neighborhood_reads() -> str | None:
+    """The inductive neighborhood ladder: feature propagation, its decomposition, XGBoost."""
+    files = {}
+    for _, fname, _ in NEIGHBORHOOD_ROWS:
+        src = results("betaxanthin", fname)
+        if not osp.isfile(src):
+            return None
+        if fname not in files:
+            with open(src) as fh:
+                files[fname] = json.load(fh)
+    xgb_src = results("betaxanthin", "store_baselines_betaxanthin_xgb.json")
+    xgb = json.load(open(xgb_src))["representations"] if osp.isfile(xgb_src) else {}
+    values: list[dict[str, float | None]] = []
+    for rep, fname, _ in NEIGHBORHOOD_ROWS:
+        o = files[fname]["representations"][rep]
+        row: dict[str, float | None] = {
+            m: float(o[m]["selected_on_val"]["test_pinned"]["mean_spearman"])
+            for m in ("ridge", "knn", "forest")
+        }
+        row["xgb"] = (
+            float(xgb[rep]["xgb"]["selected_on_val"]["test_pinned"]["mean_spearman"])
+            if rep in xgb
+            else None
+        )
+        row["dim"] = float(o["dim"])
+        values.append(row)
+    best = {
+        m: max(v[m] for v in values if v[m] is not None)
+        for m in ("ridge", "knn", "forest", "xgb")
+    }
+    rows = []
+    for (rep, _, label), v in zip(NEIGHBORHOOD_ROWS, values, strict=True):
+        cells = [label, f"{int(v['dim']):,}"]
+        for m in ("ridge", "knn", "forest", "xgb"):
+            cells.append("--" if v[m] is None else fmt(v[m], best[m]))
+        rows.append("    " + " & ".join(cells) + " \\\\")
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Inductive reads of the neighborhood on the CPU ladder]{The "
+        "betaxanthin pin read from the deleted gene's graph neighborhood with no label "
+        "and no measurement of the strain. The neighbor mean of a feature is, per graph "
+        "(STRING coexpression and the union of the nine the trainer masks), the mean of "
+        "that feature over the gene's one-hop neighbors that carry it plus "
+        "$\\log(1 + n)$ of their count (\\texttt{target\\_graph\\_feature\\_store.py}); "
+        "``degree control'' reads the count columns alone. Ridge, cosine nearest "
+        "neighbors and the 300-tree forest are the study ladder's models; XGBoost "
+        "(gradient-boosted trees, 500 rounds at rate 0.05, row subsample 0.8, column "
+        "subsample 0.5, depth 3 or 6 and minimum child weight 1 or 5 selected on "
+        "validation Pearson) was run on the rows that carry a value. Every cell is the "
+        "pinned-test Spearman on the 629 pinned genes at the validation-selected setting. "
+        + BEST_NOTE
+        + " The first three rows are the study ladder's reference reads and are not "
+        "inductive. Written by \\texttt{target\\_notes\\_tex\\_tables.py} from "
+        "\\texttt{results/store\\_baselines\\_betaxanthin\\_nbr.json}, "
+        "\\texttt{\\_nbr\\_decomp.json}, \\texttt{\\_xgb.json} and "
+        "\\texttt{store\\_baselines\\_betaxanthin.json}.}\n"
+        "  \\label{tab:neighborhood-reads}\n"
+        "  \\begin{tabular}{@{}p{66mm}rrrrr@{}}\n    \\hline\n"
+        "    representation & columns & ridge & kNN & forest & XGBoost \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "betaxanthin",
+        "neighborhood_reads",
+        body,
+        "results/store_baselines_betaxanthin_nbr.json, _nbr_decomp.json, _xgb.json",
+    )
+
+
+MESSAGE_PASSING_LABELS = {
+    "mlp_go": ("none", "GO", "MLP, no graph"),
+    "gcn_union_go": ("union of nine", "GO", "two-hop ego net"),
+    "gcn_coexpression_go": ("STRING coexpression", "GO", "two-hop ego net"),
+    "gcn_go_incidence": ("GO incidence, propagated pairs", "GO + term identity", "co-annotation"),
+    "gcn_go_incidence_dag": ("GO incidence, direct pairs + DAG", "GO + term identity", "co-annotation"),
+    "gcn_go_incidence_ones": ("GO incidence, propagated pairs", "all ones", "structure only"),
+    "gcn_go_incidence_dag_ones": ("GO incidence, direct pairs + DAG", "all ones", "structure only"),
+}
+
+
+def message_passing() -> str | None:
+    """Message passing read out at the deleted gene, the 600-epoch run."""
+    src = results("betaxanthin", "target_gcn_readout_betaxanthin_e600.json")
+    src200 = results("betaxanthin", "target_gcn_readout_betaxanthin.json")
+    if not (osp.isfile(src) and osp.isfile(src200)):
+        return None
+    d = json.load(open(src))
+    d200 = {a["name"]: a for a in json.load(open(src200))["arms"]}
+    arms = d["arms"]
+    by = {a["name"]: a for a in arms}
+    best = max(a["mean"] for a in arms)
+    rows = []
+    for a in arms:
+        graph, inputs, design = MESSAGE_PASSING_LABELS[a["name"]]
+        rows.append(
+            f"    {design} & {graph} & {inputs} & {a['n_edges']:,} & "
+            f"{fmt(a['mean'], best)} & {a['sd']:.3f} & "
+            f"{min(a['select_epoch'])}--{max(a['select_epoch'])} & "
+            f"{d200[a['name']]['mean']:+.3f} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Message passing read out at the deleted gene]{Two graph-convolution "
+        "layers of width 64 and a linear head, trained full batch for "
+        f"{d['epochs']} epochs on the {d['n_train']:,} training genes' standardized "
+        f"betaxanthin, the epoch selected on the {d['n_val']} validation genes by the "
+        "trainer's rule (a five-epoch moving average of the validation Pearson) and "
+        f"scored once on the {d['n_pinned']} pinned genes as Spearman; ``mean'' and ``sd'' "
+        "are over three seeds and ``epochs'' the range of the selected epoch. The gene "
+        f"graphs have {by['gcn_union_go']['n_nodes']:,} nodes and the incidence graphs "
+        f"{by['gcn_go_incidence']['n_nodes']:,} (genes and terms); each arm holds "
+        f"{by['gcn_union_go']['n_parameters']:,} parameters with the multi-hot as input, "
+        f"{by['gcn_go_incidence']['n_parameters']:,} with the term identity added and "
+        f"{by['gcn_go_incidence_ones']['n_parameters']:,} with a single one "
+        "(\\texttt{target\\_gcn\\_readout.py}, CPU, slurm job 2956). The pinned genes' "
+        "targets never enter the loss; their features and edges do, as any inductive "
+        "test gene's would. An ego net reads the deleted gene through its two-hop "
+        "neighborhood on a gene graph with the GO multi-hot as input; the incidence "
+        "graph has a node per gene and per GO term with an edge per annotation "
+        "(the propagated pairs of the multi-hot, or the direct pairs plus the "
+        "ontology's \\texttt{is\\_a} and \\texttt{part\\_of} edges between terms), gene "
+        "nodes carrying the multi-hot and term nodes their identity, or every node a "
+        "single one. ``200'' is the same arm's mean at the 200-epoch budget (job 2955). "
+        + BEST_NOTE
+        + " Written by \\texttt{target\\_notes\\_tex\\_tables.py} from "
+        "\\texttt{results/target\\_gcn\\_readout\\_betaxanthin\\_e600.json} and "
+        "\\texttt{target\\_gcn\\_readout\\_betaxanthin.json}.}\n"
+        "  \\label{tab:message-passing}\n"
+        "  \\begin{tabular}{@{}p{22mm}p{40mm}p{24mm}rrrrr@{}}\n    \\hline\n"
+        "    design & graph & inputs & edges & mean & sd & epochs & 200 \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "betaxanthin",
+        "message_passing",
+        body,
+        "results/target_gcn_readout_betaxanthin_e600.json",
+    )
+
+
 def main() -> None:
     paths = [
         pool_mlp_sweep(),
@@ -1333,6 +1496,8 @@ def main() -> None:
         betaxanthin_amino_acid_correlation(),
         go_models("betaxanthin"),
         go_models("amino_acids"),
+        neighborhood_reads(),
+        message_passing(),
     ]
     for path in paths:
         if path is not None:

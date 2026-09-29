@@ -9,10 +9,11 @@ one row per served record, and mostly on the (gene, compound) pair. The model tr
 the built store, one entry per (genotype, environment) cell. This script reads the cell
 table ``flatten_cells.py`` wrote and re-measures each plan claim on the store itself.
 
-Ten tables, each one question:
+Twelve tables, each one question:
 
 ``store_axes.csv``            what each source holds on the genotype, environment and
                               dose axes of the representation.
+``pool_totals.csv``           the pool as one row, shared genes and compounds counted once.
 ``unit_of_analysis.csv``      the store's cell against the plan's (gene, compound) pair:
                               counts, spread and skew at both units.
 ``ploidy_pairs.csv``          how many Hoepfner cells are measured in both ploidy arms,
@@ -185,6 +186,34 @@ def store_axes(table: pd.DataFrame, plan_dose: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def pool_totals(table: pd.DataFrame) -> pd.DataFrame:
+    """The pool as one row, with genes, environments and compounds counted once."""
+    keys = table["inchikeys"].str.split("|").explode()
+    return pd.DataFrame(
+        [
+            {
+                "measurements": int(table["n_measurements"].sum()),
+                "cells": len(table),
+                "cells_repeated": int((table["n_measurements"] > 1).sum()),
+                "environments_repeated": int(
+                    table.loc[table["n_measurements"] > 1, "environment_id"].nunique()
+                ),
+                "genes": table["query_gene"].nunique(),
+                "environments": table["environment_id"].nunique(),
+                "compounds": keys[keys != ""].nunique(),
+                "cells_no_compound": int((table["n_compounds"] == 0).sum()),
+                "cells_two_compounds": int((table["n_compounds"] >= 2).sum()),
+                "cells_compound_without_inchikey": int(
+                    (table["n_with_inchikey"] < table["n_compounds"]).sum()
+                ),
+                "cells_at_dose_zero": int((table["functional_dose"] == 0.0).sum()),
+                "cells_at_dose_half": int((table["functional_dose"] == 0.5).sum()),
+                "cells_with_molar": int(table["log10_molar"].notna().sum()),
+            }
+        ]
+    )
+
+
 def pair_means(meas: pd.DataFrame, name: str) -> pd.Series:
     """Mean response per (gene, InChIKey) over every measurement, the plan's unit."""
     m = meas[
@@ -221,8 +250,17 @@ def unit_of_analysis(
     return pd.DataFrame(rows)
 
 
-def ploidy_pairs(meas: pd.DataFrame) -> pd.DataFrame:
-    """Hoepfner cells measured heterozygous AND homozygous, at three match levels."""
+def ploidy_pairs(meas: pd.DataFrame, reliability: pd.DataFrame) -> pd.DataFrame:
+    """Hoepfner cells measured heterozygous AND homozygous, at three match levels.
+
+    The attenuation limit is the correlation two noisy measurements of the SAME quantity
+    would show, the square root of the product of the two arms' reliabilities, so the
+    observed correlation over that limit is what the arms share once noise is set aside.
+    """
+    arms = reliability[reliability["dataset"] == "Hoepfner 2014"].set_index(
+        "functional_dose"
+    )["pearson_median"]
+    limit = float(np.sqrt(arms.loc[0.0] * arms.loc[0.5]))
     h = meas[
         (meas["dataset"] == "EnvChemgenHoepfner2014Dataset")
         & (meas["n_compounds"] == 1)
@@ -249,6 +287,8 @@ def ploidy_pairs(meas: pd.DataFrame) -> pd.DataFrame:
         if len(both) >= MIN_GENES_PER_PAIR:
             row["spearman"] = float(spearmanr(both[0.0], both[0.5])[0])
             row["pearson"] = float(pearsonr(both[0.0], both[0.5])[0])
+            row["attenuation_limit"] = limit
+            row["pearson_over_limit"] = row["pearson"] / limit
             per_compound = [
                 spearmanr(g[0.0], g[0.5])[0]
                 for _, g in both.groupby(level="inchikeys")
@@ -261,6 +301,7 @@ def ploidy_pairs(meas: pd.DataFrame) -> pd.DataFrame:
             het_hit = both[0.5] <= both[0.5].quantile(0.05)
             row["hom_hits"] = int(hom_hit.sum())
             row["hom_hits_also_het_hits"] = int((hom_hit & het_hit).sum())
+            row["hom_hits_expected_by_chance"] = float(hom_hit.sum() * het_hit.mean())
         rows.append(row)
     return pd.DataFrame(rows)
 
@@ -557,13 +598,15 @@ def main() -> None:
     plan_overlap = pd.read_csv(osp.join(plan, "cross_dataset_pair_overlap.csv"))
 
     pairs = within_cell_pairs(meas, table)
+    reliability = within_cell_reliability(pairs)
     outputs = {
         "store_axes": store_axes(table, plan_dose),
+        "pool_totals": pool_totals(table),
         "unit_of_analysis": unit_of_analysis(table, meas, plan_dist),
-        "ploidy_pairs": ploidy_pairs(meas),
+        "ploidy_pairs": ploidy_pairs(meas, reliability),
         "label_policy": label_policy(table),
         "within_cell_pairs": pairs,
-        "within_cell_reliability": within_cell_reliability(pairs),
+        "within_cell_reliability": reliability,
         "standardized_target": standardized_target(table),
         "vanacloig_folds": vanacloig_folds(table, plan_noise),
         "embedding_coverage_store": embedding_coverage(

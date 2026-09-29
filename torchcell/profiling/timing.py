@@ -185,8 +185,8 @@ def print_comparison_table(
     )
     print("-" * 100)
 
-    baseline_total = 0
-    optimized_total = 0
+    baseline_total = 0.0
+    optimized_total = 0.0
 
     for method in all_methods:
         baseline_time = baseline_methods.get(method, {}).get("mean", 0)

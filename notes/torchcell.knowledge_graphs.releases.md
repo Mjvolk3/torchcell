@@ -57,3 +57,38 @@ answers count-store queries; a DBMS whose system database faults comes back as o
 
 Importing `torchcell.knowledge_graphs` imports BioCypher (a banner on stdout and a
 `biocypher-log/` directory in the cwd, gitignored); `scripts/ops.sh` filters the banner.
+
+## 2026.09.29 - The package version a release names (T4 of the data release program)
+
+Plan: [[plan.data-release-program.2026.09.29]], Decisions 1, 2 and 5; issue #467. Until
+now a release pinned a git commit and nothing said which package version reads it.
+
+- `KgRelease` gains `torchcell_version` (the stamping checkout's `torchcell.__version__`)
+  and `torchcell_tag` (`git describe --tags --exact-match HEAD`; None between package
+  releases). Both are recorded at `stamp` (`kg_manifest.checkout_package_version` reads
+  `torchcell/__version__.py` of `--repo`, or of the checkout the package was imported
+  from, `package_checkout()`), never inferred later, and travel through the manifest,
+  `to_properties`/`from_properties`, `write-node` and the snapshot. Nodes written before
+  this carry None.
+- `status` has a `PKG` column after `RELEASE`: the tag when the build ran from one,
+  `1.2.0 (untagged)` otherwise, `-` for a pre-spine node. `scripts/ops.sh` finds the
+  release id by regex, not by column, so `make ops` is unchanged.
+- `compatibility` is split: `closure_compatibility(release, commit, datasets, closures,
+  surface)` runs the check against any `SchemaSurface`, which is what the compatibility
+  page uses with the surface at a git tag; `compatibility(release, repo_root)` is the
+  working-tree case as before.
+- New subcommand `snapshot --manifest M [--n-nodes N] [--built-at T] [--repo-root R]`
+  writes `database/releases/<release>.json` and `<release>.closures.json`
+  ([[torchcell.knowledge_graphs.release_snapshot]]); both slurm scripts call it right
+  after `write-node`. `--torchcell-version/--torchcell-tag/--note` are for a manifest
+  stamped before the spine and are refused when the manifest records a version.
+- Bootstrapped snapshot for the served release `2026.09.21-ab6d8c5d` (version 1.2, 51
+  datasets): `torchcell_version` 1.2.0 (`git show ab6d8c5d:torchcell/__version__.py`),
+  `torchcell_tag` None (`git tag --points-at ab6d8c5d` is empty; v1.2.0 is 4309a482a of
+  2026.07.01 and v1.2.1 is 6d6c8bb27 of 2026.09.27), `n_nodes` 99,724,909 (the count
+  job 2678 passed to `write-node`, `database/slurm/output/2678_increment_kg.out` line
+  1602), composite `39e26472ceb731c22f882e80fbd9c10a941637e57823317795283fcfbf36d2dc`.
+  The derivation is in the snapshot's last event note.
+- Measured with `scripts/kg_compat_page.py`: v1.2.1 is `compatible` with that release
+  (all 51 closures match the surface at the tag) and v1.2.0 is `partial (all 51 datasets
+  drifted)`; page at [[scripts.kg_compat_page]].

@@ -14,3 +14,25 @@ The admission gate exists so a dataset can join the served graph without a full 
 - Admissible only if every served id is still produced and at least one new id exists. A served id the LMDB no longer produces blocks, because that is a changed record and the full-rebuild case; an identical re-admission blocks as nothing to add.
 - Manifest: `KgDatasetEntry.superset_of` records the previous entry and `n_added`; the event kind is `superset_admission`. CLI: `admit --neo4j-uri --database`.
 - Measured runs and the resulting served counts (410,571 and 632,998): [[torchcell.knowledge_graphs.incremental-admission]]. Slurm side: [[database.slurm.scripts.gilahyper_increment_kg-slurm_docker]].
+
+## 2026.09.29 - The manifest records the package version
+
+Plan: [[plan.data-release-program.2026.09.29]], Decision 1 (T4, issue #467). The schema
+version stays 1: every new field is optional, so the served manifest (stamped 2026-09-21,
+before this) still loads with `torchcell_version` None.
+
+- `KgBuildManifest.torchcell_version` and `torchcell_tag`: the package version and tag the
+  release names, written by `releases stamp` from the stamping checkout
+  (`checkout_package_version`: `torchcell/__version__.py` of the checkout, `git describe
+  --tags --exact-match HEAD`). `bootstrap` fills them from the build commit instead
+  (`package_version_at_ref`, `package_tag_at_ref`: `git show <commit>:torchcell/__version__.py`
+  and `git tag --points-at <commit>`; two tags on one commit raise).
+- `KgEvent.torchcell_version`: the package version of the checkout that produced the
+  event. `bootstrap` writes it from the commit; `admit` puts the working tree's version
+  in the `AdmissionReport` (`torchcell_version`, next to `torchcell_commit`) and `record`
+  copies it into the event, so a batch carries one value for all members.
+- `manifest.torchcell_commit` stays the FULL build's commit while `release` names the
+  latest event's commit; the snapshot's `torchcell_commit` follows `KgRelease` (the full
+  build), and the compatibility page prints it as `commit`.
+- Tests: `tests/torchcell/knowledge_graphs/test_kg_manifest.py` (round trip, the
+  pre-spine manifest, the git helpers on a throwaway repo).

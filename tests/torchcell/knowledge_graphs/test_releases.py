@@ -59,6 +59,7 @@ from torchcell.knowledge_graphs.releases import (
     main,
     main_build,
     next_version,
+    package_label,
     read_release,
     release_from_manifest,
     release_id,
@@ -157,10 +158,13 @@ def test_stamp_manifest_then_release_round_trips_through_node_properties() -> No
         built_at="2026-09-17T20:36:32-05:00",
         content_hashes=hashes,
         previous_version=None,
+        torchcell_version="1.2.0",
+        torchcell_tag=None,
     )
     assert manifest.version == "1.0"
     assert manifest.release == "2026.09.17-7715ee35"
     assert manifest.datasets["DsA"].content_sha256 == "a" * 64
+    assert (manifest.torchcell_version, manifest.torchcell_tag) == ("1.2.0", None)
 
     release = release_from_manifest(
         manifest,
@@ -170,8 +174,10 @@ def test_stamp_manifest_then_release_round_trips_through_node_properties() -> No
     )
     assert release.n_datasets == 2
     assert release.closures["DsB"] == {"Experiment": "aa", "Genotype": "bb"}
+    assert (release.torchcell_version, release.torchcell_tag) == ("1.2.0", None)
     props = release.to_properties()
     assert isinstance(props["datasets_json"], str)
+    assert (props["torchcell_version"], props["torchcell_tag"]) == ("1.2.0", None)
     assert KgRelease.from_properties(props) == release
 
 
@@ -183,6 +189,8 @@ def test_incremental_stamp_keeps_hashes_of_untouched_datasets() -> None:
         built_at="2026-09-17T20:36:32-05:00",
         content_hashes={"DsA": "a" * 64, "DsB": "b" * 64},
         previous_version=None,
+        torchcell_version="1.2.0",
+        torchcell_tag=None,
     )
     manifest.datasets["DsC"] = manifest.datasets["DsA"].model_copy(
         update={"dataset_class": "DsC", "content_sha256": None}
@@ -202,9 +210,12 @@ def test_incremental_stamp_keeps_hashes_of_untouched_datasets() -> None:
         built_at="2026-09-30T01:00:00+00:00",
         content_hashes={"DsC": "c" * 64},
         previous_version=manifest.version,
+        torchcell_version="1.2.1",
+        torchcell_tag="v1.2.1",
     )
     assert manifest.version == "1.1"
     assert manifest.release == "2026.09.30-abcdef01"
+    assert (manifest.torchcell_version, manifest.torchcell_tag) == ("1.2.1", "v1.2.1")
     assert manifest.datasets["DsA"].content_sha256 == "a" * 64
     assert manifest.datasets["DsC"].content_sha256 == "c" * 64
     manifest.datasets["DsD"] = manifest.datasets["DsC"].model_copy(
@@ -217,6 +228,8 @@ def test_incremental_stamp_keeps_hashes_of_untouched_datasets() -> None:
             built_at="2026-10-01T00:00:00+00:00",
             content_hashes={},
             previous_version=manifest.version,
+            torchcell_version="1.2.1",
+            torchcell_tag="v1.2.1",
         )
 
 
@@ -228,6 +241,8 @@ def test_release_from_manifest_refuses_a_missing_hash() -> None:
         built_at="2026-09-17T20:36:32-05:00",
         content_hashes={"DsA": "a" * 64},
         previous_version="1.2",
+        torchcell_version="1.2.0",
+        torchcell_tag=None,
     )
     assert manifest.version == "2.0"
     with pytest.raises(ValueError, match="no content hash"):
@@ -258,6 +273,8 @@ def test_release_from_manifest_and_stamp_refuse_an_unstamped_or_commitless_manif
             built_at="x",
             content_hashes=hashes,
             previous_version=None,
+            torchcell_version="1.2.0",
+            torchcell_tag=None,
         )
 
 
@@ -309,18 +326,62 @@ def test_status_rows_report_faults_and_missing_release_nodes() -> None:
     rows = status_rows("gilahyper", [healthy], None) + status_rows(
         "radiant", [faulting, bare], None
     )
-    assert rows[0][:4] == [
+    assert rows[0][:5] == [
         "gilahyper",
         "torchcell [default]",
         "1.0",
         "2026.09.17-7715ee35",
+        "-",
     ]
-    assert rows[0][7] == "99,723,455" and rows[0][8] == "latest,pinned"
-    assert rows[1][9].startswith("faulting (java.io.IOException")
-    assert rows[2][9] == "online (no release node)"
+    assert rows[0][8] == "99,723,455" and rows[0][9] == "latest,pinned"
+    assert rows[1][10].startswith("faulting (java.io.IOException")
+    assert rows[2][10] == "online (no release node)"
     text = format_table(rows)
     assert text.splitlines()[0].startswith("HOST")
     assert json.dumps(rows)  # plain strings only
+
+
+def test_pkg_column_is_the_tag_or_the_version_marked_untagged() -> None:
+    """A release from a tagged checkout shows the tag; an untagged build shows the
+    version and says so; a node written before the spine shows ``-``.
+    """
+    tagged = _release("2026.09.17-7715ee35", {"DsA": "1"}).model_copy(
+        update={"torchcell_version": "1.2.0", "torchcell_tag": "v1.2.0"}
+    )
+    untagged = tagged.model_copy(update={"torchcell_tag": None})
+    assert package_label(tagged) == "v1.2.0"
+    assert package_label(untagged) == "1.2.0 (untagged)"
+    assert package_label(_release("x", {})) == "-"
+    assert package_label(None) == "-"
+    served = [
+        ServedDatabase(
+            name="torchcell",
+            aliases=[],
+            default=False,
+            status="online",
+            release=release,
+            n_datasets=1,
+        )
+        for release in (tagged, untagged)
+    ]
+    assert [row[4] for row in status_rows("gh", served, None)] == [
+        "v1.2.0",
+        "1.2.0 (untagged)",
+    ]
+    assert format_table(status_rows("gh", served, None)).splitlines()[0] == (
+        "HOST  DATABASE   VERSION  RELEASE              PKG               COMMIT#  "
+        "DATE  DATASETS  NODES  ALIASES  STATUS"
+    )
+
+
+def test_properties_round_trip_the_package_version_and_tag() -> None:
+    release = RELEASE.model_copy(
+        update={"torchcell_version": "1.2.0", "torchcell_tag": "v1.2.0"}
+    )
+    props = release.to_properties()
+    assert (props["torchcell_version"], props["torchcell_tag"]) == ("1.2.0", "v1.2.0")
+    assert KgRelease.from_properties(props) == release
+    assert KgRelease.from_properties(RELEASE.to_properties()) == RELEASE
 
 
 # --------------------------------------------------------------------------- the node
@@ -350,6 +411,8 @@ def test_to_properties_flattens_the_maps_to_compact_sorted_json() -> None:
         "release": "2026.09.17-7715ee35",
         "version": "1.0",
         "torchcell_commit": "7715ee35d95c",
+        "torchcell_version": None,
+        "torchcell_tag": None,
         "built_at": "2026-09-17T20:36:32-05:00",
         "biocypher_out": "2026-09-16_00-44-53",
         "neo4j_version": None,
@@ -892,6 +955,7 @@ def test_status_rows_fill_the_git_columns_when_a_repo_root_is_given(
             "torchcell",
             "1.0",
             "2026.09.17-7715ee35",
+            "-",
             "1200",
             "2026.09.17",
             "2",
@@ -905,10 +969,10 @@ def test_status_rows_fill_the_git_columns_when_a_repo_root_is_given(
 # --------------------------------------------------------------------------- CLI
 
 STATUS_TABLE = [
-    "HOST  DATABASE             VERSION  RELEASE              COMMIT#  DATE  DATASETS  NODES  ALIASES        STATUS",
-    "gh    torchcell [default]  1.0      2026.09.17-7715ee35  -        -     2         7      latest,pinned  online",
-    "gh    neo4j                -        -                    -        -     -         7      -              faulting (java.io.IOException: Input/output error)",
-    "gh    old                  -        -                    -        -     -         -      -              offline",
+    "HOST  DATABASE             VERSION  RELEASE              PKG  COMMIT#  DATE  DATASETS  NODES  ALIASES        STATUS",
+    "gh    torchcell [default]  1.0      2026.09.17-7715ee35  -    -        -     2         7      latest,pinned  online",
+    "gh    neo4j                -        -                    -    -        -     -         7      -              faulting (java.io.IOException: Input/output error)",
+    "gh    old                  -        -                    -    -        -     -         -      -              offline",
 ]
 
 
@@ -1054,9 +1118,19 @@ def test_cli_hashes_from_csv_dir_needs_no_connection(
 
 
 def test_cli_stamp_versions_the_manifest_file_in_place(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """``stamp --kind full`` writes version 1.0, the release id, and the hashes back."""
+    """``stamp --kind full`` writes version 1.0, the release id, the hashes, and the
+    package version and tag of the checkout (``checkout_package_version`` on ``--repo``,
+    or the imported checkout) back.
+    """
+    asked: list[Path] = []
+
+    def checkout(root: Path) -> tuple[str, str | None]:
+        asked.append(root)
+        return "1.2.0", "v1.2.0"
+
+    monkeypatch.setattr(releases, "checkout_package_version", checkout)
     manifest_path = tmp_path / "kg_manifest.json"
     save_manifest(_manifest({"DsA": 10, "DsB": 20}), manifest_path)
     hashes_path = tmp_path / "hashes.json"
@@ -1080,14 +1154,105 @@ def test_cli_stamp_versions_the_manifest_file_in_place(
         == 0
     )
     assert capsys.readouterr().out == (
-        f"{manifest_path}: version 1.0, release 2026.09.17-7715ee35\n"
+        f"{manifest_path}: version 1.0, release 2026.09.17-7715ee35, "
+        "torchcell 1.2.0 (v1.2.0)\n"
     )
     stamped = load_manifest(manifest_path)
     assert (stamped.version, stamped.release) == ("1.0", "2026.09.17-7715ee35")
+    assert (stamped.torchcell_version, stamped.torchcell_tag) == ("1.2.0", "v1.2.0")
     assert {n: e.content_sha256 for n, e in stamped.datasets.items()} == {
         "DsA": "a" * 64,
         "DsB": "b" * 64,
     }
+    assert asked == [releases.package_checkout()]
+    assert (
+        main(
+            [
+                "--repo",
+                str(tmp_path),
+                "stamp",
+                "--manifest",
+                str(manifest_path),
+                "--kind",
+                "incremental",
+                "--built-at",
+                "2026-09-30T00:00:00+00:00",
+                "--hashes",
+                str(hashes_path),
+                "--previous-version",
+                "1.0",
+            ]
+        )
+        == 0
+    )
+    assert asked[-1] == tmp_path.resolve()
+    capsys.readouterr()
+
+
+def test_cli_snapshot_writes_the_committed_files_and_bootstraps_the_version(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A stamped manifest becomes ``database/releases/<release>.json`` and its closures
+    under ``--repo-root``; ``--torchcell-version`` fills a pre-spine manifest and is
+    refused for one that records its version.
+    """
+    from torchcell.knowledge_graphs.release_snapshot import load_closures, load_snapshot
+
+    manifest = _manifest({"DsA": 10, "DsB": 20})
+    stamp_manifest(
+        manifest,
+        kind="full",
+        built_at="2026-09-17T20:36:32-05:00",
+        content_hashes={"DsA": "a" * 64, "DsB": "b" * 64},
+        previous_version=None,
+        torchcell_version="1.2.0",
+        torchcell_tag=None,
+    )
+    manifest_path = tmp_path / "kg_manifest.json"
+    save_manifest(manifest, manifest_path)
+    argv = [
+        "snapshot",
+        "--manifest",
+        str(manifest_path),
+        "--n-nodes",
+        "99",
+        "--built-at",
+        "2026-09-17T21:00:00-05:00",
+        "--repo-root",
+        str(tmp_path),
+    ]
+    assert main(argv) == 0
+    composite = hashlib.sha256(("a" * 64 + "\n" + "b" * 64 + "\n").encode()).hexdigest()
+    snapshot_path = tmp_path / "database" / "releases" / "2026.09.17-7715ee35.json"
+    assert capsys.readouterr().out == (
+        f"2026.09.17-7715ee35: torchcell 1.2.0 (untagged), composite {composite} -> "
+        f"{snapshot_path}, {tmp_path / 'database' / 'releases' / '2026.09.17-7715ee35.closures.json'}\n"
+    )
+    snapshot = load_snapshot(snapshot_path)
+    assert (snapshot.n_nodes, snapshot.built_at, snapshot.torchcell_version) == (
+        99,
+        "2026-09-17T21:00:00-05:00",
+        "1.2.0",
+    )
+    assert load_closures(tmp_path, "2026.09.17-7715ee35") == {
+        "DsA": {"Experiment": "aa", "Genotype": "bb"},
+        "DsB": {"Experiment": "aa", "Genotype": "bb"},
+    }
+    with pytest.raises(ValueError, match="already records torchcell_version 1.2.0"):
+        main([*argv, "--torchcell-version", "9.9.9"])
+    manifest.torchcell_version = None
+    save_manifest(manifest, manifest_path)
+    assert (
+        main([*argv, "--torchcell-version", "1.2.0", "--torchcell-tag", "v1.2.0"]) == 0
+    )
+    capsys.readouterr()
+    snapshot = load_snapshot(snapshot_path)
+    assert (snapshot.torchcell_version, snapshot.torchcell_tag) == ("1.2.0", "v1.2.0")
+    assert snapshot.events[-1].note == (
+        "bootstrapped: torchcell_version 1.2.0 and torchcell_tag v1.2.0 were supplied "
+        "to `releases snapshot --torchcell-version` because the manifest predates the "
+        "versioning spine"
+    )
 
 
 def test_cli_write_node_merges_the_release_built_from_a_stamped_manifest(
@@ -1103,6 +1268,8 @@ def test_cli_write_node_merges_the_release_built_from_a_stamped_manifest(
         built_at="2026-09-17T20:36:32-05:00",
         content_hashes={"DsA": "a" * 64, "DsB": "b" * 64},
         previous_version=None,
+        torchcell_version="1.2.0",
+        torchcell_tag=None,
     )
     manifest_path = tmp_path / "kg_manifest.json"
     save_manifest(manifest, manifest_path)

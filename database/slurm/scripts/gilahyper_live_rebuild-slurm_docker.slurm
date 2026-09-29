@@ -435,6 +435,12 @@ python -m torchcell.knowledge_graphs.releases stamp --manifest "$KG_MANIFEST" --
 docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '$NEO4J_DATABASE');"
 python -m torchcell.knowledge_graphs.releases write-node --manifest "$KG_MANIFEST" --database "$NEO4J_DATABASE" \
     --built-at "$BUILT_AT" --n-nodes "$SERVED"
+# Release snapshot (plan.data-release-program.2026.09.29, Decision 1): the committed
+# database/releases/<release>.json (+ .closures.json) that scripts/kg_compat_page.py
+# turns into the docs compatibility page. Written into the checkout; commit it, then
+# regenerate the page with `python scripts/kg_compat_page.py`.
+python -m torchcell.knowledge_graphs.releases snapshot --manifest "$KG_MANIFEST" \
+    --built-at "$BUILT_AT" --n-nodes "$SERVED" --repo-root "$TORCHCELL_SRC"
 docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '');"
 docker exec "$NEO4J_CONTAINER" $CS -d system \
     "CREATE ALIAS latest IF NOT EXISTS FOR DATABASE $NEO4J_DATABASE; CREATE ALIAS pinned IF NOT EXISTS FOR DATABASE $NEO4J_DATABASE;"

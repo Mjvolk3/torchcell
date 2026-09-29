@@ -136,3 +136,50 @@ https://pypi.org/project/torchcell/0.1.15/
 (6) Can now check [pypi torchcell](https://pypi.org/project/torchcell/) for updated version.
 
 ![](./assets/images/versioning.md.pypi-updated-version-0.1.15.png)
+
+## 2026.09.29 - Tag map, the parser that reads it, and release-before-build
+
+Plan: [[plan.data-release-program.2026.09.29]], Decision 5 (T4, issue #467).
+
+### What each commit tag does now
+
+Measured on python-semantic-release 10.4.1 (the installed version) with the config in
+`pyproject.toml`; `tests/scripts/test_release_parser.py` pins it on the last 30 real
+subjects of `main`.
+
+| tag | bump | note |
+|---|---|---|
+| `API` | major | also any tag with `!` (`FIX(x)!: ...`) or a `BREAKING CHANGE:` paragraph |
+| `FEAT`, `ENH`, `DEP`, `DEV`, `REV` | minor | |
+| `FIX`, `BUG`, `BLD`, `MAINT`, `PERF` | patch | `FIX` and `PERF` are new to the map; a `FIX(...)` used to release nothing |
+| `DOC`, `DOCS`, `NOTE`, `TST`, `TEST`, `STY`, `CI`, `REL`, `BENCH` | none | allowed, so they are not parser noise; `DOCS`, `NOTE` and `CI` are new |
+| anything else (`fig(008): ...`, the `1.2.1` bump commit) | not parsed | ignored by the release |
+
+The parser is `scripts/release_parser.py:TorchcellCommitParser` ([[scripts.release_parser]]):
+the conventional parser plus `major_tags`. The `scipy` parser used until now accepts
+`TAG: subject` and `TAG: scope: subject` only; on the last 30 subjects 23 did not parse
+because they carry the `TAG(scope): subject` form, so `FIX(losses): ...` bumped nothing
+however `patch_tags` was set. With the new parser those 30 subjects give 8 patch, 20 no
+release, 2 unparsed. Consequence: the first push to `main` after this lands releases
+`1.2.2`, since five `FIX` commits, `PERF(ops)` and `MAINT(ci)` sit above `v1.2.1`.
+
+### Cut the source release before the KG build
+
+The KG release names a package version (`torchcell_version`, `torchcell_tag` in the
+manifest, the `KgRelease` node and the committed snapshot,
+[[torchcell.knowledge_graphs.releases]]). For the tag to be a real package release:
+
+1. Land everything the build should serialize under, then push a bumping commit to
+   `main` (`FEAT:` for a minor, `FIX:` for a patch, `API:` or `!` for a major);
+   `semantic-release.yaml` tags `vX.Y.Z` and pushes the bump commit
+   (`torchcell/__version__.py`, `pyproject.toml`).
+2. Check out that tag in the build checkout (`TORCHCELL_SRC` at `vX.Y.Z`, clean tree)
+   and run the full build (`gilahyper_live_rebuild-slurm_docker.slurm`) or the increment.
+   `stamp` records `torchcell.__version__` and `git describe --tags --exact-match HEAD`
+   of that checkout; a build from an untagged commit records the version with tag None
+   and the status table shows `1.2.x (untagged)`.
+3. The slurm script writes `database/releases/<release>.json` (+ `.closures.json`) into
+   the checkout; commit them, run `python scripts/kg_compat_page.py`, commit the page.
+
+The bootstrapped snapshot for `2026.09.21-ab6d8c5d` records `1.2.0` with tag None: the
+build ran from `ab6d8c5d`, between `v1.2.0` (2026.07.01) and `v1.2.1` (2026.09.27).

@@ -40,6 +40,9 @@ adapters:
   # r7 arm: adapters.single_pass_chunk_budget_mb=N (resolved-record MiB per
   # single-pass chunk; sets the chunk length per adapter). 48 is the module default.
   single_pass_chunk_budget_mb: 48
+  # r10 arms: see kg_bench_ladder.yaml.
+  inprocess_max_mb: 0
+  completion_order: false
 
 datasets:
   - Bloom2019Dataset # the adapter that OOM-killed full builds 2889 and 2905

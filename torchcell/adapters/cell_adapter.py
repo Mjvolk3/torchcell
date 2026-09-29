@@ -11,7 +11,7 @@ import json
 import logging
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
-from concurrent.futures import Future, ProcessPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, Future, ProcessPoolExecutor, wait
 from datetime import datetime
 from functools import wraps
 from typing import Any, cast
@@ -45,6 +45,7 @@ CHUNKS_PER_WORKER = 2
 SINGLE_PASS_NODES = "all node types (chunked)"
 SINGLE_PASS_EDGES = "all edge types (chunked)"
 SINGLE_PASS_CHUNK_BUDGET_BYTES = 48 * 2**20
+INPROCESS_MAX_BYTES = 0  # 0: the in-process rule is by record count alone
 """Resolved-record bytes a single-pass chunk may carry.
 
 A folded pass emits every node (or edge) type per record, so a chunk's output scales
@@ -124,6 +125,17 @@ class CellAdapter:
         self.row_specs: RowSpecs | None = None
         self.chunks_per_worker = CHUNKS_PER_WORKER
         self.single_pass_chunk_budget_bytes = SINGLE_PASS_CHUNK_BUDGET_BYTES
+        # r10: the in-process rule is by records only unless this is set; then a
+        # dataset also has to fit in this many resolved bytes. Job 2959 ran Caudal
+        # (943 records of 3 MB), Kemmeren (1,484 of 780 KB), Messner and Nadal-Ribelles
+        # in-process on one core for 39 minutes of a 4 h build.
+        self.inprocess_max_bytes = INPROCESS_MAX_BYTES
+        # r10: yield chunk results as they complete instead of in submission order.
+        # In order, the parent blocks on the oldest chunk and submits a replacement
+        # only after consuming it, so one slow chunk idles the rest of the pool: job
+        # 2959's Costanzo passes averaged 18 of 64 cores with peaks at 50.
+        self.completion_order = False
+        self._record_bytes: int | None = None
         self.event = 0
         wandb.init()
         self.log_method_table()
@@ -386,8 +398,16 @@ class CellAdapter:
                 chunk_size = budget_chunk
 
         # Small datasets: one chunk, this process, no forks. The whole dataset is
-        # the chunk, and data_chunker's in-process branch iterates it directly.
-        if 0 < len(self.dataset) <= self.inprocess_max_records:
+        # the chunk, and data_chunker's in-process branch iterates it directly. With
+        # inprocess_max_bytes set, "small" also means small in resolved bytes, so a
+        # dataset of a few hundred multi-MB expression records goes to the pool.
+        inprocess = 0 < len(self.dataset) <= self.inprocess_max_records
+        if inprocess and self.inprocess_max_bytes > 0:
+            inprocess = (
+                len(self.dataset) * self._estimate_record_bytes()
+                <= self.inprocess_max_bytes
+            )
+        if inprocess:
             whole = self.dataset[0 : len(self.dataset)]
             self.dataset.close_lmdb()
             yield from chunk_processing_func(whole, method_name, inprocess=True)
@@ -459,6 +479,20 @@ class CellAdapter:
                     if future is None:
                         break
                     in_flight.append(future)
+                if self.completion_order:
+                    # r10: consume whichever chunk finishes first and refill at once,
+                    # so the window stays full and no worker waits on the oldest chunk.
+                    # Row order across chunks then depends on timing; the writer dedups
+                    # by id, and the import does not depend on row order.
+                    pending: set[Future[Any]] = set(in_flight)
+                    while pending:
+                        done, pending = wait(pending, return_when=FIRST_COMPLETED)
+                        for finished in done:
+                            yield from finished.result()
+                            future = submit_next(executor)
+                            if future is not None:
+                                pending.add(future)
+                    continue
                 while in_flight:
                     yield from in_flight.popleft().result()
                     future = submit_next(executor)
@@ -516,7 +550,9 @@ class CellAdapter:
         return decorator
 
     def _estimate_record_bytes(self, samples: int = 64) -> int:
-        """Median JSON size of a resolved record, from evenly spaced samples."""
+        """Median JSON size of a resolved record, from evenly spaced samples (cached)."""
+        if self._record_bytes is not None:
+            return self._record_bytes
         n = len(self.dataset)
         step = max(1, n // samples)
         sizes = sorted(
@@ -528,7 +564,8 @@ class CellAdapter:
         # environment and the pool's feeder could not pickle it (jobs 2918-2921,
         # Costanzo capped to 2M: "cannot pickle 'Environment' object").
         self.dataset.close_lmdb()
-        return max(1, sizes[len(sizes) // 2])
+        self._record_bytes = max(1, sizes[len(sizes) // 2])
+        return self._record_bytes
 
     def _pack_chunk(self, datas: list[Any]) -> list[Any]:
         """Return a chunk's output as objects, or as one RenderedChunk when rendering."""

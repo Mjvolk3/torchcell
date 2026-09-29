@@ -31,9 +31,17 @@ closure fingerprints against the local schema surface and names the datasets who
 records the local code would serialize differently, the same drift the admission gate
 checks before an increment.
 
+**The package version a release names.** ``stamp`` records ``torchcell_version`` (the
+stamping checkout's ``torchcell.__version__``) and ``torchcell_tag`` (``git describe
+--tags --exact-match HEAD``, None between package releases) in the manifest, and the
+node and the committed snapshot (``snapshot``, ``torchcell.knowledge_graphs
+.release_snapshot``) carry them, so ``scripts/kg_compat_page.py`` can say which package
+tags read which release without the machine-local manifest.
+
     python -m torchcell.knowledge_graphs.releases status --label gilahyper
     python -m torchcell.knowledge_graphs.releases datasets --version latest
     python -m torchcell.knowledge_graphs.releases diff 2026.09.17-7715ee35 latest
+    python -m torchcell.knowledge_graphs.releases snapshot --manifest kg_manifest.json
 """
 
 from __future__ import annotations
@@ -45,14 +53,19 @@ import json
 import subprocess
 import sys
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from torchcell.knowledge_graphs.kg_manifest import KgBuildManifest, surface_in_worktree
+from torchcell.knowledge_graphs.kg_manifest import (
+    KgBuildManifest,
+    checkout_package_version,
+    surface_in_worktree,
+)
+from torchcell.provenance.schema_deps import SchemaSurface
 
 RELEASE_LABEL = "KgRelease"
 LATEST_ALIAS = "latest"
@@ -79,6 +92,12 @@ class KgRelease(BaseModel):
     release: str  # <YYYY.MM.DD>-<commit[:8]>; the build date, the generation commit
     version: str  # <major>.<minor>
     torchcell_commit: str
+    # ``torchcell.__version__`` of the checkout that stamped the release and the git tag
+    # on its HEAD (None when the build ran from an untagged commit); both recorded at
+    # the stamp, never inferred later. None on a node written before the versioning
+    # spine ([[plan.data-release-program.2026.09.29]]).
+    torchcell_version: str | None = None
+    torchcell_tag: str | None = None
     built_at: str
     biocypher_out: str
     neo4j_version: str | None = None
@@ -98,6 +117,8 @@ class KgRelease(BaseModel):
             "release": self.release,
             "version": self.version,
             "torchcell_commit": self.torchcell_commit,
+            "torchcell_version": self.torchcell_version,
+            "torchcell_tag": self.torchcell_tag,
             "built_at": self.built_at,
             "biocypher_out": self.biocypher_out,
             "neo4j_version": self.neo4j_version,
@@ -121,6 +142,8 @@ class KgRelease(BaseModel):
             release=props["release"],
             version=props["version"],
             torchcell_commit=props["torchcell_commit"],
+            torchcell_version=props.get("torchcell_version"),
+            torchcell_tag=props.get("torchcell_tag"),
             built_at=props["built_at"],
             biocypher_out=props["biocypher_out"],
             neo4j_version=props.get("neo4j_version"),
@@ -313,6 +336,8 @@ def release_from_manifest(
         release=manifest.release,
         version=manifest.version,
         torchcell_commit=manifest.torchcell_commit,
+        torchcell_version=manifest.torchcell_version,
+        torchcell_tag=manifest.torchcell_tag,
         built_at=built_at,
         biocypher_out=manifest.events[-1].biocypher_out or "",
         neo4j_version=manifest.neo4j_version,
@@ -331,19 +356,24 @@ def stamp_manifest(
     built_at: str,
     content_hashes: dict[str, str],
     previous_version: str | None,
+    torchcell_version: str,
+    torchcell_tag: str | None,
 ) -> KgBuildManifest:
-    """Give a manifest its version, release id, and per-dataset content hashes.
+    """Give a manifest its version, release id, package version, and content hashes.
 
     A full build passes a hash for every dataset. An incremental admission passes the
     hashes of the datasets it imported; the rest keep the hash they already carry,
     since incremental import never touches existing nodes. Any dataset left without a
-    hash is an error.
+    hash is an error. ``torchcell_version`` and ``torchcell_tag`` are what the stamping
+    checkout reports (``checkout_package_version``); the release names them from now on.
     """
     if manifest.torchcell_commit is None:
         raise ValueError("the manifest records no full-build commit")
     manifest.version = next_version(previous_version, kind)
     commit = manifest.events[-1].torchcell_commit or manifest.torchcell_commit
     manifest.release = release_id(built_at, commit)
+    manifest.torchcell_version = torchcell_version
+    manifest.torchcell_tag = torchcell_tag
     for name, entry in manifest.datasets.items():
         if name in content_hashes:
             entry.content_sha256 = content_hashes[name]
@@ -520,12 +550,40 @@ def diff(a: KgRelease, b: KgRelease) -> ReleaseDiff:
 
 def compatibility(release: KgRelease, repo_root: Path) -> ReleaseCompatibility:
     """Which served datasets the checkout at ``repo_root`` would serialize differently."""
-    surface = surface_in_worktree(repo_root)
+    return compatibility_with_surface(release, surface_in_worktree(repo_root))
+
+
+def compatibility_with_surface(
+    release: KgRelease, surface: SchemaSurface
+) -> ReleaseCompatibility:
+    """:func:`compatibility` against an already-loaded schema surface."""
+    return closure_compatibility(
+        release.release,
+        release.torchcell_commit,
+        release.datasets,
+        release.closures,
+        surface,
+    )
+
+
+def closure_compatibility(
+    release: str,
+    torchcell_commit: str,
+    dataset_names: Iterable[str],
+    closures: Mapping[str, Mapping[str, str]],
+    surface: SchemaSurface,
+) -> ReleaseCompatibility:
+    """The compatibility verdict from a release's closures and any schema surface.
+
+    The surface may come from the working tree, from ``git show`` at a package tag
+    (``scripts/kg_compat_page.py`` reads the closures from the committed snapshot), or
+    from any two files parsed by ``torchcell.provenance.schema_deps.load_surface``.
+    """
     compatible: list[str] = []
     drifted: list[DatasetDrift] = []
     unchecked: list[str] = []
-    for name in sorted(release.datasets):
-        closure = release.closures.get(name)
+    for name in sorted(dataset_names):
+        closure = closures.get(name)
         if not closure:
             unchecked.append(name)
             continue
@@ -539,8 +597,8 @@ def compatibility(release: KgRelease, repo_root: Path) -> ReleaseCompatibility:
         else:
             compatible.append(name)
     return ReleaseCompatibility(
-        release=release.release,
-        torchcell_commit=release.torchcell_commit,
+        release=release,
+        torchcell_commit=torchcell_commit,
         compatible=compatible,
         drifted=drifted,
         unchecked=unchecked,
@@ -548,6 +606,13 @@ def compatibility(release: KgRelease, repo_root: Path) -> ReleaseCompatibility:
 
 
 # --------------------------------------------------------------------------- reporting
+
+
+def package_checkout() -> Path:
+    """The checkout this ``torchcell`` was imported from (the parent of the package)."""
+    import torchcell
+
+    return Path(torchcell.__file__).resolve().parents[1]
 
 
 def _git(repo_root: Path, *args: str) -> str | None:
@@ -603,10 +668,19 @@ def behind_main(repo_root: Path, sha: str) -> str:
     return f"{behind} behind, {ahead} ahead of main"
 
 
+def package_label(release: KgRelease | None) -> str:
+    """The PKG cell: the tag when the build ran from one, else the version marked untagged."""
+    if release is None or release.torchcell_version is None:
+        return "-"
+    if release.torchcell_tag is None:
+        return f"{release.torchcell_version} (untagged)"
+    return release.torchcell_tag
+
+
 def status_rows(
     label: str, served: list[ServedDatabase], repo_root: Path | None
 ) -> list[list[str]]:
-    """Table rows for one host: HOST DATABASE VERSION RELEASE COMMIT# DATE DATASETS NODES ALIASES STATUS."""
+    """Table rows for one host: HOST DATABASE VERSION RELEASE PKG COMMIT# DATE DATASETS NODES ALIASES STATUS."""
     rows: list[list[str]] = []
     for db in served:
         release = db.release
@@ -622,6 +696,7 @@ def status_rows(
                 db.name + (" [default]" if db.default else ""),
                 release.version if release else "-",
                 release.release if release else "-",
+                package_label(release),
                 commit_index(repo_root, commit) if (repo_root and commit) else "-",
                 commit_date(repo_root, commit) if (repo_root and commit) else "-",
                 str(db.n_datasets) if db.n_datasets is not None else "-",
@@ -636,7 +711,7 @@ def status_rows(
 def format_table(rows: list[list[str]]) -> str:
     """Fixed-width table with the header row."""
     header = [
-        "HOST", "DATABASE", "VERSION", "RELEASE", "COMMIT#", "DATE",
+        "HOST", "DATABASE", "VERSION", "RELEASE", "PKG", "COMMIT#", "DATE",
         "DATASETS", "NODES", "ALIASES", "STATUS",
     ]  # fmt: skip
     table = [header, *rows]
@@ -727,6 +802,42 @@ def main(argv: list[str] | None = None) -> int:
         "--previous-version", default=None, help="version of the store this replaces"
     )
 
+    p_snap = sub.add_parser(
+        "snapshot",
+        help="write database/releases/<release>.json (+ .closures.json) from a "
+        "stamped manifest, for the committed compatibility page",
+    )
+    p_snap.add_argument("--manifest", required=True)
+    p_snap.add_argument("--n-nodes", type=int, default=None)
+    p_snap.add_argument(
+        "--built-at",
+        default=None,
+        help="the stamp's timestamp (default: the manifest's last event time)",
+    )
+    p_snap.add_argument(
+        "--repo-root",
+        default=None,
+        help="checkout whose database/releases/ receives the files (default: the "
+        "checkout this torchcell was imported from)",
+    )
+    p_snap.add_argument(
+        "--torchcell-version",
+        default=None,
+        help="BOOTSTRAP ONLY: the package version for a manifest stamped before "
+        "the versioning spine (refused when the manifest already records one)",
+    )
+    p_snap.add_argument(
+        "--torchcell-tag",
+        default=None,
+        help="BOOTSTRAP ONLY: the tag on the release commit, with --torchcell-version",
+    )
+    p_snap.add_argument(
+        "--note",
+        default=None,
+        help="BOOTSTRAP ONLY: how the two values were derived; appended to the "
+        "snapshot's last event note",
+    )
+
     p_node = sub.add_parser(
         "write-node", help="write the KgRelease node from a manifest"
     )
@@ -755,16 +866,56 @@ def main(argv: list[str] | None = None) -> int:
 
         manifest = load_manifest(Path(args.manifest))
         hashes = json.loads(Path(args.hashes).read_text(encoding="utf-8"))
+        torchcell_version, torchcell_tag = checkout_package_version(
+            repo_root or package_checkout()
+        )
         stamp_manifest(
             manifest,
             kind=args.kind,
             built_at=args.built_at,
             content_hashes=hashes,
             previous_version=args.previous_version,
+            torchcell_version=torchcell_version,
+            torchcell_tag=torchcell_tag,
         )
         save_manifest(manifest, Path(args.manifest))
         print(
-            f"{args.manifest}: version {manifest.version}, release {manifest.release}"
+            f"{args.manifest}: version {manifest.version}, release {manifest.release}, "
+            f"torchcell {torchcell_version} ({torchcell_tag or 'untagged'})"
+        )
+        return 0
+
+    if args.command == "snapshot":
+        from torchcell.knowledge_graphs.kg_manifest import load_manifest
+        from torchcell.knowledge_graphs.release_snapshot import (
+            bootstrap_package_version,
+            snapshot_from_manifest,
+            write_snapshot,
+        )
+
+        manifest = load_manifest(Path(args.manifest))
+        snapshot = snapshot_from_manifest(
+            manifest, n_nodes=args.n_nodes, built_at=args.built_at
+        )
+        if args.torchcell_version is not None:
+            snapshot = bootstrap_package_version(
+                snapshot,
+                torchcell_version=args.torchcell_version,
+                torchcell_tag=args.torchcell_tag,
+                note=args.note,
+            )
+        target = (
+            Path(args.repo_root).resolve() if args.repo_root else package_checkout()
+        )
+        paths = write_snapshot(
+            snapshot,
+            {name: dict(entry.closure) for name, entry in manifest.datasets.items()},
+            target,
+        )
+        print(
+            f"{snapshot.release}: torchcell {snapshot.torchcell_version} "
+            f"({snapshot.torchcell_tag or 'untagged'}), composite "
+            f"{snapshot.composite_sha256} -> {paths[0]}, {paths[1]}"
         )
         return 0
 

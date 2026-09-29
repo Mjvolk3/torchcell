@@ -1,5 +1,6 @@
 """Tests for the served knowledge-graph manifest and the admission rule."""
 
+import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -7,6 +8,7 @@ import pytest
 from pydantic import BaseModel
 
 from torchcell.knowledge_graphs.kg_manifest import (
+    VERSION_RELPATH,
     AdapterDrift,
     AdmissionReport,
     GraphSchemaEntry,
@@ -19,10 +21,14 @@ from torchcell.knowledge_graphs.kg_manifest import (
     _dataset_entry,
     batch_report_from_members,
     cell_adapter_surface,
+    checkout_package_version,
     experiment_node_id,
     format_batch_report,
     format_report,
     graph_schema_from_yaml,
+    package_tag_at_ref,
+    package_version_at_ref,
+    package_version_from_source,
     parse_n_experiments,
     record_admission,
     record_batch_admission,
@@ -193,6 +199,7 @@ def _member(
         checked_at="2026-09-12T00:00:00+00:00",
         torchcell_commit="abc1234",
         torchcell_dirty=False,
+        torchcell_version="1.2.0",
         served_commit="513cbfa1",
         verdict="blocked" if reasons else "admissible",
         reasons=list(reasons),
@@ -391,16 +398,95 @@ def test_old_manifest_without_a_value_surface_still_loads() -> None:
         }
     )
     assert manifest.value_surface == {}
+    # a manifest stamped before the versioning spine records no package version
+    assert (manifest.torchcell_version, manifest.torchcell_tag) == (None, None)
     # and an event written before value acknowledgments existed loads the same way
-    assert (
-        KgEvent(
-            kind="bootstrap",
-            at="2026-09-01T00:00:00+00:00",
-            torchcell_commit=None,
-            datasets=[],
-        ).acknowledged_value_drift
-        == []
+    event = KgEvent(
+        kind="bootstrap",
+        at="2026-09-01T00:00:00+00:00",
+        torchcell_commit=None,
+        datasets=[],
     )
+    assert event.acknowledged_value_drift == []
+    assert event.torchcell_version is None
+
+
+def test_manifest_round_trips_the_package_version_and_tag() -> None:
+    """``torchcell_version``/``torchcell_tag`` on the manifest and the event survive the
+    JSON round trip, and the schema version stays 1 (the fields are optional).
+    """
+    manifest = _manifest_with([])
+    manifest.torchcell_version = "1.2.0"
+    manifest.torchcell_tag = "v1.2.0"
+    manifest.events.append(
+        KgEvent(
+            kind="full_build",
+            at="t1",
+            torchcell_commit="7715ee35",
+            torchcell_version="1.2.0",
+            datasets=[],
+        )
+    )
+    loaded = KgBuildManifest.model_validate_json(manifest.model_dump_json())
+    assert loaded == manifest
+    assert loaded.manifest_schema_version == 1
+    assert (loaded.torchcell_version, loaded.torchcell_tag) == ("1.2.0", "v1.2.0")
+    assert loaded.events[-1].torchcell_version == "1.2.0"
+
+
+def test_package_version_from_source_reads_the_assignment_or_refuses() -> None:
+    source = (
+        '# header\n"""doc."""\n\n__version__ = "1.2.1"  # Linked to semantic-release\n'
+    )
+    assert package_version_from_source(source) == "1.2.1"
+    with pytest.raises(ValueError, match="no __version__ assignment"):
+        package_version_from_source("VERSION = '1.2.1'\n")
+
+
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.run(
+        [
+            "git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t",
+            "-c", "commit.gpgsign=false", *args,
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()  # fmt: skip
+
+
+def test_package_version_and_tag_come_from_git_at_a_ref_or_the_checkout(
+    tmp_path: Path,
+) -> None:
+    """A throwaway repo: commit 1 has version 1.2.0 and tag v1.2.0; commit 2 bumps the
+    file to 1.2.1 and is untagged; commit 3 carries two tags, which is refused.
+    """
+    repo = tmp_path / "repo"
+    (repo / "torchcell").mkdir(parents=True)
+    _git(repo, "init", "-q", "-b", "main")
+    version_file = repo / VERSION_RELPATH
+    version_file.write_text('__version__ = "1.2.0"\n', encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "REL: 1.2.0")
+    _git(repo, "tag", "v1.2.0")
+    first = _git(repo, "rev-parse", "HEAD")
+    assert checkout_package_version(repo) == ("1.2.0", "v1.2.0")
+    version_file.write_text('__version__ = "1.2.1"\n', encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "FIX(x): y")
+    assert checkout_package_version(repo) == ("1.2.1", None)
+    assert package_version_at_ref(repo, first) == "1.2.0"
+    assert package_version_at_ref(repo, "HEAD") == "1.2.1"
+    assert package_tag_at_ref(repo, first) == "v1.2.0"
+    assert package_tag_at_ref(repo, "HEAD") is None
+    _git(repo, "tag", "v1.2.1")
+    _git(repo, "tag", "extra")
+    with pytest.raises(
+        ValueError, match=r"HEAD carries several tags: \['extra', 'v1.2.1'\]"
+    ):
+        package_tag_at_ref(repo, "HEAD")
+    with pytest.raises(FileNotFoundError, match="does not exist at v9"):
+        package_version_at_ref(repo, "v9")
 
 
 # ------------------------------------------------------------------ superset admission
@@ -602,6 +688,10 @@ def test_record_batch_admission_of_supersets_writes_one_superset_event() -> None
     assert plain.events[-1].kind == "incremental_admission"
     assert plain.events[-1].note is None
     assert plain.datasets["DmfKuzmin2018Dataset"].superset_of is None
+    # the event records the package version of the checkout that admitted (the report's)
+    assert plain.events[-1].torchcell_version == "1.2.0"
+    assert event.torchcell_version == "1.2.0"
+    assert batch.torchcell_version == "1.2.0"
 
 
 def test_format_report_states_the_superset_proof() -> None:

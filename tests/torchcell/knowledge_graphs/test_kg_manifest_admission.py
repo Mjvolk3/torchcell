@@ -15,7 +15,9 @@ files the manifest reads.
   Solvent}: two symbols shared with the served dataset, two novel.
 - One adapter module + conf per dataset, a toy ``cell_adapter.py`` whose table maps
   ``experiment (chunked)``, ``fitness phenotype (chunked)`` and ``genotype to experiment
-  (chunked)``, a toy graph schema, and the three value-surface files.
+  (chunked)``, a toy graph schema, the three value-surface files, and
+  ``torchcell/__version__.py`` at ``1.2.0``; the stub git says the commit is tagged
+  ``v1.2.0`` (``tag --points-at``, ``describe --tags --exact-match``).
 - Dev LMDBs under ``data_root``: an empty ``processed/lmdb`` directory, the records the
   toy dataset classes read (``records.json``), and a fresh ``build_manifest.json``.
 
@@ -172,6 +174,8 @@ shift 2
 case "$1" in
   rev-parse) echo "$STUB_COMMIT" ;;
   status) printf '%s' "$STUB_STATUS" ;;
+  tag) [ -n "$STUB_TAG" ] && echo "$STUB_TAG"; exit 0 ;;
+  describe) if [ -n "$STUB_TAG" ]; then echo "$STUB_TAG"; else exit 128; fi ;;
   show)
     rel="${2#*:}"
     if [ -f "$STUB_REF_DIR/$rel" ]; then
@@ -267,6 +271,7 @@ def toy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> _Toy:
     t = _Toy(tmp_path.resolve() / "repo", tmp_path.resolve() / "dev")
     t.write("torchcell/datamodels/schema.py", SCHEMA_PY)
     t.write("torchcell/datamodels/pydant.py", PYDANT_PY)
+    t.write(km.VERSION_RELPATH, '__version__ = "1.2.0"\n')
     t.write(km.SCHEMA_CONFIG_RELPATH, SCHEMA_YAML)
     t.write(km.CELL_ADAPTER_RELPATH, CELL_ADAPTER_PY)
     for rel, text in VALUE_FILES.items():
@@ -325,6 +330,7 @@ def toy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> _Toy:
     monkeypatch.setenv("STUB_REF_DIR", str(t.repo))
     monkeypatch.setenv("STUB_COMMIT", COMMIT)
     monkeypatch.setenv("STUB_STATUS", "")
+    monkeypatch.setenv("STUB_TAG", "v1.2.0")
     monkeypatch.setattr(km, "_now", lambda: NOW)
     return t
 
@@ -384,6 +390,8 @@ def test_bootstrap_reconstructs_the_full_build_from_the_commit(toy: _Toy) -> Non
         neo4j_version="5.26.28",
         biocypher_version="0.5.43",
         torchcell_commit=COMMIT,
+        torchcell_version="1.2.0",
+        torchcell_tag="v1.2.0",
         graph_schema={
             "experiment": km.GraphSchemaEntry(
                 kind="node", properties=["serialized_data"]
@@ -434,6 +442,7 @@ def test_bootstrap_reconstructs_the_full_build_from_the_commit(toy: _Toy) -> Non
                 kind="bootstrap",
                 at=NOW,
                 torchcell_commit=COMMIT,
+                torchcell_version="1.2.0",
                 datasets=["ServedDataset"],
                 biocypher_out=BIOCYPHER_OUT,
                 note=f"reconstructed from the full build at {COMMIT}; built_at {BUILT_AT}",
@@ -508,6 +517,7 @@ def test_a_new_dataset_on_an_unchanged_tree_is_admissible(toy: _Toy) -> None:
         checked_at=NOW,
         torchcell_commit=COMMIT,
         torchcell_dirty=False,
+        torchcell_version="1.2.0",
         served_commit=COMMIT,
         verdict="admissible",
         reasons=[],
@@ -891,6 +901,7 @@ def test_record_admission_adopts_the_current_surfaces_and_logs_the_event(
         kind="incremental_admission",
         at=NOW,
         torchcell_commit=COMMIT,
+        torchcell_version="1.2.0",
         datasets=["ToyDataset"],
         biocypher_out="2026-09-27_00-00-00",
     )
@@ -962,6 +973,7 @@ def test_record_batch_admission_validates_counts_and_dedupes_acknowledgments(
         kind="superset_admission",
         at=NOW,
         torchcell_commit=COMMIT,
+        torchcell_version="1.2.0",
         datasets=["ToyDataset", "ServedDataset"],
         biocypher_out="2026-09-27_00-00-00",
         note="superset of served: ServedDataset +1 (served 2)",

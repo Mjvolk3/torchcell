@@ -130,6 +130,11 @@ __all__ = [
     "loader_relpath",
     "closure_at_ref",
     "closure_in_worktree",
+    "VERSION_RELPATH",
+    "package_version_from_source",
+    "package_version_at_ref",
+    "package_tag_at_ref",
+    "checkout_package_version",
     "bootstrap_manifest",
     "check_admission",
     "check_batch_admission",
@@ -146,6 +151,7 @@ __all__ = [
 ]
 
 KG_MANIFEST_SCHEMA_VERSION = 1
+VERSION_RELPATH = "torchcell/__version__.py"
 SCHEMA_CONFIG_RELPATH = "biocypher/config/torchcell_schema_config.yaml"
 CELL_ADAPTER_RELPATH = "torchcell/adapters/cell_adapter.py"
 ADAPTER_DIR_RELPATH = "torchcell/adapters"
@@ -229,6 +235,9 @@ class KgEvent(BaseModel):
     ]
     at: str
     torchcell_commit: str | None
+    # ``torchcell.__version__`` of the checkout that produced the event; None for an
+    # event written before the versioning spine ([[plan.data-release-program.2026.09.29]]).
+    torchcell_version: str | None = None
     datasets: list[str]
     biocypher_out: str | None = None
     note: str | None = None
@@ -251,6 +260,12 @@ class KgBuildManifest(BaseModel):
     # the store was stamped.
     version: str | None = None
     release: str | None = None
+    # The package version the release names: ``torchcell.__version__`` of the checkout
+    # that stamped it, and the git tag on that commit (``git describe --tags
+    # --exact-match``) when the build ran from a tagged release; None for a manifest
+    # stamped before the versioning spine, and never inferred afterwards.
+    torchcell_version: str | None = None
+    torchcell_tag: str | None = None
     graph_schema: dict[str, GraphSchemaEntry]
     cell_adapter_methods: dict[str, str]  # CellAdapter function -> source fingerprint
     cell_adapter_table: dict[str, str]  # conf method name -> CellAdapter function
@@ -320,6 +335,7 @@ class AdmissionReport(BaseModel):
     checked_at: str
     torchcell_commit: str | None
     torchcell_dirty: bool | None
+    torchcell_version: str | None = None  # the working tree's torchcell.__version__
     served_commit: str | None
     verdict: Literal["admissible", "blocked"]
     reasons: list[str]
@@ -369,6 +385,7 @@ class BatchAdmissionReport(BaseModel):
     checked_at: str
     torchcell_commit: str | None
     torchcell_dirty: bool | None
+    torchcell_version: str | None = None
     served_commit: str | None
     verdict: Literal["admissible", "blocked"]
     reasons: list[str]
@@ -642,6 +659,60 @@ def closure_in_worktree(
     return {name: surface.fingerprints[name] for name in sorted(closure)}
 
 
+_VERSION_RE = re.compile(r'^__version__\s*=\s*"([^"]+)"', re.MULTILINE)
+
+
+def package_version_from_source(source: str) -> str:
+    """The ``__version__`` string assigned in ``torchcell/__version__.py``'s text."""
+    match = _VERSION_RE.search(source)
+    if match is None:
+        raise ValueError(f"no __version__ assignment in {VERSION_RELPATH}")
+    return match.group(1)
+
+
+def package_version_at_ref(repo_root: Path, ref: str) -> str:
+    """``torchcell.__version__`` as the file read at ``ref``."""
+    return package_version_from_source(_git_show(repo_root, ref, VERSION_RELPATH))
+
+
+def package_tag_at_ref(repo_root: Path, ref: str) -> str | None:
+    """The tag pointing at ``ref`` (``git tag --points-at``), or None when untagged.
+
+    Two tags on one commit is an error rather than a choice: the release records the
+    one name the commit was published under.
+    """
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "tag", "--points-at", ref],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    tags = result.stdout.split()
+    if len(tags) > 1:
+        raise ValueError(f"{ref} carries several tags: {tags}")
+    return tags[0] if tags else None
+
+
+def checkout_package_version(repo_root: Path) -> tuple[str, str | None]:
+    """``(torchcell.__version__, tag)`` of the checkout at ``repo_root``.
+
+    The version is read from the checkout's ``torchcell/__version__.py``; the tag is
+    ``git describe --tags --exact-match HEAD`` and None when HEAD is untagged, which is
+    what a build between two package releases records.
+    """
+    version = package_version_from_source(
+        (repo_root / VERSION_RELPATH).read_text(encoding="utf-8")
+    )
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "describe", "--tags", "--exact-match", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    tag = result.stdout.strip() if result.returncode == 0 else None
+    return version, tag
+
+
 def _dataset_class(name: str) -> type:
     import torchcell.datasets.scerevisiae  # noqa: F401  # populates the registry
     from torchcell.datasets.dataset_registry import dataset_registry
@@ -714,12 +785,15 @@ def bootstrap_manifest(
         if rel.endswith("_adapter.py") or rel.endswith(".yaml")
     }
     now = _now()
+    torchcell_version = package_version_at_ref(repo_root, commit)
     return KgBuildManifest(
         database=database,
         store_host=store_host,
         neo4j_version=neo4j_version,
         biocypher_version=biocypher_version,
         torchcell_commit=commit,
+        torchcell_version=torchcell_version,
+        torchcell_tag=package_tag_at_ref(repo_root, commit),
         graph_schema=graph_schema_from_yaml(
             _git_show(repo_root, commit, SCHEMA_CONFIG_RELPATH)
         ),
@@ -733,6 +807,7 @@ def bootstrap_manifest(
                 kind="bootstrap",
                 at=now,
                 torchcell_commit=commit,
+                torchcell_version=torchcell_version,
                 datasets=sorted(dataset_classes),
                 biocypher_out=biocypher_out,
                 note=f"reconstructed from the full build at {commit}; built_at {built_at}",
@@ -896,6 +971,7 @@ def check_admission(
     from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 
     commit, dirty = _git_info(repo_root)
+    torchcell_version, _ = checkout_package_version(repo_root)
     surface = surface_in_worktree(repo_root)
     reasons: list[str] = []
 
@@ -1029,6 +1105,7 @@ def check_admission(
         checked_at=_now(),
         torchcell_commit=commit,
         torchcell_dirty=dirty,
+        torchcell_version=torchcell_version,
         served_commit=manifest.torchcell_commit,
         verdict="blocked" if reasons else "admissible",
         reasons=reasons,
@@ -1095,6 +1172,7 @@ def batch_report_from_members(members: list[AdmissionReport]) -> BatchAdmissionR
         checked_at=_now(),
         torchcell_commit=first.torchcell_commit,
         torchcell_dirty=first.torchcell_dirty,
+        torchcell_version=first.torchcell_version,
         served_commit=first.served_commit,
         verdict="blocked" if reasons else "admissible",
         reasons=reasons,
@@ -1266,6 +1344,7 @@ def record_admission(
             kind=_event_kind([report]),
             at=now,
             torchcell_commit=report.torchcell_commit,
+            torchcell_version=report.torchcell_version,
             datasets=[report.dataset_class],
             biocypher_out=biocypher_out,
             note=_superset_note([report]),
@@ -1329,6 +1408,7 @@ def record_batch_admission(
             kind=_event_kind(report.members),
             at=now,
             torchcell_commit=report.torchcell_commit,
+            torchcell_version=report.torchcell_version,
             datasets=list(report.dataset_classes),
             biocypher_out=biocypher_out,
             note=_superset_note(report.members),

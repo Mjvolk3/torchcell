@@ -361,6 +361,12 @@ python -m torchcell.knowledge_graphs.releases stamp --manifest "$KG_MANIFEST" --
 docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '$NEO4J_DATABASE');"
 python -m torchcell.knowledge_graphs.releases write-node --manifest "$KG_MANIFEST" --database "$NEO4J_DATABASE" \
     --built-at "$BUILT_AT" --n-nodes "$AFTER"
+# Release snapshot (plan.data-release-program.2026.09.29, Decision 1): the committed
+# database/releases/<release>.json (+ .closures.json) that scripts/kg_compat_page.py
+# turns into the docs compatibility page. Written into the checkout; commit it, then
+# regenerate the page with `python scripts/kg_compat_page.py`.
+python -m torchcell.knowledge_graphs.releases snapshot --manifest "$KG_MANIFEST" \
+    --built-at "$BUILT_AT" --n-nodes "$AFTER" --repo-root "$TORCHCELL_SRC"
 docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '');"
 python -m torchcell.knowledge_graphs.releases --repo "$TORCHCELL_SRC" status --label gilahyper
 docker run --rm --entrypoint bash --user 7474:7474 -v "$SERVE_ROOT/biocypher-out":/src:ro -v "$ARCHIVE_ROOT":/dst "$IMAGE" \

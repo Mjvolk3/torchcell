@@ -295,20 +295,34 @@ version_variables = [
 ]
 branch = "main"
 upload_to_pypi = "true"
-commit_parser = "scipy"
+# scripts/release_parser.py: the conventional parser (reads the TAG(scope): subject form
+# the repo writes; python-semantic-release 10.4.1's scipy parser does not) plus
+# major_tags. Tested by tests/scripts/test_release_parser.py on real subjects.
+commit_parser = "scripts/release_parser.py:TorchcellCommitParser"
 
 [tool.semantic_release.commit_parser_options]
+# Tag map (notes/versioning.md, 2026.09.29): FIX is a patch tag so a bug fix bumps a
+# release instead of silently not releasing; PERF is a patch tag as in the conventional
+# default; DOCS, NOTE and CI are allowed with no bump so the parser stops treating them
+# as noise. A major bump is API, or any tag with "!" or a "BREAKING CHANGE:" paragraph.
+# Cut the source release BEFORE a KG build (plan.data-release-program.2026.09.29,
+# Decision 5) so the release names a tagged package version.
 allowed_tags = [
     "API",
     "DEP",
     "ENH",
     "REV",
     "BUG",
+    "FIX",
     "MAINT",
+    "PERF",
     "BENCH",
     "BLD",
+    "CI",
     "DEV",
     "DOC",
+    "DOCS",
+    "NOTE",
     "STY",
     "TST",
     "REL",
@@ -317,4 +331,4 @@ allowed_tags = [
 ]
 major_tags = ["API"]
 minor_tags = ["DEP", "DEV", "ENH", "REV", "FEAT"]
-patch_tags = ["BLD", "BUG", "MAINT"]
+patch_tags = ["BLD", "BUG", "FIX", "MAINT", "PERF"]

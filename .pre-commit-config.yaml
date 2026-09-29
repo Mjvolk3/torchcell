@@ -70,6 +70,22 @@ repos:
         files: ^torchcell/datamodels/(schema|pydant)\.py$
         require_serial: true
 
+      # Supported-query drift gate: when an input of a supported query can have moved (the
+      # schema surface, the BioCypher schema config, the cell adapter, a shipped .cql, the
+      # registry package, a committed release snapshot), check every registered query
+      # against the newest snapshot and block when a `supported` one drifts, unless
+      # TORCHCELL_QUERY_DRIFT_ACK=1. CI's query-drift job (.github/workflows/docs.yaml) runs
+      # the same check and files the before-next-kg-build issue on main.
+      # See torchcell/knowledge_graphs/supported_queries/check.py.
+      - id: supported-queries
+        name: supported queries (drift against the committed KG release)
+        entry: bash scripts/run-supported-queries.sh
+        language: system
+        pass_filenames: false
+        # One line on purpose: a YAML folded scalar would join these with spaces.
+        files: ^(torchcell/datamodels/(schema|pydant)\.py|biocypher/config/torchcell_schema_config\.yaml|torchcell/adapters/cell_adapter\.py|torchcell/knowledge_graphs/(queries/.*\.cql|supported_queries/.*)|database/releases/.*\.json)$
+        require_serial: true
+
       # Ontology-figure gate: the schema-ontology artifacts are generated from the live
       # pydantic models, so they are never hand-maintained. When one of their inputs is
       # staged, regenerate, stage the result, and fail so the author sees that the figure

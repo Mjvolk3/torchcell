@@ -92,3 +92,17 @@ now a release pinned a git commit and nothing said which package version reads i
 - Measured with `scripts/kg_compat_page.py`: v1.2.1 is `compatible` with that release
   (all 51 closures match the surface at the tag) and v1.2.0 is `partial (all 51 datasets
   drifted)`; page at [[scripts.kg_compat_page]].
+
+## 2026.09.29 - Supported queries check against the committed snapshots (T5)
+
+Plan: [[plan.data-release-program.2026.09.29]], Decisions 3 and 4; issue #468. The committed
+snapshot `database/releases/<release>.json` and its `.closures.json` are also the input of
+the supported-query drift check ([[torchcell.knowledge_graphs.supported_queries.check]]):
+node labels and relationship types come from the snapshot's `graph_schema` (BioCypher's
+Pascal-case label of each class, plus `is_a` ancestors from the checkout's schema config),
+`missing_dataset` and the per-query `dataset_composite` from its `datasets`
+(`release_snapshot.composite_sha256` over the selected subset), and `contract_changed` from
+the closures, the same fingerprints `closure_compatibility` compares. A new snapshot written
+by `snapshot` is therefore also the release that the next `validate` runs against, and on
+`main` a drifted supported query files a `before-next-kg-build` issue
+([[database.supported-queries]]). Nothing in `releases.py` changed.

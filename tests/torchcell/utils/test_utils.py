@@ -146,7 +146,9 @@ def test_apply_paper_style_sets_paper_rc() -> None:  # test-quality: allow rcPar
         plt.rcParams["axes.labelsize"] = 16.0
         plt.rcParams["savefig.bbox"] = "tight"
         apply_paper_style()
-        applied = {key: plt.rcParams[key] for key in PAPER_RC}
+        # Iterate rather than index by a str key: CI's matplotlib stubs type the
+        # RcParams keys as a Literal set.
+        applied = {key: value for key, value in plt.rcParams.items() if key in PAPER_RC}
         assert applied == {**PAPER_RC, "font.family": ["Arial"]}
         assert plt.rcParams["axes.labelsize"] == 6.0
         assert plt.rcParams["savefig.bbox"] is None

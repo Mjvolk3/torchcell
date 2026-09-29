@@ -465,3 +465,58 @@ Measured:
 
 Open: the parent-size memory blowup above; the r6/r7 group-size arms (jobs 2932 and
 2933) never ran and were cancelled; production configs still run the old path.
+
+## 2026.09.28 - Round 9: the Experiment blob points at interned constants
+
+Direction from the user: the build box is half of GilaHyper, 64 CPUs and 256 GB (jobs
+2930 to 2936 ran at 32 CPUs / 128 GB, which is where 2936 died at 124 GB), and the
+store's size is now the pressing problem: /db is 95% full with 440 GB free and the
+served store is 705 GB, so a rebuild cannot even be staged beside it.
+
+Where the bytes are, from `scripts/blob_census.py` (`results/blob_census.csv`; 64
+evenly spaced records per dataset through the adapter's `transform_item`, sizes of the
+`experiment.model_dump()` JSON the adapter writes, projected over the full record
+counts):
+
+| dataset | records | blob B | environment B | genotype B | interned entries | inline GB | pointer GB |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| DmfCostanzo2016 | 20,705,612 | 11,017 | 9,544 | 1,067 | 4 | 228.1 | 33.8 |
+| DmiCostanzo2016 | 20,705,612 | 10,934 | 9,544 | 1,067 | 4 | 226.4 | 32.1 |
+| EnvChemgenHoepfner2014 | 3,124,319 | 6,792 | 4,621 | 405 | 719 | 21.2 | 7.3 |
+| HetHillenmeyer2008 | 2,698,797 | 6,551 | 5,019 | 413 | 465 | 17.7 | 4.6 |
+| Bloom2019 | 530,100 | 22,141 | 3,122 | 17,917 | 13,992 | 11.7 | 0.8 |
+| EnvChemgenWildenhain2015 | 428,206 | 19,592 | 17,662 | 465 | 10,346 | 8.4 | 0.9 |
+| HomHillenmeyer2008 | 1,088,620 | 7,321 | 5,816 | 395 | 256 | 8.0 | 1.8 |
+| DmfKuzmin2020 | 632,998 | 11,065 | 9,573 | 1,087 | 2 | 7.0 | 1.0 |
+| all 51 | 44.5M | | | | | 564.4 | 90.1 |
+
+The projection of the inline layout (564 GB) matches what job 2936 wrote: its
+`Experiment-part000.csv` was 521 GB at adapter 48 of 51. 85% of a Costanzo record is
+its environment, one of 4 interned entries repeated 20.7M times. The whole-record
+zlib alternative projects to 141.5 GB, a worse result than pointers, at the cost of an
+opaque property.
+
+Design (commit below): `CellAdapter._experiment_node` now dumps the record once,
+hashes the inlined JSON for the node id exactly as before, then writes the
+`environment` (JSON of 512 bytes or more, the dataset LMDB's own interning floor) and
+the `genotype` (8,192 bytes or more: Bloom's segregant genotypes at 17.9 KB and
+Caudal's at 2.7 MB, never a gene-perturbation genotype at about 1 KB) as `interned
+constant` nodes, id = sha256 of the exact payload, and leaves `{"$ref": <id>, "kind":
+<field>}` in the blob. `RenderedChunk` dedups by id before rendering and the sink
+dedups globally, so a dataset's constant environment is rendered once per chunk and
+written once per build. `Neo4jQueryRaw.process` now buffers 1,000 records per LMDB
+transaction, fetches the unseen ids of each batch in one `UNWIND` query, verifies every
+payload hashes to its id, and splices them back, so the query LMDB holds the same
+inlined records it always did and every existing `.cql` query is unchanged. The
+Environment node (identity-keyed, so it merges environments that differ in provenance
+or media name) cannot be the pointer target: the round trip must reproduce the blob
+whose sha256 is the node id, which is what the tests in
+`tests/torchcell/adapters/test_experiment_node_interned_constant.py` and
+`scripts/verify_pointer_roundtrip.py` (every Experiment row of a build re-hashed after
+resolution) assert. New schema class `interned constant`, so this is a full-rebuild
+change; the bench harness now freezes `biocypher/` with the wheel.
+
+Hypothesis (untested): the Experiment CSV goes from about 564 GB to about 94 GB
+(90 GB of blobs plus the constant nodes, of which Caudal's 943 genotypes are 2.5 GB),
+the store from 705 GB to about 200 GB, and generation gets faster because the parent
+writes and the workers pickle 6x fewer bytes.

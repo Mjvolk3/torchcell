@@ -496,28 +496,37 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class _ToyExperiment(BaseModel):
-    """Stands in for an Experiment: only ``model_dump`` matters for the id."""
+    """Stands in for an Experiment: only ``model_dump`` matters for the id.
+
+    ``genotype`` and ``environment`` are the fields the adapter may write as interned
+    constant pointers; small ones like these stay inline, and the id is computed from
+    the inlined dump either way.
+    """
 
     dataset_name: str
     fitness: float
     genes: list[str]
+    genotype: dict[str, list[str]] = {"perturbations": []}
+    environment: dict[str, str] = {"media": "YPD"}
 
 
 def test_experiment_node_id_matches_the_adapter() -> None:
     """The gate's id mirror and ``CellAdapter._experiment_node`` agree byte for byte.
 
     The adapter method is called through ``__wrapped__`` (the chunking decorator keeps
-    the original), with no adapter instance: the id depends on the data alone.
+    the original), with no adapter instance: the id depends on the data alone. The
+    method returns the Experiment node first, then any interned constants.
     """
     from torchcell.adapters.cell_adapter import CellAdapter
 
     experiment = _ToyExperiment(
         dataset_name="ToyDataset", fitness=0.5, genes=["YAL001C"]
     )
-    node = CellAdapter._experiment_node.__wrapped__(  # type: ignore[attr-defined]
+    nodes = CellAdapter._experiment_node.__wrapped__(  # type: ignore[attr-defined]
         None, {"experiment": experiment}, "experiment (chunked)"
     )
-    assert node.get_id() == experiment_node_id(experiment)
+    assert [n.get_label() for n in nodes] == ["experiment"]
+    assert nodes[0].get_id() == experiment_node_id(experiment)
     # a one-field change moves the id
     assert experiment_node_id(
         experiment.model_copy(update={"fitness": 0.6})

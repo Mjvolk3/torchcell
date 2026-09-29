@@ -70,8 +70,33 @@ class Titer(BaseModel):
     )
 
 
+class Plasmid(BaseModel):
+    """An episomal plasmid a strain carries, from Supplementary Table 2.
+
+    Every plasmid in this panel is the same backbone family, ``AmpR, CEN,
+    URA3``, built off the empty parent pYZ125. Two consequences the genotype
+    string alone does not make obvious: the strain must be held on uracil
+    dropout or it segregates the plasmid, and URA3 is spent, so the strain
+    cannot also take a URA3-marked library.
+    """
+
+    name: str
+    backbone: str = "AmpR, CEN, URA3"
+    cargo: str
+    # AmpR means the plasmid itself is propagated in E. coli DH5-alpha in the
+    # source lab. Requesting a plasmid is therefore a separate line item from
+    # requesting a yeast strain.
+    ecoli_host: str = "DH5-alpha"
+
+
 class Strain(BaseModel):
-    """One tube in the freezer, and what the paper says it is."""
+    """One tube in the freezer, and what the paper says it is.
+
+    All eleven are *S. cerevisiae*. Every one appears in Supplementary
+    Table 1, titled "Yeast strains used in this study". The only E. coli in
+    the paper is DH5-alpha as a cloning host, plus ``Ec_ilvC``, which is an
+    E. coli gene expressed in yeast rather than an E. coli strain.
+    """
 
     collection_id: str
     tube_label: str
@@ -80,6 +105,7 @@ class Strain(BaseModel):
     configuration: Configuration
     role: str
     parent: str
+    plasmid: Plasmid | None = None
     genotype: str = Field(
         description=(
             "Verbatim from Supplementary Table 1, 'Yeast strains used in this "
@@ -112,6 +138,7 @@ STRAINS: list[Strain] = [
             "ILV6 on a CEN plasmid, with no isobutanol pathway overexpressed."
         ),
         parent="YZy91",
+        plasmid=Plasmid(name="pYZ127", cargo="PTDH3-ILV6-TADH1"),
         genotype="YZy91, CEN URA3 plasmid (PTDH3-ILV6-TADH1)",
         quote="YZy311 YZy91, pYZ127 YZy91, CEN URA3 plasmid (PTDH3-ILV6-TADH1)",
         quote_locator="Supplementary Table 1",
@@ -128,6 +155,7 @@ STRAINS: list[Strain] = [
             "delta-integrated. The denominator of the 1.6-fold improvement."
         ),
         parent="YZy363",
+        plasmid=Plasmid(name="pYZ127", cargo="PTDH3-ILV6-TADH1"),
         genotype="YZy363, CEN URA3 plasmid (PTDH3-ILV6-TADH1)",
         quote="YZy313 YZy363, pYZ127 YZy363, CEN URA3 plasmid (PTDH3-ILV6-TADH1)",
         quote_locator="Supplementary Table 1",
@@ -144,6 +172,7 @@ STRAINS: list[Strain] = [
             "mutation separates the two."
         ),
         parent="YZy363",
+        plasmid=Plasmid(name="pYZ228", cargo="PTDH3-ILV6V110E-TADH1"),
         genotype="YZy363, CEN URA3 plasmid (PTDH3-ILV6V110E-TADH1)",
         quote=(
             "YZy314 YZy363, pYZ228 YZy363, CEN URA3 plasmid (PTDH3-ILV6V110E-TADH1)"
@@ -185,7 +214,8 @@ STRAINS: list[Strain] = [
             "retransformed with a plasmid carrying unmutagenized LEU4."
         ),
         parent="YZy148",
-        genotype="YZy148, CEN plasmid (PTDH3-LEU4-TADH1), wild-type allele",
+        plasmid=Plasmid(name="pYZ149", cargo="PTDH3-LEU4-TADH1"),
+        genotype="YZy148, CEN URA3 plasmid (PTDH3-LEU4-TADH1)",
         titer=Titer(
             product="isopentanol",
             mg_per_l=201.0,
@@ -211,7 +241,8 @@ STRAINS: list[Strain] = [
             "benchmark the evolved LEU4 variants were scored against."
         ),
         parent="YZy148",
-        genotype="YZy148, CEN plasmid carrying LEU4DS547",
+        plasmid=Plasmid(name="pYZ154", cargo="PTDH3-LEU4DS547-TADH1"),
+        genotype="YZy148, CEN URA3 plasmid (PTDH3-LEU4DS547-TADH1)",
         titer=Titer(
             product="isopentanol",
             mg_per_l=842.0,
@@ -264,6 +295,7 @@ STRAINS: list[Strain] = [
             "improvement."
         ),
         parent="YZy452",
+        plasmid=Plasmid(name="pYZ126", cargo="PTDH3-Ll_ilvD-TADH1"),
         genotype="YZy452, CEN URA3 plasmid (PTDH3-Ll_ilvD-TADH1)",
         titer=Titer(
             product="isobutanol",
@@ -290,6 +322,7 @@ STRAINS: list[Strain] = [
             "contrast."
         ),
         parent="YZy452",
+        plasmid=Plasmid(name="pYZ353", cargo="PTDH3-Ll_ilvDI433V-TADH1"),
         genotype="YZy452, CEN URA3 plasmid (PTDH3-Ll_ilvDI433V-TADH1)",
         titer=Titer(
             product="isobutanol",
@@ -548,22 +581,31 @@ def write_genotype_table(path: str) -> None:
         f"%% sha256 {SI3_SHA256}",
         "\\begin{table}[htbp]",
         "\\centering",
-        "\\caption{\\textbf{Genotypes, as Supplementary Table 1 prints them.} "
-        "Parent names the strain each was built from, so a chain can be walked "
-        "back to CEN.PK2-1C (MATa \\gene{ura3}-52 \\gene{trp1}-289 "
-        "\\gene{leu2}-3,112 \\gene{his3}-1 MAL2-8c SUC2). Plasmid contents are "
-        "in parentheses, following the source.}",
+        "\\caption{\\textbf{Genotypes, as Supplementary Table 1 prints them, "
+        "and which strains carry a plasmid.} All eleven are \\org{S.\\ "
+        "cerevisiae}; none is an \\org{E.\\ coli} strain. Parent names the "
+        "strain each was built from, so a chain can be walked back to "
+        "CEN.PK2-1C (MATa \\gene{ura3}-52 \\gene{trp1}-289 \\gene{leu2}-3,112 "
+        "\\gene{his3}-1 MAL2-8c SUC2). Seven of the eleven carry an episomal "
+        "plasmid and four do not. Every plasmid is the same backbone, AmpR "
+        "CEN URA3, off the empty parent pYZ125, so each of those seven must be "
+        "held on uracil dropout or it segregates the plasmid and reverts to "
+        "its parent, and each has URA3 spent. The plasmids themselves are "
+        "propagated in \\org{E.\\ coli} DH5$\\alpha$, which makes a plasmid a "
+        "separate request from a strain.}",
         "\\label{tab:genotypes}",
         "\\footnotesize",
-        "\\begin{tabular}{@{}lll >{\\raggedright\\arraybackslash}p{88mm}@{}}",
+        "\\begin{tabular}{@{}llll >{\\raggedright\\arraybackslash}p{72mm}@{}}",
         "\\toprule",
-        "ID & Strain & Parent & Genotype \\\\",
+        "ID & Strain & Parent & Plasmid & Genotype \\\\",
         "\\midrule",
     ]
     for s in STRAINS:
+        plasmid = s.plasmid.name if s.plasmid else "none"
         lines.append(
             f"{s.collection_id} & {_tex_escape(s.tube_label)} & "
-            f"{_tex_escape(s.parent)} & {_tex_escape(s.genotype)} \\\\"
+            f"{_tex_escape(s.parent)} & {plasmid} & "
+            f"{_tex_escape(s.genotype)} \\\\"
         )
     lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}", ""]
     with open(path, "w") as f:
@@ -607,6 +649,8 @@ def write_csv(path: str) -> None:
                 "color_group",
                 "configuration",
                 "parent",
+                "plasmid",
+                "plasmid_cargo",
                 "genotype",
                 "role",
                 "product",
@@ -629,6 +673,8 @@ def write_csv(path: str) -> None:
                     s.color_group,
                     s.configuration,
                     s.parent,
+                    s.plasmid.name if s.plasmid else "",
+                    s.plasmid.cargo if s.plasmid else "",
                     s.genotype,
                     s.role,
                     t.product if t else "",

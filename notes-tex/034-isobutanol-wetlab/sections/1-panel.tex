@@ -75,6 +75,38 @@ is YZy312, and it is not in the box.
 
 \input{tables/t3-genotypes}
 
+\notesec{All eleven are yeast, and seven of them carry a plasmid} Nothing in
+this panel is an \org{E.\ coli} strain. Every one of the eleven appears in
+Supplementary Table 1, which the source titles "Yeast strains used in this
+study", and the only \org{E.\ coli} in the paper is DH5$\alpha$ as a cloning
+host, plus \gene{Ec\_ilvC}, an \org{E.\ coli} gene expressed in yeast.
+
+The distinction that does cut through the panel is episomal. C0046, C0049, C0052
+and C0053 are chromosomal only. The other seven each carry one plasmid, and all
+seven plasmids are the same backbone, AmpR CEN \gene{URA3}, built off the empty
+parent pYZ125. Three things follow, and none of them is visible in a genotype
+string.
+
+\begin{itemize}\setlength\itemsep{0.15em}
+  \item \textbf{They have to be held on uracil dropout.} A CEN \gene{URA3}
+    plasmid under no selection segregates, and a plasmid-bearing tube streaked
+    on rich medium quietly becomes its own parent. The paper's own methods grow
+    these in "SC (or SC-ura)" for exactly this reason.
+  \item \textbf{\gene{URA3} is spent in all seven.} That is the marker a guide
+    library wants, so none of the seven can host one without curing the plasmid
+    first.
+  \item \textbf{A plasmid is a separate request from a strain.} AmpR means the
+    plasmids live in \org{E.\ coli} in the source lab. Asking for pYZ228 is not
+    the same transaction as asking for a yeast strain, and it is the cheaper of
+    the two when the combination can be rebuilt here.
+\end{itemize}
+
+\noindent
+The last point simplifies two items on the request list. pYZ125 is the empty
+vector, so the missing vector control is C0049 transformed with pYZ125 rather
+than a request for YZy453; and YZy312 is C0052 transformed with pYZ228 rather
+than a request for a strain.
+
 \notesec{Titers down that column do not compare} Four measurement conditions
 appear in \cref{tab:panel}: 15 percent galactose, 15 percent glucose, 2 percent
 glucose in the dark, and a 48 hour fermentation scored for a different product.

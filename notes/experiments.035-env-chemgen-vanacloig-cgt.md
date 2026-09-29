@@ -72,3 +72,38 @@ others.
 **Observed, not explained.** Sodium glyoxylate has a reliability index at or below zero, so
 its ceiling is recorded as zero, and both the embedding arm (0.402) and ridge (0.316) score
 it well above zero on the centered target.
+
+## 2026.09.29 - Without the graph prior the encoder collapses every gene token
+
+Measured by [[experiments.035-env-chemgen-vanacloig-cgt.scripts.diagnose_token_collapse]]
+(slurm 3024, `results/token_collapse.csv`) on 512 sampled genes and 512 sampled strains per
+checkpoint. "Across share" is the fraction of the tokens' total squared norm that varies
+across rows: 1 is every row distinct, 0 is every row identical.
+
+| model | gene tokens, across share | strain summary, across share | prediction sd over strains | over compounds |
+|---|---|---|---|---|
+| transformer at initialization | 0.073 | 0.005 | 0.011 | 0.001 |
+| transformer, prior 0, fold 0 | 0.0000 | 0.0000 | 0.0000 | 0.539 |
+| transformer, prior 0, fold 1 | 0.0002 | 0.0000 | 0.0000 | 0.119 |
+| transformer, prior 1, fold 0 (epoch 10 of 12) | 0.399 | 0.562 | 0.031 | 0.418 |
+| embedding table, 5 folds | none | 0.28 | 0.07 to 0.57 | 0.19 to 0.71 |
+
+Without the prior, training drives all 6,607 gene tokens onto one vector: the strain
+summary is identical for every strain and the prediction is one value per compound. That is
+the round-1 symptom: train MSE flat at 0.60 (fold 0) and 0.975 (fold 1), within-compound raw
+Spearman near zero. Fold 0 of that arm was selected at 0.063 centered. The arm was cancelled
+after fold 1 (slurm 3017), and the genes-only floor with it (slurm 3019), since neither could
+be read while the encoder collapses.
+
+With the prior at 1 the tokens stay distinct, and fold 0 was still improving at epoch 10 of
+12 (test centered median 0.129, raw 0.024). Its prediction still varies 14 times more over
+compounds than over strains.
+
+Hypothesis (untested): the encoder starts near collapse, with gene tokens at a mean cosine of
+0.93 at initialization, and nothing but the graph prior pushes them apart, because a readout
+that can fit the compound effect alone gets most of its loss reduction without them.
+
+**Next arm, launched.** The prior at 1 plus an identity skip: the strain's genes summed from
+the encoder's input embedding table, passed to the readout beside the transformer summary
+(`model.identity_skip`, slurm 3025). It asks whether the transformer adds anything once strain
+identity cannot be lost.

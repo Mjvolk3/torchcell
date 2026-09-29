@@ -1231,4 +1231,48 @@ adds $+0.001$, $+0.003$ and $+0.017$, each within its paired spread, so the 0.06
 0.08 the profile adds as an input (rounds 206 to 220) is not reachable through the
 representation the two heads share, at least at weight 1.
 
+Round 226 is read (job 2973, 3 h 32 min): the graphs' one-hop propagation of GO as a
+store, the neighbor mean (Section~\ref{sec:inductive}) of the propagated GO multi-hot
+over STRING coexpression and over the union of the nine graphs with $\log(1+n)$ of the
+covered-neighbor count, 4,726 columns (\texttt{YPD\_bx\_gonbr}), on the round-167
+recipe: the linear affine under \texttt{log1p} with zero initialization, GO's own
+multi-hot replaced by the neighbors'. INDUCTIVE: no label and no measurement enters,
+and a pinned gene's row is built exactly as a training gene's. It reads 0.145 (sd
+0.072) against GO alone's 0.202 (sd 0.001) on the same six seeds ($-0.058$ paired, sd
+0.071, one of six), top-50 4.26 against 5.03, ensembled 0.149 against 0.202; the seeds
+read 0.027 to 0.210 and select at epochs 6 to 165 on validation Pearson 0.12 to 0.19,
+the widest seed spread of any GO arm. On the pool's coverage (Section~\ref{sec:coverage},
+every gene carries a row here so no indicator enters) the covered strains read 0.089
+and the uncovered 0.246. The same 4,726 columns read 0.279 by forest and 0.183 by ridge
+on the ladder, so through the linear slot the store loses to the annotation it was
+built from.
+
+Round 227 is read (job 2974, 3 h 36 min): GO with its neighbor mean appended
+(\texttt{YPD\_bx\_gogonbr}, 7,088 columns, the concatenation of round 167's store and
+round 226's), the same linear affine. INDUCTIVE. It reads 0.221 (sd 0.004) against
+0.202 ($+0.019$ paired, sd 0.005, six of six), top-50 5.86 against 5.03, ensembled 0.221
+against 0.202; the seeds read 0.215 to 0.227 and select at epochs 3 to 8 on validation
+Pearson 0.22 to 0.23. Against the propagation alone it is $+0.076$ (sd 0.073, six of
+six). On the covered strains it reads 0.159 against GO's 0.140, on the uncovered 0.329.
+This is the first inductive gain on the transformer, and it edges the three-family
+affine of round 190 (0.217, twelve seeds) with GO and the graphs alone. The gain is a
+fifth of what the same columns give the forest: the forest lifts GO from 0.187 to 0.279
+on the ladder, the affine lifts it from 0.202 to 0.221.
+
+Round 228 is read (job 2975, 3 h 37 min): the propagation store of round 226 through a
+hidden layer of 256 (\texttt{--ess-solve-head-hidden 256}, the round-206 pool recipe),
+the arm for a read the ladder found nonlinear (ridge 0.183, forest 0.279). INDUCTIVE.
+It reads 0.217 (sd 0.013), $+0.073$ over the linear affine of round 226 (sd 0.076, six
+of six) and $-0.062$ under the pool through the same layer (round 206, 0.279; sd 0.033,
+none of six), top-50 5.03, ensembled 0.232; the seeds read 0.204 to 0.235 and select at
+epochs 14 to 128 on validation Pearson 0.13 to 0.19. The hidden layer holds 1,211,095
+of the cell's 1,229,275 parameters against 5,198 in the linear head. On the covered
+strains it reads 0.161, on the uncovered 0.253. The layer recovers the linear slot's
+loss and no more: through 256 the store reads GO alone's level, where the forest reads
+the pool's. Hypothesis, untested: the slot reads the columns through a twelve-wide
+backbone token and one affine map, and the forest's read of the neighborhood is a
+conjunction of many columns that neither form reaches; the test is the forest itself,
+trained out of fold on the training genes and its prediction fed as a one-column
+inductive store (stacking), which is planned and not run.
+
 \input{tables/target_transfer}

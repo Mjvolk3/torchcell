@@ -760,6 +760,45 @@ def job_hours(job: int):
     return run
 
 
+def feature_store_columns(store: str):
+    """Column count of a store from its build JSON (feature store or concatenation)."""
+
+    def run() -> float:
+        import json
+
+        for name in (f"target_graph_feature_store_{store}.json", f"target_store_concat_{store}.json"):
+            path = osp.join(RESULTS, name)
+            if osp.exists(path):
+                d = json.load(open(path))
+                return float(d["n_columns"])
+        raise FileNotFoundError(store)
+
+    return run
+
+
+def n_params(stem: str, part: str, seed: int = 2700):
+    """A parameter count of one cell's result file (``n_parameters[part]``)."""
+
+    def run() -> float:
+        import json
+
+        with open(osp.join(RESULTS, f"{stem}_s{seed}.json")) as fh:
+            return float(json.load(fh)["n_parameters"][part])
+
+    return run
+
+
+def lift_ratio(pair: str, fname: str, rep_hi: str, rep_lo: str):
+    """A transfer pair's paired difference over a ladder file's forest lift (rep_hi minus rep_lo)."""
+
+    def run() -> float:
+        return transfer(pair, "mean_difference")() / (
+            ladder_file(fname, rep_hi, "forest")() - ladder_file(fname, rep_lo, "forest")()
+        )
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:standing -- the comparators on the same split and the cross-target read.
     Check(
@@ -15104,6 +15143,79 @@ CHECKS: list[Check] = [
     Check(claim='round 225: val min', stated=0.23, recompute=cells_stat('w244_bxdelaux_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
     Check(claim='round 225: val max', stated=0.31, recompute=cells_stat('w244_bxdelaux_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
     Check(claim='round 225: job hours', stated=6.82, recompute=job_hours(2948), tolerance=0.01),
+    Check(claim='round 226: arm mean', stated=0.145, recompute=transfer('betaxanthin: the GO neighbor-propagation store (inductive) against GO alone', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 226: arm sd', stated=0.072, recompute=transfer('betaxanthin: the GO neighbor-propagation store (inductive) against GO alone', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 226: control mean', stated=0.202, recompute=transfer('betaxanthin: the GO neighbor-propagation store (inductive) against GO alone', 'mean_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 226: control sd', stated=0.001, recompute=transfer('betaxanthin: the GO neighbor-propagation store (inductive) against GO alone', 'sd_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 226: paired diff', stated=-0.058, recompute=transfer('betaxanthin: the GO neighbor-propagation store (inductive) against GO alone', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 226: paired sd', stated=0.071, recompute=transfer('betaxanthin: the GO neighbor-propagation store (inductive) against GO alone', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 226: positive', stated=1, recompute=transfer('betaxanthin: the GO neighbor-propagation store (inductive) against GO alone', 'n_positive'), tolerance=0.5),
+    Check(claim='round 226: arm top-50', stated=4.26, recompute=transfer('betaxanthin: the GO neighbor-propagation store (inductive) against GO alone', 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 226: control top-50', stated=5.03, recompute=transfer('betaxanthin: the GO neighbor-propagation store (inductive) against GO alone', 'mean_top50_enrichment', 'control'), tolerance=0.006),
+    Check(claim='round 226: ensemble', stated=0.149, recompute=ensemble('w245_bxdelgonbr_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 226: control ensemble', stated=0.202, recompute=ensemble('w167_bxdelgo_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 226: seed min', stated=0.027, recompute=cells_stat('w245_bxdelgonbr_h12l1p1_e200', 'spearman', 'min'), tolerance=0.0006),
+    Check(claim='round 226: seed max', stated=0.210, recompute=cells_stat('w245_bxdelgonbr_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='round 226: epoch min', stated=6, recompute=cells_stat('w245_bxdelgonbr_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 226: epoch max', stated=165, recompute=cells_stat('w245_bxdelgonbr_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 226: val min', stated=0.12, recompute=cells_stat('w245_bxdelgonbr_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 226: val max', stated=0.19, recompute=cells_stat('w245_bxdelgonbr_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 226: covered', stated=0.089, recompute=coverage('w245w247', 'w245_bxdelgonbr_h12l1p1_e200', 'mean_spearman_covered'), tolerance=0.0006),
+    Check(claim='round 226: uncovered', stated=0.246, recompute=coverage('w245w247', 'w245_bxdelgonbr_h12l1p1_e200', 'mean_spearman_uncovered'), tolerance=0.0006),
+    Check(claim='round 226: columns', stated=4726, recompute=feature_store_columns('YPD_bx_gonbr'), tolerance=0.5),
+    Check(claim='round 226: ladder forest on the columns', stated=0.279, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go_nbr', 'forest'), tolerance=0.0006),
+    Check(claim='round 226: ladder ridge on the columns', stated=0.183, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go_nbr', 'ridge'), tolerance=0.0006),
+    Check(claim='round 226: job hours', stated=3.53, recompute=job_hours(2973), tolerance=0.01),
+    Check(claim='round 227: arm mean', stated=0.221, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against GO alone', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 227: arm sd', stated=0.004, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against GO alone', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 227: paired diff', stated=0.019, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against GO alone', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 227: paired sd', stated=0.005, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against GO alone', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 227: positive', stated=6, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against GO alone', 'n_positive'), tolerance=0.5),
+    Check(claim='round 227: arm top-50', stated=5.86, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against GO alone', 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 227: ensemble', stated=0.221, recompute=ensemble('w246_bxdelgogonbr_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 227: seed min', stated=0.215, recompute=cells_stat('w246_bxdelgogonbr_h12l1p1_e200', 'spearman', 'min'), tolerance=0.0006),
+    Check(claim='round 227: seed max', stated=0.227, recompute=cells_stat('w246_bxdelgogonbr_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='round 227: epoch min', stated=3, recompute=cells_stat('w246_bxdelgogonbr_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 227: epoch max', stated=8, recompute=cells_stat('w246_bxdelgogonbr_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 227: val min', stated=0.22, recompute=cells_stat('w246_bxdelgogonbr_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 227: val max', stated=0.23, recompute=cells_stat('w246_bxdelgogonbr_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 227: against propagation alone diff', stated=0.076, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against the propagation alone', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 227: against propagation alone sd', stated=0.073, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against the propagation alone', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 227: against propagation alone positive', stated=6, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against the propagation alone', 'n_positive'), tolerance=0.5),
+    Check(claim='round 227: covered', stated=0.159, recompute=coverage('w245w247', 'w246_bxdelgogonbr_h12l1p1_e200', 'mean_spearman_covered'), tolerance=0.0006),
+    Check(claim='round 227: GO covered', stated=0.140, recompute=coverage('aapool', 'w167_bxdelgo_h12l1p1_e200', 'mean_spearman_covered'), tolerance=0.0006),
+    Check(claim='round 227: uncovered', stated=0.329, recompute=coverage('w245w247', 'w246_bxdelgogonbr_h12l1p1_e200', 'mean_spearman_uncovered'), tolerance=0.0006),
+    Check(claim='round 227: columns', stated=7088, recompute=feature_store_columns('YPD_bx_gogonbr'), tolerance=0.5),
+    Check(claim='round 227: round 190 twelve seeds', stated=0.217, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'mean_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 227: forest GO on the ladder', stated=0.187, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go', 'forest'), tolerance=0.0006),
+    Check(claim='round 227: a fifth of the forest lift', stated=0.20, recompute=lift_ratio('betaxanthin: GO with its neighbor propagation appended against GO alone', 'store_baselines_betaxanthin_nbr.json', 'go_nbr', 'go'), tolerance=0.03),
+    Check(claim='round 227: job hours', stated=3.59, recompute=job_hours(2974), tolerance=0.01),
+    Check(claim='round 228: arm mean', stated=0.217, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the linear affine', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 228: arm sd', stated=0.013, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the linear affine', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 228: over linear diff', stated=0.073, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the linear affine', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 228: over linear sd', stated=0.076, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the linear affine', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 228: over linear positive', stated=6, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the linear affine', 'n_positive'), tolerance=0.5),
+    Check(claim='round 228: under pool diff', stated=-0.062, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the pool through 256', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 228: under pool sd', stated=0.033, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the pool through 256', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 228: under pool positive', stated=0, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the pool through 256', 'n_positive'), tolerance=0.5),
+    Check(claim='round 228: pool through 256', stated=0.279, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the pool through 256', 'mean_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 228: top-50', stated=5.03, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the linear affine', 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 228: ensemble', stated=0.232, recompute=ensemble('w247_bxdelgonbrmlp256_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 228: seed min', stated=0.204, recompute=cells_stat('w247_bxdelgonbrmlp256_h12l1p1_e200', 'spearman', 'min'), tolerance=0.0006),
+    Check(claim='round 228: seed max', stated=0.235, recompute=cells_stat('w247_bxdelgonbrmlp256_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='round 228: epoch min', stated=14, recompute=cells_stat('w247_bxdelgonbrmlp256_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 228: epoch max', stated=128, recompute=cells_stat('w247_bxdelgonbrmlp256_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 228: val min', stated=0.13, recompute=cells_stat('w247_bxdelgonbrmlp256_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 228: val max', stated=0.19, recompute=cells_stat('w247_bxdelgonbrmlp256_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 228: head parameters', stated=1211095, recompute=n_params('w247_bxdelgonbrmlp256_h12l1p1_e200', 'betaxanthin_head'), tolerance=0.5),
+    Check(claim='round 228: total parameters', stated=1229275, recompute=n_params('w247_bxdelgonbrmlp256_h12l1p1_e200', 'total'), tolerance=0.5),
+    Check(claim='round 228: linear head parameters', stated=5198, recompute=n_params('w245_bxdelgonbr_h12l1p1_e200', 'betaxanthin_head'), tolerance=0.5),
+    Check(claim='round 228: covered', stated=0.161, recompute=coverage('w245w247', 'w247_bxdelgonbrmlp256_h12l1p1_e200', 'mean_spearman_covered'), tolerance=0.0006),
+    Check(claim='round 228: uncovered', stated=0.253, recompute=coverage('w245w247', 'w247_bxdelgonbrmlp256_h12l1p1_e200', 'mean_spearman_uncovered'), tolerance=0.0006),
+    Check(claim='round 228: job hours', stated=3.61, recompute=job_hours(2975), tolerance=0.01),
+    Check(claim='standing: round 227 arm', stated=0.221, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against GO alone', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='standing: round 226 arm', stated=0.145, recompute=transfer('betaxanthin: the GO neighbor-propagation store (inductive) against GO alone', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='standing: round 228 arm', stated=0.217, recompute=transfer('betaxanthin: the GO neighbor-propagation store through 256 against the linear affine', 'mean_spearman', 'arm'), tolerance=0.0006),
     Check(claim='inductive: go_nbr forest', stated=0.279, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go_nbr', 'forest'), tolerance=0.0006),
     Check(claim='inductive: go_nbr knn', stated=0.221, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go_nbr', 'knn'), tolerance=0.0006),
     Check(claim='inductive: go_nbr ridge', stated=0.183, recompute=ladder_file('store_baselines_betaxanthin_nbr.json', 'go_nbr', 'ridge'), tolerance=0.0006),

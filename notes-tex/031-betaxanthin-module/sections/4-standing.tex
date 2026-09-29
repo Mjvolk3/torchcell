@@ -234,13 +234,15 @@ transformer's 0.217 with the same annotation, with the degree control at zero. T
 amino-acid profile as a joint training target is null: the co-head adds $+0.001$,
 $+0.003$ and $+0.017$ on the three-family affine, on GO alone and on the control
 (rounds 223 to 225), each within its paired spread. The transformer arms that carry
-the neighborhood in are queued and unread: the neighbor mean of GO as a store, linear
-and through 256, and GO with its neighbor mean appended (rounds B86 to B88, w245 to
-w247, jobs 2962 to 2964); the perturbation operator with two ReZero blocks, with the
+the neighborhood in are read (rounds 226 to 228): the neighbor mean of GO as a store
+reads 0.145 through the linear affine and 0.217 through 256, and GO with its neighbor
+mean appended reads 0.221 against GO alone's 0.202 ($+0.019$, six of six), the first
+inductive gain on the transformer and a fifth of the lift the same columns give the
+forest. Queued and unread: the perturbation operator with two ReZero blocks, with the
 Hadamard pair term, with the null sink, and with all three (rounds B89 to B92, w248 to
-w251, jobs 2967 to 2970); and the species language-model composite sequence embedding,
+w251, jobs 2978 to 2981); and the species language-model composite sequence embedding,
 FUDT upstream and downstream, ProtT5 and CaLM, with and without ESM2, in place of
-ProtT5 alone (rounds B93 and B94, w252 and w253, jobs 2971 and 2972). The operator
+ProtT5 alone (rounds B93 and B94, w252 and w253, jobs 2982 and 2983). The operator
 arms rest on the model's own documented and verified note about its perturbation
 transform: on a single deletion the cross-attention has one key, so its context is a
 linear map of the deleted gene's embedding with no dependence on the querying gene,

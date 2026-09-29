@@ -155,7 +155,7 @@ echo "snapshot $SNAP"
 # a non-admin), only a pending one's, so pass it at submission.
 # ESS_JOB_OUTPUT redirects the job log (the launcher's #SBATCH --output is 028's
 # slurm/output); the 031 and 032 module studies pass their own slurm/output/%x_%j.out.
-sbatch --mem="${ESS_MEM:-36g}" --cpus-per-task="${ESS_CPUS:-24}" \
+sbatch --mem="${ESS_MEM:-36g}" --cpus-per-task="${ESS_CPUS:-16}" \
     --time="${ESS_TIME:-08:00:00}" ${ESS_JOB_OUTPUT:+--output="$ESS_JOB_OUTPUT"} \
     ${ESS_JOB_OUTPUT:+--error="$ESS_JOB_OUTPUT"} \
     ${ESS_JOB_NAME:+--job-name="$ESS_JOB_NAME"} "$SCRIPT_REL" "$@"

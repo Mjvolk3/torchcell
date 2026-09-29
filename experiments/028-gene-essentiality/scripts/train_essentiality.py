@@ -739,6 +739,51 @@ class BxCell(BaseModel):
             "hidden."
         ),
     )
+    pert_layers: int = Field(
+        default=1,
+        description=(
+            "Stacked cross-attention plus FFN blocks in the perturbation transform "
+            "(EquivariantPerturbationTransform.num_layers). 1 is every cell before "
+            "2026-09-28. The transform's FFN runs over all 6,607 tokens and is 80 percent "
+            "of its cost, so extra depth is paid for by pert_extra_ffn_mult."
+        ),
+    )
+    pert_residual: str = Field(
+        default="postln",
+        description=(
+            "Residual of the perturbation transform: 'postln' (every earlier cell) or "
+            "'rezero' (both betas start at zero, so the block starts as an exact "
+            "identity, which is what makes a deeper transform trainable without warmup)."
+        ),
+    )
+    pert_extra_ffn_mult: int | None = Field(
+        default=None,
+        description=(
+            "FFN width multiple for the blocks AFTER the first (None: every block at "
+            "ffn_mult 4). 1 makes the extra depth cheap, so deeper and wider are separate "
+            "arms."
+        ),
+    )
+    pert_hadamard: str = Field(
+        default="off",
+        description=(
+            "'off' | 'add' | 'replace': a multiplicative pair term h_i * (1 + gamma(c)) "
+            "beside (add) or instead of (replace) the additive context. On a single "
+            "deletion the plain cross-attention has one key, so its context is a linear "
+            "map of the deleted gene with no dependence on the querying gene; the pair "
+            "term is one of the two ways the operator can act differently on gene 17 "
+            "and gene 900."
+        ),
+    )
+    pert_null_sink: bool = Field(
+        default=False,
+        description=(
+            "Append a zero key/value column with a learned logit offset, so at one "
+            "perturbed gene the real key's weight is sigmoid(q_i.k_p/sqrt(d) - b) and "
+            "depends on the querying gene; the other way to un-degenerate the single-"
+            "deletion softmax. Trainable bias from 0.0 (see the model's block comment)."
+        ),
+    )
     # WAVE 5 (2026-09-10). Three knobs on the module itself, all defaulting to what waves 1
     # to 4 ran, so an earlier result file deserializes unchanged.
     kcat_tier: str = Field(
@@ -2389,6 +2434,11 @@ def build_cell(
     attention_mask_layers: list[int] | None = None,
     graph_reg_lambda: float | None = None,
     pert_heads: int = 6,
+    pert_layers: int = 1,
+    pert_residual: str = "postln",
+    pert_extra_ffn_mult: int | None = None,
+    pert_hadamard: str = "off",
+    pert_null_sink: bool = False,
     layers: int | None = None,
     hidden: int | None = None,
     attention_heads: int | None = None,
@@ -2590,6 +2640,11 @@ def build_cell(
             GRAPH_REG_LAMBDA if graph_reg_lambda is None else graph_reg_lambda
         ),
         pert_heads=pert_heads,
+        pert_layers=pert_layers,
+        pert_residual=pert_residual,
+        pert_extra_ffn_mult=pert_extra_ffn_mult,
+        pert_hadamard=pert_hadamard,
+        pert_null_sink=pert_null_sink,
         learnable_embedding=learnable_embedding,
         kcat_tier=kcat_tier,
         thermo_source=thermo_source,
@@ -5388,6 +5443,16 @@ def build_model_for_cell(
             "num_heads": cell.pert_heads,
             "dropout": 0.1,
             "enabled": False,
+            # The perturbation OPERATOR's shape (2026-09-28): depth, residual, the pair
+            # terms. Defaults reproduce every earlier cell.
+            "num_layers": cell.pert_layers,
+            "residual": cell.pert_residual,
+            "extra_layer_ffn_mult": cell.pert_extra_ffn_mult,
+            "hadamard": cell.pert_hadamard,
+            "null_sink": cell.pert_null_sink,
+            "null_sink_bias_init": 0.0,
+            "null_sink_trainable": True,
+            "null_sink_magnitude_match": True,
         },
         attention_mask_config=(
             {**ATTENTION_MASK_CONFIG, "layers": list(cell.attention_mask_layers)}
@@ -7455,6 +7520,11 @@ def main() -> None:
         help="0-based transformer blocks that carry the hard mask; [1 2] masks the second and third.",
     )
     parser.add_argument("--pert-heads", type=int, default=6)
+    parser.add_argument("--pert-layers", type=int, default=1)
+    parser.add_argument("--pert-residual", choices=["postln", "rezero"], default="postln")
+    parser.add_argument("--pert-extra-ffn-mult", type=int, default=None)
+    parser.add_argument("--pert-hadamard", choices=["off", "add", "replace"], default="off")
+    parser.add_argument("--pert-null-sink", action="store_true")
     parser.add_argument(
         "--learnable-embedding",
         action="store_true",
@@ -7866,6 +7936,11 @@ def main() -> None:
         attention_mask_layers=args.attention_mask_layers,
         graph_reg_lambda=args.graph_reg_lambda,
         pert_heads=args.pert_heads,
+        pert_layers=args.pert_layers,
+        pert_residual=args.pert_residual,
+        pert_extra_ffn_mult=args.pert_extra_ffn_mult,
+        pert_hadamard=args.pert_hadamard,
+        pert_null_sink=args.pert_null_sink,
         layers=args.layers,
         hidden=args.hidden,
         attention_heads=args.attention_heads,

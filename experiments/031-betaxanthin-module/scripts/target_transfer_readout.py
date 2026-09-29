@@ -1382,6 +1382,30 @@ PAIRS = [
         "w233_aadelgogonbr_h12l1p1_e200",
         "w170_aadelgo_h12l1p1_e200",
     ),
+    (
+        "betaxanthin: the perturbation operator with two ReZero blocks against the inductive incumbent",
+        "betaxanthin",
+        "w248_bxdelgopfbamomapert2_h12l1p1_e200",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the perturbation operator with the Hadamard pair term against the inductive incumbent",
+        "betaxanthin",
+        "w249_bxdelgopfbamomahad_h12l1p1_e200",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the perturbation operator with the null sink against the inductive incumbent",
+        "betaxanthin",
+        "w250_bxdelgopfbamomasink_h12l1p1_e200",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the perturbation operator with depth, the pair term and the null sink against the inductive incumbent",
+        "betaxanthin",
+        "w251_bxdelgopfbamomapertall_h12l1p1_e200",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+    ),
 ]
 
 

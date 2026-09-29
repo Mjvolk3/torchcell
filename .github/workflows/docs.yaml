@@ -130,6 +130,90 @@ jobs:
           done
           exit $drift
 
+  # Supported-query drift (torchcell/knowledge_graphs/supported_queries): every registered
+  # query is checked against the newest committed release snapshot (database/releases/).
+  # On a pull request a drifted `supported` query fails the job. On main, each drifted
+  # `supported` query opens (or updates) one issue labeled before-next-kg-build, titled
+  # "Before the next KG build: supported query <id> drifts against <release>", which is the
+  # queue for the next KG build; the job then passes, because the issue is the signal.
+  # Deduplication is by exact title among OPEN issues; closing one is manual, after
+  # `validate` on the new release. Separate from `build` for the same reason as
+  # ontology-drift: it must never stop the docs deploy.
+  query-drift:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install the check's imports only
+        run: |
+          # NOT `pip install -e .` (torch). The check's import closure is release_snapshot,
+          # kg_manifest (PyYAML), provenance.build_manifest (python-dotenv) and pydantic;
+          # the schema surface is parsed with ast, never imported. A ModuleNotFoundError
+          # here means that closure grew: add the named package.
+          python -m pip install --upgrade pip
+          pip install pydantic pyyaml python-dotenv
+
+      - name: Check the supported queries against the newest release snapshot
+        run: |
+          # The JSON report is the contract with the next step; a crash leaves no valid
+          # JSON and fails the job, it is never read as "no drift".
+          set +e
+          PYTHONPATH="$PWD" python -m torchcell.knowledge_graphs.supported_queries \
+            --repo-root "$PWD" check --json > "$RUNNER_TEMP/query-drift.json"
+          status=$?
+          set -e
+          if [ "$status" -gt 1 ]; then
+            echo "::error::the supported-query check crashed (exit $status)"
+            exit "$status"
+          fi
+          jq -r '.report_markdown' "$RUNNER_TEMP/query-drift.json"
+          jq -r '.report_markdown' "$RUNNER_TEMP/query-drift.json" >> "$GITHUB_STEP_SUMMARY"
+          test "$(jq -r '.exit_code' "$RUNNER_TEMP/query-drift.json")" = "$status"
+
+      - name: File or update the before-next-kg-build issues
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          report="$RUNNER_TEMP/query-drift.json"
+          jq -c '.results[] | select(.status == "supported" and (.drifts | length) > 0)' \
+            "$report" | while read -r result; do
+            title="$(jq -r '.issue_title' <<<"$result")"
+            body="$RUNNER_TEMP/issue-body.md"
+            jq -r '.issue_body' <<<"$result" > "$body"
+            number="$(gh issue list --state open --label before-next-kg-build \
+              --search "\"$title\" in:title" --limit 100 --json number,title \
+              | jq -r --arg t "$title" '[.[] | select(.title == $t)][0].number // empty')"
+            if [ -n "$number" ]; then
+              gh issue edit "$number" --body-file "$body"
+              echo "updated #$number: $title"
+            else
+              gh issue create --title "$title" --label before-next-kg-build \
+                --body-file "$body"
+              echo "opened: $title"
+            fi
+          done
+
+      - name: Fail a pull request whose supported query drifts
+        if: github.event_name == 'pull_request'
+        run: |
+          code="$(jq -r '.exit_code' "$RUNNER_TEMP/query-drift.json")"
+          if [ "$code" != "0" ]; then
+            echo "::error::a supported query drifts against the newest release snapshot;"
+            echo "::error::fix the query or schema, or deprecate the query in its registry entry."
+            exit 1
+          fi
+
   readthedocs:
     runs-on: ubuntu-latest
     needs: build

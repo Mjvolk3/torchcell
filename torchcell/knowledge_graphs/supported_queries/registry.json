@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "queries": [
+    {
+      "id": "amino_acid_betaxanthin",
+      "title": "Amino-acid metabolome and betaxanthin production of deletion strains",
+      "cql_path": "queries/amino_acid_betaxanthin.cql",
+      "converter": null,
+      "phenotype_classes": [
+        "MetabolitePhenotype"
+      ],
+      "status": "supported",
+      "since_kg_version": "1.2",
+      "deprecated_in": null,
+      "validated_release": "2026.09.21-ab6d8c5d",
+      "dataset_composite": "684edad79ca7df16bd4983cd644e2915c6110f3c5f1d6625990e0cc59ca17d2d",
+      "docs_page": null
+    },
+    {
+      "id": "essentiality_smf",
+      "title": "Gene essentiality and single-mutant fitness",
+      "cql_path": "queries/essentiality_smf.cql",
+      "converter": "torchcell.datamodels.fitness_composite_conversion.CompositeFitnessConverter",
+      "phenotype_classes": [
+        "FitnessPhenotype",
+        "GeneEssentialityPhenotype"
+      ],
+      "status": "supported",
+      "since_kg_version": "1.2",
+      "deprecated_in": null,
+      "validated_release": "2026.09.21-ab6d8c5d",
+      "dataset_composite": "9704a2985f8935417ae027176c3eab73d52c65cb6a523fc894e146b02b07ea5f",
+      "docs_page": "docs/source/showcase/essentiality-smf.md"
+    },
+    {
+      "id": "expression_proteome_morphology",
+      "title": "Microarray expression, proteome and CalMorph morphology of deletion strains",
+      "cql_path": "queries/expression_proteome_morphology.cql",
+      "converter": null,
+      "phenotype_classes": [
+        "CalMorphPhenotype",
+        "MicroarrayExpressionPhenotype",
+        "ProteinAbundancePhenotype"
+      ],
+      "status": "supported",
+      "since_kg_version": "1.2",
+      "deprecated_in": null,
+      "validated_release": "2026.09.21-ab6d8c5d",
+      "dataset_composite": "ec6ba6c5aa29b25fae70589dc81742f791b5a3895283cd8b2fe07cbe1ea3be91",
+      "docs_page": null
+    },
+    {
+      "id": "solid_growth_025",
+      "title": "Every solid-medium growth record (fitness, interactions, essentiality, synthetic lethality)",
+      "cql_path": "queries/solid_growth_025.cql",
+      "converter": "torchcell.datamodels.fitness_composite_conversion.CompositeFitnessConverter",
+      "phenotype_classes": [
+        "FitnessPhenotype",
+        "GeneEssentialityPhenotype",
+        "GeneInteractionPhenotype",
+        "SyntheticLethalityPhenotype"
+      ],
+      "status": "supported",
+      "since_kg_version": "1.2",
+      "deprecated_in": null,
+      "validated_release": "2026.09.21-ab6d8c5d",
+      "dataset_composite": "cc00363ea5f72d4f68a6d08e5592085120680ea6c78f8acc050bab947f389714",
+      "docs_page": null
+    }
+  ]
+}

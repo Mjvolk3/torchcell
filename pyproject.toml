@@ -253,11 +253,13 @@ paths = [
 [tool.torchcell.test_exceptions.pairs]
 # Source module -> the test file that covers it when the mirrored basename would collide
 # under pytest's prepend import mode (tests/torchcell/{models,losses}/test_dcell.py,
-# tests/torchcell/{graph,datasets/scerevisiae}/test_sgd.py).
+# tests/torchcell/{graph,datasets/scerevisiae}/test_sgd.py, and test_registry.py against
+# tests/torchcell/sequence/genome/test_registry.py).
 "torchcell/losses/dcell.py" = "tests/torchcell/losses/test_losses_dcell.py"
 "torchcell/graph/sgd.py" = "tests/torchcell/graph/test_graph_sgd.py"
 "torchcell/viz/fitness.py" = "tests/torchcell/viz/test_viz_fitness.py"
 "torchcell/datasets/server.py" = "tests/torchcell/datasets/test_datasets_server.py"
+"torchcell/knowledge_graphs/supported_queries/registry.py" = "tests/torchcell/knowledge_graphs/supported_queries/test_supported_queries_registry.py"
 
 [tool.coverage.run]
 source = ["torchcell"]
@@ -289,6 +291,7 @@ torchcell = [
     "knowledge_graphs/queries/*.cql", # supported Cypher queries (showcase pages, T5 registry)
     "adapters/conf/*.yaml",
     "datamodels/*.json", # pinned data tables (e.g. compound_identity_table.json)
+    "knowledge_graphs/supported_queries/registry.json", # supported-query registry (T5)
 ]
 
 [tool.setuptools.packages.find]

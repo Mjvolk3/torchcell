@@ -456,19 +456,31 @@ def main(cfg: DictConfig) -> None:
 
     torch.set_float32_matmul_precision("medium")
     print(f"devices: {devices}; starting training ({timestamp()})")
+    # The batch limits are read from the Hydra dict, NOT wandb.config: wandb stores the
+    # config through JSON and hands `1.0` back as the integer 1, which Lightning reads as
+    # ONE batch per epoch rather than the whole loader (job 2413837 showed `0/1` where
+    # 1,022 training batches were due; the 025 configs never set the key and took the
+    # script default). A float is a fraction of the loader, an int is a batch count.
+    trainer_cfg = wandb_cfg["trainer"]
+    limit_train_batches = trainer_cfg.get("limit_train_batches", 1.0)
+    limit_val_batches = trainer_cfg.get("limit_val_batches", 1.0)
+    print(
+        f"batch limits: train={limit_train_batches!r} val={limit_val_batches!r} "
+        f"({type(limit_train_batches).__name__})"
+    )
     trainer = L.Trainer(
-        strategy=wandb.config.trainer["strategy"],
-        accelerator=wandb.config.trainer["accelerator"],
+        strategy=trainer_cfg["strategy"],
+        accelerator=trainer_cfg["accelerator"],
         devices=devices,
         num_nodes=get_slurm_nodes(),
         logger=wandb_logger,
-        max_epochs=wandb.config.trainer["max_epochs"],
+        max_epochs=int(trainer_cfg["max_epochs"]),
         callbacks=callbacks,
         log_every_n_steps=10,
-        overfit_batches=wandb.config.trainer["overfit_batches"],
-        precision=wandb.config.trainer.get("precision", "32-true"),
-        limit_train_batches=wandb.config.trainer.get("limit_train_batches", 1.0),
-        limit_val_batches=wandb.config.trainer.get("limit_val_batches", 1.0),
+        overfit_batches=trainer_cfg["overfit_batches"],
+        precision=trainer_cfg.get("precision", "32-true"),
+        limit_train_batches=limit_train_batches,
+        limit_val_batches=limit_val_batches,
     )
     trainer.fit(model=task, datamodule=data_module, ckpt_path=ckpt_path)
 

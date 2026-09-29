@@ -163,6 +163,8 @@ ARMS = [
     ("w249_bxdelgopfbamomahad_h12l1p1_e200", "betaxanthin"),
     ("w250_bxdelgopfbamomasink_h12l1p1_e200", "betaxanthin"),
     ("w251_bxdelgopfbamomapertall_h12l1p1_e200", "betaxanthin"),
+    ("w252_bxdelgopfbamomacomp_h12l1p1_e200", "betaxanthin"),
+    ("w253_bxdelgopfbamomacompesm_h12l1p1_e200", "betaxanthin"),
     ("w233_aadelgogonbr_h12l1p1_e200", "amino_acids"),
 ]
 TOP_K = 50

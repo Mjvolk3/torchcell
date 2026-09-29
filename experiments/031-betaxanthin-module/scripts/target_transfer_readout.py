@@ -1406,6 +1406,24 @@ PAIRS = [
         "w251_bxdelgopfbamomapertall_h12l1p1_e200",
         "w190_bxdelgopfbamoma_h12l1p1_e200",
     ),
+    (
+        "betaxanthin: the species language-model composite embedding against ProtT5 alone on the inductive incumbent",
+        "betaxanthin",
+        "w252_bxdelgopfbamomacomp_h12l1p1_e200",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the composite with ESM2 added against ProtT5 alone on the inductive incumbent",
+        "betaxanthin",
+        "w253_bxdelgopfbamomacompesm_h12l1p1_e200",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the composite with ESM2 added against the composite",
+        "betaxanthin",
+        "w253_bxdelgopfbamomacompesm_h12l1p1_e200",
+        "w252_bxdelgopfbamomacomp_h12l1p1_e200",
+    ),
 ]
 
 

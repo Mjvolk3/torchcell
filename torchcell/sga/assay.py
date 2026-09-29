@@ -186,7 +186,7 @@ def recommend_volume(metrics: pd.DataFrame) -> tuple[float, str]:
         + 0.15 * _lo(m["median_within_strain_cv"])
         + 0.15 * (_hi(z) if (z > 0).any() else z * 0)
     )
-    best_row: dict[str, Any] = m.iloc[int(np.argmax(m["score"].to_numpy()))].to_dict()
+    best_row: dict[Any, Any] = m.iloc[int(np.argmax(m["score"].to_numpy()))].to_dict()
     best = best_row
     zbest = float(best["zfactor_wt_vs_weakest"])
     sep = (

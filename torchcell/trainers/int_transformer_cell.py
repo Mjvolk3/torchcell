@@ -539,12 +539,18 @@ class RegressionTask(L.LightningModule):
         for label, per_token in getattr(self, f"{stage}_token_metrics").items():
             for i, name in enumerate(self.dataset_vocabulary):
                 metric = per_token[str(i)]
-                # Every key on every rank, in vocabulary order: a token this rank
-                # never saw logs NaN rather than being skipped.
-                value = (
-                    metric.compute()
-                    if self._token_counts[stage][label][i] >= 2
-                    else torch.tensor(float("nan"))
+                # compute() on EVERY rank for every token, in vocabulary order:
+                # torchmetrics gathers the metric states across ranks inside compute(),
+                # so a rank that skips the call leaves the others waiting, and the
+                # sample count that decides NaN is the SYNCED one (fewer than two pairs
+                # in the whole world reads NaN, on the metric's device). The per-rank
+                # gate this replaces logged a CPU NaN tensor into an NCCL all_reduce
+                # and killed job 2413834 in the sanity check.
+                computed = self._compute_metrics_safely(
+                    MetricCollection({"Pearson": metric})
+                )
+                value = computed.get(
+                    "Pearson", torch.tensor(float("nan"), device=self.device)
                 )
                 self.log(f"{stage}/token/{name}/{label}/Pearson", value, sync_dist=True)
                 self.log(

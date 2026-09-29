@@ -191,3 +191,7 @@ tensor([0])
 dataset_hetero[0]['gene'].phenotype_stat_types
 ['gene_interaction_p_value']
 ```
+
+## 2026.09.29 - Findings from the Phase 10 tests (not fixed)
+
+Pinned in [[tests.torchcell.models.test_hetero_cell_bipartite_dango_gi]]: the conv wrapper's PyG `LayerNorm` runs in graph mode without a batch vector (lines 654 to 655), so an eval-mode prediction depends on the other samples in its batch (norm "batch" removes the dependence); `PreProcessor` shares one norm module across layers (lines 572 to 582); every activation but "relu" is SiLU (line 571) and so is the wrapper's `activation=None` (line 645); a one-layer GIN outputs `gin_hidden_dim` (lines 703 to 706); the GATv2 init branch is dead (lines 877 to 893); an unknown `combination_method` fails only at the end of the first forward (lines 847 to 855, 1112); local scores go to sample 0 when neither pointer field is present (lines 1019 to 1051) and to the wrong samples when the last sample has no perturbations (lines 1043 to 1050); a batch without `pert_mask` raises `IndexError` (lines 916 to 919). Coverage 0% to 39.6%; `main()` is untested.

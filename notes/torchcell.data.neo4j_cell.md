@@ -265,3 +265,7 @@ HeteroDataBatch(
   }
 )
 ```
+
+## 2026.09.29 - Findings from the Phase 10 tests (not fixed)
+
+Pinned in [[tests.torchcell.data.test_neo4j_cell_process]]: `overwrite_intermediates=True` calls `os.remove` on the previous stage's LMDB directory (lines 504 to 505) and can never succeed, leaving its marker behind; `_WORKER_DROPPED_CACHES` (line 1037) names `_is_any_perturbed_gene_index`, which the property never fills (it caches into `_is_any_perturbed_gene_index_cache`, lines 951 to 967), so the perturbed-gene index is pickled to every DataLoader worker; the three phenotype index loops keep a malformed entry's first item before printing "Skipping this entry"; the deletion-gene index has no error handler; a caller-supplied `"base"` graph replaces the gene-set nodes (lines 296 to 297). The `main*` demo functions (lines 1079 to 2021, 940 lines) are the module's remaining uncovered code and are a candidate to move under `experiments/`.

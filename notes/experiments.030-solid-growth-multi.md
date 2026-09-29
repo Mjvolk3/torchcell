@@ -328,3 +328,58 @@ Smoke ([[experiments.030-solid-growth-multi.scripts.gh_smoke_dataset_token]], Gi
 The dataset-token smoke passed on GilaHyper job 2867 after two redesigns ([[experiments.030-solid-growth-multi.scripts.smoke_report_030]]): the readout places a source's synthetic twin 0.285 above the source for a 0.3 offset, sd 0.053 across rows, and reading real rows under the twin raises their MSE by 0.055 (delta squared 0.09, band 0.045 to 0.135). Two things the failed submissions taught. A single synthetic token over every source cannot be read on the triples: Kuzmin 2018 triples sit at -0.87 normalized and 2020 at +0.16 against a training mixture at 0, and one global token bias carries that gap. And a paired control run cannot resolve a delta squared over 4 floor of 0.0225 when two runs' validation losses differ by 0.06 from initialization. The same partial models put the essentiality readout at AUROC 0.82 released and 0.76 matched against the PPI-degree baseline of 0.59 and 0.71 (three short epochs, a smoke, not a result).
 
 The build and the split cache were mirrored to IGB scratch by GilaHyper job 2862 ([[experiments.030-solid-growth-multi.scripts.gh_sync_igb_030]]); the first arm, `cgt_030_s3_r_tok_embfit_001` seed 0, goes to mmli from a detached worktree at the branch tip ([[experiments.030-solid-growth-multi.scripts.igb_mmli_cgt_030]]). Seeds 1 and 2 after the first epoch's wall time and MaxRSS are read.
+
+## 2026.09.28 - How the 030 training set is constructed, stage by stage
+
+The pool a 030 arm trains on is not the output of one query. It is the query's store passed
+through the dataset class's fixed pipeline and then two committed selection scripts. Every
+stage is a script in this experiment's folder or in `torchcell/data`, every artifact is
+committed with its counts asserted, and the trainer fingerprints the final training set, so
+the construction reproduces from the graph release without any hand step.
+
+**Stage order inside `Neo4jCellDataset`** (`torchcell/data/neo4j_cell.py`,
+`_determine_processing_steps`): raw -> conversion -> deduplication -> aggregation ->
+processed. Conversion runs before deduplication, and aggregation runs last. Each stage that
+is configured writes its own LMDB; a stage set to `None` is skipped.
+
+| stage | 025 build (`experiments/025-solid-growth/scripts/query.py`) | 030 build (`030-build` worktree, `experiments/030-solid-growth-multi/scripts/query.py`) |
+|---|---|---|
+| query | `001_multi_measurement.cql`, all alleles | the same query |
+| conversion | `CompositeFitnessConverter`: SGD essentiality and SynthLethDB lethal pairs become fitness 0 entries | the same converter |
+| deduplication | `MeanExperimentDeduplicator`: one value per (genotype, label) as the mean over sources, p by t-test | `None`: every source entry kept |
+| aggregation | `GenotypeAggregator`: one record per genotype | the same aggregator |
+| records | 13.5M | 13.5M |
+
+The merge is the only pipeline difference between the two builds. In 025 a single that is
+essential in SGD and measured by Costanzo holds one fitness, the mean of 0 and the
+measurement; in 030 it holds two entries under two source tokens.
+
+**Selection after the build, 030:**
+
+1. `closure_recompute_030.py` scans every double of the count index and writes
+   `closure/entries.parquet`: one row per stored entry of every single, every double whose
+   gene pair lies inside some triple, and every triple.
+2. `subset_definitions_030.py` turns the distinct record ids of that table into
+   `results/subset_S3_indices.json.gz` (1,121,662 records: 5,694 singles, 739,236 closure
+   doubles, 376,732 triples) and asserts each count. The 025 pool, built the same way by
+   `experiments/025-solid-growth/scripts/subset_definitions.py` on the 025 build, has
+   1,121,645; the 17 extra are genotypes the no-merge build keeps apart.
+3. `transfer_010_tmi_splits_030.py` carries the 010 random split over the triples by
+   gene-set identity (`results/pinned_splits_from_010_seed_42.json.gz`, 301,386 / 37,673 /
+   37,673, every 010 triple matched).
+4. `arm_030.py` resolves the arm: pool = subset minus `subset.exclude`; pinned val and
+   test are the 010 sets; with `unpinned_to_train` every other pool record trains. The
+   holdout arms (`fit_000`, `embfit_001`) exclude the 698 essentiality singles of
+   `build_essentiality_holdout_030.py` and serve them as `val_ess`; the no-holdout arms
+   (`fit_002`, `embfit_003`) set `exclude: null` and train the whole pool, which is the
+   025 S3 training set on the 030 build.
+5. `make_normalization_stats_030.py` fits the label constants on the training ENTRY rows
+   of that exact set and records `train_index_sha256`; the training script recomputes the
+   set and refuses a file whose fingerprint differs. `warm_split_cache_030.py` writes the
+   data module cache for each seed under a name that carries the pool hash, so a pool
+   change cannot reuse a stale split.
+
+Essentiality was never subsetted out. The SGD records (1,140) and SynthLethDB records
+(691) are in the query, survive conversion as fitness 0 entries, and sit in the S3 pool as
+singles. The holdout arm removed 698 specific single RECORDS from training for an AUROC
+readout; it did not remove the essentiality label from the data.

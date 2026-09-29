@@ -34,6 +34,17 @@ PROJECT = "torchcell_025-solid-growth_equivariant_cell_graph_transformer"
 VIEW_NAME = "025 random split: arms grouped, S3 closure vs S0"
 # Pinned after the first `save_as_new_view()`; None creates the view and prints its id.
 VIEW_ID: str | None = "vo1fa9efqdf"
+# The S3 closure comparison alone: learnable table (fit_031, seed 1 at the 130-epoch
+# budget, seeds 2 and 3 at 50) against the parameter-matched composite (embfit_034).
+# Same labels, same sections 1 to 3; the runset keeps only these three arms so the S0
+# lines do not crowd the two representations being compared.
+S3_VIEW_NAME = "025 S3 closure: learnable table vs composite embedding"
+S3_VIEW_ID: str | None = "erilfg5h206"
+S3_ARMS = [
+    "s3_closure_fitness1.0_130ep",
+    "s3_closure_fitness1.0_50ep",
+    "s3_closure_composite_fitness1.0_50ep",
+]
 X = "epoch"
 
 # The abandoned partial of S3 seed 1 (job 2408888, restarted for per-order logging).
@@ -262,10 +273,52 @@ def populate_view() -> str:
     return view.url
 
 
+def populate_s3_view() -> str:
+    """Overwrite (or create) the saved view that compares the S3 closure representations."""
+    sections = [
+        ws.Section(
+            name=name,
+            is_open=True,
+            layout_settings=ws.SectionLayoutSettings(columns=4, rows=1),
+            panel_settings=ws.SectionPanelSettings(x_axis=X, smoothing_type="none"),
+            panels=[_line(y, title) for y, title in panels],
+        )
+        for name, panels in SECTIONS[:3]
+    ]
+    settings = ws.WorkspaceSettings(
+        x_axis=X, smoothing_type="none", max_runs=60, sort_panels_alphabetically=False
+    )
+    runset_settings = ws.RunsetSettings(
+        filters=[ws.Config("split") == "R", ws.Config("arm").isin(S3_ARMS)],
+        groupby=[ws.Config("arm")],
+        order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
+    )
+    if S3_VIEW_ID is None:
+        view = ws.Workspace(
+            entity=ENTITY,
+            project=PROJECT,
+            name=S3_VIEW_NAME,
+            sections=sections,
+            settings=settings,
+            runset_settings=runset_settings,
+        )
+        view.save_as_new_view()
+        print(f"NEW saved S3 view: {view.url}\n  pin its nw= id into S3_VIEW_ID")
+        return view.url
+    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={S3_VIEW_ID}")
+    view.name = S3_VIEW_NAME
+    view.sections = sections
+    view.settings = settings
+    view.runset_settings = runset_settings
+    view.save()
+    return view.url
+
+
 def main() -> None:
     api = wandb.Api()
     print(f"labeled {label_runs(api)} runs")
     print(populate_view())
+    print(populate_s3_view())
 
 
 if __name__ == "__main__":

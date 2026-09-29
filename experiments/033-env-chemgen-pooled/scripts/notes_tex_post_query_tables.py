@@ -292,6 +292,18 @@ def t1_axes(results: str) -> None:
             "no InChIKey": axes["cells_compound_without_inchikey"].map(n),
         }
     )
+    pool = pd.read_csv(osp.join(results, "pool_totals.csv")).iloc[0]
+    out.loc[len(out)] = [
+        "All four",
+        n(pool["measurements"]),
+        n(pool["cells"]),
+        n(pool["genes"]),
+        n(pool["environments"]),
+        n(pool["compounds"]),
+        n(pool["cells_no_compound"]),
+        n(pool["cells_two_compounds"]),
+        n(pool["cells_compound_without_inchikey"]),
+    ]
     write(
         "t1-store-axes", tex_table(out, left(2.6) + right(1.45) * 8), "store_axes.csv"
     )
@@ -436,26 +448,31 @@ def t7_target(results: str) -> None:
 
 def t8_ploidy(results: str) -> None:
     ploidy = pd.read_csv(osp.join(results, "ploidy_pairs.csv"))
+
+    def count(v: float) -> str:
+        return "" if pd.isna(v) else n(v)
+
     out = pd.DataFrame(
         {
             "matched on": ploidy["level"],
-            "homozygous": ploidy["cells_homozygous"].map(n),
-            "heterozygous": ploidy["cells_heterozygous"].map(n),
-            "both": ploidy["cells_both"].map(n),
+            "cells in both arms": ploidy["cells_both"].map(n),
             "Spearman": ploidy["spearman"].map(lambda v: f(v, 3)),
             "Pearson": ploidy["pearson"].map(lambda v: f(v, 3)),
+            "limit": ploidy["attenuation_limit"].map(lambda v: f(v, 3)),
+            "Pearson over limit": ploidy["pearson_over_limit"].map(lambda v: f(v, 3)),
             "per compound": ploidy["spearman_per_compound_median"].map(
                 lambda v: f(v, 3)
             ),
-            "homozygous hits": ploidy["hom_hits"].map(
-                lambda v: "" if pd.isna(v) else n(v)
-            ),
-            "also heterozygous": ploidy["hom_hits_also_het_hits"].map(
-                lambda v: "" if pd.isna(v) else n(v)
-            ),
+            "homozygous hits": ploidy["hom_hits"].map(count),
+            "also heterozygous hits": ploidy["hom_hits_also_het_hits"].map(count),
+            "expected by chance": ploidy["hom_hits_expected_by_chance"].map(count),
         }
     )
-    write("t8-ploidy", tex_table(out, left(3.2) + right(1.2) * 8), "ploidy_pairs.csv")
+    write(
+        "t8-ploidy",
+        tex_table(out, left(3.0) + right(1.3) + right(1.15) * 8),
+        "ploidy_pairs.csv",
+    )
 
 
 def t9_folds(results: str) -> None:

@@ -449,6 +449,118 @@
       "ensemble_six_spearman": 0.04023530046097703,
       "slurm_job": 2976,
       "elapsed": "4 h 45 min"
+    },
+    "w170_aadelgo_h12l1p1_e200": {
+      "stem": "w170_aadelgo_h12l1p1_e200",
+      "round": null,
+      "label": "the GO multi-hot affine",
+      "cells": [
+        {
+          "seed": 2700,
+          "select_epoch": 2,
+          "select_val_pearson": 0.11007480744860675,
+          "spearman": 0.05645865147162758,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2701,
+          "select_epoch": 3,
+          "select_val_pearson": 0.1108961141864328,
+          "spearman": 0.05873380078419939,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2702,
+          "select_epoch": 2,
+          "select_val_pearson": 0.11186507790300407,
+          "spearman": 0.05843713080392566,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2703,
+          "select_epoch": 2,
+          "select_val_pearson": 0.11144855748371858,
+          "spearman": 0.057347198817187174,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2704,
+          "select_epoch": 2,
+          "select_val_pearson": 0.11029716908294511,
+          "spearman": 0.0588086451447808,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2705,
+          "select_epoch": 3,
+          "select_val_pearson": 0.10609326041058491,
+          "spearman": 0.05716392914507135,
+          "n_records_with_any_feature": 564
+        }
+      ],
+      "mean_spearman": 0.05782489269446533,
+      "sd_spearman": 0.0009695769835097125,
+      "min_spearman": 0.05645865147162758,
+      "max_spearman": 0.0588086451447808,
+      "ensemble_six_spearman": 0.05871755840605766,
+      "slurm_job": null,
+      "elapsed": null
+    },
+    "w233_aadelgogonbr_h12l1p1_e200": {
+      "stem": "w233_aadelgogonbr_h12l1p1_e200",
+      "round": 213,
+      "label": "GO with its one-hop neighbor mean appended (inductive)",
+      "cells": [
+        {
+          "seed": 2700,
+          "select_epoch": 2,
+          "select_val_pearson": 0.11872113819577192,
+          "spearman": 0.07062939607370976,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2701,
+          "select_epoch": 3,
+          "select_val_pearson": 0.1133072905634579,
+          "spearman": 0.058230787748365945,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2702,
+          "select_epoch": 4,
+          "select_val_pearson": 0.10845998047213805,
+          "spearman": 0.06703812829762593,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2703,
+          "select_epoch": 2,
+          "select_val_pearson": 0.11436557682770256,
+          "spearman": 0.0665086860911077,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2704,
+          "select_epoch": 2,
+          "select_val_pearson": 0.1192321342685701,
+          "spearman": 0.06915781297918633,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2705,
+          "select_epoch": 2,
+          "select_val_pearson": 0.11441647028550506,
+          "spearman": 0.06049575008288568,
+          "n_records_with_any_feature": 564
+        }
+      ],
+      "mean_spearman": 0.06534342687881355,
+      "sd_spearman": 0.004915495077825259,
+      "min_spearman": 0.058230787748365945,
+      "max_spearman": 0.07062939607370976,
+      "ensemble_six_spearman": 0.06649315745284083,
+      "slurm_job": 2977,
+      "elapsed": "3 h 30 min"
     }
   },
   "pairs": [
@@ -607,6 +719,32 @@
       "mean_difference": -0.051627285548850814,
       "sd_difference": 0.008027213764030471,
       "n_positive": 0
+    },
+    {
+      "name": "GO with its neighbor mean against GO alone",
+      "arm": "w233_aadelgogonbr_h12l1p1_e200",
+      "control": "w170_aadelgo_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.06534342687881355,
+      "arm_sd": 0.004915495077825259,
+      "control_mean": 0.05782489269446533,
+      "control_sd": 0.0009695769835097125,
+      "mean_difference": 0.007518534184348231,
+      "sd_difference": 0.0052537453228640625,
+      "n_positive": 5
+    },
+    {
+      "name": "GO with its neighbor mean against the control",
+      "arm": "w233_aadelgogonbr_h12l1p1_e200",
+      "control": "w141_aadel_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.06534342687881355,
+      "arm_sd": 0.004915495077825259,
+      "control_mean": 0.04922161770875602,
+      "control_sd": 0.007021744764877032,
+      "mean_difference": 0.016121809170057535,
+      "sd_difference": 0.008216591156866359,
+      "n_positive": 6
     }
   ]
 }

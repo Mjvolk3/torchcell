@@ -452,6 +452,23 @@ study's rounds 223 to 225, $+0.001$ over twelve seeds). Predicting both at weigh
 null in one direction and costs the profile in the other; the weight
 (\texttt{--aux-weight}) exists in the trainer and is untested at any value but 1.
 
+Round 213 is read (job 2977, 3 h 30 min): GO with its one-hop neighbor mean appended
+(\texttt{SM\_aa\_gogonbr}, 7,088 columns: the propagated multi-hot beside the mean
+annotation of the deleted gene's neighbors on the STRING coexpression graph and on the
+union of the nine, with $\log(1 + n)$ of each neighbor count) on round 202's recipe
+(GO alone through the linear affine, \texttt{log1p}, zero initialization). INDUCTIVE:
+no label and no measurement enters, and the row of a pinned gene is built as a training
+gene's is. It reads 0.065 (sd 0.005) against GO alone at 0.058 on the same six seeds
+($+0.008$ paired, sd 0.005, five of six) and against the control at 0.049 ($+0.016$,
+sd 0.008, six of six), ensembled 0.067 against GO's 0.059; the seeds read 0.058 to
+0.071 and select at epochs 2 to 4, where GO alone selects at 2 to 3. It is the highest
+inductive read of the profile on the transformer, under the measured betaxanthin score
+as an input (round 205, 0.078, a phenotype input), and it recovers 0.4 of the forest's
+lift on the same columns (0.063 to 0.081 by forest against 0.058 to 0.065 here), the
+fraction the betaxanthin study's round 227 recovered (a fifth). Hypothesis, untested:
+the read is nonlinear in the neighbor-mean columns, as the ladder's ridge and forest
+disagree, and the linear affine cannot shape it.
+
 \input{tables/aa_label_medium_rounds}
 
 \input{tables/target_transfer}

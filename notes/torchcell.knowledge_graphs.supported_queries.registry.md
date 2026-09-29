@@ -43,6 +43,6 @@ The composites were written by `python -m torchcell.knowledge_graphs.supported_q
 validate <id> --release 2026.09.21-ab6d8c5d`; the `essentiality_smf` value was re-derived by
 hand (sha256 of the two sorted `content_sha256` values of `SmfCostanzo2016Dataset` and
 `GeneEssentialitySgdDataset`, newline-joined with a trailing newline) and matched.
-`essentiality_smf.cql` is owned by the showcase branch `feat/showcase-essentiality-smf`; this
-branch carries a byte-identical copy so its own gate passes, and whichever lands second
-reconciles the add.
+`essentiality_smf.cql` is owned by the showcase commit c82630140 (group 1 page, issue #470),
+which landed first; this branch's byte-identical copy rebased onto it without a change, and
+the showcase's one-line `queries/__init__.py` was kept.

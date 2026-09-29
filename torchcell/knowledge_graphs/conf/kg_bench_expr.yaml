@@ -1,0 +1,43 @@
+# torchcell/knowledge_graphs/conf/kg_bench_expr.yaml
+# [[torchcell.knowledge_graphs.conf.kg_bench_expr.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_bench_expr.yaml
+# The large-record datasets, same production adapter settings as kg_bench_ladder.yaml.
+# Job 2959 (full build, r5 stack with inprocess_max_records=25000) ran these four
+# in-process on ONE core: Caudal 17 min (943 records of 3 MB), Kemmeren 10 min (1,484
+# of 780 KB), Messner 6 min (4,699 of 86 KB), Nadal-Ribelles 6 min (6,188 of 133 KB),
+# 39 minutes of a 4 h build. The r10 arm adapters.inprocess_max_mb=N sends a dataset
+# to the pool when its resolved bytes exceed N MiB even if its record count is small.
+
+defaults:
+  - default
+  - _self_
+
+wandb:
+  mode: online
+  project: tcdb
+  tags: [tcdb-002, expr]
+
+adapters:
+  io_to_total_worker_ratio: 0.1
+  chunk_size: 1e5
+  loader_batch_size: 1e3
+  inprocess_max_records: 0
+  single_pass: false
+  fast_writer: false
+  chunks_per_worker: 2
+  single_pass_chunk_budget_mb: 48
+  inprocess_max_mb: 0
+  completion_order: false
+
+datasets:
+  - ProteomeZelezniak2018Dataset # 97 records of 58 KB: stays in-process under the byte rule
+  - CaudalPanTranscriptome2024Dataset # 943 of 3 MB
+  - MicroarrayKemmeren2014Dataset # 1,484 of 780 KB
+  - ProteomeMessner2023Dataset # 4,699 of 86 KB
+  - NadalRibellesPerturbSeq2025Dataset # 6,188 of 133 KB
+
+subset:
+  size: null
+  seed: 42
+  per_dataset: {}
+  prefilter: {}

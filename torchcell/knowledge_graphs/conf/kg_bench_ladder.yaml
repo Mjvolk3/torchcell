@@ -44,6 +44,13 @@ adapters:
   # r7 arm: adapters.single_pass_chunk_budget_mb=N (resolved-record MiB per
   # single-pass chunk; sets the chunk length per adapter). 48 is the module default.
   single_pass_chunk_budget_mb: 48
+  # r10 arm: adapters.inprocess_max_mb=N (a dataset runs in-process only if it is also
+  # under N MiB of resolved records; 0 keeps the record-count rule alone).
+  inprocess_max_mb: 0
+  # r10 arm: adapters.completion_order=true (chunk results consumed as they complete
+  # and the window refilled at once, instead of in submission order). false is
+  # production.
+  completion_order: false
 
 datasets:
   - MetaboliteZelezniak2018Dataset # 95 records

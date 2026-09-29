@@ -455,3 +455,16 @@ carrying `Media.is_synthetic` (they previously failed L0 structural, #92).
 ## 2026.09.27 - The mating-type to strain mapping is inverted (audit finding, not yet fixed)
 
 The Phase 8 audit of [[tests.torchcell.datasets.scerevisiae.test_sameith2015_synthetic]] checked the strain mapping at sameith2015.py lines 954 to 957 against the paper and the SI. By standard nomenclature BY4741 is MATa and BY4742 is MATalpha. The paper (`paper.md`, sha256 7064a1eb...) states: "All single mutants and most double mutants carry the mating type matα and are in the genetic background of BY4742. Few double mutants carry the mating type matA and are in the genetic background of BY4741." The SI workbook (sha256 9521ad36...) has exactly four comments reading "MATa", all on passed pairs, and none reading "matA" or "MATα", so those two branches never fire. The loader maps "MATa" to BY4742, so all 72 passed pairs are stored as BY4742, including the four the paper places in BY4741. The inverted mapping appears in the loader's docstrings (lines 98 and 750, "BY4742, mata") and in this note's earlier sections, with no source; the "63 / 9 pairs" split stated above also does not match the current code on this workbook. The test pins the current behavior; a fix changes the stored strain of served records, so it waits for a decision (weekly note).
+
+## 2026.09.29 - Independent re-verification
+
+A read-only Fable 5.1 agent graded seven recorded claims against the mirror, the SI workbook, all 287 GEO sample records and the dev LMDBs: CONFIRMED 3, REFUTED 1, PARTLY 3, UNVERIFIABLE 0. Consolidated in [[datasets.showcase-verification.2026.09.29]]; raw report `notes/assets/verification/2026.09.29/sameith2015.md`.
+
+- Refuted: "69 of 72 pairs found, 3 missing from GEO" (sections above). All three pairs have arrays (GSM1044629/30, GSM1044636/37, GSM1044642/43) and the dev DM LMDB has 72 records.
+- The mating-type finding of 2026.09.27 is confirmed by the paper, the SI and GEO (`strain: BY4741` on exactly the 8 arrays of the four MATa pairs).
+- Every record stores PubMed ID 26687005 (an eLife paper); Sameith 2015 is PMID 26700642. #478 (before the next build).
+- The SM dataset folds all 143 double-mutant arrays into 45 of its 82 records (`n_replicates` up to 14), 8 of them onto the second gene of the title. #479 (before the next build).
+- The loader's replicate quotations attributed to "Sameith et al. 2015, Cell Reports" are Kemmeren 2014's; Sameith's Methods defer to it as ref [46]. The "132/127" VALUE header count in the 2026.07.15 section omits 28 arrays; numerically 217 arrays are log2(Cy5/Cy3) and 70 log2(Cy3/Cy5), with the header contradicting the numbers on those 70. #481.
+- "Four measurements" is 2 arrays x 2 probes; GSE42536 holds at most 2 arrays per mutant (20 singles have 1). #482.
+- The KanMX-first / NatMX-second marker assignment on double mutants has no source (the paper names haploid transformation, random spore analysis or tetrad dissection), and six singles are lab remakes. #480.
+- The reference RNA is BY4742 wild type on all 287 arrays, so after the strain fix the four BY4741 records' `genome_reference` differs from the reference RNA's strain; a schema decision raised on PR #460.

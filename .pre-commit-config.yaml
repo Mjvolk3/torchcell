@@ -20,6 +20,9 @@ repos:
       - id: markdownlint-cli2
         args: [--fix]
         files: ^notes/.*\.md$
+        # Raw verifier reports are committed byte-verbatim as evidence; --fix would
+        # rewrite URLs inside their verbatim source quotes.
+        exclude: ^notes/assets/verification/
 
   - repo: local
     hooks:

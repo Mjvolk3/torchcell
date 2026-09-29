@@ -93,3 +93,15 @@ multi-strain, expected), L2 value_fidelity (8,466,210 finite values), L2 se_nonn
   liquid). This paper both defers its growth protocol to Mulleder 2016 (its ref 15, which is
   mirrored) and restates the identical recipe, so one sourced object carries both papers.
   Table and gaps in [[torchcell.datamodels.media-components]]. LMDB rebuilt + L0-L4 re-run.
+
+## 2026.09.29 - Independent re-verification
+
+A read-only Fable 5.1 agent graded twenty recorded claims against the mirror, Mendeley, ProteomeXchange/PRIDE/MassIVE, Europe PMC and the dev LMDB: CONFIRMED 13, REFUTED 1, PARTLY 5, UNVERIFIABLE 1. Consolidated in [[datasets.showcase-verification.2026.09.29]]; raw report `notes/assets/verification/2026.09.29/messner2023.md`.
+
+- Refuted: the test note's "only bites on a malformed filename". 156 records carry a numeric `perturbed_gene_name` from real filenames (SLA1 is served as "2824") and 1,182 a lowercase ORF; gene names should come from the SGD GFF by systematic name. #485 (before the next build).
+- "Values ~340-430 confirm linear" (2026.07.12 section) is wrong: the matrix runs 0.0313 to 393,221, median 235.1. Linear scale is confirmed instead by reproducing the paper's median CVs (WT 11.0% vs 11.3%, QC 7.9% vs 8.1%, KO 15.5% vs 16.2%). Batch correction is applied to precursors before MaxLFQ. #486.
+- The paper's 8,693,150 protein quantities is 4,699 x 1,850, the imputed grid; the store holds 8,466,210 measured values (97.4%).
+- The 8 h post-dilution culture duration is stated in the Methods but `duration_hours` is None. #486.
+- PXD036062 is not in PRIDE; MassIVE MSV000090136 holds raw `.wiff`, the 74,825,469,404 B DIA-NN report, the spectral library and a plate-layout file, no protein matrix. The Cell SI was not inspected (no `si/` in the mirror) and the y5k app has a "Download" tab whose content was not retrievable, so the mirror-once argument rests on the Key Resources Table and MassIVE.
+- BY4741 and kanMX for the KO strains come from the cited collections (refs 5 and 94), not from a Messner sentence about the KOs.
+- The paper table's "vector (1830)" is the first record's protein count; per-record counts run 1,441 to 1,849 and the union is 1,850. The served protein count (1,667 vs 1,850 in two memories) is unverified.

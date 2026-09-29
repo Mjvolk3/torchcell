@@ -75,7 +75,7 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" "${PTRACE_OPT[@]}" \
     -v "$DEV_DATA_ROOT/data/torchcell":/var/lib/neo4j/data/torchcell:ro \
     -v "$DEV_DATA_ROOT/torchcell-genomes":/var/lib/neo4j/torchcell-genomes:ro \
     -v "$BUILD_ROOT/database/.env":/.env \
-    -v "$BUILD_ROOT/database/biocypher":/var/lib/neo4j/biocypher \
+    -v "$WHEEL_DIR/biocypher":/var/lib/neo4j/biocypher \
     -v "$WHEEL_DIR":/mnt/torchcell-wheel:ro \
     "$IMAGE" -c "set -euo pipefail
         cd /var/lib/neo4j

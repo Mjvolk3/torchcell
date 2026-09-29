@@ -28,6 +28,10 @@ WHEEL_DIR="$BENCH_ROOT/wheels/${STAMP}_${ROUND}_${ARM}_${COMMIT}"
 mkdir -p "$WHEEL_DIR" "$BENCH_ROOT/slurm"
 "$PY" -m pip wheel --no-deps --no-build-isolation -w "$WHEEL_DIR" "$SRC" >/dev/null
 ls "$WHEEL_DIR"/torchcell-*.whl >/dev/null
+# The BioCypher schema config is frozen with the wheel: the container reads it from
+# the mounted dir, and an arm that adds a node class (r9: interned constant) must run
+# against the schema of the commit it was built from, not the build tree's copy.
+cp -r "$SRC/biocypher" "$WHEEL_DIR/biocypher"
 chmod -R a+rX "$WHEEL_DIR"
 export KG_OVERRIDES="${KG_OVERRIDES:-}"
 sbatch --export=ALL,WHEEL_DIR="$WHEEL_DIR",ROUND="$ROUND",ARM="$ARM",COMMIT="$COMMIT",KG_CONFIG="${KG_CONFIG:-kg_bench_ladder}",KEEP_CSV="${KEEP_CSV:-0}",PROFILE="${PROFILE:-0}" \

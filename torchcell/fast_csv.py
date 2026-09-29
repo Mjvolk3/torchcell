@@ -252,9 +252,11 @@ class RenderedChunk:
         seen_edges: dict[str, set[tuple[str, str]]] = {}
         for item in rows:
             if isinstance(item, BioCypherNode):
-                pascal, node_id, line = render_node(item, specs)
-                if node_id in seen_nodes:
+                # Dedup before rendering: a constant node (environment, interned
+                # constant) repeats on every record of a chunk, and its line is KBs.
+                if item.node_id in seen_nodes:
                     continue
+                pascal, node_id, line = render_node(item, specs)
                 seen_nodes.add(node_id)
                 bucket = chunk.nodes.setdefault(pascal, ([], []))
                 bucket[0].append(node_id)

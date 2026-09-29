@@ -30,6 +30,10 @@ from torchcell.datamodels.identity import (
     media_identity,
     temperature_identity,
 )
+from torchcell.datamodels.interned_constant import (
+    INTERNED_CONSTANT_LABEL,
+    split_experiment_dump,
+)
 from torchcell.fast_csv import RenderedChunk, RowSpecs
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 
@@ -671,16 +675,39 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _experiment_node(self, data: dict[str, Any], method_name: str) -> BioCypherNode:
-        experiment_id = hashlib.sha256(
-            json.dumps(data["experiment"].model_dump()).encode("utf-8")
-        ).hexdigest()
-        return BioCypherNode(
-            node_id=experiment_id,
-            preferred_id="experiment",
-            node_label="experiment",
-            properties={"serialized_data": json.dumps(data["experiment"].model_dump())},
-        )
+    def _experiment_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherNode]:
+        """The Experiment node plus the interned constants its blob points to.
+
+        The node id is the sha256 of the fully inlined record, as before. The blob
+        written to ``serialized_data`` replaces the large sub-objects (environment,
+        segregant genotype) with ``{"$ref": <id>}`` pointers and emits each pointed-to
+        constant as an ``interned constant`` node, which the chunk and the sink dedup
+        by id, so a dataset's constant environment is written once instead of once
+        per record (torchcell/datamodels/interned_constant.py).
+        """
+        dump = data["experiment"].model_dump()
+        experiment_id = hashlib.sha256(json.dumps(dump).encode("utf-8")).hexdigest()
+        pointered, constants = split_experiment_dump(dump)
+        nodes = [
+            BioCypherNode(
+                node_id=experiment_id,
+                preferred_id="experiment",
+                node_label="experiment",
+                properties={"serialized_data": json.dumps(pointered)},
+            )
+        ]
+        for ref, kind, payload in constants:
+            nodes.append(
+                BioCypherNode(
+                    node_id=ref,
+                    preferred_id=INTERNED_CONSTANT_LABEL,
+                    node_label=INTERNED_CONSTANT_LABEL,
+                    properties={"kind": kind, "serialized_data": payload},
+                )
+            )
+        return nodes
 
     @data_chunker
     def _genotype_node(self, data: dict[str, Any], method_name: str) -> BioCypherNode:

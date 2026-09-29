@@ -22,11 +22,20 @@ from neo4j import GraphDatabase
 from tqdm import tqdm
 
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
+from torchcell.datamodels.interned_constant import (
+    INTERNED_CONSTANT_NEO4J_LABEL,
+    collect_pointers,
+    resolve_pointers,
+    verified_constant,
+)
 from torchcell.datamodels.schema import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
     EXPERIMENT_TYPE_MAP,
 )
 from torchcell.sequence import GeneSet
+
+PROCESS_BATCH = 1000
+"""Records resolved and written per LMDB transaction in ``Neo4jQueryRaw.process``."""
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -191,17 +200,20 @@ class Neo4jQueryRaw:
             self.env.close()
             self.env = None
 
-    def fetch_data(self) -> Iterator[Any]:
-        """Open a Neo4j session, run the query, and yield each result record."""
+    def _connect(self) -> tuple[Any, str]:
+        """Return ``(driver, database)`` for the configured KG version."""
         from torchcell.database.connection import neo4j_connection_settings
         from torchcell.knowledge_graphs.releases import resolve_database
 
         version = self.version or neo4j_connection_settings().version
         database = resolve_database(version, self.uri, self.username, self.password)
-        log.info(
-            "Connecting to Neo4j (%s -> %s) and executing query...", version, database
-        )
+        log.info("Connecting to Neo4j (%s -> %s)", version, database)
         driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
+        return driver, database
+
+    def fetch_data(self) -> Iterator[Any]:
+        """Open a Neo4j session, run the query, and yield each result record."""
+        driver, database = self._connect()
         # The close is in ``finally`` so a consumer that stops early (closing the
         # generator) still closes the driver, after the session exits.
         try:
@@ -214,6 +226,33 @@ class Neo4jQueryRaw:
             log.info("All records processed.")
         finally:
             driver.close()
+
+    def fetch_constants(self, refs: list[str]) -> dict[str, Any]:
+        """Fetch interned constants by id and verify each payload against its id.
+
+        Every id must resolve: a pointer the store cannot serve is a broken build,
+        so a missing one raises instead of leaving a ``$ref`` in the record.
+        """
+        driver, database = self._connect()
+        found: dict[str, Any] = {}
+        with driver.session(database=database) as session:
+            result = session.run(
+                f"UNWIND $ids AS ref MATCH (n:{INTERNED_CONSTANT_NEO4J_LABEL} {{id: ref}}) "
+                "RETURN ref, n.serialized_data AS payload",
+                ids=refs,
+            )
+            for record in result:
+                found[record["ref"]] = verified_constant(
+                    record["ref"], record["payload"]
+                )
+        driver.close()
+        missing = sorted(set(refs) - found.keys())
+        if missing:
+            raise KeyError(
+                f"{len(missing)} interned constants are missing from the store, "
+                f"first {missing[:3]}"
+            )
+        return found
 
     def _init_lmdb(self, readonly: bool = True) -> None:
         """Initialize the LMDB environment."""
@@ -233,6 +272,41 @@ class Neo4jQueryRaw:
         with self.env.begin(write=True) as txn:
             txn.put(key, value)
 
+    def _write_batch(
+        self,
+        batch: list[tuple[int, dict[str, Any], dict[str, Any]]],
+        constants: dict[str, Any],
+    ) -> None:
+        """Resolve a batch's pointers (one fetch for its unseen ids) and write it."""
+        refs: set[str] = set()
+        for _, e_node_data, ref_node_data in batch:
+            collect_pointers(e_node_data, refs)
+            collect_pointers(ref_node_data, refs)
+        unseen = sorted(refs - constants.keys())
+        if unseen:
+            constants.update(self.fetch_constants(unseen))
+        with self.env.begin(write=True) as txn:
+            for i, e_node_data, ref_node_data in batch:
+                e_node_data = resolve_pointers(e_node_data, constants)
+                ref_node_data = resolve_pointers(ref_node_data, constants)
+                experiment_class = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]]
+                experiment = experiment_class(
+                    dataset_name=e_node_data["dataset_name"],
+                    genotype=e_node_data["genotype"],
+                    environment=e_node_data["environment"],
+                    phenotype=e_node_data["phenotype"],
+                )
+                experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                    ref_node_data["experiment_reference_type"]
+                ]
+                experiment_reference = experiment_reference_class(**ref_node_data)
+                data_dict = {
+                    "experiment": experiment,
+                    "experiment_reference": experiment_reference,
+                }
+                data_json = json.dumps(data_dict, default=lambda o: o.model_dump())
+                txn.put(f"data_{i}".encode(), data_json.encode())
+
     def process(self) -> None:
         """Stream query results into LMDB and build the reference and gene-set indices.
 
@@ -245,6 +319,11 @@ class Neo4jQueryRaw:
         directory this call created, and re-raises; a staging directory found at the
         start (left by a build that was killed outright) raises
         ``StaleStagingStoreError`` before the query runs.
+
+        Experiment blobs carry ``{"$ref": <id>}`` pointers where the build interned a
+        large sub-object (torchcell/datamodels/interned_constant.py); each batch fetches
+        the ids it has not seen, verifies them, and splices them back before the
+        record is written, so the LMDB holds the same inlined records it always did.
         """
         staging_dir = self.lmdb_dir + ".partial"
         if osp.exists(staging_dir):
@@ -282,6 +361,8 @@ class Neo4jQueryRaw:
     def _write_records(self, records: Iterator[Any]) -> int:
         """Write each query record as ``data_<i>``; return the number written."""
         i = -1
+        constants: dict[str, Any] = {}
+        batch: list[tuple[int, dict[str, Any], dict[str, Any]]] = []
         for i, record in tqdm(enumerate(records)):
             # Two record shapes, by what the query RETURNs. Property shape
             # (e_serialized/ref_serialized strings) is REQUIRED at scale: returning
@@ -296,47 +377,18 @@ class Neo4jQueryRaw:
                 e_node_data = json.loads(record["e_serialized"])
             else:
                 e_node_data = json.loads(record["e"]["serialized_data"])
-
-            # Create an instance of the FitnessExperiment model
-            experiment_class = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]]
-            experiment = experiment_class(
-                dataset_name=e_node_data["dataset_name"],
-                genotype=e_node_data["genotype"],
-                environment=e_node_data["environment"],
-                phenotype=e_node_data["phenotype"],
-            )
-
-            # Extract the serialized data from the 'ref' node (same two shapes).
             if "ref_serialized" in record.keys():
                 ref_node_data = json.loads(record["ref_serialized"])
             else:
                 ref_node_data = json.loads(record["ref"]["serialized_data"])
+            batch.append((i, e_node_data, ref_node_data))
+            if len(batch) >= PROCESS_BATCH:
+                self._write_batch(batch, constants)
+                batch = []
+        if batch:
+            self._write_batch(batch, constants)
 
-            experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
-                ref_node_data["experiment_reference_type"]
-            ]
-            # Create an instance of the FitnessExperimentReference model
-            experiment_reference = experiment_reference_class(**ref_node_data)
-
-            # Create a dictionary with experiment and reference objects
-            data_dict = {
-                "experiment": experiment,
-                "experiment_reference": experiment_reference,
-            }
-
-            # Serialize the dictionary to JSON
-            data_json = json.dumps(data_dict, default=lambda o: o.model_dump())
-
-            # Generate a key for the data
-            data_key = f"data_{i}".encode()
-
-            # Write the serialized dictionary to LMDB
-            self.write_to_lmdb(data_key, data_json.encode())
-
-            # Log progress every log_batch_size records
-            # if (i + 1) % log_batch_size == 0:
-            #     log.info(f"Processed {i + 1} records")
-
+        log.info(f"Interned constants resolved: {len(constants)}")
         return i + 1
 
     def __getitem__(self, index: int | slice | list[int]) -> Any:

@@ -37,6 +37,19 @@ experiment reference:
     properties:
         serialized_data: str
 
+# interned constant: a large sub-object of an experiment record (its environment, or a
+# segregant genotype) stored ONCE, content-addressed: id = sha256 of serialized_data.
+# The experiment's serialized_data carries {"$ref": <id>, "kind": <field>} where the
+# sub-object was; torchcell.data.neo4j_query_raw splices it back on query. Without this
+# the 9.4 KB Costanzo environment was inlined into 41.4M experiment blobs (release 1.2:
+# 645 of 689 GB was serialized_data). See torchcell/datamodels/interned_constant.py.
+interned constant:
+    represented_as: node
+    is_a: information content entity
+    properties:
+        kind: str
+        serialized_data: str
+
 genome:
     represented_as: node
     properties:

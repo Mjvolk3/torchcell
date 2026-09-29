@@ -442,6 +442,18 @@ def main(cfg: DictConfig) -> None:
             )
         )
 
+    # A continuation: `+resume.ckpt_path=<...-last.ckpt>` hands Lightning the full training
+    # state (weights, optimizer, epoch counter), so a run cut by the 4-day mmli limit
+    # continues under its config's max_epochs as a NEW W&B run whose config records the
+    # checkpoint it resumed from; the readout stitches the two by `resumed_from`.
+    resume_cfg = wandb_cfg.get("resume") or {}
+    ckpt_path = resume_cfg.get("ckpt_path")
+    if ckpt_path is not None:
+        if not osp.exists(ckpt_path):
+            raise FileNotFoundError(f"resume.ckpt_path not found: {ckpt_path}")
+        wandb.config.update({"resumed_from": ckpt_path}, allow_val_change=True)
+        print(f"resuming full training state from {ckpt_path}")
+
     torch.set_float32_matmul_precision("medium")
     print(f"devices: {devices}; starting training ({timestamp()})")
     trainer = L.Trainer(
@@ -458,7 +470,7 @@ def main(cfg: DictConfig) -> None:
         limit_train_batches=wandb.config.trainer.get("limit_train_batches", 1.0),
         limit_val_batches=wandb.config.trainer.get("limit_val_batches", 1.0),
     )
-    trainer.fit(model=task, datamodule=data_module)
+    trainer.fit(model=task, datamodule=data_module, ckpt_path=ckpt_path)
 
     mse = trainer.callback_metrics["val/gene_interaction/MSE"].item()
     pearson = trainer.callback_metrics["val/gene_interaction/Pearson"].item()

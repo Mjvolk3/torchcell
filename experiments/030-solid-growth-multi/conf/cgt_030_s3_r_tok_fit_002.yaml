@@ -12,15 +12,17 @@
 # Reads against cgt_s3_r_kl_fit_031 (learnable table, 0.479 +- 0.001 over epochs 10-29,
 # seeds 0-2) and cgt_030_s3_r_tok_embfit_003 (same arm, composite embedding).
 #
-# THE BUDGET IS 60 EPOCHS, the 025 arms ran 50. Seed 1 of the 025 composite closure arm
+# THE BUDGET IS 100 EPOCHS, the 025 arms ran 50. Seed 1 of the 025 composite closure arm
 # (run anx8rrdn, job 2409708) sat in a 0.477 to 0.487 validation band over epochs 30-49
-# while train Pearson kept rising (0.531 -> 0.539), which is a plateau but not a
-# convincing convergence; ten more epochs extend the second scoring window (30-49) with a
-# tail (50-59) that says whether the band holds, drifts down as fit_031 did after its
-# epoch-32 peak, or is still rising. Wall clock: 025 epochs ran 36 min clean and about
-# 4 h under the GPFS mmapLock stall, and seed 1 took 2 d 20 h for 50; 60 fits the 4-day
-# limit unless the stall covers more than a third of the run. The `-last` checkpoint is
-# written every epoch, so a run cut by the limit still scores its windows.
+# while train Pearson kept rising (0.531 -> 0.539), a plateau but not a convincing
+# convergence, and the per-entry path trains 4.3x the label rows per record, so the
+# first 030 cell runs long enough to read the tail (50-99) against the two scoring
+# windows (10-29, 30-49). Wall clock: 025 epochs ran 36 min clean and about 4 h under
+# the GPFS mmapLock stall, and 025 seed 1 took 2 d 20 h for 50 epochs, so 100 do NOT fit
+# the 4-day mmli limit: the job is cut past epoch 60 and continued by a second job that
+# resumes the full training state (`+resume.ckpt_path=<...>-last.ckpt`, written every
+# epoch; see cgt_030_s3_r_tok_embfit_003 for the command). A run cut before the
+# continuation still scores its windows.
 #
 #   PROJECT_ROOT=<worktree> sbatch -J 030-r1w1-tab-s0 \
 #       experiments/030-solid-growth-multi/scripts/igb_mmli_cgt_030.slurm cgt_030_s3_r_tok_fit_002 +seed=0
@@ -29,7 +31,7 @@ defaults:
   - _self_
 
 wandb:
-  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_60, per_entry, dataset_token, no_holdout, igb_mmli]
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_100, per_entry, dataset_token, no_holdout, igb_mmli]
 
 # No holdout: the pool is the whole subset, the second validation loader and the
 # val_ess/* readout are absent, and regression_task.essentiality is not read.
@@ -42,4 +44,4 @@ transforms:
   fit_stats: normalization_stats_030_s3_r.json
 
 trainer:
-  max_epochs: 60
+  max_epochs: 100

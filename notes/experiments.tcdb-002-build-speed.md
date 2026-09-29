@@ -520,3 +520,27 @@ Hypothesis (untested): the Experiment CSV goes from about 564 GB to about 94 GB
 (90 GB of blobs plus the constant nodes, of which Caudal's 943 genotypes are 2.5 GB),
 the store from 705 GB to about 200 GB, and generation gets faster because the parent
 writes and the workers pickle 6x fewer bytes.
+
+### r9 on the ladder: job 2958
+
+Job 2958 (commit d78b80cb, r5 stack with the 128 MiB budget as in 2931, 24 CPUs /
+96 GB, the CPUs free beside the GPU packs), `KEEP_CSV=1`:
+
+<https://wandb.ai/zhao-group/tcdb/runs/wnz9dhsq>
+
+| | job 2931 (32 CPUs) | job 2958 (24 CPUs) |
+|---|--:|--:|
+| wall | 653 s | 861 s |
+| CSV rows | 29,736,977 | 29,736,985 (+8 interned constants) |
+| Experiment rows | 2,732,203 | 2,732,203 |
+| Experiment CSV | 30.84 GB | 5.00 GB |
+| all CSVs | 39.28 GB | 13.43 GB |
+
+`scripts/verify_pointer_roundtrip.py` on the kept output (`results/2958_pointer_roundtrip.csv`):
+every one of the 2,732,203 Experiment rows re-hashes to its node id after its pointers
+are resolved from the 8 `InternedConstant` rows (77.8 KB); 0 failures. Blob bytes
+4.44 GB against 30.28 GB inlined, 6.8x. The ladder's genotype pointers never fired (no
+segregant genotypes on the ladder), so Bloom and Caudal are first exercised by the full
+build. Wall is not comparable to 2931 across CPU counts; per adapter Costanzo dmf took
+614 s at 24 CPUs against 463 s at 32, so the pointer change is not a speed lever on the
+ladder either way.

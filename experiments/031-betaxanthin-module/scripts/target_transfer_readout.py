@@ -1454,6 +1454,18 @@ PAIRS = [
         "w256_bxdelgopfbamomaaux01_h12l1p1_e200",
         "w242_bxdelgopfbamomaaux_h12l1p1_e200",
     ),
+    (
+        "betaxanthin: the forest's one-column store under default affine initialization against zero initialization",
+        "betaxanthin",
+        "w257_bxdelgonbrforestdef_h12l1p1_e200",
+        "w254_bxdelgonbrforest_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the forest's one-column store under default affine initialization against GO alone",
+        "betaxanthin",
+        "w257_bxdelgonbrforestdef_h12l1p1_e200",
+        "w167_bxdelgo_h12l1p1_e200",
+    ),
 ]
 
 

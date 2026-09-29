@@ -168,6 +168,7 @@ ARMS = [
     ("w254_bxdelgonbrforest_h12l1p1_e200", "betaxanthin"),
     ("w255_bxdelgopfbamomaforest_h12l1p1_e200", "betaxanthin"),
     ("w256_bxdelgopfbamomaaux01_h12l1p1_e200", "betaxanthin"),
+    ("w257_bxdelgonbrforestdef_h12l1p1_e200", "betaxanthin"),
     ("w233_aadelgogonbr_h12l1p1_e200", "mulleder19"),
 ]
 TOP_K = 50

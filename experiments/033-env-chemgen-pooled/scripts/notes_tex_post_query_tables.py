@@ -515,6 +515,28 @@ def t10_embedding(results: str) -> None:
     )
 
 
+def t13_vectorless(results: str) -> None:
+    env = pd.read_csv(osp.join(results, "vectorless_environments.csv"))
+    out = pd.DataFrame(
+        {
+            "kind": env["kind"],
+            "compound": env["compound_names"].fillna(""),
+            "concentration": env["conc_values"].map(
+                lambda v: "" if pd.isna(v) else f"{float(v):g}"
+            )
+            + " "
+            + env["conc_units"].fillna(""),
+            "base medium": env["base_medium"],
+            "temperature, C": env["temperature_c"].map(
+                lambda v: "unstated" if pd.isna(v) else f"{v:g}"
+            ),
+            "generations": env["duration_generations"].map(lambda v: f"{v:g}"),
+            "cells": env["cells"].map(n),
+        }
+    )
+    write("t13-vectorless", tex_table(out, "lllllrr"), "vectorless_environments.csv")
+
+
 def t11_cross(results: str) -> None:
     cross = pd.read_csv(osp.join(results, "cross_source_cells.csv"))
     out = pd.DataFrame(
@@ -585,6 +607,7 @@ def main() -> None:
         t10_embedding,
         t11_cross,
         t12_vocabulary,
+        t13_vectorless,
     ):
         table(args.results)
 

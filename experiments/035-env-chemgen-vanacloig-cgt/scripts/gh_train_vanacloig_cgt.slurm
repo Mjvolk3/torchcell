@@ -17,7 +17,8 @@
 # ARM      cgt_genes | cgt_env | embedding_env
 # FOLDS    space-separated fold numbers, default "0 1 2 3 4"
 # SEED     default 0
-# EXTRA    further hydra overrides, e.g. "trainer.max_epochs=1 results_subdir=smoke"
+# EXTRA    further hydra overrides, e.g. "trainer.max_epochs=1 results_subdir=smoke".
+#          No commas: sbatch splits --export on them, so a list override takes one item.
 set -euo pipefail
 
 ARM=${ARM:?ARM is required}
@@ -32,7 +33,10 @@ cd "$PROJECT_ROOT"
 echo "PROJECT_ROOT=$PROJECT_ROOT ($(git rev-parse --short HEAD))"
 echo "ARM=$ARM FOLDS=$FOLDS SEED=$SEED EXTRA=$EXTRA"
 echo "SLURM_JOB_GPUS=${SLURM_JOB_GPUS:-} CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-}"
-nvidia-smi --query-gpu=index,uuid,memory.used --format=csv
+# the embedding arm runs on CPU (--gres=gpu:0), where nvidia-smi finds no device
+if [ -n "${CUDA_VISIBLE_DEVICES:-}" ]; then
+  nvidia-smi --query-gpu=index,uuid,memory.used --format=csv
+fi
 export PYTHONPATH="$PROJECT_ROOT"
 
 for fold in $FOLDS; do

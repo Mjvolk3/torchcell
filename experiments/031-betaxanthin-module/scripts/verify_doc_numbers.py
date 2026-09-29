@@ -799,6 +799,28 @@ def lift_ratio(pair: str, fname: str, rep_hi: str, rep_lo: str):
     return run
 
 
+def stack_store(store: str, key: str):
+    """A provenance value of a forest stacking store's build JSON
+    (target_forest_stack_store_<store>.json, 2026-09-29)."""
+
+    def run() -> float:
+        d = json.load(open(osp.join(RESULTS, f"target_forest_stack_store_{store}.json")))
+        return float(d["provenance"][key])
+
+    return run
+
+
+def stack_column(store: str, key: str):
+    """What a stacking store's one column reads by itself on the pinned genes
+    (target_stack_column_read.json)."""
+
+    def run() -> float:
+        d = json.load(open(osp.join(RESULTS, "target_stack_column_read.json")))
+        return float(d["stores"][store][key])
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:standing -- the comparators on the same split and the cross-target read.
     Check(
@@ -15269,6 +15291,125 @@ CHECKS: list[Check] = [
     Check(claim='inductive: incidence ones', stated=0.014, recompute=gcn('gcn_go_incidence_ones', 'mean'), tolerance=0.0006),
     Check(claim='inductive: incidence dag ones', stated=-0.031, recompute=gcn('gcn_go_incidence_dag_ones', 'mean'), tolerance=0.0006),
     Check(claim='standing: transformer inductive incumbent', stated=0.217, recompute=transfer('betaxanthin: the inductive incumbent (GO, HiGHS pFBA, MOMA) with the Mulleder co-head against without, twelve seeds', 'mean_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 229: arm mean', stated=0.217, recompute=transfer('betaxanthin: the perturbation operator with two ReZero blocks against the inductive incumbent', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 229: arm sd', stated=0.004, recompute=transfer('betaxanthin: the perturbation operator with two ReZero blocks against the inductive incumbent', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 229: control mean', stated=0.216, recompute=transfer('betaxanthin: the perturbation operator with two ReZero blocks against the inductive incumbent', 'mean_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 229: diff', stated=0.001, recompute=transfer('betaxanthin: the perturbation operator with two ReZero blocks against the inductive incumbent', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 229: diff sd', stated=0.01, recompute=transfer('betaxanthin: the perturbation operator with two ReZero blocks against the inductive incumbent', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 229: positive', stated=3, recompute=transfer('betaxanthin: the perturbation operator with two ReZero blocks against the inductive incumbent', 'n_positive'), tolerance=0.5),
+    Check(claim='round 229: top-50', stated=4.89, recompute=transfer('betaxanthin: the perturbation operator with two ReZero blocks against the inductive incumbent', 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 229: control top-50', stated=4.73, recompute=transfer('betaxanthin: the perturbation operator with two ReZero blocks against the inductive incumbent', 'mean_top50_enrichment', 'control'), tolerance=0.006),
+    Check(claim='round 229: ensemble', stated=0.22, recompute=ensemble('w248_bxdelgopfbamomapert2_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 229: seed min', stated=0.21, recompute=cells_stat('w248_bxdelgopfbamomapert2_h12l1p1_e200', 'spearman', 'min'), tolerance=0.0006),
+    Check(claim='round 229: seed max', stated=0.22, recompute=cells_stat('w248_bxdelgopfbamomapert2_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='round 229: epoch min', stated=7, recompute=cells_stat('w248_bxdelgopfbamomapert2_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 229: epoch max', stated=15, recompute=cells_stat('w248_bxdelgopfbamomapert2_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 229: val min', stated=0.24, recompute=cells_stat('w248_bxdelgopfbamomapert2_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 229: val max', stated=0.26, recompute=cells_stat('w248_bxdelgopfbamomapert2_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 229: control epoch min', stated=9, recompute=cells_stat('w190_bxdelgopfbamoma_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 229: control epoch max', stated=14, recompute=cells_stat('w190_bxdelgopfbamoma_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 229: transform parameters', stated=2870, recompute=n_params('w248_bxdelgopfbamomapert2_h12l1p1_e200', 'perturbation_transform'), tolerance=0.5),
+    Check(claim='round 229: control transform parameters', stated=1884, recompute=n_params('w190_bxdelgopfbamoma_h12l1p1_e200', 'perturbation_transform'), tolerance=0.5),
+    Check(claim='round 229: job hours', stated=4.13, recompute=job_hours(2978), tolerance=0.01),
+    Check(claim='round 230: arm mean', stated=0.218, recompute=transfer('betaxanthin: the perturbation operator with the Hadamard pair term against the inductive incumbent', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 230: arm sd', stated=0.006, recompute=transfer('betaxanthin: the perturbation operator with the Hadamard pair term against the inductive incumbent', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 230: diff', stated=0.002, recompute=transfer('betaxanthin: the perturbation operator with the Hadamard pair term against the inductive incumbent', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 230: diff sd', stated=0.01, recompute=transfer('betaxanthin: the perturbation operator with the Hadamard pair term against the inductive incumbent', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 230: positive', stated=4, recompute=transfer('betaxanthin: the perturbation operator with the Hadamard pair term against the inductive incumbent', 'n_positive'), tolerance=0.5),
+    Check(claim='round 230: top-50', stated=5.03, recompute=transfer('betaxanthin: the perturbation operator with the Hadamard pair term against the inductive incumbent', 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 230: ensemble', stated=0.22, recompute=ensemble('w249_bxdelgopfbamomahad_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 230: seed min', stated=0.206, recompute=cells_stat('w249_bxdelgopfbamomahad_h12l1p1_e200', 'spearman', 'min'), tolerance=0.0006),
+    Check(claim='round 230: seed max', stated=0.225, recompute=cells_stat('w249_bxdelgopfbamomahad_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='round 230: epoch min', stated=7, recompute=cells_stat('w249_bxdelgopfbamomahad_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 230: epoch max', stated=13, recompute=cells_stat('w249_bxdelgopfbamomahad_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 230: val min', stated=0.24, recompute=cells_stat('w249_bxdelgopfbamomahad_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 230: val max', stated=0.25, recompute=cells_stat('w249_bxdelgopfbamomahad_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 230: transform parameters', stated=2196, recompute=n_params('w249_bxdelgopfbamomahad_h12l1p1_e200', 'perturbation_transform'), tolerance=0.5),
+    Check(claim='round 230: job hours', stated=3.71, recompute=job_hours(2979), tolerance=0.01),
+    Check(claim='round 231: arm mean', stated=0.216, recompute=transfer('betaxanthin: the perturbation operator with the null sink against the inductive incumbent', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 231: arm sd', stated=0.006, recompute=transfer('betaxanthin: the perturbation operator with the null sink against the inductive incumbent', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 231: diff', stated=0.0001, recompute=transfer('betaxanthin: the perturbation operator with the null sink against the inductive incumbent', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 231: diff sd', stated=0.0005, recompute=transfer('betaxanthin: the perturbation operator with the null sink against the inductive incumbent', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 231: positive', stated=4, recompute=transfer('betaxanthin: the perturbation operator with the null sink against the inductive incumbent', 'n_positive'), tolerance=0.5),
+    Check(claim='round 231: epoch min', stated=9, recompute=cells_stat('w250_bxdelgopfbamomasink_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 231: epoch max', stated=14, recompute=cells_stat('w250_bxdelgopfbamomasink_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 231: val min', stated=0.25, recompute=cells_stat('w250_bxdelgopfbamomasink_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 231: val max', stated=0.26, recompute=cells_stat('w250_bxdelgopfbamomasink_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 231: ensemble', stated=0.216, recompute=ensemble('w250_bxdelgopfbamomasink_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 231: top-50', stated=4.69, recompute=transfer('betaxanthin: the perturbation operator with the null sink against the inductive incumbent', 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 231: job hours', stated=4.58, recompute=job_hours(2990), tolerance=0.01),
+    Check(claim='round 232: arm mean', stated=0.219, recompute=transfer('betaxanthin: the species language-model composite embedding against ProtT5 alone on the inductive incumbent', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 232: arm sd', stated=0.004, recompute=transfer('betaxanthin: the species language-model composite embedding against ProtT5 alone on the inductive incumbent', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 232: diff', stated=0.003, recompute=transfer('betaxanthin: the species language-model composite embedding against ProtT5 alone on the inductive incumbent', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 232: diff sd', stated=0.007, recompute=transfer('betaxanthin: the species language-model composite embedding against ProtT5 alone on the inductive incumbent', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 232: positive', stated=3, recompute=transfer('betaxanthin: the species language-model composite embedding against ProtT5 alone on the inductive incumbent', 'n_positive'), tolerance=0.5),
+    Check(claim='round 232: top-50', stated=4.76, recompute=transfer('betaxanthin: the species language-model composite embedding against ProtT5 alone on the inductive incumbent', 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 232: ensemble', stated=0.22, recompute=ensemble('w252_bxdelgopfbamomacomp_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 232: seed min', stated=0.212, recompute=cells_stat('w252_bxdelgopfbamomacomp_h12l1p1_e200', 'spearman', 'min'), tolerance=0.0006),
+    Check(claim='round 232: seed max', stated=0.223, recompute=cells_stat('w252_bxdelgopfbamomacomp_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='round 232: epoch min', stated=8, recompute=cells_stat('w252_bxdelgopfbamomacomp_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 232: epoch max', stated=14, recompute=cells_stat('w252_bxdelgopfbamomacomp_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 232: val min', stated=0.24, recompute=cells_stat('w252_bxdelgopfbamomacomp_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 232: val max', stated=0.26, recompute=cells_stat('w252_bxdelgopfbamomacomp_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 232: preprocessor parameters', stated=42048, recompute=n_params('w252_bxdelgopfbamomacomp_h12l1p1_e200', 'embedding_preprocessor'), tolerance=0.5),
+    Check(claim='round 232: control preprocessor parameters', stated=14400, recompute=n_params('w190_bxdelgopfbamoma_h12l1p1_e200', 'embedding_preprocessor'), tolerance=0.5),
+    Check(claim='round 232: job hours', stated=3.55, recompute=job_hours(2992), tolerance=0.01),
+    Check(claim='round 233: arm mean', stated=0.216, recompute=transfer('betaxanthin: the composite with ESM2 added against ProtT5 alone on the inductive incumbent', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 233: arm sd', stated=0.005, recompute=transfer('betaxanthin: the composite with ESM2 added against ProtT5 alone on the inductive incumbent', 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 233: diff', stated=-0.0002, recompute=transfer('betaxanthin: the composite with ESM2 added against ProtT5 alone on the inductive incumbent', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 233: diff sd', stated=0.01, recompute=transfer('betaxanthin: the composite with ESM2 added against ProtT5 alone on the inductive incumbent', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 233: positive', stated=3, recompute=transfer('betaxanthin: the composite with ESM2 added against ProtT5 alone on the inductive incumbent', 'n_positive'), tolerance=0.5),
+    Check(claim='round 233: vs composite diff', stated=-0.004, recompute=transfer('betaxanthin: the composite with ESM2 added against the composite', 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 233: vs composite sd', stated=0.007, recompute=transfer('betaxanthin: the composite with ESM2 added against the composite', 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 233: vs composite positive', stated=2, recompute=transfer('betaxanthin: the composite with ESM2 added against the composite', 'n_positive'), tolerance=0.5),
+    Check(claim='round 233: ensemble', stated=0.217, recompute=ensemble('w253_bxdelgopfbamomacompesm_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 233: seed min', stated=0.207, recompute=cells_stat('w253_bxdelgopfbamomacompesm_h12l1p1_e200', 'spearman', 'min'), tolerance=0.0006),
+    Check(claim='round 233: seed max', stated=0.22, recompute=cells_stat('w253_bxdelgopfbamomacompesm_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='round 233: epoch min', stated=9, recompute=cells_stat('w253_bxdelgopfbamomacompesm_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 233: epoch max', stated=13, recompute=cells_stat('w253_bxdelgopfbamomacompesm_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 233: val min', stated=0.25, recompute=cells_stat('w253_bxdelgopfbamomacompesm_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 233: val max', stated=0.26, recompute=cells_stat('w253_bxdelgopfbamomacompesm_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 233: preprocessor parameters', stated=57408, recompute=n_params('w253_bxdelgopfbamomacompesm_h12l1p1_e200', 'embedding_preprocessor'), tolerance=0.5),
+    Check(claim='round 233: job hours', stated=3.57, recompute=job_hours(2993), tolerance=0.01),
+    Check(claim='round 234: arm mean', stated=0.2, recompute=transfer("betaxanthin: the forest's read of the GO neighbor mean as a one-column store (inductive) against GO alone", 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 234: arm sd', stated=0.032, recompute=transfer("betaxanthin: the forest's read of the GO neighbor mean as a one-column store (inductive) against GO alone", 'sd_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='round 234: GO control', stated=0.202, recompute=transfer("betaxanthin: the forest's read of the GO neighbor mean as a one-column store (inductive) against GO alone", 'mean_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 234: vs GO diff', stated=-0.003, recompute=transfer("betaxanthin: the forest's read of the GO neighbor mean as a one-column store (inductive) against GO alone", 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 234: vs GO sd', stated=0.032, recompute=transfer("betaxanthin: the forest's read of the GO neighbor mean as a one-column store (inductive) against GO alone", 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 234: vs GO positive', stated=2, recompute=transfer("betaxanthin: the forest's read of the GO neighbor mean as a one-column store (inductive) against GO alone", 'n_positive'), tolerance=0.5),
+    Check(claim='round 234: linear control', stated=0.145, recompute=transfer("betaxanthin: the forest's read as a one-column store against the neighbor mean through the linear affine", 'mean_spearman', 'control'), tolerance=0.0006),
+    Check(claim='round 234: vs linear diff', stated=0.055, recompute=transfer("betaxanthin: the forest's read as a one-column store against the neighbor mean through the linear affine", 'mean_difference'), tolerance=0.0006),
+    Check(claim='round 234: vs linear sd', stated=0.075, recompute=transfer("betaxanthin: the forest's read as a one-column store against the neighbor mean through the linear affine", 'sd_difference'), tolerance=0.0006),
+    Check(claim='round 234: vs linear positive', stated=4, recompute=transfer("betaxanthin: the forest's read as a one-column store against the neighbor mean through the linear affine", 'n_positive'), tolerance=0.5),
+    Check(claim='round 234: top-50', stated=5.26, recompute=transfer("betaxanthin: the forest's read of the GO neighbor mean as a one-column store (inductive) against GO alone", 'mean_top50_enrichment', 'arm'), tolerance=0.006),
+    Check(claim='round 234: seed min', stated=0.174, recompute=cells_stat('w254_bxdelgonbrforest_h12l1p1_e200', 'spearman', 'min'), tolerance=0.0006),
+    Check(claim='round 234: seed max', stated=0.259, recompute=cells_stat('w254_bxdelgonbrforest_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='round 234: epoch min', stated=10, recompute=cells_stat('w254_bxdelgonbrforest_h12l1p1_e200', 'select_epoch', 'min'), tolerance=0.5),
+    Check(claim='round 234: epoch max', stated=194, recompute=cells_stat('w254_bxdelgonbrforest_h12l1p1_e200', 'select_epoch', 'max'), tolerance=0.5),
+    Check(claim='round 234: val min', stated=0.32, recompute=cells_stat('w254_bxdelgonbrforest_h12l1p1_e200', 'select_val_pearson', 'min'), tolerance=0.006),
+    Check(claim='round 234: val max', stated=0.34, recompute=cells_stat('w254_bxdelgonbrforest_h12l1p1_e200', 'select_val_pearson', 'max'), tolerance=0.006),
+    Check(claim='round 234: ensemble', stated=0.247, recompute=ensemble('w254_bxdelgonbrforest_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='round 234: ensemble top-50', stated=6.19, recompute=ensemble('w254_bxdelgonbrforest_h12l1p1_e200', 'top50_enrichment', 'first_six'), tolerance=0.006),
+    Check(claim='round 234: head parameters', stated=473, recompute=n_params('w254_bxdelgonbrforest_h12l1p1_e200', 'betaxanthin_head'), tolerance=0.5),
+    Check(claim='round 234: column alone', stated=0.269, recompute=stack_column('YPD_bx_gonbrforest', 'pinned_spearman'), tolerance=0.0006),
+    Check(claim='round 234: column pinned genes', stated=629, recompute=stack_column('YPD_bx_gonbrforest', 'n_pinned_with_row'), tolerance=0.5),
+    Check(claim='round 234: leaf', stated=5, recompute=stack_store('YPD_bx_gonbrforest', 'min_samples_leaf'), tolerance=0.5),
+    Check(claim='round 234: leaf val pearson', stated=0.314, recompute=stack_store('YPD_bx_gonbrforest', 'val_pearson'), tolerance=0.0006),
+    Check(claim='round 234: val spearman', stated=0.15, recompute=stack_store('YPD_bx_gonbrforest', 'val_spearman'), tolerance=0.0006),
+    Check(claim='round 234: oof spearman', stated=0.236, recompute=stack_store('YPD_bx_gonbrforest', 'oof_train_spearman'), tolerance=0.0006),
+    Check(claim='round 234: train genes', stated=3494, recompute=stack_store('YPD_bx_gonbrforest', 'n_train_genes'), tolerance=0.5),
+    Check(claim='round 234: val genes', stated=270, recompute=stack_store('YPD_bx_gonbrforest', 'n_val_genes'), tolerance=0.5),
+    Check(claim='round 234: job hours', stated=3.54, recompute=job_hours(3000), tolerance=0.01),
+    Check(claim='standing: operator two blocks', stated=0.217, recompute=transfer('betaxanthin: the perturbation operator with two ReZero blocks against the inductive incumbent', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='standing: operator hadamard', stated=0.218, recompute=transfer('betaxanthin: the perturbation operator with the Hadamard pair term against the inductive incumbent', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='standing: operator sink', stated=0.216, recompute=transfer('betaxanthin: the perturbation operator with the null sink against the inductive incumbent', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='standing: composite', stated=0.219, recompute=transfer('betaxanthin: the species language-model composite embedding against ProtT5 alone on the inductive incumbent', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='standing: composite esm2', stated=0.216, recompute=transfer('betaxanthin: the composite with ESM2 added against ProtT5 alone on the inductive incumbent', 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='standing: stacking transformer', stated=0.2, recompute=transfer("betaxanthin: the forest's read of the GO neighbor mean as a one-column store (inductive) against GO alone", 'mean_spearman', 'arm'), tolerance=0.0006),
+    Check(claim='standing: stacking column', stated=0.269, recompute=stack_column('YPD_bx_gonbrforest', 'pinned_spearman'), tolerance=0.0006),
+    Check(claim='standing: stacking best seed', stated=0.259, recompute=cells_stat('w254_bxdelgonbrforest_h12l1p1_e200', 'spearman', 'max'), tolerance=0.0006),
+    Check(claim='standing: stacking ensemble', stated=0.247, recompute=ensemble('w254_bxdelgonbrforest_h12l1p1_e200', 'spearman', 'first_six'), tolerance=0.0006),
+    Check(claim='inductive: neighbor mean transformer', stated=0.221, recompute=transfer('betaxanthin: GO with its neighbor propagation appended against GO alone', 'mean_spearman', 'arm'), tolerance=0.0006),
 ]
 
 

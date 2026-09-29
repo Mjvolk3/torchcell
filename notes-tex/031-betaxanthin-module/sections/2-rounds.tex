@@ -1275,4 +1275,79 @@ conjunction of many columns that neither form reaches; the test is the forest it
 trained out of fold on the training genes and its prediction fed as a one-column
 inductive store (stacking), which is planned and not run.
 
+Round 229 is read (job 2978, 4 h 8 min): the perturbation operator with two stacked
+cross-attention blocks under ReZero residuals, the second block's feedforward at
+multiple 1 (\texttt{--pert-layers 2 --pert-residual rezero --pert-extra-ffn-mult 1}),
+on the round-190 recipe (GO with both flux programs in one affine), the first rung of
+the operator ladder. INDUCTIVE. On a single deletion the transform's cross-attention
+has one key, so its context is a linear map of the deleted gene's embedding with no
+dependence on the querying gene (the model's own documented note, verified there); the
+ladder gives the operator depth and the two constructions that make it query
+dependent. It reads 0.217 (sd 0.004) against round 190's 0.216 on the same six seeds,
+$+0.001$ (sd 0.010, three of six), top-50 4.89 against 4.73, ensembled 0.220; the seeds
+read 0.210 to 0.220 and select at epochs 7 to 15 on validation Pearson 0.24 to 0.26,
+where round 190 selects at 9 to 14. The second block adds 986 parameters to the
+transform (2,870 against 1,884). Depth alone changes nothing.
+
+Round 230 is read (job 2979, 3 h 43 min): the multiplicative pair term
+$h_i \odot (1 + \gamma(c))$ added beside the additive context
+(\texttt{--pert-hadamard add}), one block, on the same recipe. INDUCTIVE. It reads
+0.218 (sd 0.006), $+0.002$ over round 190 (sd 0.010, four of six), top-50 5.03,
+ensembled 0.220; the seeds read 0.206 to 0.225 and select at epochs 7 to 13 on
+validation 0.24 to 0.25. The pair term adds 312 parameters (2,196 against 1,884) and
+moves nothing.
+
+Round 231 is read (job 2990, 4 h 35 min): the null sink (\texttt{--pert-null-sink}: a
+zero key and value column with a learned logit offset from 0.0, trainable, the attended
+output rescaled to undo the sink's attenuation), so that the single real key's weight
+is $\sigma(q_i \cdot k_p / \sqrt{d} - b)$ and depends on the querying gene. INDUCTIVE.
+It reads 0.216 (sd 0.006), $+0.0001$ over round 190 (sd 0.0005, four of six), and
+selects the identical epochs (14, 12, 9, 11, 11, 11) on validation 0.25 to 0.26: the
+sink's one scalar leaves the cell's predictions where they were. Ensembled 0.216,
+top-50 4.69. Three rungs read the incumbent exactly, so the operator's form is not the
+bottleneck at this recipe; the combined operator (w251, job 2991) is running and unread.
+
+Round 232 is read (job 2992, 3 h 33 min): the species language-model composite
+sequence embedding, FUDT upstream and downstream over the flanking DNA, ProtT5 over the
+protein and CaLM over the codons (\texttt{--node-embeddings pathways fudt\_upstream
+fudt\_downstream prot\_T5\_all calm}, the set the expression line and the essentiality
+study's round 17 used), in place of ProtT5 alone on the round-190 recipe; every
+betaxanthin cell before it ran on ProtT5 alone. INDUCTIVE. It reads 0.219 (sd 0.004),
+$+0.003$ over round 190 (sd 0.007, three of six), top-50 4.76 against 4.73, ensembled
+0.220; the seeds read 0.212 to 0.223 and select at epochs 8 to 14 on validation 0.24 to
+0.26. The preprocessor grows from 14,400 to 42,048 parameters for the wider input and
+the read does not move.
+
+Round 233 is read (job 2993, 3 h 34 min): the composite of round 232 with ESM2 (650M,
+all genes) added. INDUCTIVE. It reads 0.216 (sd 0.005), $-0.0002$ against round 190
+(sd 0.010, three of six) and $-0.004$ against the composite (sd 0.007, two of six),
+ensembled 0.217; the seeds read 0.207 to 0.220 and select at epochs 9 to 13 on
+validation 0.25 to 0.26; the preprocessor holds 57,408 parameters. The sequence
+embedding is not the bottleneck on this target: four species models in place of one
+read the incumbent's level.
+
+Round 234 is read (job 3000, 3 h 32 min): the forest's read of the GO neighbor mean as
+a ONE-column store (\texttt{YPD\_bx\_gonbrforest}, \texttt{target\_forest\_stack\_store.py},
+slurm job 2989): the ladder's forest (300 trees, square-root features, leaf size 5
+selected on validation Pearson 0.314) fit on the training genes' standardized targets,
+its value for a training gene from a forest that never saw that gene's label (five
+folds, out-of-fold Spearman 0.236 on the 3,494 training genes) and for every other gene
+from the forest fit on the whole training split, the column shifted nonnegative and
+read through the round-167 recipe's linear affine under zero initialization and
+$\log(1 + v)$. INDUCTIVE: the forest reads annotation only, so the row exists for any
+gene with neighbors, and no pinned gene's label is read anywhere. The column by itself
+reads the 629 pinned genes at Spearman 0.269 (\texttt{target\_stack\_column\_read.py})
+and the 270 validation genes at 0.150. The transformer reads 0.200 (sd 0.032),
+$-0.003$ against GO alone (round 167, 0.202; sd 0.032, two of six) and $+0.055$ over
+the neighbor mean through the same affine (round 226, 0.145; sd 0.075, four of six),
+top-50 5.26; the seeds read 0.174 to 0.259 and select at epochs 10 to 194 on validation
+Pearson 0.32 to 0.34. The spread is the epoch: the one seed that selected epoch 194
+reads 0.259, the column's own level, and the five that selected epochs 10 to 29 read
+under it; the six-seed ensemble reads 0.247 with top-50 6.19. The affine head holds 473
+parameters. Hypothesis, untested: the zero-initialized slot learns the column late,
+and the validation split, where the column reads 0.150, cannot tell the epochs apart
+until it has. The same store under the default affine initialization (w257, job 3006)
+is queued, the store appended to the round-190 affine (w255, job 3001) is running, and
+the co-head at weight 0.1 (w256, job 3005) is running; none is read.
+
 \input{tables/target_transfer}

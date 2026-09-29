@@ -238,13 +238,18 @@ the neighborhood in are read (rounds 226 to 228): the neighbor mean of GO as a s
 reads 0.145 through the linear affine and 0.217 through 256, and GO with its neighbor
 mean appended reads 0.221 against GO alone's 0.202 ($+0.019$, six of six), the first
 inductive gain on the transformer and a fifth of the lift the same columns give the
-forest. Queued and unread: the perturbation operator with two ReZero blocks, with the
-Hadamard pair term, with the null sink, and with all three (rounds B89 to B92, w248 to
-w251, jobs 2978 to 2981); and the species language-model composite sequence embedding,
-FUDT upstream and downstream, ProtT5 and CaLM, with and without ESM2, in place of
-ProtT5 alone (rounds B93 and B94, w252 and w253, jobs 2982 and 2983). The operator
-arms rest on the model's own documented and verified note about its perturbation
-transform: on a single deletion the cross-attention has one key, so its context is a
-linear map of the deleted gene's embedding with no dependence on the querying gene,
-and the pair term and the null sink are the two constructions that make it query
-dependent; whether that lifts betaxanthin is unmeasured until the packs land.
+forest. The perturbation operator's form is not the bottleneck: on a single deletion
+the cross-attention has one key, so its context is a linear map of the deleted gene's
+embedding with no dependence on the querying gene (the model's own documented and
+verified note), and with two ReZero blocks, with the Hadamard pair term and with the
+null sink it reads 0.217, 0.218 and 0.216 against 0.216 on the same seeds (rounds 229
+to 231), the sink selecting the incumbent's epochs exactly; the combined operator
+(w251, job 2991) is running. Neither is the sequence embedding: the species
+language-model composite, FUDT upstream and downstream, ProtT5 and CaLM, reads 0.219 in
+place of ProtT5's 0.216, and with ESM2 added 0.216 (rounds 232 and 233). Stacking is
+the current attempt on the remaining gap: the forest's out-of-fold read of the
+neighborhood as a one-column store reads the pinned genes at 0.269 by itself and 0.200
+through the transformer (round 234), 0.259 on the one seed that trained to epoch 194
+and 0.247 ensembled; the same store under the default affine initialization (w257, job
+3006) and appended to the three-family affine (w255, job 3001), and the co-head at
+weight 0.1 (w256, job 3005), are running or queued and unread.

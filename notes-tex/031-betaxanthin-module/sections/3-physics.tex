@@ -569,6 +569,20 @@ so that the read is structure alone, 0.014 and $-0.031$. The annotation carries 
 signal as the gene's own terms and as its neighbors' terms on the gene graphs, not as
 the co-annotation structure, at this depth and budget.
 
+The transformer's perturbation operator is not the bottleneck at this recipe. On a
+single deletion the transform's cross-attention has one key, so its context is a
+linear map of the deleted gene's embedding with no dependence on the querying gene (the
+model's own documented and verified note); rounds 229 to 231 gave it two ReZero blocks,
+the Hadamard pair term and the null sink, and read 0.217, 0.218 and 0.216 against the
+incumbent's 0.216 on the same seeds, the sink selecting the incumbent's epochs exactly.
+Neither is the sequence embedding: the species language-model composite (rounds 232 and
+233) reads 0.219 and, with ESM2 added, 0.216 in place of ProtT5's 0.216. The gap that
+remains is between the forest's read of the neighborhood, 0.279, and the transformer's
+read of the same columns, 0.221, and stacking is the current attempt to close it: the
+forest's out-of-fold prediction as a one-column store reads the pinned genes at 0.269
+by itself and 0.200 through the transformer (round 234), 0.259 on the one seed that
+trained to epoch 194 and 0.247 as a six-seed ensemble.
+
 \input{tables/neighborhood_reads}
 
 \input{tables/message_passing}

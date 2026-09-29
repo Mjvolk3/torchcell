@@ -7,11 +7,13 @@
 
 import json
 import logging
+import os
 import os.path as osp
 import pickle
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from functools import wraps
+from pathlib import Path
 from typing import Any, cast
 
 import lmdb
@@ -22,6 +24,7 @@ from pydantic import BaseModel
 from torch_geometric.data import Dataset
 from tqdm import tqdm
 
+from torchcell import __version__
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 from torchcell.datamodels import (
     Experiment,
@@ -30,11 +33,13 @@ from torchcell.datamodels import (
     Publication,
 )
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
-from torchcell.provenance.build_manifest import write_build_manifest
+from torchcell.provenance.build_manifest import MANIFEST_FILENAME, write_build_manifest
 from torchcell.sequence import GeneSet
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+TC_DATA_URL_VAR = "TC_DATA_URL"
 
 
 def process_reference_batch(batch: list[dict[str, Any]]) -> list[str]:
@@ -268,11 +273,57 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
         ``raw_file_names`` are absent/incomplete, which for a dataset restored
         from a built LMDB (raw pruned, or a partially-extracted leftover) means
         an unnecessary network download that either 403s or collides on move.
-        A genuinely un-built dataset (no ``lmdb``) still downloads as before.
+
+        With ``TC_DATA_URL`` set, an un-built dataset is fetched as a packaged
+        artifact from the ``tc-data`` endpoint instead (``_download_artifact``),
+        which fills ``processed/`` so PyG then skips ``process()``. With the
+        variable unset, a genuinely un-built dataset (no ``lmdb``) downloads its
+        raw files from the publisher as before.
         """
         if osp.isdir(osp.join(self.processed_dir, "lmdb")):
             return
+        if os.environ.get(TC_DATA_URL_VAR):
+            self._download_artifact()
+            return
         super()._download()
+
+    def _download_artifact(self) -> None:
+        """Fetch, verify and unpack this dataset's artifact from the ``tc-data`` endpoint.
+
+        Selects the newest ``supported`` artifact for this root's slug whose
+        ``torchcell_version`` shares the installed ``major.minor``; the endpoint
+        being set and having nothing compatible is an error, never a silent fall
+        back to the publisher download. The unpacked tree must carry
+        ``preprocess/build_manifest.json`` (the schema contract of the LMDB).
+        """
+        # Local import: ``torchcell.datasets`` eagerly imports the loader modules,
+        # which import this module, so a top-level import would be circular.
+        from torchcell.datasets.client import DatasetClient, unpack_artifact
+
+        client = DatasetClient.from_env()
+        slug = osp.basename(osp.normpath(self.root))
+        artifact = client.select(slug)
+        if artifact is None:
+            raise RuntimeError(
+                f"{client.url} has no supported artifact for {slug!r} compatible "
+                f"with torchcell {__version__}; unset {TC_DATA_URL_VAR} to build "
+                "from the publisher files instead"
+            )
+        if artifact.dataset_class != self.__class__.__name__:
+            raise RuntimeError(
+                f"artifact {artifact.rel_path} was built by "
+                f"{artifact.dataset_class}, not {self.__class__.__name__}"
+            )
+        archive = client.download(
+            artifact, Path(self.root) / "artifacts" / artifact.archive
+        )
+        unpack_artifact(archive, Path(self.root))
+        manifest = Path(self.preprocess_dir) / MANIFEST_FILENAME
+        if not manifest.is_file():
+            raise FileNotFoundError(
+                f"{artifact.rel_path} unpacked without preprocess/{MANIFEST_FILENAME}"
+            )
+        log.info("unpacked %s (%d records)", artifact.rel_path, artifact.n_experiments)
 
     @abstractmethod
     def download(self) -> None:
@@ -424,7 +475,7 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
 
         return cast(int, length)
 
-    def get(self, idx: int | list[int] | np.ndarray) -> Any:
+    def get(self, idx: int | list[int] | np.ndarray[Any, Any]) -> Any:
         """Return one item, or a list of items for list/array/boolean indices."""
         if self.env is None:
             self._init_db()

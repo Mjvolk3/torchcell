@@ -23,14 +23,11 @@ never plaintext; comparison is constant-time; key values are never logged.
 
 from __future__ import annotations
 
-import hashlib
-import hmac
-import json
 import logging
 import mimetypes
 import os
-import secrets
 from pathlib import Path
+from typing import Self
 
 import uvicorn
 from dotenv import load_dotenv
@@ -39,6 +36,7 @@ from fastapi.responses import FileResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field
 
+from torchcell.api_keys import API_KEY_HEADER, ApiKeys, hash_key, print_minted_key
 from torchcell.literature.backfill import LIBRARY_SUBDIR
 from torchcell.literature.bib_store import (
     BIB_STORE_MANIFEST,
@@ -53,72 +51,28 @@ from torchcell.literature.manifest import MANIFEST_FILENAME, Manifest, _role_for
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-API_KEY_HEADER = "X-API-Key"
 SEARCH_RESULT_CAP = 200
+KEYS_FILE_VAR = "TC_LIT_KEYS_FILE"
+INLINE_KEYS_VAR = "TC_LIT_API_KEYS"
+
+_hash_key = hash_key  # kept for callers that imported the private name
 
 
-def _hash_key(key: str) -> str:
-    """sha256 hex digest of an API key (what we store + compare, never the key)."""
-    return hashlib.sha256(key.encode("utf-8")).hexdigest()
-
-
-class LiteratureKeys(BaseModel):
-    """Named API keys, stored as sha256 hashes for constant-time verification."""
-
-    model_config = ConfigDict(frozen=True)
-
-    hashes: dict[str, str] = Field(
-        description="Map of key name -> sha256 hex of the key value."
-    )
+class LiteratureKeys(ApiKeys):
+    """The shared :class:`ApiKeys` model bound to the ``TC_LIT_*`` variables."""
 
     @classmethod
-    def from_file(cls, path: str | Path) -> LiteratureKeys:
-        """Load ``{name: sha256hex}`` from a JSON keys file."""
-        data = json.loads(Path(path).read_text())
-        return cls(hashes={str(k): str(v) for k, v in data.items()})
+    def from_pairs(cls, spec: str, env_name: str = INLINE_KEYS_VAR) -> Self:
+        """Parse ``name1:key1,name2:key2`` plaintext pairs, hashing each key."""
+        return super().from_pairs(spec, env_name=env_name)
 
     @classmethod
-    def from_pairs(cls, spec: str) -> LiteratureKeys:
-        """Parse ``name1:key1,name2:key2`` plaintext pairs, hashing each key.
-
-        Convenient for quick-start/tests; the keys file (hashes at rest) is
-        preferred for anything real since env values are visible via ``ps``.
-        """
-        hashes: dict[str, str] = {}
-        for pair in spec.split(","):
-            pair = pair.strip()
-            if not pair:
-                continue
-            name, _, key = pair.partition(":")
-            if not name or not key:
-                raise ValueError(f"bad TC_LIT_API_KEYS pair: {pair!r}")
-            hashes[name.strip()] = _hash_key(key.strip())
-        return cls(hashes=hashes)
-
-    @classmethod
-    def from_env(cls) -> LiteratureKeys:
+    def from_env(cls) -> Self:
         """Load keys from ``TC_LIT_KEYS_FILE`` (preferred) or ``TC_LIT_API_KEYS``.
 
         Raises ``KeyError`` if neither is set -- the server never runs unauthenticated.
         """
-        keys_file = os.environ.get("TC_LIT_KEYS_FILE")
-        if keys_file:
-            return cls.from_file(keys_file)
-        inline = os.environ.get("TC_LIT_API_KEYS")
-        if inline:
-            return cls.from_pairs(inline)
-        raise KeyError("Set TC_LIT_KEYS_FILE or TC_LIT_API_KEYS to run the server.")
-
-    def verify(self, presented: str) -> str | None:
-        """Return the name of the key matching ``presented``, else None.
-
-        Constant-time over the stored hashes; the presented value is never logged.
-        """
-        candidate = _hash_key(presented)
-        for name, stored in self.hashes.items():
-            if hmac.compare_digest(candidate, stored):
-                return name
-        return None
+        return cls.from_env_names(KEYS_FILE_VAR, INLINE_KEYS_VAR)
 
 
 class LiteratureServerConfig(BaseModel):
@@ -404,11 +358,7 @@ def create_app_from_env() -> FastAPI:
 
 def _gen_key(name: str) -> None:
     """Print a fresh random API key + the JSON keys-file line to store its hash."""
-    key = secrets.token_urlsafe(32)
-    entry = {name: _hash_key(key)}
-    print(f"API key for '{name}' (give this to the client, it is NOT stored):\n  {key}")
-    print("\nAdd this to your TC_LIT_KEYS_FILE (JSON of {name: sha256hex}):")
-    print(f"  {json.dumps(entry)}")
+    print_minted_key(name, KEYS_FILE_VAR)
 
 
 def main() -> None:

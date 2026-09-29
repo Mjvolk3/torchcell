@@ -283,6 +283,7 @@ torchcell = [
     "py.typed",
     "knowledge_graphs/conf/*.yaml",
     "knowledge_graphs/conf/gene_sets/*.txt", # prefilter gene-set lists (build inputs)
+    "knowledge_graphs/queries/*.cql", # supported Cypher queries (showcase pages, T5 registry)
     "adapters/conf/*.yaml",
     "datamodels/*.json", # pinned data tables (e.g. compound_identity_table.json)
 ]

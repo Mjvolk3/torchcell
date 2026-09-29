@@ -440,8 +440,13 @@ def embedding_coverage(table: pd.DataFrame, embed_dir: str) -> pd.DataFrame:
         has_vector = cell_keys.map(
             lambda keys, e=embedded: all(k in e for k in keys)
         ) & (table["n_compounds"] > 0)
-        for name, display in DISPLAY.items():
-            mask = table["dataset"] == name
+        sources = {**DISPLAY, "pool": "All four"}
+        for name, display in sources.items():
+            mask = (
+                pd.Series(True, index=table.index)
+                if name == "pool"
+                else table["dataset"] == name
+            )
             keys = cell_keys[mask].explode()
             keys = set(keys[keys != ""])
             rows.append(

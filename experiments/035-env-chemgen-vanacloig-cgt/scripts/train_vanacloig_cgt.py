@@ -86,11 +86,25 @@ class EnvironmentReadout(nn.Module):
         hidden: int,
         feature_dim: int,
         dropout: float,
+        identity_skip: bool = False,
     ) -> None:
-        """``encoder`` None selects the embedding table; ``arm`` decides the inputs."""
+        """``encoder`` None selects the embedding table; ``arm`` decides the inputs.
+
+        ``identity_skip`` adds the strain's genes summed from the encoder's own INPUT
+        embedding table to the readout, a path around the transformer. Round 1 measured
+        every gene token of the unregularized encoder collapsed onto one vector (share of
+        squared norm varying across genes 0.0000, ``diagnose_token_collapse.py``), which
+        leaves the readout nothing to tell strains apart by; the skip keeps strain
+        identity whatever the encoder does to it.
+        """
         super().__init__()
         self.arm = arm
         self.encoder = encoder
+        assert not identity_skip or encoder is not None, "the skip needs an encoder"
+        assert (
+            encoder is None or encoder.gene_embedding is not None or not identity_skip
+        )
+        self.identity_skip = identity_skip
         self.table = nn.Embedding(gene_num, hidden) if encoder is None else None
         uses_environment = arm != "cgt_genes"
         self.environment = (
@@ -103,7 +117,11 @@ class EnvironmentReadout(nn.Module):
             if uses_environment
             else None
         )
-        width = hidden * ((2 if encoder is not None else 1) + int(uses_environment))
+        width = hidden * (
+            (2 if encoder is not None else 1)
+            + int(uses_environment)
+            + int(identity_skip)
+        )
         self.head = nn.Sequential(
             nn.Linear(width, hidden),
             nn.GELU(),
@@ -132,6 +150,9 @@ class EnvironmentReadout(nn.Module):
             rows = torch.arange(size, device=strain.device).unsqueeze(1)
             z_s = out["H_genes_pert"][rows, strain].sum(dim=1)
             parts = [out["h_CLS"].unsqueeze(0).expand(size, -1), z_s]
+            if self.identity_skip:
+                assert self.encoder.gene_embedding is not None
+                parts.append(self.encoder.gene_embedding(strain).sum(dim=1))
             penalty = out["graph_reg_loss"]
         else:
             assert self.table is not None
@@ -285,6 +306,7 @@ def main(cfg: DictConfig) -> None:
         hidden=cfg.model.hidden_channels,
         feature_dim=features.shape[1],
         dropout=cfg.model.dropout,
+        identity_skip=cfg.model.identity_skip,
     ).to(device)
     cell_graph = cell_graph.to(device)
 

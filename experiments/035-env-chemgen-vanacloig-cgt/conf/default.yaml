@@ -65,6 +65,8 @@ model:
   num_transformer_layers: 8
   num_attention_heads: 9
   dropout: 0.1
+  # the strain's genes summed from the encoder's input embedding table, beside z_S
+  identity_skip: false
 
   learnable_embedding:
     enabled: true

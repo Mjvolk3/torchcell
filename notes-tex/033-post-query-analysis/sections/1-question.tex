@@ -1,0 +1,51 @@
+%% notes-tex/033-post-query-analysis/sections/1-question.tex
+
+\section{The question\secstatus{todo}}
+\label{sec:question}
+
+The planning documents for inhibitor-tolerance modeling,
+\texttt{notes-tex/031-inhibitor-tolerance-data} and
+\texttt{notes-tex/031-unified-representation}, measured everything on the dev-tree
+loaders, one row per served record, and most statistics on the (gene, compound) pair. A
+model does not train on those rows. It trains on the store the query built, build 001 of
+experiment 033, whose row is a strain in one environment. Whether the plan's numbers
+describe that store is an empirical question, and every answer here is read from the store
+itself.
+
+Every script named below lives in \file{experiments/033-env-chemgen-pooled/scripts/}.
+\file{flatten_cells.py} reads each entry of the processed store once and writes its
+genotype, environment and every folded measurement as one table row (slurm 2988).
+\file{store_against_plan.py} re-measures each plan claim on that table and reads the
+plan's own values from the 031 result files at commit \texttt{bf1884c46}.
+\file{post_query_figures.py} and \file{notes_tex_post_query_tables.py} draw the figures
+and render the tables.
+
+\notesec{Vocabulary}
+A \term{cell} is one entry of the store: a genotype, its ploidy, and one environment. An
+\term{environment} is the content address the graph adapter gives a condition: medium
+composition, temperature, the dosed compounds at their concentrations, aerobicity and
+duration. The \term{functional dose} of a perturbed gene is the copies present over the
+copies in the reference, zero for a deletion and one half for a heterozygous deletion in a
+diploid. The \term{label} of a cell is the one number the store's label table holds for it.
+A \term{measurement} is one served record, and a cell folds every measurement that shares
+its genotype and environment. The \term{orientation} of a source is the factor, plus or
+minus one, that makes a negative response a fitness defect. A \term{pair} is one (gene,
+compound) combination with the response averaged over every dose, screen and ploidy arm
+that measured it, which is the unit the plan's joinability statistics use. The \term{plan}
+is the two 031 documents together. The \term{reliability} of a served value is the Pearson
+correlation over genes between two screens of the same environment, and its square root is
+the \term{ceiling} on the correlation any model can reach with the noise-free response. The
+\term{store} is build 001 of the pooled chemogenomic dataset,
+\file{/db/experiments/033-env-chemgen-pooled-001-pooled-build}.
+
+\begin{keybox}
+\textbf{Measured.} Every axis of the store per source (Section~\ref{sec:units}); the
+ploidy arms and what pairs them (Section~\ref{sec:genotype}); the environment vocabulary,
+the dose and the compound vectors (Section~\ref{sec:environment}); which measurement the
+label table holds and how well repeated screens agree (Section~\ref{sec:label}); the pooled
+target after orienting and standardizing (Section~\ref{sec:target}).
+
+\textbf{Not measured.} No model has been trained on the store. Every statement about what
+a loss, a token or an operator would do with these numbers is labeled as a hypothesis, and
+Section~\ref{sec:next} lists the decisions the measurements leave open.
+\end{keybox}

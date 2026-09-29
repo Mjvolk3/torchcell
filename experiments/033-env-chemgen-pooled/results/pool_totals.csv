@@ -1,0 +1,2 @@
+measurements,cells,cells_repeated,environments_repeated,environments_rescreened,cells_repeated_in_rescreened,genes,environments,compounds,cells_no_compound,cells_two_compounds,cells_compound_without_inchikey,cells_at_dose_zero,cells_at_dose_half,cells_with_molar
+6394540,6042771,278581,585,50,265023,5863,6229,5463,57388,147953,22944,1826549,4216222,5585863

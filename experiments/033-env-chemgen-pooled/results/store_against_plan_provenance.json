@@ -1,0 +1,8 @@
+{
+  "cell_table": "/scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/cell_table/cell_table.parquet",
+  "cells": 6042771,
+  "measurements": 6394540,
+  "store": "/db/experiments/033-env-chemgen-pooled-001-pooled-build",
+  "plan_results": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/031-env-chemgen-vanacloig-hillenmeyer/experiments/031-env-chemgen-inhibitor-tolerance/results",
+  "plan_commit": "bf1884c46de0b67b0477e1ef4f0c7566277be4e3"
+}

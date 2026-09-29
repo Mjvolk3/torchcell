@@ -1,0 +1,15 @@
+dataset,environment_id,compound_names,conc_values,conc_units,base_medium,temperature_c,duration_generations,cells,kind
+Hillenmeyer HET,3e3b3d15ff0a226621c3183288cb83e6db539db193be31fe10c789f6b37ce42d,tunicamycin,150.0,nM,YPD,,5.0,5734,no InChIKey
+Hillenmeyer HET,f6936142dd541bede9a660cd654d011a0ecde1ea87c08bf76b4c9be1bdaaaaa4,tunicamycin,600.0,nM,YPD,,5.0,5734,no InChIKey
+Hillenmeyer HET,1070d50d64d1109b82e4cf44a57ba2fa6958c48a3c10e9b70983101976729b7c,tunicamycin,150.0,nM,YPD,,15.0,5738,no InChIKey
+Hillenmeyer HET,4067ee2e6f0af62c5dd899b910428962b447125df27c9619f7dc25ebc44f11bc,tunicamycin,600.0,nM,YPD,,15.0,5738,no InChIKey
+Hillenmeyer HET,5546e3a187b44042429023258abe074ef214270d79172d9af081239a6dc861c5,,,,SD,,0.0,5783,no compound
+Hillenmeyer HET,f999a2fab0734df842efd61ec10409f2d1a2de10c7170ba3e3bb13301b93e67a,,,,SD,,5.0,5802,no compound
+Hillenmeyer HET,985811650ecaa0faa67d26be6e894a7436cc8c71ba1568a2bc8c943e8c5001a9,,,,SD,,10.0,5771,no compound
+Hillenmeyer HET,908b2e7a782d34f0d9dffb0324a3eb5331f6f7fae391f621e1326b6730d3d53d,,,,YP,,5.0,5734,no compound
+Hillenmeyer HET,313704c2db80025e8cf3e982bcc2ca632ea95ed892e142409988209f036b6e2c,,,,YP,,15.0,5738,no compound
+Hillenmeyer HET,84c5f765c2cada3bf2043898bfb26348d7c1fe17b7666798864b2676944efc9e,,,,YPD,20.0,20.0,5677,no compound
+Hillenmeyer HET,49e64cb6c62e667c3685d37392a8053250468ea52c1ac82814f632f253a6a454,,,,YPD,23.0,5.0,5734,no compound
+Hillenmeyer HET,0734dd89383ab7abf3e5d4d56fd0020b8984299847d6b0254fad42f2fbc0de39,,,,YPD,23.0,15.0,5738,no compound
+Hillenmeyer HET,5c8f7e3de835dae7be28a322fd7e636718e37dbd200daf09e0ce562f15627419,,,,YPD,37.0,5.0,5734,no compound
+Hillenmeyer HET,223de908197483e28dcdd14a1b7c58b9797aad3ed6e6848708ed34b93eec4d73,,,,YPD,37.0,20.0,5677,no compound

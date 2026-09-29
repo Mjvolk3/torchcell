@@ -1,0 +1,82 @@
+%% notes-tex/033-post-query-analysis/sections/3-units.tex
+
+\section{The unit of a training row\secstatus{todo}}
+\label{sec:units}
+
+Table~\ref{tab:axes} counts what the store holds. The pool is 6{,}042{,}771 cells over
+5{,}863 perturbed genes, 6{,}229 environments and 5{,}463 compounds. The gene count
+corrects an earlier note: 6{,}607 is the size of the S288C gene set the query filtered on
+and the width of the model's gene axis, and 5{,}863 of those genes are perturbed in at
+least one cell. Vanacloig's three host genes are among them, because the other three
+sources screen \gene{PDR1}, \gene{PDR3} and \gene{SNQ2} as ordinary query genes.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/store_axes.csv and results/pool_totals.csv, rendered by
+%% notes_tex_post_query_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The store per source. Measurements are served records, cells are store entries,
+and the last three columns count cells whose environment doses no compound, doses two, or
+doses a compound that carries no InChIKey. The bottom row counts genes, environments and
+compounds once across the pool.}
+\label{tab:axes}
+\input{tables/t1-store-axes}
+\end{table}
+
+\notesec{A cell is not a pair}
+The plan's joinability table, its spread and skew per source, and its cross-dataset
+correlations are all computed on the pair: one gene under one compound, averaged over
+every dose, screen and ploidy arm. Table~\ref{tab:units} computes the same statistics at
+both units from the store. Computed at the pair, the store reproduces the plan: the spread
+agrees to the third decimal for all four sources, and the pair counts differ by 596 for
+Hillenmeyer and 443 for Hoepfner out of 1.65 and 0.86 million. Computed at the cell, the
+two large sources change. Hillenmeyer has 1.57 cells per pair and Hoepfner 3.34, and their
+spread is 15 and 25 percent wider at the cell than at the pair, because averaging over
+doses and arms removes variance that a model trained on cells has to fit.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/unit_of_analysis.csv, rendered by notes_tex_post_query_tables.py. Plan columns
+%% are read from 031 results/dataset_distributions.csv.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The same response statistics at the store's unit and at the plan's. Pairs are
+(gene, compound) means computed from the store's measurements; plan pairs and the plan
+columns are the 031 values. Vanacloig and Wildenhain have one cell per pair, so their
+columns coincide.}
+\label{tab:units}
+\input{tables/t4-units}
+\end{table}
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/post_query_figures.py ->
+%% store_units.svg, from results/store_axes.csv, results/unit_of_analysis.csv and
+%% results/dataset_index_summary.json; converted by `make plots`.
+\tcfig{figures/store_units.pdf}{\textbf{The store's row is a cell, and two sources hold
+more cells than pairs.} \textbf{a}, Served measurements, store cells and (gene, compound)
+pairs per source on a log scale; the gap between the second and third bar is what
+averaging over dose, duration and ploidy arm removes. \textbf{b}, Standard deviation of
+the response at the cell and at the pair. \textbf{c}, How many measurements a cell folds;
+5{,}764{,}190 cells hold one and 278{,}581 hold more.}{fig:units}
+
+\notesec{The environment vocabulary}
+Table~\ref{tab:vocabulary} gives the vocabulary an environment encoder sees. Three sources
+are dense: an environment carries about 3{,}500 cells in Vanacloig and about 5{,}700 in
+Hillenmeyer and Hoepfner, so an environment is a near-complete profile over the source's
+genes. Wildenhain is sparse. Its 5{,}170 environments carry a median of 68 cells each,
+between 7 and 185, out of 242 genes, so a Wildenhain compound is a partial profile and no
+two compounds need share their genes. Hoepfner is the only source that revisits its
+compounds: a compound appears in a median of three environments and at most thirteen, and
+only one of its 148 compounds appears in a single environment.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/environment_vocabulary.csv, rendered by notes_tex_post_query_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Environments per source. Cells per environment is the minimum, median and
+maximum. Doses and environments per compound are the median and the maximum over the
+compounds dosed alone with an InChIKey.}
+\label{tab:vocabulary}
+\input{tables/t12-vocabulary}
+\end{table}

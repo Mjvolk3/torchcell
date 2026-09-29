@@ -1,0 +1,77 @@
+%% notes-tex/033-post-query-analysis/033-post-query-analysis.tex
+%% [[experiments.033-env-chemgen-pooled]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/033-post-query-analysis/033-post-query-analysis.tex
+%%
+%% The 031 plan for inhibitor-tolerance modeling, checked against build 001 of the pooled
+%% chemogenomic store: the unit of a training row, the ploidy arms, the environment
+%% fields and compound vectors, the label of a repeated cell, and the pooled target.
+%%
+%% Build:  make            -> 033-post-query-analysis.pdf
+%%         make check      -> the formatting / provenance / style gate
+%%         make plots      -> convert the panels from ASSET_IMAGES_DIR
+%%         make tables     -> regenerate tables/*.tex from the result CSVs
+%%
+%% Every figure and table is written by a committed script under
+%% experiments/033-env-chemgen-pooled/scripts/: flatten_cells.py, store_against_plan.py,
+%% post_query_figures.py and notes_tex_post_query_tables.py.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}Inhibitor Tolerance: the Built Store Against the Plan\\
+  {\large What the pooled chemogenomic store holds, which statements of the 031 plan
+   survive the build, and the five decisions the store adds before a first run}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+The 031 plan for inhibitor-tolerance modeling was measured on dev-tree records. The pooled
+store the model trains on, build 001 of experiment 033, holds 6{,}394{,}540 served
+measurements as 6{,}042{,}771 cells, a cell being a strain in one environment, over
+5{,}863 perturbed genes, 6{,}229 environments and 5{,}463 compounds. Every number here is
+read from that store.
+
+The plan's data claims hold. All served records are present, the 648{,}977 Hoepfner pairs
+measured in both ploidy arms are there, the 41 Vanacloig reliability indexes match the
+plan's to floating-point error with a median ceiling of 0.84, the 71 repeated Hoepfner
+screen pairs give the plan's median reliability of 0.611, every dosed compound has a
+fingerprint vector, and the cross-source correlations are reproduced. Only Hillenmeyer
+needs its sign flipped.
+
+Five facts of the store are new. The store's row is not the plan's row: the plan's
+statistics describe 3.08 million (gene, compound) pairs, and the store holds twice as many
+cells because a cell keeps dose, duration and ploidy arm. The label table holds the last
+measurement of each of 278{,}581 repeated cells, an accident of insertion order. No
+Hoepfner cell is paired across ploidy inside one environment, because the heterozygous arm
+ran 20 generations and the homozygous arm 5, so the data that would fit the heterozygosity
+factor changes duration with ploidy, and the two arms correlate at 0.13 against a noise
+limit of 0.61. 80{,}332 Hillenmeyer cells have no complete compound vector. And after
+per-source standardizing, 2 to 3 percent of each source's cells carry 41 to 80 percent of
+its squared error. Section~\ref{sec:next} turns each into a decision with a
+recommendation, none of which has been run.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-question}
+\input{sections/2-scorecard}
+\input{sections/3-units}
+\input{sections/4-genotype}
+\input{sections/5-environment}
+\input{sections/6-label}
+\input{sections/7-target}
+\input{sections/8-next}
+
+\end{document}

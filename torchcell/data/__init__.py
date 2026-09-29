@@ -10,6 +10,7 @@ from .experiment_dataset import (
     post_process,
 )
 from .genotype_aggregate import DeletionKeyedGenotypeAggregator, GenotypeAggregator
+from .genotype_environment_aggregate import GenotypeEnvironmentAggregator
 from .graph_processor import (
     DCellGraphProcessor,
     IncidenceSubgraphRepresentation,
@@ -32,6 +33,7 @@ __all__ = [
     "Aggregator",
     "DeletionKeyedGenotypeAggregator",
     "GenotypeAggregator",
+    "GenotypeEnvironmentAggregator",
     "ExperimentDataset",
     "Neo4jCellDataset",
     "compute_experiment_reference_index_sequential",

@@ -1,0 +1,92 @@
+%% notes-tex/033-post-query-analysis/sections/6-label.tex
+
+\section{The label of a repeated cell, and what repeats say about noise\secstatus{todo}}
+\label{sec:label}
+
+\notesec{The label table holds the last measurement}
+278{,}581 cells fold more than one measurement, and the build left the choice among them
+to read time. The label table has already made it. The loop that fills the table in
+\file{torchcell/data/neo4j_cell.py} visits the measurements of a cell in order and
+overwrites the label with each one, so the value that remains is the last. Table~\ref{tab:policy}
+confirms it on every repeated cell of the store: the label equals the last measurement in
+all of them, the first in none, and the mean in one cell of 170{,}966 by coincidence. The
+order of measurements inside a cell is the order the query returned them, which carries no
+meaning.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/label_policy.csv, rendered by notes_tex_post_query_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Which measurement the label table holds for a repeated cell. The three label
+columns are the share of repeated cells whose label equals that measurement. Range over
+sd is the median spread between a cell's measurements in units of the source's standard
+deviation. The last column is the Pearson correlation between the label and the mean of
+the cell's measurements.}
+\label{tab:policy}
+\input{tables/t5-label-policy}
+\end{table}
+
+The choice is not small where it applies. The measurements of a repeated cell differ by a
+median of 0.49 standard deviations in Hillenmeyer and 0.36 in Hoepfner, and the label
+correlates with the mean of the cell's measurements at 0.81 and 0.85. Repeated cells are
+4.6 percent of the pool. They are spread over 585 environments and concentrated in 50 of
+them, the ones where two screens share at least 100 genes, which hold 265{,}023 of the
+278{,}581 (\file{results/pool_totals.csv}).
+
+\notesec{Repeat agreement recovers the plan's ceilings}
+Two screens of one environment are parallel measurements, so their correlation over genes
+estimates the reliability of one served value. The plan computed this for Hoepfner from
+the raw score matrices. Table~\ref{tab:reliability} computes it from the store's folded
+measurements and finds the same 71 screen pairs and the same median of 0.611 over both
+arms, with ceilings of 0.759 and 0.799 against the plan's 0.758 and 0.797. For Hillenmeyer
+the store holds 19 repeated environments, with a median Pearson of 0.352 and a median
+Spearman of 0.248. The plan's raw replicate agreement for the same source is a Spearman of
+0.255 over 108 conditions, read from the raw arrays. The two estimates agree, and both sit
+far below the reliability of 0.84 that the served standard errors imply, which is the
+plan's reason for not using the served errors for this source.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/within_cell_pairs.csv and results/within_cell_reliability.csv, rendered by
+%% notes_tex_post_query_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Reliability from repeated screens inside the store. A screen pair is two screens
+of one environment and ploidy arm with at least 100 genes in common. The ceiling is the
+square root of the median Pearson. Methotrexate contributes the most pairs in every row,
+30 of Hoepfner's 71.}
+\label{tab:reliability}
+\input{tables/t6-reliability}
+\end{table}
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/post_query_figures.py ->
+%% store_reliability.svg, from results/within_cell_pairs.csv, results/vanacloig_folds.csv
+%% and the cell table; converted by `make plots`.
+\tcfig{figures/store_reliability.pdf}{\textbf{The store reproduces the plan's ceilings,
+and the two ploidy arms barely agree.} \textbf{a}, Pearson correlation over genes for
+every pair of screens that measured one environment, bar at the median; the dotted line is
+the plan's Hoepfner median. \textbf{b}, Reliability index of each Vanacloig compound from
+the store's standard errors against the plan's value; all 41 lie on the diagonal.
+\textbf{c}, Hoepfner cells matched on compound and concentration, homozygous response
+against heterozygous response, density on a log scale; axes span the 0.5th to 99.5th
+percentile.}{fig:reliability}
+
+\notesec{The evaluation folds are in the store as planned}
+The first-round evaluation holds out one Vanacloig compound at a time. Table~\ref{tab:folds}
+lists the 41 folds as the store holds them: between 3{,}388 and 3{,}514 cells each, every
+cell with a served standard error, and a reliability index identical to the plan's. The
+fold table the evaluation needs can therefore be built from the store alone.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/vanacloig_folds.csv, rendered by notes_tex_post_query_tables.py. The plan
+%% column is 031 results/condition_noise_vanacloig2022.csv.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The 41 compound-cold folds of Vanacloig, ordered by ceiling. Reliability is one
+minus the mean squared served standard error over the variance of the response across the
+fold's genes; the ceiling is its square root, and zero where the index is negative.}
+\label{tab:folds}
+\input{tables/t9-folds}
+\end{table}

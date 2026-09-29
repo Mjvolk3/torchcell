@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Mjvolk3/torchcell/actions/workflows/style.yaml"><img src="https://github.com/Mjvolk3/torchcell/actions/workflows/style.yaml/badge.svg?branch=main" alt="Lint (ruff)" /></a>
-  <a href="https://github.com/Mjvolk3/torchcell/actions/workflows/test.yaml"><img src="https://github.com/Mjvolk3/torchcell/actions/workflows/test.yaml/badge.svg?branch=main" alt="Pytest with Coverage" /></a>
-  <a href="https://github.com/Mjvolk3/torchcell/actions/workflows/mypy.yaml"><img src="https://github.com/Mjvolk3/torchcell/actions/workflows/mypy.yaml/badge.svg?branch=main" alt="Type check (mypy)" /></a>
-  <a href="https://github.com/Mjvolk3/torchcell/actions/workflows/docs.yaml"><img src="https://github.com/Mjvolk3/torchcell/actions/workflows/docs.yaml/badge.svg?branch=main" alt="Build and Deploy Docs" /></a>
+  <a href="https://github.com/Mjvolk3/torchcell/actions/workflows/style.yaml"><img src="https://img.shields.io/github/check-runs/Mjvolk3/torchcell/main?nameFilter=ruff&label=lint%20(ruff)" alt="Lint (ruff)" /></a>
+  <a href="https://github.com/Mjvolk3/torchcell/actions/workflows/test.yaml"><img src="https://img.shields.io/github/check-runs/Mjvolk3/torchcell/main?nameFilter=pytest-coverage&label=pytest" alt="Pytest with Coverage" /></a>
+  <a href="https://github.com/Mjvolk3/torchcell/actions/workflows/mypy.yaml"><img src="https://img.shields.io/github/check-runs/Mjvolk3/torchcell/main?nameFilter=mypy-check&label=mypy" alt="Type check (mypy)" /></a>
+  <a href="https://github.com/Mjvolk3/torchcell/actions/workflows/docs.yaml"><img src="https://img.shields.io/github/check-runs/Mjvolk3/torchcell/main?nameFilter=build&label=docs" alt="Build and Deploy Docs" /></a>
   <a href="https://codecov.io/gh/Mjvolk3/torchcell"><img src="https://codecov.io/gh/Mjvolk3/torchcell/branch/main/graph/badge.svg" alt="codecov" /></a>
   <a href="https://github.com/Mjvolk3/torchcell/releases/latest"><img src="https://img.shields.io/github/v/release/Mjvolk3/torchcell?sort=semver" alt="Latest release" /></a>
   <a href="https://github.com/Mjvolk3/torchcell/blob/main/pyproject.toml"><img src="https://img.shields.io/badge/python-3.13%2B-blue" alt="Python 3.13+" /></a>

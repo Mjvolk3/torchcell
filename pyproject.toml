@@ -252,6 +252,7 @@ paths = [
 # tests/torchcell/{graph,datasets/scerevisiae}/test_sgd.py).
 "torchcell/losses/dcell.py" = "tests/torchcell/losses/test_losses_dcell.py"
 "torchcell/graph/sgd.py" = "tests/torchcell/graph/test_graph_sgd.py"
+"torchcell/viz/fitness.py" = "tests/torchcell/viz/test_viz_fitness.py"
 
 [tool.coverage.run]
 source = ["torchcell"]

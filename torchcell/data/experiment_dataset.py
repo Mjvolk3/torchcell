@@ -482,13 +482,12 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
 
         # Handling boolean index arrays or numpy arrays
         if isinstance(idx, (list, np.ndarray)):
-            if isinstance(idx, list):
-                idx = np.array(idx)
-            if idx.dtype == np.bool_:
-                idx = np.where(idx)[0]
+            indices: np.ndarray[Any, Any] = np.asarray(idx)
+            if indices.dtype == np.bool_:
+                indices = np.where(indices)[0]
 
             # If idx is a list/array of indices, return a list of data objects
-            return [self.get_single_item(i) for i in idx]
+            return [self.get_single_item(int(i)) for i in indices]
         else:
             # Single item retrieval
             return self.get_single_item(idx)

@@ -22,8 +22,9 @@ from __future__ import annotations
 import hashlib
 import os
 import tarfile
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Self
+from typing import Any, Protocol, Self
 
 import httpx
 
@@ -42,6 +43,18 @@ class ArtifactIntegrityError(RuntimeError):
     """A downloaded archive's sha256 does not match the index row."""
 
 
+class HttpClient(Protocol):
+    """The two ``httpx.Client`` calls the client makes; a test client satisfies it too."""
+
+    def get(self, url: str, *, headers: Mapping[str, str]) -> Any:
+        """A buffered GET returning a response with ``raise_for_status`` and ``content``."""
+        ...
+
+    def stream(self, method: str, url: str, *, headers: Mapping[str, str]) -> Any:
+        """A context manager yielding a response with ``iter_bytes`` and ``headers``."""
+        ...
+
+
 class DatasetClient:
     """Keyed HTTP client for one ``tc-data`` endpoint."""
 
@@ -49,20 +62,22 @@ class DatasetClient:
         self,
         url: str,
         api_key: str,
-        http: httpx.Client | None = None,
+        http: HttpClient | None = None,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> None:
         """``url`` is the endpoint base (no trailing slash needed); ``http`` injects a client."""
         self.url = url.rstrip("/")
         self._headers = {API_KEY_HEADER: api_key}
-        self._http = http if http is not None else httpx.Client(timeout=timeout)
+        self._http: HttpClient = (
+            http if http is not None else httpx.Client(timeout=timeout)
+        )
 
     @classmethod
-    def from_env(cls, http: httpx.Client | None = None) -> Self:
+    def from_env(cls, http: HttpClient | None = None) -> Self:
         """Build from ``TC_DATA_URL`` and ``TC_DATA_API_KEY`` (``KeyError`` if unset)."""
         return cls(os.environ[URL_VAR], os.environ[API_KEY_VAR], http=http)
 
-    def _get(self, path: str) -> httpx.Response:
+    def _get(self, path: str) -> Any:
         response = self._http.get(f"{self.url}{path}", headers=self._headers)
         response.raise_for_status()
         return response

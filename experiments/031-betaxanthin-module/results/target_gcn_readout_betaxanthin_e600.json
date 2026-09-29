@@ -1,0 +1,244 @@
+{
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_gcn_readout.py",
+  "target": "betaxanthin",
+  "columns": [
+    "betaxanthin"
+  ],
+  "n_train": 3494,
+  "n_val": 270,
+  "n_pinned": 629,
+  "epochs": 600,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "statistic": "pinned-test Spearman (mean over columns) of the node prediction at the deleted gene, epoch selected by the five-epoch moving average of the validation Pearson; pinned targets never enter the loss",
+  "arms": [
+    {
+      "name": "mlp_go",
+      "graph": "none",
+      "inputs": "go",
+      "n_nodes": 6607,
+      "n_edges": 0,
+      "dim_in": 2362,
+      "n_parameters": 155457,
+      "select_epoch": [
+        36,
+        35,
+        35
+      ],
+      "val_pearson": [
+        0.28452250361442566,
+        0.29958364367485046,
+        0.3000166416168213
+      ],
+      "pinned_spearman": [
+        0.1964784450967154,
+        0.19913726958372852,
+        0.2004901410505241
+      ],
+      "pinned_pearson": [
+        0.3134877383708954,
+        0.31396108865737915,
+        0.3222211003303528
+      ],
+      "mean": 0.19870195191032267,
+      "sd": 0.0020409684500344197,
+      "seconds": 49.47673964500427
+    },
+    {
+      "name": "gcn_union_go",
+      "graph": "union",
+      "inputs": "go",
+      "n_nodes": 6607,
+      "n_edges": 1514071,
+      "dim_in": 2362,
+      "n_parameters": 155457,
+      "select_epoch": [
+        592,
+        586,
+        564
+      ],
+      "val_pearson": [
+        0.25416702032089233,
+        0.2500687539577484,
+        0.2581605911254883
+      ],
+      "pinned_spearman": [
+        0.2644054695384781,
+        0.2654591325254495,
+        0.2645590995909467
+      ],
+      "pinned_pearson": [
+        0.48637378215789795,
+        0.4881798028945923,
+        0.508172333240509
+      ],
+      "mean": 0.2648079005516248,
+      "sd": 0.0005691905314164339,
+      "seconds": 1894.0168690681458
+    },
+    {
+      "name": "gcn_coexpression_go",
+      "graph": "string12_0_coexpression",
+      "inputs": "go",
+      "n_nodes": 6607,
+      "n_edges": 996199,
+      "dim_in": 2362,
+      "n_parameters": 155457,
+      "select_epoch": [
+        419,
+        552,
+        459
+      ],
+      "val_pearson": [
+        0.2871100604534149,
+        0.3036457896232605,
+        0.28254571557044983
+      ],
+      "pinned_spearman": [
+        0.2608240472983822,
+        0.25942474080353434,
+        0.25590721053441173
+      ],
+      "pinned_pearson": [
+        0.46740201115608215,
+        0.461653470993042,
+        0.46662184596061707
+      ],
+      "mean": 0.2587186662121094,
+      "sd": 0.0025333232990234016,
+      "seconds": 1265.5210683345795
+    },
+    {
+      "name": "gcn_go_incidence",
+      "graph": "go_incidence",
+      "inputs": "go+term",
+      "n_nodes": 8969,
+      "n_edges": 271088,
+      "dim_in": 4724,
+      "n_parameters": 306625,
+      "select_epoch": [
+        209,
+        223,
+        188
+      ],
+      "val_pearson": [
+        0.2520059049129486,
+        0.2658360004425049,
+        0.26017290353775024
+      ],
+      "pinned_spearman": [
+        0.160809961871228,
+        0.16358461175256828,
+        0.17869476257054626
+      ],
+      "pinned_pearson": [
+        0.3186453878879547,
+        0.3110042214393616,
+        0.3395073413848877
+      ],
+      "mean": 0.1676964453981142,
+      "sd": 0.009625326278109544,
+      "seconds": 426.7199158668518
+    },
+    {
+      "name": "gcn_go_incidence_dag",
+      "graph": "go_incidence_dag",
+      "inputs": "go+term",
+      "n_nodes": 8969,
+      "n_edges": 52830,
+      "dim_in": 4724,
+      "n_parameters": 306625,
+      "select_epoch": [
+        62,
+        73,
+        72
+      ],
+      "val_pearson": [
+        0.27532482147216797,
+        0.2759254574775696,
+        0.28637152910232544
+      ],
+      "pinned_spearman": [
+        0.13657967291042247,
+        0.1495103011054362,
+        0.13767837390805962
+      ],
+      "pinned_pearson": [
+        0.2620738446712494,
+        0.28710928559303284,
+        0.2791801989078522
+      ],
+      "mean": 0.1412561159746394,
+      "sd": 0.00716941176810567,
+      "seconds": 181.63940119743347
+    },
+    {
+      "name": "gcn_go_incidence_ones",
+      "graph": "go_incidence",
+      "inputs": "ones",
+      "n_nodes": 8969,
+      "n_edges": 271088,
+      "dim_in": 1,
+      "n_parameters": 4353,
+      "select_epoch": [
+        4,
+        4,
+        31
+      ],
+      "val_pearson": [
+        0.08869026601314545,
+        0.08731213212013245,
+        0.08832888305187225
+      ],
+      "pinned_spearman": [
+        0.009198474769548541,
+        0.02495827519109595,
+        0.007028412229621235
+      ],
+      "pinned_pearson": [
+        -0.016499213874340057,
+        0.0008025989518500865,
+        -0.012748903594911098
+      ],
+      "mean": 0.013728387396755243,
+      "sd": 0.009785707831419797,
+      "seconds": 321.7445275783539
+    },
+    {
+      "name": "gcn_go_incidence_dag_ones",
+      "graph": "go_incidence_dag",
+      "inputs": "ones",
+      "n_nodes": 8969,
+      "n_edges": 52830,
+      "dim_in": 1,
+      "n_parameters": 4353,
+      "select_epoch": [
+        114,
+        161,
+        196
+      ],
+      "val_pearson": [
+        0.09370655566453934,
+        0.09167566895484924,
+        0.09297381341457367
+      ],
+      "pinned_spearman": [
+        -0.031104704443519475,
+        -0.03183162675763329,
+        -0.030941092674909975
+      ],
+      "pinned_pearson": [
+        -0.03183940425515175,
+        -0.0328926220536232,
+        -0.031721677631139755
+      ],
+      "mean": -0.03129247462535425,
+      "sd": 0.0004740316118284329,
+      "seconds": 78.92661809921265
+    }
+  ],
+  "seconds": 4229.454887866974
+}

@@ -186,9 +186,17 @@ def store_axes(table: pd.DataFrame, plan_dose: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def pool_totals(table: pd.DataFrame) -> pd.DataFrame:
-    """The pool as one row, with genes, environments and compounds counted once."""
+def pool_totals(table: pd.DataFrame, pairs: pd.DataFrame) -> pd.DataFrame:
+    """The pool as one row, with genes, environments and compounds counted once.
+
+    A rescreened environment is one where two screens share at least
+    ``MIN_GENES_PER_PAIR`` genes, an environment and ploidy arm of ``pairs``.
+    """
     keys = table["inchikeys"].str.split("|").explode()
+    rescreened = pairs[["environment_id", "functional_dose"]].drop_duplicates()
+    repeated = table.loc[
+        table["n_measurements"] > 1, ["environment_id", "functional_dose"]
+    ].merge(rescreened, on=["environment_id", "functional_dose"], how="inner")
     return pd.DataFrame(
         [
             {
@@ -198,6 +206,8 @@ def pool_totals(table: pd.DataFrame) -> pd.DataFrame:
                 "environments_repeated": int(
                     table.loc[table["n_measurements"] > 1, "environment_id"].nunique()
                 ),
+                "environments_rescreened": len(rescreened),
+                "cells_repeated_in_rescreened": len(repeated),
                 "genes": table["query_gene"].nunique(),
                 "environments": table["environment_id"].nunique(),
                 "compounds": keys[keys != ""].nunique(),
@@ -601,7 +611,7 @@ def main() -> None:
     reliability = within_cell_reliability(pairs)
     outputs = {
         "store_axes": store_axes(table, plan_dose),
-        "pool_totals": pool_totals(table),
+        "pool_totals": pool_totals(table, pairs),
         "unit_of_analysis": unit_of_analysis(table, meas, plan_dist),
         "ploidy_pairs": ploidy_pairs(meas, reliability),
         "label_policy": label_policy(table),

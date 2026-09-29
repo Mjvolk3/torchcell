@@ -111,7 +111,9 @@ Measured from the built label table by
 **The label surface is one float per cell.** The store carries a single phenotype label,
 `environment_response`, over 6,042,771 cells, and `label_df.parquet` has exactly two
 columns, the entry index and that float. Every cell is either 1 perturbation (5,899,553) or
-4 (143,218, the Vanacloig sensitized host). The union of perturbed genes is 6,607.
+4 (143,218, the Vanacloig sensitized host). The query's gene set, the S288C genome, is
+6,607 genes; the store perturbs 5,863 of them (corrected 2026.09.29, see the post-query
+section below: this sentence first gave 6,607 as the count of perturbed genes).
 
 **The four sources do not share a scale, and two of them do not share a sign.**
 

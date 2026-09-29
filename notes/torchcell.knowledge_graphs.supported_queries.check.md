@@ -54,3 +54,18 @@ job `query-drift` in `.github/workflows/docs.yaml`.
 
 Run on 2026.09.29 against `2026.09.21-ab6d8c5d` from the branch checkout: 4 queries, 0
 drifted, exit 0.
+
+### Interpreter pin: contract fingerprints depend on the Python patch release
+
+The first CI run of `query-drift` (PR #498, runner Python 3.13.15) reported
+`contract_changed` on `Phenotype` for all four queries while the same commit passed
+locally (torchcell env, Python 3.13.0). Measured: `ast.unparse` renders
+`f'a {", ".join(x)}'`-style nested-quote f-strings as `f'a {', '.join(x)}'` on 3.13.0 and
+`f"a {', '.join(x)}"` on 3.13.15, and `schema_deps` hashes the unparsed text of validator
+methods, so `Phenotype` (whose `validate_fields` has such an f-string) fingerprints to
+`447168409f...` on 3.13.0, the value every committed closure records, and `1d57c3d8...` on
+3.13.15. The `query-drift` job and the `test.yaml` job are pinned to `python-version:
+"3.13.0"`. The same dependence affects any other fingerprint comparison run on a different
+patch release (`scripts/kg_compat_page.py`, `kg_manifest admit`); making fingerprints
+independent of `ast.unparse` quoting would change every recorded fingerprint and is a
+separate decision.

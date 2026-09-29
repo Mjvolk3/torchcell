@@ -130,3 +130,14 @@ Compare by rank or by log ratio to each dataset's own center, never by value.
   ammonium sulfate gap, and the open question about whether this record's state should be
   liquid (the amino acids are extracted from the liquid SM subculture the agar spots
   inoculate) are in [[torchcell.datamodels.media-components]]. LMDB rebuilt + L0-L4 re-run.
+
+## 2026.09.29 - Independent re-verification
+
+A read-only Fable 5.1 agent graded eight recorded claims against the mirror, the Europe PMC SI, Mendeley, MetaboLights MTBLS434 and the dev LMDB: CONFIRMED 4, REFUTED 1, PARTLY 3, UNVERIFIABLE 0. Consolidated in [[datasets.showcase-verification.2026.09.29]]; raw report `notes/assets/verification/2026.09.29/mulleder2016.md`.
+
+- Refuted: `download()` verifying the sha256 of a present file; it returns before hashing. #490. Graded partly, with its first half refuted: "the paper says 18 amino acids" (2026.07.05 section); no sentence gives 18, and Table S5 lists 19.
+- The Cell SI `mmc3.xls` is byte-identical to the Mendeley pin (sha256 `a7fcb4bc...`), and MetaboLights MTBLS434 holds the raw-level uM data (equal to `data_raw` to 3 decimals) and 6,475 mzML files; no raw-mirror provenance record exists for Table S3. #487.
+- "4637/4678 strains with a single measurement" mixes denominators: among the 4,678 released strains 4,487 have one `data_raw` row and 191 have two to four (167 / 20 / 4). Their released mM fits the mean of the normalized rows (diagnostic, not a published statement). `n_replicates = 1` is understated for those 191. #488 (before the next build).
+- The reference `n_replicates = {aa: 1}` misdescribes the MCD robust mean, a statistic over 4,678 strains. #489 (before the next build).
+- The complemented WT rows (YOR202W batch 04, YLR303W batch 02) exist in `data_raw` but not in the mM sheet, which bears on review flag 1.
+- The citation is Cell 167(2):553-565.e12 (PMC5055083), not "Cell 165:1282".

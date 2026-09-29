@@ -229,3 +229,15 @@ target in experiment 019. Full analysis + variance study + implemented transform
 - **torchcell decision:** KEEP all 281 with a per-feature z-score (train-split only,
   epsilon-floored) + FLAG the degenerate set for user review; do NOT import the paper's
   247-drop (a normality verdict over base+CV, not a variance floor on our 281 base target).
+
+## 2026.09.29 - Independent re-verification
+
+A read-only Fable 5.1 agent graded eight recorded claims against the mirror (paper, SI, raw TSVs), the SCMD and CalMorph portals, the CalMorph User Manual, Suzuki 2018, SSBD and the dev LMDB: CONFIRMED 4, REFUTED 0, PARTLY 4, UNVERIFIABLE 0. Consolidated in [[datasets.showcase-verification.2026.09.29]]; raw report `notes/assets/verification/2026.09.29/ohya2005.md`.
+
+- The distributed matrices are the Suzuki 2018 CalMorph 1.2 re-analysis of the 2005 images (SCMD2 datasheet page: "The data sheets here have been published by Suzuki et al. (2018, BMC Genomics) by reanalysing the images first published in Ohya et al. (2005, PNAS) after a quality control."). The 2026.07.15 statement that they are "Ohya 2005's OWN published data" is wrong, and the manifest's `reused_by_doi` is the wrong relation. #491.
+- SSBD ssbd-repos-000349 (DOI 10.24631/ssbd.repos.2024.05.349) publishes sha256 values equal to both loader pins and should be the cited source; the cell-count companion files (`mt4718nmrt.tsv`, `mt4718dmnt.tsv`) are not mirrored. #492, #493.
+- 25 C: Suzuki 2018's 25 C sentences concern its 19-mutant validation set, not this dataset; the same-lab source is the CalMorph User Manual section 6.1 ("3. Culture the cells at 25°C on a rotator at 25-30 r/min."). The FLAG in the 2026.07.15 section closes as "the paper is mirrored and contains no temperature". #494.
+- The loader comment's BY4741 genotype has `lys2D0` (BY4742's marker; BY4741 is `met15Δ0`), and the `TCV` CV prefix does not exist (CCV 60 + ACV 33 + DCV 127 = 220). #494.
+- Three wild-type counts: the paper imaged 126, the average file has 122 rows, Suzuki 2018 selected 109. The mean-WT reference is correct as a torchcell choice but is not the paper's Box-Cox standardization. #494.
+- The `2005a` mirror directory is a deliberate `dataset_raw_mirror` record with no `paper.md`, not a broken capture as #271 says; the lit sync should read `kind`. #495.
+- Four strains the Supporting Text flags (rad18 an α cell, ctf8 an a/α mixture, scp160 2N, rho4 unlinked to the cassette) carry no qc flag. #496.

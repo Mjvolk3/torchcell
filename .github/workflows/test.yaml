@@ -31,7 +31,13 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        # 3.13.0, not "3.13": schema contract fingerprints (torchcell/provenance/schema_deps.py)
+        # hash ast.unparse text of validator methods, and ast.unparse quotes nested-quote
+        # f-strings differently in later 3.13 patch releases (3.13.15 gives Phenotype
+        # 1d57c3d8... where 3.13.0 gives the 447168409f... every committed KG closure
+        # records). 3.13.0 is the torchcell env's interpreter, the one the closures were
+        # computed with; test_check.py compares the real registry with those closures.
+        python-version: "3.13.0"
 
     # Cache the dependencies
     - name: Cache pip dependencies

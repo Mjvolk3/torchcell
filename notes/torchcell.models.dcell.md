@@ -613,3 +613,7 @@ Overfits faster and loss continues to drop.
 Cut from larger png.
 
 ![](./assets/drawio/DCell_example_only.drawio.png)
+
+## 2026.09.29 - Findings from the Phase 10 tests (not fixed)
+
+Pinned in [[tests.torchcell.models.test_dcell]]: the training script's plot helper calls `model(batch)` (line 486) while `forward` takes `(cell_graph, batch)`, and the plot fires on the last epoch (line 706), so `main` always ends in `TypeError`; `_prepare_term_input` (line 373) silently skips a child whose activation is not computed yet although `_calculate_input_dim` counted it, so a hierarchy whose strata put a child beside its parent fails at the parent's Linear with a shape mismatch. Coverage 47.8% to 96.3%.

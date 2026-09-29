@@ -47,8 +47,19 @@ S3_ARMS = [
 ]
 X = "epoch"
 
-# The abandoned partial of S3 seed 1 (job 2408888, restarted for per-order logging).
-EXCLUDED_RUN_IDS = {"kj03xx8y", "0kaadgdu", "bekoxpor", "ztfcxu37"}
+# The abandoned partial of S3 seed 1 (job 2408888, restarted for per-order logging), and
+# the composite seed 2 cancelled at epoch 10 (job 2409709, 2026-09-28, to free mmli for
+# 030; rerun at 100 epochs as job 2413835).
+EXCLUDED_RUN_IDS = {
+    "kj03xx8y",
+    "0kaadgdu",
+    "bekoxpor",
+    "ztfcxu37",
+    "zmq123p8",
+    "uhrd45is",
+    "i50s2453",
+    "c994bnfz",
+}
 KEEP_STATES = {"finished", "running"}
 
 # config tag -> arm label; ctrl_013 is split further by graph_reg_lambda (the

@@ -435,6 +435,23 @@ lifted essentiality together read under either alone here. The label stores need
 neighbors' labels at inference, so even where they lift a target they bound the
 transductive case; on this target they lift nothing.
 
+Round 212 is read (job 2976, 4 h 45 min): the reverse co-head, a width-1 betaxanthin
+head trained beside the nineteen-column primary on the control recipe
+(\texttt{--aux-betaxanthin} at weight 1, no store), the first arm of the inductive
+program on this target. INDUCTIVE at the gene level: betaxanthin is a training target
+and never an input, and every pinned gene's betaxanthin record sits in the test block,
+so this is the inductive form of round 205's arm, the measured score as an input
+(0.078). It reads 0.026 (sd 0.012) against the control at 0.049 ($-0.023$ paired, sd
+0.016, one of six) and against the score as an input at 0.078 ($-0.052$, sd 0.008,
+zero of six), ensembled 0.040 against the control's 0.062 on the same six seeds; the
+seeds read 0.015 to 0.045 and select at epochs 28 to 108 on validation Pearson 0.050 to
+0.120. At epoch 0 the betaxanthin head's squared error was about twice the profile's
+data term (loss 1.49 against data 0.49 on seed 2700), the imbalance the forward co-head
+showed on betaxanthin, where the profile as a co-target moved nothing (the betaxanthin
+study's rounds 223 to 225, $+0.001$ over twelve seeds). Predicting both at weight 1 is
+null in one direction and costs the profile in the other; the weight
+(\texttt{--aux-weight}) exists in the trainer and is untested at any value but 1.
+
 \input{tables/aa_label_medium_rounds}
 
 \input{tables/target_transfer}

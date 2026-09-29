@@ -166,3 +166,62 @@ control on every seed (rounds 210 and 211, Section~\ref{sec:rounds}).
 \input{tables/graph_homophily}
 
 \input{tables/graph_homophily_cooper}
+
+\subsection{How autoencodable the profile is from the genotype: a conditional VAE\secstatus{todo}}
+\label{sec:cvae}
+
+The profile compresses well from itself: four dimensions of a PCA fitted on the training
+strains rebuild 0.58 of a held-out strain's standardized $\log(1 + \text{mM})$ profile,
+an autoencoder of the same width 0.62, and eight dimensions 0.77 and 0.80
+(\texttt{aa\_profile\_reconstruction.py}). Predicting an eight-dimensional autoencoder
+latent from the annotation and decoding it reads the pinned strains at 0.080 by ridge,
+where the direct map from the annotation to the nineteen reads 0.077
+(\texttt{aa\_latent\_regression.py}), so the latent detour is a tie. The conditional
+VAE (\texttt{aa\_conditional\_vae.py}, job 2984, 52 min on CPU) puts both facts in one
+model and asks whether the strain's latent can be reached from its genotype. An encoder
+$q(z \mid y, x)$ reads the measured profile $y$ and the genotype features $x$ of the
+deleted gene, a conditional prior $p(z \mid x)$ reads the genotype alone, a decoder
+$p(y \mid z, h_x)$ rebuilds the profile from the latent and a two-layer embedding $h_x$
+of the features, and a linear head on $z$ reads the strain's Cachera betaxanthin score,
+the discriminator. Two routes reach the latent, and the distance between them is the
+answer: the \emph{posterior route} decodes a held-out strain from $q(z \mid y, x)$, which
+needs the measurement, and the \emph{prior route} decodes it from $p(z \mid x)$, which a
+strain nobody measured also has. The loss is the Gaussian reconstruction, $\beta$ times
+the KL divergence from the posterior to the conditional prior, and $\lambda$ times the
+head's squared error on the posterior latent. Features: the propagated GO multi-hot, its
+one-hop neighbor mean over the graphs (\texttt{SM\_aa\_gonbr}, the annotation of the
+deleted gene's coexpression and union neighbors, no label), ProtT5, and the three
+together, each standardized on the training strains; the grid is a latent of 4 or 8,
+$\beta$ of 1.0 or 0.1 and $\lambda$ of 0 or 1, three seeds, 300 epochs, the epoch and
+the cell selected on the validation prior-route mean Spearman. Of the 4,678 profiled
+strains 3,292 are fitted, 822 validate and 564 are pinned and held out of every fit, 563
+of them with a betaxanthin score. \emph{Calibration} is the fraction of true values
+inside the central 90 percent of 64 profiles sampled from the conditional prior, 0.90
+when the samples are calibrated (Tables~\ref{tab:aa-cvae} and
+\ref{tab:aa-cvae-baselines}).
+
+The posterior route reconstructs a pinned strain's profile at up to 0.747 mean Spearman
+and $R^2$ 0.62 (the neighbor mean, latent 8, $\beta$ 0.1, seeds 0.741 to 0.755), and
+ProtT5 with the head on reaches 0.742 and 0.59. The prior route reads 0.036 to 0.073
+over every cell of the grid, and the plain MLP from the same features with no latent
+reads 0.045 to 0.066: the latent holds what the measurement supplied and nothing the
+genotype can reach beyond what a direct map already reaches, which is the tie of
+\texttt{aa\_latent\_regression.py} again, now with the prior fitted jointly. The
+betaxanthin head reads the prior latent at most at 0.172 (the neighbor mean, $\beta$ 1,
+$\lambda$ 1; seed sd 0.031) against 0.130 (sd 0.039) for the MLP from the same features
+and 0.151 for the MLP from GO, within the seed spread of either; on the posterior latent
+it reads up to 0.221, a read that needs the measured profile. The prior samples are
+underdispersed: the central 90 percent covers 0.11 to 0.76 of the true values across
+the grid, 0.69 on the best-reconstructing cell, so a sampled profile understates the
+spread the genotype leaves open. With the head on and the three feature sets together
+the latent collapses toward the prior: the KL falls to 0.08 and 0.20 per strain, the
+posterior route to 0.096 and 0.097, and the selected epochs sit at 2 to 5, so the
+model gives up the profile to serve the head. The profile is autoencodable from itself
+and not from the genotype; a decoder fed a genotype-only latent returns the population
+profile with a small strain-specific shift, and the sampling use of such a model, a
+distribution over profiles for a strain nobody measured, is bounded by the same 0.05
+to 0.07 the direct maps read.
+
+\input{tables/aa_cvae}
+
+\input{tables/aa_cvae_baselines}

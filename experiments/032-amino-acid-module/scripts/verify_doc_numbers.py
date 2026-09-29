@@ -386,6 +386,73 @@ def label_medium(kind: str, name: str, key: str):
     return run
 
 
+
+def cvae(kind: str, key: str, field: str, stat: str = "mean"):
+    """A value of the conditional VAE summary (aa_cvae_tables.py): ``cell`` reads a grid
+    cell ``features|k|beta|lambda``, ``base`` a plain-MLP feature set, ``top`` a top-level
+    scalar (``n_fit``, ``prior_range:min``, ``calibration_range:max``, ``seconds``)."""
+
+    def run() -> float:
+        d = json.load(open(osp.join(RESULTS, "aa_cvae_summary.json")))
+        if kind == "cell":
+            return float(d["cells"][key][field][stat])
+        if kind == "base":
+            return float(d["baselines"][key][field][stat])
+        if ":" in key:
+            a, b = key.split(":")
+            return float(d[a][b])
+        return float(d[key])
+
+    return run
+
+
+def cvae_extreme(field: str, which: str, kind: str = "cells"):
+    """The min or max over the grid cells (or the baselines) of a field's seed mean."""
+
+    def run() -> float:
+        d = json.load(open(osp.join(RESULTS, "aa_cvae_summary.json")))
+        vals = [v[field]["mean"] for v in d[kind].values()]
+        return float(min(vals) if which == "min" else max(vals))
+
+    return run
+
+
+def reconstruction(k: int, field: str):
+    """A held-out reconstruction at ``k`` dimensions (aa_profile_reconstruction.py)."""
+
+    def run() -> float:
+        d = json.load(open(osp.join(RESULTS, "aa_profile_reconstruction.json")))
+        return float(next(r for r in d["rows"] if r["k"] == k)[field])
+
+    return run
+
+
+def latent_regression(representation: str, codec: str, model: str):
+    """The pinned mean Spearman of one row of aa_latent_regression.py."""
+
+    def run() -> float:
+        d = json.load(open(osp.join(RESULTS, "aa_latent_regression.json")))
+        return float(
+            next(
+                r
+                for r in d["rows"]
+                if r["representation"] == representation and r["codec"] == codec and r["model"] == model
+            )["pinned_mean_spearman"]
+        )
+
+    return run
+
+
+def nbr_ladder(representation: str, model: str = "forest"):
+    """The pinned mean Spearman of the neighbor-mean ladder (store_baselines_amino_acids_nbr.json)."""
+
+    def run() -> float:
+        d = json.load(open(osp.join(RESULTS, "store_baselines_amino_acids_nbr.json")))
+        return float(d["representations"][representation][model]["selected_on_val"]["test_pinned"]["mean_spearman"])
+
+    return run
+
+
 CHECKS: list[Check] = [
     # sec:cross-target -- the betaxanthin score against the amino-acid pool.
     Check(
@@ -5655,6 +5722,71 @@ CHECKS: list[Check] = [
         ),
         tolerance=0.006,
     ),
+    # round 212: the reverse co-head (aa_label_medium_readout.py, aa_conditional_vae.py).
+    Check(claim="round 212: mean", stated=0.026, recompute=label_medium("arm", "w232_aadelauxbx_h12l1p1_e200", "mean_spearman"), tolerance=0.0006),
+    Check(claim="round 212: sd", stated=0.012, recompute=label_medium("arm", "w232_aadelauxbx_h12l1p1_e200", "sd_spearman"), tolerance=0.0006),
+    Check(claim="round 212: control mean", stated=0.049, recompute=label_medium("pair", "the betaxanthin co-head against the control", "control_mean"), tolerance=0.0006),
+    Check(claim="round 212: vs control paired", stated=-0.023, recompute=label_medium("pair", "the betaxanthin co-head against the control", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 212: vs control paired sd", stated=0.016, recompute=label_medium("pair", "the betaxanthin co-head against the control", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 212: vs control higher", stated=1, recompute=label_medium("pair", "the betaxanthin co-head against the control", "n_positive"), tolerance=0.5),
+    Check(claim="round 212: score-as-input mean", stated=0.078, recompute=label_medium("pair", "the betaxanthin co-head against the score as an input", "control_mean"), tolerance=0.0006),
+    Check(claim="round 212: vs score paired", stated=-0.052, recompute=label_medium("pair", "the betaxanthin co-head against the score as an input", "mean_difference"), tolerance=0.0006),
+    Check(claim="round 212: vs score paired sd", stated=0.008, recompute=label_medium("pair", "the betaxanthin co-head against the score as an input", "sd_difference"), tolerance=0.0006),
+    Check(claim="round 212: vs score higher", stated=0, recompute=label_medium("pair", "the betaxanthin co-head against the score as an input", "n_positive"), tolerance=0.5),
+    Check(claim="round 212: ensemble", stated=0.040, recompute=label_medium("arm", "w232_aadelauxbx_h12l1p1_e200", "ensemble_six_spearman"), tolerance=0.0006),
+    Check(claim="round 212: control ensemble", stated=0.062, recompute=label_medium("arm", "w141_aadel_h12l1p1_e200", "ensemble_six_spearman"), tolerance=0.0006),
+    Check(claim="round 212: lowest seed", stated=0.015, recompute=label_medium("arm", "w232_aadelauxbx_h12l1p1_e200", "min_spearman"), tolerance=0.0006),
+    Check(claim="round 212: highest seed", stated=0.045, recompute=label_medium("arm", "w232_aadelauxbx_h12l1p1_e200", "max_spearman"), tolerance=0.0006),
+    Check(claim="round 212: earliest epoch", stated=28, recompute=label_medium("arm", "w232_aadelauxbx_h12l1p1_e200", "min:select_epoch"), tolerance=0.5),
+    Check(claim="round 212: latest epoch", stated=108, recompute=label_medium("arm", "w232_aadelauxbx_h12l1p1_e200", "max:select_epoch"), tolerance=0.5),
+    Check(claim="round 212: lowest validation Pearson", stated=0.050, recompute=label_medium("arm", "w232_aadelauxbx_h12l1p1_e200", "min:select_val_pearson"), tolerance=0.0006),
+    Check(claim="round 212: highest validation Pearson", stated=0.120, recompute=label_medium("arm", "w232_aadelauxbx_h12l1p1_e200", "max:select_val_pearson"), tolerance=0.0006),
+    Check(claim="round 212: slurm job", stated=2976, recompute=label_medium("arm", "w232_aadelauxbx_h12l1p1_e200", "slurm_job"), tolerance=0.5),
+    # sec:cvae -- the conditional VAE.
+    Check(claim="cvae: strains fitted", stated=3292, recompute=cvae("top", "n_fit", ""), tolerance=0.5),
+    Check(claim="cvae: strains validating", stated=822, recompute=cvae("top", "n_val", ""), tolerance=0.5),
+    Check(claim="cvae: pinned strains", stated=564, recompute=cvae("top", "n_pinned", ""), tolerance=0.5),
+    Check(claim="cvae: pinned with a betaxanthin score", stated=563, recompute=cvae("top", "n_pinned_with_betaxanthin", ""), tolerance=0.5),
+    Check(claim="cvae: epochs", stated=300, recompute=cvae("top", "epochs", ""), tolerance=0.5),
+    Check(claim="cvae: minutes", stated=52, recompute=lambda: cvae("top", "seconds", "")() / 60, tolerance=0.6),
+    Check(claim="cvae: best posterior mean Spearman", stated=0.747, recompute=cvae("cell", "gonbr|8|0.1|0.0", "posterior_mean_spearman"), tolerance=0.0006),
+    Check(claim="cvae: best posterior R2", stated=0.62, recompute=cvae("cell", "gonbr|8|0.1|0.0", "posterior_r2"), tolerance=0.006),
+    Check(claim="cvae: best posterior lowest seed", stated=0.741, recompute=cvae("cell", "gonbr|8|0.1|0.0", "posterior_mean_spearman", "min"), tolerance=0.0006),
+    Check(claim="cvae: best posterior highest seed", stated=0.755, recompute=cvae("cell", "gonbr|8|0.1|0.0", "posterior_mean_spearman", "max"), tolerance=0.0006),
+    Check(claim="cvae: best posterior calibration", stated=0.69, recompute=cvae("cell", "gonbr|8|0.1|0.0", "calibration_90"), tolerance=0.006),
+    Check(claim="cvae: ProtT5 with the head posterior", stated=0.742, recompute=cvae("cell", "t5|8|0.1|1.0", "posterior_mean_spearman"), tolerance=0.0006),
+    Check(claim="cvae: ProtT5 with the head posterior R2", stated=0.59, recompute=cvae("cell", "t5|8|0.1|1.0", "posterior_r2"), tolerance=0.006),
+    Check(claim="cvae: prior route, lowest cell", stated=0.036, recompute=cvae_extreme("prior_mean_spearman", "min"), tolerance=0.0006),
+    Check(claim="cvae: prior route, highest cell", stated=0.073, recompute=cvae_extreme("prior_mean_spearman", "max"), tolerance=0.0006),
+    Check(claim="cvae: MLP profile, lowest feature set", stated=0.045, recompute=cvae_extreme("mlp_profile_mean_spearman", "min", "baselines"), tolerance=0.0006),
+    Check(claim="cvae: MLP profile, highest feature set", stated=0.066, recompute=cvae_extreme("mlp_profile_mean_spearman", "max", "baselines"), tolerance=0.0006),
+    Check(claim="cvae: best prior betaxanthin", stated=0.172, recompute=cvae("cell", "gonbr|8|1.0|1.0", "prior_bx_spearman"), tolerance=0.0006),
+    Check(claim="cvae: best prior betaxanthin sd", stated=0.031, recompute=cvae("cell", "gonbr|8|1.0|1.0", "prior_bx_spearman", "sd"), tolerance=0.0006),
+    Check(claim="cvae: MLP betaxanthin from the neighbor mean", stated=0.130, recompute=cvae("base", "gonbr", "mlp_bx_spearman"), tolerance=0.0006),
+    Check(claim="cvae: MLP betaxanthin from the neighbor mean sd", stated=0.039, recompute=cvae("base", "gonbr", "mlp_bx_spearman", "sd"), tolerance=0.0006),
+    Check(claim="cvae: MLP betaxanthin from GO", stated=0.151, recompute=cvae("base", "go", "mlp_bx_spearman"), tolerance=0.0006),
+    Check(claim="cvae: best posterior betaxanthin", stated=0.221, recompute=cvae("cell", "gonbr|8|1.0|1.0", "posterior_bx_spearman"), tolerance=0.0006),
+    Check(claim="cvae: calibration, lowest cell", stated=0.11, recompute=cvae_extreme("calibration_90", "min"), tolerance=0.006),
+    Check(claim="cvae: calibration, highest cell", stated=0.76, recompute=cvae_extreme("calibration_90", "max"), tolerance=0.006),
+    Check(claim="cvae: collapsed cell KL, beta 1", stated=0.08, recompute=cvae("cell", "go+gonbr+t5|8|1.0|1.0", "kl_per_strain"), tolerance=0.006),
+    Check(claim="cvae: collapsed cell KL, beta 0.1", stated=0.20, recompute=cvae("cell", "go+gonbr+t5|8|0.1|1.0", "kl_per_strain"), tolerance=0.006),
+    Check(claim="cvae: collapsed cell posterior, beta 1", stated=0.096, recompute=cvae("cell", "go+gonbr+t5|8|1.0|1.0", "posterior_mean_spearman"), tolerance=0.0006),
+    Check(claim="cvae: collapsed cell posterior, beta 0.1", stated=0.097, recompute=cvae("cell", "go+gonbr+t5|8|0.1|1.0", "posterior_mean_spearman"), tolerance=0.0006),
+    Check(claim="cvae: collapsed cells earliest epoch", stated=2, recompute=lambda: min(cvae("cell", "go+gonbr+t5|8|1.0|1.0", "select_epoch", "min")(), cvae("cell", "go+gonbr+t5|8|0.1|1.0", "select_epoch", "min")()), tolerance=0.5),
+    Check(claim="cvae: collapsed cells latest epoch", stated=5, recompute=lambda: max(cvae("cell", "go+gonbr+t5|8|1.0|1.0", "select_epoch", "max")(), cvae("cell", "go+gonbr+t5|8|0.1|1.0", "select_epoch", "max")()), tolerance=0.5),
+    Check(claim="compressibility: four PCA dimensions", stated=0.58, recompute=reconstruction(4, "pca_heldout_r2"), tolerance=0.006),
+    Check(claim="compressibility: four autoencoder dimensions", stated=0.62, recompute=reconstruction(4, "ae_heldout_r2_mean"), tolerance=0.006),
+    Check(claim="compressibility: eight PCA dimensions", stated=0.77, recompute=reconstruction(8, "pca_heldout_r2"), tolerance=0.006),
+    Check(claim="compressibility: eight autoencoder dimensions", stated=0.80, recompute=reconstruction(8, "ae_heldout_r2_mean"), tolerance=0.006),
+    Check(claim="latent regression: eight-dimensional autoencoder latent from GO by ridge", stated=0.080, recompute=latent_regression("go", "ae8", "ridge"), tolerance=0.0006),
+    Check(claim="latent regression: direct from GO by ridge", stated=0.077, recompute=latent_regression("go", "direct", "ridge"), tolerance=0.0006),
+    # standing -- the neighbor-mean ladder on the profile.
+    Check(claim="standing: GO with its neighbor mean by forest", stated=0.081, recompute=nbr_ladder("go+go_nbr"), tolerance=0.0006),
+    Check(claim="standing: GO alone by forest on the neighbor ladder", stated=0.063, recompute=nbr_ladder("go"), tolerance=0.0006),
+    Check(claim="standing: the degree columns alone by forest", stated=0.021, recompute=nbr_ladder("go_nbr_degree"), tolerance=0.0006),
+    Check(claim="standing: the profile beside the betaxanthin head, round 212 cost", stated=0.023, recompute=lambda: -label_medium("pair", "the betaxanthin co-head against the control", "mean_difference")(), tolerance=0.0006),
+    Check(claim="standing: posterior route (0.75)", stated=0.75, recompute=cvae("cell", "gonbr|8|0.1|0.0", "posterior_mean_spearman"), tolerance=0.006),
+    Check(claim="standing: prior route (0.05)", stated=0.05, recompute=cvae("cell", "gonbr|8|0.1|0.0", "prior_mean_spearman"), tolerance=0.006),
 ]
 
 

@@ -337,6 +337,118 @@
       "ensemble_six_spearman": 0.02667612461888083,
       "slurm_job": 2944,
       "elapsed": "3 h 32 min"
+    },
+    "w225_aadelbxscoremlp256_h12l1p1_e200": {
+      "stem": "w225_aadelbxscoremlp256_h12l1p1_e200",
+      "round": null,
+      "label": "the betaxanthin score as an input through 256",
+      "cells": [
+        {
+          "seed": 2700,
+          "select_epoch": 67,
+          "select_val_pearson": 0.1275896868227344,
+          "spearman": 0.08986682884744555,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2701,
+          "select_epoch": 47,
+          "select_val_pearson": 0.11314160690495842,
+          "spearman": 0.08009138275348258,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2702,
+          "select_epoch": 121,
+          "select_val_pearson": 0.1311516455423675,
+          "spearman": 0.07175020866789876,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2703,
+          "select_epoch": 197,
+          "select_val_pearson": 0.12496480443759968,
+          "spearman": 0.07667348233728087,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2704,
+          "select_epoch": 113,
+          "select_val_pearson": 0.12091641740775422,
+          "spearman": 0.07383976649318968,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2705,
+          "select_epoch": 102,
+          "select_val_pearson": 0.1292894692405274,
+          "spearman": 0.07487786776661816,
+          "n_records_with_any_feature": 564
+        }
+      ],
+      "mean_spearman": 0.07784992281098593,
+      "sd_spearman": 0.0065258740879422265,
+      "min_spearman": 0.07175020866789876,
+      "max_spearman": 0.08986682884744555,
+      "ensemble_six_spearman": 0.08241266502308746,
+      "slurm_job": null,
+      "elapsed": null
+    },
+    "w232_aadelauxbx_h12l1p1_e200": {
+      "stem": "w232_aadelauxbx_h12l1p1_e200",
+      "round": 212,
+      "label": "the betaxanthin co-head at weight 1 on the control (inductive)",
+      "cells": [
+        {
+          "seed": 2700,
+          "select_epoch": 36,
+          "select_val_pearson": 0.09368591559560675,
+          "spearman": 0.04510630944738259,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2701,
+          "select_epoch": 49,
+          "select_val_pearson": 0.12049770918919851,
+          "spearman": 0.017666258811510783,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2702,
+          "select_epoch": 32,
+          "select_val_pearson": 0.10705906608583111,
+          "spearman": 0.01774452708649237,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2703,
+          "select_epoch": 28,
+          "select_val_pearson": 0.05042770166734332,
+          "spearman": 0.03126390629845013,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2704,
+          "select_epoch": 47,
+          "select_val_pearson": 0.11902624405430336,
+          "spearman": 0.014704747824911208,
+          "n_records_with_any_feature": 564
+        },
+        {
+          "seed": 2705,
+          "select_epoch": 108,
+          "select_val_pearson": 0.10491858417854498,
+          "spearman": 0.030850074104063666,
+          "n_records_with_any_feature": 564
+        }
+      ],
+      "mean_spearman": 0.026222637262135123,
+      "sd_spearman": 0.011671952551747246,
+      "min_spearman": 0.014704747824911208,
+      "max_spearman": 0.04510630944738259,
+      "ensemble_six_spearman": 0.04023530046097703,
+      "slurm_job": 2976,
+      "elapsed": "4 h 45 min"
     }
   },
   "pairs": [
@@ -468,6 +580,32 @@
       "control_sd": 0.007021744764877032,
       "mean_difference": -0.02843479965721152,
       "sd_difference": 0.008215735711306613,
+      "n_positive": 0
+    },
+    {
+      "name": "the betaxanthin co-head against the control",
+      "arm": "w232_aadelauxbx_h12l1p1_e200",
+      "control": "w141_aadel_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.026222637262135123,
+      "arm_sd": 0.011671952551747246,
+      "control_mean": 0.04922161770875602,
+      "control_sd": 0.007021744764877032,
+      "mean_difference": -0.0229989804466209,
+      "sd_difference": 0.01642725670953421,
+      "n_positive": 1
+    },
+    {
+      "name": "the betaxanthin co-head against the score as an input",
+      "arm": "w232_aadelauxbx_h12l1p1_e200",
+      "control": "w225_aadelbxscoremlp256_h12l1p1_e200",
+      "n": 6,
+      "arm_mean": 0.026222637262135123,
+      "arm_sd": 0.011671952551747246,
+      "control_mean": 0.07784992281098593,
+      "control_sd": 0.0065258740879422265,
+      "mean_difference": -0.051627285548850814,
+      "sd_difference": 0.008027213764030471,
       "n_positive": 0
     }
   ]

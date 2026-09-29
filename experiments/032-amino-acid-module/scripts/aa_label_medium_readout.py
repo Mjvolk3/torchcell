@@ -2,7 +2,7 @@
 # [[experiments.032-amino-acid-module.scripts.aa_label_medium_readout]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/032-amino-acid-module/scripts/aa_label_medium_readout
 
-r"""Rounds 208 to 211 on the amino acids: the medium controls and the label stores, paired.
+r"""Rounds 208 to 212 on the amino acids: the medium controls, the label stores and the reverse co-head, paired.
 
 The four rounds that landed on 2026-09-28 carried two essentiality recipes to the
 M\"ulleder profile: the growth ratio's medium (w228 four media as a control, w229 the
@@ -57,6 +57,8 @@ ARMS: dict[str, tuple[int | None, str]] = {
     "w229_aadelstoredef_h12l1p1_e200": (209, "the SM store under default affine initialization, own medium"),
     "w230_aadelgraphlabel_h12l1p1_e200": (210, "the graphs' label propagation of the profile (transductive)"),
     "w231_aadelgraphlabelpfba_h12l1p1_e200": (211, "the label propagation with the SM store appended (transductive)"),
+    "w225_aadelbxscoremlp256_h12l1p1_e200": (None, "the betaxanthin score as an input through 256"),
+    "w232_aadelauxbx_h12l1p1_e200": (212, "the betaxanthin co-head at weight 1 on the control (inductive)"),
 }
 PAIRS: list[tuple[str, str, str]] = [
     ("four media's growth ratios against the SM ratio", "w228_aadelstore4m_h12l1p1_e200", "w143_aadelstore_h12l1p1_e200"),
@@ -69,6 +71,8 @@ PAIRS: list[tuple[str, str, str]] = [
     ("label propagation with the SM store against the SM store", "w231_aadelgraphlabelpfba_h12l1p1_e200", "w143_aadelstore_h12l1p1_e200"),
     ("label propagation with the SM store against label propagation alone", "w231_aadelgraphlabelpfba_h12l1p1_e200", "w230_aadelgraphlabel_h12l1p1_e200"),
     ("label propagation with the SM store against the control", "w231_aadelgraphlabelpfba_h12l1p1_e200", "w141_aadel_h12l1p1_e200"),
+    ("the betaxanthin co-head against the control", "w232_aadelauxbx_h12l1p1_e200", "w141_aadel_h12l1p1_e200"),
+    ("the betaxanthin co-head against the score as an input", "w232_aadelauxbx_h12l1p1_e200", "w225_aadelbxscoremlp256_h12l1p1_e200"),
 ]
 
 
@@ -196,12 +200,13 @@ def table(arms: dict[str, Arm], pairs: list[Pair]) -> str:
         )
     return (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
-        "  \\caption[Rounds 208 to 211: the medium controls and the label stores, paired]{"
-        "The four rounds of 2026-09-28 paired by seed against their controls on the same "
+        "  \\caption[Rounds 208 to 212: the medium controls, the label stores and the reverse co-head, paired]{"
+        "The four rounds of 2026-09-28 and the reverse co-head of 2026-09-29 paired by seed against their controls on the same "
         "split (Merzbacher's 639 genes pinned to test, the 027 protocol) and statistic as "
         "Table~\\ref{tab:target-transfer}, the mean per-amino-acid pinned-test Spearman "
         "over the 19 columns at the epoch selected on validation Pearson. The two label "
-        "stores are transductive: their columns are other strains' measured profiles. "
+        "stores are transductive: their columns are other strains' measured profiles; the "
+        "co-head (round 212, \\texttt{--aux-betaxanthin} at weight 1) is inductive. "
         "Written by \\texttt{aa\\_label\\_medium\\_readout.py} from the per-seed result "
         "files.}\n"
         "  \\label{tab:aa-label-medium}\n"
@@ -210,7 +215,7 @@ def table(arms: dict[str, Arm], pairs: list[Pair]) -> str:
         "higher \\\\\n    \\hline\n" + "\n".join(rows) + "\n    \\hline\n  \\end{tabular}\n"
         "\\end{table}\n\n"
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
-        "  \\caption[Rounds 208 to 211: seed levels and ensembles]{The same four arms by "
+        "  \\caption[Rounds 208 to 212: seed levels and ensembles]{The same five arms by "
         "seed: the lowest and highest single-seed read, the mean with its standard "
         "deviation, the six-seed ensemble (the mean prediction over seeds scored as one "
         "cell, as \\texttt{target\\_ensemble\\_readout.py} scores it), the selected epochs "

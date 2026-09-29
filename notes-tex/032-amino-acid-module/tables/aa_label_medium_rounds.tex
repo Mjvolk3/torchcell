@@ -5,7 +5,7 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{3pt}
-  \caption[Rounds 208 to 211: the medium controls and the label stores, paired]{The four rounds of 2026-09-28 paired by seed against their controls on the same split (Merzbacher's 639 genes pinned to test, the 027 protocol) and statistic as Table~\ref{tab:target-transfer}, the mean per-amino-acid pinned-test Spearman over the 19 columns at the epoch selected on validation Pearson. The two label stores are transductive: their columns are other strains' measured profiles. Written by \texttt{aa\_label\_medium\_readout.py} from the per-seed result files.}
+  \caption[Rounds 208 to 212: the medium controls, the label stores and the reverse co-head, paired]{The four rounds of 2026-09-28 and the reverse co-head of 2026-09-29 paired by seed against their controls on the same split (Merzbacher's 639 genes pinned to test, the 027 protocol) and statistic as Table~\ref{tab:target-transfer}, the mean per-amino-acid pinned-test Spearman over the 19 columns at the epoch selected on validation Pearson. The two label stores are transductive: their columns are other strains' measured profiles; the co-head (round 212, \texttt{--aux-betaxanthin} at weight 1) is inductive. Written by \texttt{aa\_label\_medium\_readout.py} from the per-seed result files.}
   \label{tab:aa-label-medium}
   \begin{tabular}{@{}lrrrrr@{}}
     \hline
@@ -21,6 +21,8 @@
     label propagation with the SM store against the SM store & 6 & 0.0208 (0.0074) & 0.0402 (0.0051) & $-0.0194$ (0.0118) & 0/6 \\
     label propagation with the SM store against label propagation alone & 6 & 0.0208 (0.0074) & 0.0264 (0.0098) & $-0.0057$ (0.0084) & 1/6 \\
     label propagation with the SM store against the control & 6 & 0.0208 (0.0074) & 0.0492 (0.0070) & $-0.0284$ (0.0082) & 0/6 \\
+    the betaxanthin co-head against the control & 6 & 0.0262 (0.0117) & 0.0492 (0.0070) & $-0.0230$ (0.0164) & 1/6 \\
+    the betaxanthin co-head against the score as an input & 6 & 0.0262 (0.0117) & 0.0778 (0.0065) & $-0.0516$ (0.0080) & 0/6 \\
     \hline
   \end{tabular}
 \end{table}
@@ -29,7 +31,7 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{2.5pt}
-  \caption[Rounds 208 to 211: seed levels and ensembles]{The same four arms by seed: the lowest and highest single-seed read, the mean with its standard deviation, the six-seed ensemble (the mean prediction over seeds scored as one cell, as \texttt{target\_ensemble\_readout.py} scores it), the selected epochs and the validation Pearson at selection. Written by \texttt{aa\_label\_medium\_readout.py}.}
+  \caption[Rounds 208 to 212: seed levels and ensembles]{The same five arms by seed: the lowest and highest single-seed read, the mean with its standard deviation, the six-seed ensemble (the mean prediction over seeds scored as one cell, as \texttt{target\_ensemble\_readout.py} scores it), the selected epochs and the validation Pearson at selection. Written by \texttt{aa\_label\_medium\_readout.py}.}
   \label{tab:aa-label-medium-levels}
   \begin{tabular}{@{}r>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{84.5mm}rrrrr@{}}
     \hline
@@ -39,6 +41,7 @@
     209 & the SM store under default affine initialization, own medium & 0.040 to 0.051 & 0.046 (0.005) & 0.051 & 57 to 181 & 0.068 to 0.098 \\
     210 & the graphs' label propagation of the profile (transductive) & 0.017 to 0.043 & 0.026 (0.010) & 0.034 & 75 to 197 & 0.080 to 0.101 \\
     211 & the label propagation with the SM store appended (transductive) & 0.009 to 0.031 & 0.021 (0.007) & 0.027 & 85 to 196 & 0.077 to 0.118 \\
+    212 & the betaxanthin co-head at weight 1 on the control (inductive) & 0.015 to 0.045 & 0.026 (0.012) & 0.040 & 28 to 108 & 0.050 to 0.120 \\
     \hline
   \end{tabular}
 \end{table}

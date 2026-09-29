@@ -1442,6 +1442,18 @@ PAIRS = [
         "w255_bxdelgopfbamomaforest_h12l1p1_e200",
         "w190_bxdelgopfbamoma_h12l1p1_e200",
     ),
+    (
+        "betaxanthin: the Mulleder co-head at weight 0.1 against without on the inductive incumbent",
+        "betaxanthin",
+        "w256_bxdelgopfbamomaaux01_h12l1p1_e200",
+        "w190_bxdelgopfbamoma_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: the Mulleder co-head at weight 0.1 against weight 1",
+        "betaxanthin",
+        "w256_bxdelgopfbamomaaux01_h12l1p1_e200",
+        "w242_bxdelgopfbamomaaux_h12l1p1_e200",
+    ),
 ]
 
 

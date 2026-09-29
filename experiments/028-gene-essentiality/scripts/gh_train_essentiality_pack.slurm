@@ -27,7 +27,7 @@
 #SBATCH --mem=36g
 #SBATCH -N 1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=24
+#SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:1
 #SBATCH --job-name=028-pack
 #SBATCH --time=08:00:00

@@ -153,6 +153,7 @@ def main() -> None:
     ap.add_argument("--target", required=True, choices=sorted(GO_STORE))
     ap.add_argument("--epochs", type=int, default=EPOCHS)
     ap.add_argument("--threads", type=int, default=8)
+    ap.add_argument("--out-suffix", default="", help="appended to the results file name")
     args = ap.parse_args()
     assert os.environ.get("PYTHONHASHSEED") == "0", "PYTHONHASHSEED must be 0"
     torch.set_num_threads(args.threads)
@@ -362,7 +363,7 @@ def main() -> None:
             + f" mean {read.mean:+.3f} sd {read.sd:.3f} sel {sel} ({read.seconds:.0f}s)",
             flush=True,
         )
-    out_path = osp.join(EXPERIMENT_ROOT, STUDY[args.target], "results", f"target_gcn_readout_{args.target}.json")
+    out_path = osp.join(EXPERIMENT_ROOT, STUDY[args.target], "results", f"target_gcn_readout_{args.target}{args.out_suffix}.json")
     with open(out_path, "w") as fh:
         json.dump(
             {

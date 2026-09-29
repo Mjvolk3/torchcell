@@ -8,6 +8,8 @@
 # slurm with a memory and CPU cap (2026-09-28): 8 cores and 32 GB here.
 #
 #   TARGET=betaxanthin sbatch experiments/031-betaxanthin-module/scripts/gh_target_gcn_readout.slurm
+#   EPOCHS=600 TARGET=betaxanthin sbatch ...   (the first run, job 2955, selected epoch 199
+#                                              of 200 on every GCN seed: not converged)
 #
 #SBATCH -p main
 #SBATCH --mem=32g
@@ -31,6 +33,7 @@ export PYTHONWARNINGS=ignore
 export PYTHONHASHSEED=0
 export CUDA_VISIBLE_DEVICES=""
 export OMP_NUM_THREADS=8
-echo "host $(hostname); target ${TARGET:-betaxanthin}; DATA_ROOT=$DATA_ROOT"
+echo "host $(hostname); target ${TARGET:-betaxanthin}; epochs ${EPOCHS:-200}; DATA_ROOT=$DATA_ROOT"
 python experiments/031-betaxanthin-module/scripts/target_gcn_readout.py \
-    --target "${TARGET:-betaxanthin}" --threads 8
+    --target "${TARGET:-betaxanthin}" --threads 8 --epochs "${EPOCHS:-200}" \
+    ${GCN_OUT_SUFFIX:+--out-suffix "$GCN_OUT_SUFFIX"}

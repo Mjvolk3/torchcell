@@ -1,0 +1,44 @@
+# docker-compose.tc-data.yml
+# Standalone deployment for the keyed dataset endpoint (tc-data). Kept separate from
+# docker-compose.yml (the Neo4j pipeline) and docker-compose.tc-lit.yml (the
+# literature endpoint) so each starts and stops on its own. On Radiant the container
+# runs as the NFS-mapped uid (TC_DATA_UID, 67392) so the root-squashed Taiga mount is
+# readable; nothing is staged on the 40 GB root disk because every served tree is a
+# read-only bind mount.
+#
+# Requires (from a .env in this directory or the shell environment):
+#   TC_DATA_ROOT        host artifact store (index.json + <slug>/<archive>.tar.xz)
+#   TC_DATA_RAW_ROOT    host raw mirror (one dir per citation key with manifest.json)
+#   TC_DATA_KEYS_FILE   host path to the JSON keys file {name: sha256hex}
+#   TC_DATA_PORT        host port to expose (default 8724)
+#   TC_DATA_UID         uid to run as (default 67392, the Radiant NFS mapping)
+#
+# Mint a key first (writes nothing; prints the key + hash line):
+#   docker compose -f docker-compose.tc-data.yml run --rm tc-data-endpoint \
+#     python -m torchcell.datasets.server --gen-key collaborator-name
+# Then:
+#   docker compose -f docker-compose.tc-data.yml up -d --build
+
+services:
+  tc-data-endpoint:
+    build:
+      context: .
+      dockerfile: Dockerfile.tc-data
+    image: tc-data-endpoint:latest
+    container_name: tc-data-endpoint
+    user: "${TC_DATA_UID:-67392}"
+    ports:
+      - "${TC_DATA_PORT:-8724}:8724"
+    volumes:
+      # Store, raw mirror and keys are mounted READ-ONLY: a read-only server backed
+      # by read-only mounts cannot mutate an archive under any bug or key.
+      - "${TC_DATA_ROOT}:/data/store:ro"
+      - "${TC_DATA_RAW_ROOT}:/data/torchcell-raw:ro"
+      - "${TC_DATA_KEYS_FILE}:/keys.json:ro"
+    environment:
+      TC_DATA_ROOT: /data/store
+      TC_DATA_RAW_ROOT: /data/torchcell-raw
+      TC_DATA_KEYS_FILE: /keys.json
+      TC_DATA_HOST: 0.0.0.0
+      TC_DATA_PORT: 8724
+    restart: unless-stopped

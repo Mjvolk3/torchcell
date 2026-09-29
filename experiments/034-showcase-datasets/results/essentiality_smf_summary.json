@@ -1,0 +1,210 @@
+{
+  "script": "experiments/034-showcase-datasets/scripts/essentiality_smf.py",
+  "generated_utc": "2026-09-29T23:39:58+00:00",
+  "sources": {
+    "essentiality": "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_sgd/processed/lmdb",
+    "smf": "/scratch/projects/torchcell-scratch/data/torchcell/smf_costanzo2016/processed/lmdb"
+  },
+  "essentiality": {
+    "records": 1329,
+    "unique_genes": 1140,
+    "essential_records": 1329,
+    "non_essential_records": 0,
+    "publications": 113,
+    "unique_perturbation_types": "`sga_kanmx_deletion`",
+    "environment": {
+      "media": "YEPD",
+      "state": "solid",
+      "temperature": 30.0
+    },
+    "records_per_gene_max": 10
+  },
+  "smf": {
+    "records": 20484,
+    "unique_genes": 5493,
+    "unique_strains": 10277,
+    "records_by_temperature": {
+      "26": 10260,
+      "30": 10224
+    },
+    "records_by_temperature_and_type": {
+      "26": {
+        "sga_kanmx_deletion": 3876,
+        "sga_natmx_deletion": 3845,
+        "damp": 733,
+        "temperature_sensitive_allele": 1806
+      },
+      "30": {
+        "sga_kanmx_deletion": 3893,
+        "sga_natmx_deletion": 3845,
+        "damp": 733,
+        "temperature_sensitive_allele": 1753
+      }
+    },
+    "twins": {
+      "strains": 10277,
+      "pairs_identical_at_both_temperatures": 8454,
+      "pairs_differing": 1753,
+      "strains_at_one_temperature": 70,
+      "identical_by_type": "DAmP: 733, deletion (KanMX): 3,876, deletion (NatMX): 3,845",
+      "differing_by_type": "TS allele: 1,753"
+    },
+    "fitness_stats": {
+      "all records": {
+        "n": 20484,
+        "min": 0.1137,
+        "q1": 0.8845,
+        "median": 0.9878,
+        "mean": 0.9204543355789884,
+        "q3": 1.0143,
+        "max": 1.2774
+      },
+      "26 \u00b0C": {
+        "n": 10260,
+        "min": 0.1279,
+        "q1": 0.9,
+        "median": 0.9882,
+        "mean": 0.9298719005847954,
+        "q3": 1.0145,
+        "max": 1.1399
+      },
+      "30 \u00b0C": {
+        "n": 10224,
+        "min": 0.1137,
+        "q1": 0.866425,
+        "median": 0.9875,
+        "mean": 0.9110036101330204,
+        "q3": 1.0143,
+        "max": 1.2774
+      },
+      "deletion (KanMX), 30 \u00b0C": {
+        "n": 3893,
+        "min": 0.2265,
+        "q1": 0.9665,
+        "median": 1.0008,
+        "mean": 0.9709482943745184,
+        "q3": 1.0195,
+        "max": 1.1118
+      },
+      "deletion (NatMX), 30 \u00b0C": {
+        "n": 3845,
+        "min": 0.177,
+        "q1": 0.941,
+        "median": 0.9968,
+        "mean": 0.9381172171651495,
+        "q3": 1.0177,
+        "max": 1.0915
+      },
+      "DAmP, 30 \u00b0C": {
+        "n": 733,
+        "min": 0.337,
+        "q1": 0.929,
+        "median": 0.982,
+        "mean": 0.9387605729877216,
+        "q3": 1.0085,
+        "max": 1.066
+      },
+      "TS allele, 30 \u00b0C": {
+        "n": 1753,
+        "min": 0.1137,
+        "q1": 0.5771,
+        "median": 0.7238,
+        "mean": 0.7068037649743297,
+        "q3": 0.8466,
+        "max": 1.2774
+      }
+    },
+    "media": "SGA double-mutant selection (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT)"
+  },
+  "overlap": {
+    "essential_genes": 1140,
+    "essential_genes_with_smf": 907,
+    "essential_genes_without_smf": 233,
+    "smf_records_of_essential_genes": 4903,
+    "by_type_30": {
+      "sga_kanmx_deletion": {
+        "n": 20,
+        "min": 0.514,
+        "q1": 0.883,
+        "median": 0.9515,
+        "mean": 0.9079599999999999,
+        "q3": 0.967325,
+        "max": 1.0363,
+        "genes": 20
+      },
+      "sga_natmx_deletion": {
+        "n": 23,
+        "min": 0.386,
+        "q1": 0.8569,
+        "median": 0.9503,
+        "mean": 0.8824869565217391,
+        "q3": 0.9681500000000001,
+        "max": 1.0395,
+        "genes": 23
+      },
+      "damp": {
+        "n": 670,
+        "min": 0.337,
+        "q1": 0.93175,
+        "median": 0.9835,
+        "mean": 0.9405902985074628,
+        "q3": 1.009375,
+        "max": 1.066,
+        "genes": 670
+      },
+      "temperature_sensitive_allele": {
+        "n": 1712,
+        "min": 0.1137,
+        "q1": 0.5771,
+        "median": 0.72395,
+        "mean": 0.707326343457944,
+        "q3": 0.8474250000000001,
+        "max": 1.2774,
+        "genes": 707
+      }
+    }
+  },
+  "converter": {
+    "fitness_zero_records": 1329,
+    "dropped_records": 0,
+    "genes_with_fitness_zero": 1140
+  },
+  "figures": {
+    "histogram": {
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-essentiality-smf/notes/assets/images/034-showcase-datasets/smf_fitness_histogram.svg",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-essentiality-smf/notes/assets/images/034-showcase-datasets/smf_fitness_histogram.png"
+    },
+    "strain_types": {
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-essentiality-smf/notes/assets/images/034-showcase-datasets/smf_records_by_strain_type.svg",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-essentiality-smf/notes/assets/images/034-showcase-datasets/smf_records_by_strain_type.png"
+    }
+  },
+  "record_indices": {
+    "essentiality": 0,
+    "smf": 10263
+  },
+  "provenance": {
+    "essentiality": {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py::GeneEssentialitySgdDataset",
+      "store": "data/torchcell/gene_essentiality_sgd/processed/lmdb",
+      "raw": "SGD locus JSON, one file per gene under $DATA_ROOT/data/sgd/genome/genes (6,607 files), fetched by torchcell.graph.sgd.main_get_all_genes; filter: phenotype_details with mutant_type 'null', strain 'S288C', phenotype 'inviable'. The files carry no sha256 record.",
+      "publications": 113,
+      "citation_keys": [
+        "cherrySGDSaccharomycesGenome1998"
+      ]
+    },
+    "smf": {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py::SmfCostanzo2016Dataset",
+      "store": "data/torchcell/smf_costanzo2016/processed/lmdb",
+      "raw_file": "data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx",
+      "raw_sha256": "3b9d3351cdde8ee90832797193a1e8838be3ce6778b3761a9e57db2d3a6a9ccc",
+      "source_url": "https://thecellmap.org/costanzo2016/data_files/Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip",
+      "dois": [
+        "10.1126/science.aaf1420"
+      ],
+      "citation_keys": [
+        "costanzoGlobalGeneticInteraction2016"
+      ]
+    }
+  }
+}

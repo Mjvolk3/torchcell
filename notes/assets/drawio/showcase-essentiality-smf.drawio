@@ -1,0 +1,138 @@
+<mxfile host="app.diagrams.net" agent="claude-code">
+  <!-- Column grid (units; 100 units = 1 inch): panel a x 0 to 226; panel b x 238 to 464; panel c x 476 to 702. Rows: letters and titles y 0; content from y 24. Type ladder: 8.3 body, 9.7 titles, 11.1 bold panel letters. -->
+  <diagram name="showcase-essentiality-smf" id="showcase-essentiality-smf">
+    <mxGraphModel dx="1400" dy="1000" grid="0" page="1" pageWidth="703" pageHeight="360" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Panel a: What was measured -->
+        <mxCell id="a_letter" value="a" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=11.1;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="14" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="a_title" value="What was measured" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=9.7;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="14" y="1" width="212" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a_sgd_head" value="SGD phenotype annotation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D79B00;strokeColor=#D79B00;fontColor=#FFFFFF;fontFamily=Arial;fontSize=8.3;fontStyle=1;align=left;spacingLeft=4;" vertex="1" parent="1">
+          <mxGeometry x="0" y="24" width="226" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="a_sgd_body" value="Null-mutant phenotype &quot;inviable&quot;, curated from published papers; one record per annotation, so a gene can carry several.&lt;br&gt;Includes conditionally inviable genes.&lt;br&gt;The annotation reports no medium or temperature; the loader assumes YEPD, solid, 30 &#176;C." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="0" y="42" width="226" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="a_sgd_class" value="GeneEssentialitySgdDataset" style="text;html=1;whiteSpace=wrap;fontFamily=Courier New;fontSize=8.3;align=right;verticalAlign=top;fontColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="0" y="116" width="226" height="14" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a_smf_head" value="Costanzo et al. 2016 SGA screens" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B85450;strokeColor=#B85450;fontColor=#FFFFFF;fontFamily=Arial;fontSize=8.3;fontStyle=1;align=left;spacingLeft=4;" vertex="1" parent="1">
+          <mxGeometry x="0" y="140" width="226" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="a_smf_body" value="Colony size of each array strain on SGA selection medium, relative to wild type (fitness).&lt;br&gt;Four strain types: KanMX and NatMX deletions, DAmP, temperature-sensitive (TS) alleles.&lt;br&gt;Screens at 26 &#176;C and 30 &#176;C; deletion and DAmP values are temperature-combined (issue #410)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="0" y="158" width="226" height="86" as="geometry" />
+        </mxCell>
+        <mxCell id="a_smf_class" value="SmfCostanzo2016Dataset" style="text;html=1;whiteSpace=wrap;fontFamily=Courier New;fontSize=8.3;align=right;verticalAlign=top;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="0" y="246" width="226" height="14" as="geometry" />
+        </mxCell>
+
+        <!-- Panel b: The record -->
+        <mxCell id="b_letter" value="b" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=11.1;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="238" y="0" width="14" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="b_title" value="The record" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=9.7;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="252" y="1" width="212" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_exp" value="Experiment" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;fontStyle=1;align=left;verticalAlign=top;spacingLeft=4;spacingTop=1;" vertex="1" parent="1">
+          <mxGeometry x="238" y="24" width="226" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="b_geno" value="&lt;b&gt;genotype&lt;/b&gt;.perturbations[0]: gene, perturbation_type, strain_id" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="246" y="42" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="b_env" value="&lt;b&gt;environment&lt;/b&gt;: media (name, state), temperature" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="246" y="78" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="b_phen" value="&lt;b&gt;phenotype&lt;/b&gt;: is_essential = True (SGD) or fitness, fitness_std (Costanzo)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="246" y="114" width="210" height="32" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_ref" value="Reference" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;fontStyle=1;align=left;verticalAlign=top;spacingLeft=4;spacingTop=1;" vertex="1" parent="1">
+          <mxGeometry x="238" y="162" width="226" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="b_ref_genome" value="&lt;b&gt;genome_reference&lt;/b&gt;: strain S288C" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="246" y="180" width="210" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="b_ref_phen" value="&lt;b&gt;phenotype_reference&lt;/b&gt;: is_essential = False (SGD) or fitness = 1.0 (Costanzo)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="246" y="206" width="210" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_pub" value="&lt;b&gt;Publication&lt;/b&gt;: PubMed id (SGD) or DOI (Costanzo)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="238" y="248" width="226" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="b_note" value="Pydantic models; one LMDB entry per record in the dataset build, one Experiment node per distinct experiment in the graph." style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="238" y="274" width="226" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- Panel c: Query and conversion -->
+        <mxCell id="c_letter" value="c" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=11.1;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="476" y="0" width="14" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="c_title" value="Query and conversion" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=9.7;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="490" y="1" width="212" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_q" value="&lt;b&gt;essentiality_smf.cql&lt;/b&gt;: both datasets, genes in $gene_set, solid medium" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="476" y="24" width="226" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c_raw" value="&lt;b&gt;Neo4jQueryRaw&lt;/b&gt;: one entry per Experiment node" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="476" y="70" width="226" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="c_conv" value="&lt;b&gt;CompositeFitnessConverter&lt;/b&gt;: is_essential = True becomes fitness 0 with a fitness 1.0 reference; tagged CONVERTED_ZERO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="476" y="108" width="226" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="c_agg" value="&lt;b&gt;GenotypeAggregator&lt;/b&gt;: every entry of one gene in one record; nothing averaged" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="476" y="166" width="226" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c_rec" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="476" y="206" width="226" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c_rec_zero" value="SGD: fitness 0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="481" y="211" width="64" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="c_rec_26" value="Costanzo 26 &#176;C" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="551" y="211" width="72" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="c_rec_30" value="Costanzo 30 &#176;C" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="625" y="211" width="72" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="c_pol" value="&lt;b&gt;LabelPolicy&lt;/b&gt; (read time): a measured fitness outranks the converted 0; 30 &#176;C before 26 &#176;C" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=2;" vertex="1" parent="1">
+          <mxGeometry x="476" y="252" width="226" height="32" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_ar1" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="589" y="54" as="sourcePoint" />
+            <mxPoint x="589" y="70" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c_ar2" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="589" y="92" as="sourcePoint" />
+            <mxPoint x="589" y="108" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c_ar3" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="589" y="150" as="sourcePoint" />
+            <mxPoint x="589" y="166" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c_ar4" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="589" y="236" as="sourcePoint" />
+            <mxPoint x="589" y="252" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

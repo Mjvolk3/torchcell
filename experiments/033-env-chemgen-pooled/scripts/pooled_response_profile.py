@@ -147,7 +147,9 @@ def main() -> None:
 
     with open(osp.join(PROCESSED, "gene_set.json")) as f:
         gene_set = json.load(f)
-    print(f"gene set: {len(gene_set)} genes perturbed across the four sources")
+    # the gene set the QUERY filtered on (the S288C genome), not the genes perturbed:
+    # the store perturbs 5,863 of them (store_against_plan.py, pool_totals.csv)
+    print(f"query gene set: {len(gene_set)} genes")
 
     merged = load_labels()
     print(f"label table: {len(merged):,} cells")

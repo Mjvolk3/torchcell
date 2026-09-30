@@ -5,7 +5,7 @@
 
 Reads the ladder (``results/ladder/<tag>_scores.csv``) and every factorized sweep
 (``results/factorized/*/<name>_scores.csv``). A row of the output is one model on one
-fold seed, target and compound subset: its median and mean Spearman over the held-out
+fold seed (or every fold seed pooled, ``fold_seed == -1``), target and compound subset: its median and mean Spearman over the held-out
 compounds it scored, and its PAIRED difference from each reference on exactly those
 compounds, with a bootstrap 95% interval over compounds for the mean difference.
 
@@ -133,6 +133,12 @@ def main() -> None:
                 {"name": name, "fold_seed": fold_seed, "target": target, "subset": view}
                 | summarize(g, references, rng)
             )
+        # every fold seed pooled: 3 x 41 compound-evaluations, paired within fold seed
+        for (name, target), g in table.groupby(["name", "target"]):
+            rows.append(
+                {"name": name, "fold_seed": -1, "target": target, "subset": view}
+                | summarize(g, references, rng)
+            )
     out = pd.DataFrame(rows).sort_values(
         ["subset", "target", "fold_seed", "spearman_median"],
         ascending=[True, True, True, False],
@@ -142,7 +148,11 @@ def main() -> None:
     pd.set_option("display.max_rows", 200)
     for view in ("all", "published"):
         print(f"== {view} compounds, centered target")
-        shown = out[(out["target"] == "centered") & (out["subset"] == view)]
+        shown = out[
+            (out["target"] == "centered")
+            & (out["subset"] == view)
+            & (out["fold_seed"] == -1)
+        ]
         print(shown[COLUMNS].head(40).round(3).to_string(index=False))
 
 

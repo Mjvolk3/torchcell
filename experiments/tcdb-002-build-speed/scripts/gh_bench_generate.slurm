@@ -62,6 +62,7 @@ echo "arm=$ARM round=$ROUND commit=$COMMIT job=$JOB cpus=$SLURM_CPUS_PER_TASK me
 echo "started $(date)"
 GEN_CONTAINER="tcdb002-gen-${JOB}"
 GEN_LOG="$RUN_DIR/generate.log"
+GEN_STATUS=0
 
 # Same mounts as the production generate step: build tree for genome/graph caches and
 # the container env, dev tree datasets read-only, CSVs to the bench output dir.
@@ -87,23 +88,37 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" "${PTRACE_OPT[@]}" \
         echo container_cpu_max=\$(cat /sys/fs/cgroup/cpu.max) memory_max=\$(cat /sys/fs/cgroup/memory.max)
         # py-spy exits 'No child process' AFTER the child finished cleanly (job 2874);
         # under PROFILE=1 the generation log, not py-spy's status, says whether it ran.
-        $RUNNER -m $KG_MODULE --config-name $KG_CONFIG $KG_OVERRIDES || [ '$PROFILE' = '1' ]
-        [ -f biocypher_file_name.txt ] || { echo 'generation did not finish'; exit 1; }
-        CALL=\$(cat biocypher_file_name.txt)
-        OUT_DIR=/var/lib/neo4j/\$(dirname \$CALL)
+        # The telemetry must survive a failed arm (jobs 2995/2996 left none, so their
+        # cause is unmeasured): capture the exit status, locate the output dir even
+        # when biocypher_file_name.txt was never written, copy what exists, then exit.
+        GEN_RC=0
+        $RUNNER -m $KG_MODULE --config-name $KG_CONFIG $KG_OVERRIDES || GEN_RC=\$?
+        [ '$PROFILE' = '1' ] && GEN_RC=0
+        if [ -f biocypher_file_name.txt ]; then
+            CALL=\$(cat biocypher_file_name.txt)
+            OUT_DIR=/var/lib/neo4j/\$(dirname \$CALL)
+        else
+            OUT_DIR=\$(ls -td /var/lib/neo4j/biocypher-out/20*/ | head -1)
+            OUT_DIR=\${OUT_DIR%/}
+            echo \"generation did not finish (exit \$GEN_RC); partial output in \$OUT_DIR\"
+        fi
         echo GENERATION_OUT=\$OUT_DIR
         # Score inputs: bytes and rows per CSV, the telemetry, the phase table.
         (cd \$OUT_DIR && for f in *.csv; do printf '%s\t%s\t%s\n' \"\$f\" \$(stat -c %s \"\$f\") \$(wc -l < \"\$f\"); done) > \$OUT_DIR/csv_inventory.tsv
         du -sb \$OUT_DIR | cut -f1 > \$OUT_DIR/csv_total_bytes
         cp -r \$OUT_DIR/telemetry \$OUT_DIR/csv_inventory.tsv \$OUT_DIR/csv_total_bytes /var/lib/neo4j/biocypher-out/_run_${JOB}/ 2>/dev/null || { mkdir -p /var/lib/neo4j/biocypher-out/_run_${JOB}; cp -r \$OUT_DIR/telemetry \$OUT_DIR/csv_inventory.tsv \$OUT_DIR/csv_total_bytes /var/lib/neo4j/biocypher-out/_run_${JOB}/; }
         cp /var/lib/neo4j/biocypher_warnings.log /var/lib/neo4j/biocypher-out/_run_${JOB}/ || true
-        if [ '$KEEP_CSV' != '1' ]; then rm -rf \$OUT_DIR; echo 'CSVs removed (KEEP_CSV=0)'; fi
+        if [ '$KEEP_CSV' != '1' ] || [ \$GEN_RC -ne 0 ]; then rm -rf \$OUT_DIR; echo 'CSVs removed (KEEP_CSV=0 or failed arm)'; fi
         chown -R $(id -u):$(id -g) /var/lib/neo4j/biocypher-out/_run_${JOB}
-        [ '$KEEP_CSV' = '1' ] && chown -R $(id -u):$(id -g) \$OUT_DIR || true" 2>&1 | tee "$GEN_LOG"
+        [ '$KEEP_CSV' = '1' ] && [ -d \$OUT_DIR ] && chown -R $(id -u):$(id -g) \$OUT_DIR || true
+        exit \$GEN_RC" 2>&1 | tee "$GEN_LOG" || GEN_STATUS=$?
+# A failed arm still gets its run dir (telemetry, partial inventory) below, and the
+# job then exits with the generation's status so slurm records it as FAILED.
 
 mv "$BENCH_ROOT/biocypher-out/_run_${JOB}"/* "$RUN_DIR/"
 rmdir "$BENCH_ROOT/biocypher-out/_run_${JOB}"
 sacct -j "$JOB" --format=JobID,ReqCPUS,AllocCPUS,ReqMem,Elapsed,MaxRSS,State -P > "$RUN_DIR/sacct.txt"
 printf 'job\t%s\nround\t%s\narm\t%s\ncommit\t%s\ncpus\t%s\nmem_mb\t%s\nkg_config\t%s\noverrides\t%s\nwheel\t%s\n' \
     "$JOB" "$ROUND" "$ARM" "$COMMIT" "$SLURM_CPUS_PER_TASK" "$mem_mb" "$KG_CONFIG" "$KG_OVERRIDES" "$(basename "$WHEEL")" > "$RUN_DIR/arm.tsv"
-echo "finished $(date); results in $RUN_DIR"
+echo "finished $(date); results in $RUN_DIR; generation status $GEN_STATUS"
+exit "$GEN_STATUS"

@@ -1,0 +1,138 @@
+%% notes-tex/034-isobutanol-wetlab/sections/1-panel.tex
+%% SOURCE: experiments/034-isobutanol-wetlab/scripts/strain_panel.py
+%%         (tables/t1-strain-panel.tex and tables/t2-one-step-away.tex are emitted
+%%         by it; results/strain_panel.csv carries the same records with their quotes)
+%% Every genotype and titer traces to the mirrored paper,
+%% $DATA_ROOT/torchcell-library/zhangBiosensorBranchedchainAmino2022/.
+
+\section{What Is Actually in the Freezer\secstatus{todo}}
+\label{sec:panel}
+
+All eleven tubes come from one paper: Zhang \textit{et al.}, \textit{Nature
+Communications} \textbf{13}, 270 (2022). It builds a transcriptional biosensor
+for branched-chain higher alcohol (\term{BCHA}) metabolism and then uses it to
+run three screens. The sensor is yeast-enhanced green fluorescent protein
+(\term{yEGFP}) under the \gene{LEU1} promoter, which Leu3p activates when
+$\alpha$-isopropylmalate ($\alpha$-IPM) accumulates, and $\alpha$-IPM tracks
+flux through the branched-chain pathway.
+
+\notesec{Two sensor configurations, and they are not interchangeable} The paper
+uses the sensor in two forms, and which form a strain carries determines which
+product its fluorescence reports.
+
+\begin{quote}\small
+the constructs containing yEGFP-PEST/LEU4$_{1-410}$/\gene{leu2}$\Delta$
+(henceforth called the isobutanol configuration) and
+yEGFP/Leu4$\Delta$S547/\gene{LEU2}/\gene{leu4}$\Delta$/\gene{leu9}$\Delta$
+(henceforth called the isopentanol configuration)
+\end{quote}
+
+\noindent
+The isobutanol configuration uses a destabilized yEGFP (the PEST degron) and a
+truncated Leu4p, \term{LEU4$_{1-410}$}, that has lost its leucine regulatory
+domain. The isopentanol configuration uses stable yEGFP and a full-length Leu4p
+carrying a single serine deletion at position 547,
+\term{Leu4$\Delta$S547}. Five of our tubes sit in the first, three in the
+second.
+
+\notesec{The background is CEN.PK2-1C, not S288C} This matters more than
+anything else in the table, and \cref{sec:yko} is about why.
+
+\begin{quote}\small
+\org{S.\ cerevisiae} strain CEN.PK2-1C (MATa \gene{ura3}--52 \gene{trp1}-289
+\gene{leu2}-3,112 \gene{his3}-1 MAL2-8c SUC2) and its derivatives were used in
+this study
+\end{quote}
+
+\input{tables/t1-strain-panel}
+
+\notesec{The tubes are hosts and controls, not the headline strains} Read down
+the titer column and the panel looks weaker than the paper does. That is not an
+accident of which tubes were shipped. Eight of the eleven are either the host a
+mutagenesis library was screened in or the wild-type-allele control that a hit
+was scored against. The strains the paper leads with are the hits, and three of
+them are one transformation away.
+
+\input{tables/t2-one-step-away}
+
+\notesec{The green group is three quarters of a 2$\times$2} YZy311, YZy313 and
+YZy314 (C0043--C0045) are named nowhere in the paper's running text, which is
+why the tube labels give nothing away. Supplementary Table 1 places all three at
+once, and Fig.~3c is where they appear:
+
+\begin{quote}\small
+Isobutanol titers of YZy91 transformed with CEN plasmids containing ILV6$^{WT}$
+(Strain A) or ILV6$^{V110E}$ (\gene{ILV6} mutant \#6, Strain B) compared to
+titers from a strain overexpressing the mitochondrial isobutanol pathway
+(YZy363) transformed with CEN plasmids containing ILV6$^{WT}$ (Strain C) or
+ILV6$^{V110E}$ (\gene{ILV6} mutant \#6, Strain D).
+\end{quote}
+
+\noindent
+That is a 2$\times$2: two hosts crossed with two \gene{ILV6} alleles. C0043 is
+Strain A, C0044 is Strain C, and C0045 is Strain D. The fourth cell, Strain B,
+is YZy312, and it is not in the box.
+
+\input{tables/t3-genotypes}
+
+\notesec{All eleven are yeast, and seven of them carry a plasmid} Nothing in
+this panel is an \org{E.\ coli} strain. Every one of the eleven appears in
+Supplementary Table 1, which the source titles "Yeast strains used in this
+study", and the only \org{E.\ coli} in the paper is DH5$\alpha$ as a cloning
+host, plus \gene{Ec\_ilvC}, an \org{E.\ coli} gene expressed in yeast.
+
+The distinction that does cut through the panel is episomal. C0046, C0049, C0052
+and C0053 are chromosomal only. The other seven each carry one plasmid, and all
+seven plasmids are the same backbone, AmpR CEN \gene{URA3}, built off the empty
+parent pYZ125. Three things follow, and none of them is visible in a genotype
+string.
+
+\begin{itemize}\setlength\itemsep{0.15em}
+  \item \textbf{They have to be held on uracil dropout.} A CEN \gene{URA3}
+    plasmid under no selection segregates, and a plasmid-bearing tube streaked
+    on rich medium quietly becomes its own parent. The paper's own methods grow
+    these in "SC (or SC-ura)" for exactly this reason.
+  \item \textbf{\gene{URA3} is spent in all seven.} That is the marker a guide
+    library wants, so none of the seven can host one without curing the plasmid
+    first.
+  \item \textbf{A plasmid is a separate request from a strain.} AmpR means the
+    plasmids live in \org{E.\ coli} in the source lab. Asking for pYZ228 is not
+    the same transaction as asking for a yeast strain, and it is the cheaper of
+    the two when the combination can be rebuilt here.
+\end{itemize}
+
+\noindent
+The last point simplifies two items on the request list. pYZ125 is the empty
+vector, so the missing vector control is C0049 transformed with pYZ125 rather
+than a request for YZy453; and YZy312 is C0052 transformed with pYZ228 rather
+than a request for a strain.
+
+\notesec{Titers down that column do not compare} Four measurement conditions
+appear in \cref{tab:panel}: 15 percent galactose, 15 percent glucose, 2 percent
+glucose in the dark, and a 48 hour fermentation scored for a different product.
+What survives that is the set of contrasts in which exactly one thing changes,
+and there are three of them.
+
+\begin{itemize}\setlength\itemsep{0.15em}
+  \item \textbf{C0050 against C0051}, isobutanol, 15 percent glucose.
+    \gene{Ll\_ilvD} wild type against \gene{Ll\_ilvD}$^{\text{I433V}}$ on the
+    same CEN backbone in the same host. 3.1-fold, the largest single-allele
+    effect in the panel.
+  \item \textbf{C0044 against C0045}, isobutanol. \gene{ILV6} wild type against
+    \gene{ILV6}$^{\text{V110E}}$, same host, 1.6-fold.
+  \item \textbf{C0047 against C0048}, isopentanol. \gene{LEU4} wild type
+    against \gene{LEU4}$\Delta$S547, same host, with C0046 as the allele-free
+    floor beneath both.
+\end{itemize}
+
+\noindent
+C0043 does not pair with C0044, although both carry wild-type \gene{ILV6}:
+their hosts differ by the \gene{bat2}$\Delta$ \gene{ilv6}$\Delta$ deletions and
+by the mitochondrial pathway at once, so the two differ in more than one thing.
+
+\notesec{There is no wild type in the box} Every one of the eleven carries the
+biosensor cassette, and most carry deletions in \gene{BAT1}, \gene{BAT2},
+\gene{ILV6}, \gene{LEU4}, \gene{LEU9} or the three \gene{PDC} genes. An
+unengineered CEN.PK2-1C reference is not among them, and a differential
+expression analysis wants one. It is a cheap thing to request alongside the
+next shipment.

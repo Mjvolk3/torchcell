@@ -107,3 +107,44 @@ that can fit the compound effect alone gets most of its loss reduction without t
 the encoder's input embedding table, passed to the readout beside the transformer summary
 (`model.identity_skip`, slurm 3025). It asks whether the transformer adds anything once strain
 identity cannot be lost.
+
+## 2026.09.29 - Model search: best compound-inductive model on Vanacloig alone
+
+**Question.** Which model predicts the Vanacloig gene profile of a compound it has never seen,
+from the compound's embedding alone, and does the cell graph transformer beat the simpler
+ones? Budget: 48 hours, two GPUs, beside the two round-1 GPU jobs (slurm 3016, 3030) that
+finish tonight.
+
+**Data.** 143,218 cells: 3,598 queried genes by 41 compounds, 97% filled, one measurement per
+cell (mean of three biological replicates). Median served SE 0.138 against a response sd of
+0.699. Median per-compound ceiling 0.834 (square root of the reliability index).
+
+**Protocol, fixed before any result.**
+
+- Compound-cold folds of `vanacloig_data.make_folds`, 5 folds, fold seeds 0, 1 and 2.
+- Every choice is nested. The ladder picks options by leave-one-compound-out over the fold's
+  non-test compounds. The neural models pick their step on the fold's 4 validation compounds.
+  The test compounds never influence a choice.
+- The primary target is centered Spearman, per compound, and the headline statistic is its
+  median over the 41 compounds.
+- Every model is compared PAIRED against two references on the same compounds, with a
+  bootstrap interval over compounds (`compare_models.py`). The references are nested ridge on
+  FCFP4 (`ladder:krr|linear:fcfp4_count`) and the ladder's whole-pipeline pick
+  (`ladder:selected`).
+- Test centering for the ladder and the factorized models uses the mean over the fold's
+  non-test compounds. Round 1 (`train_vanacloig_cgt.py`, `baselines_same_folds.py`) centered on
+  the 28 training compounds, so those numbers are not paired with round 2.
+
+**Rounds.**
+
+1. `baseline_ladder.py`: kernel ridge and nearest-neighbor maps over 12 compound embeddings
+   and their kernels (slurm 3034).
+2. `train_factorized.py`, `conf/factorized/r2_table.yaml`: a learned gene table times a
+   compound encoder, bilinear or MLP head, 5 folds by 3 seeds plus the seed ensemble
+   (slurm 3035).
+3. The same trainer with the cell graph transformer as the gene encoder,
+   `conf/factorized/r2_cgt.yaml`. One encoder pass per strain per step, not per cell.
+4. Hypothesis to test if Vanacloig alone plateaus: pretrain the compound encoder on the other
+   chemogenomic stores, excluding every Vanacloig compound. Wildenhain has 5,170 compounds on
+   242 genes, Hillenmeyer heterozygous has 303 compounds and Hoepfner 148 with InChIKeys.
+   Wildenhain shares 10 of the 41 Vanacloig compounds, and Hoepfner and Hillenmeyer 2 each.

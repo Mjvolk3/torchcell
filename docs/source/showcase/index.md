@@ -6,4 +6,5 @@ Each showcase page takes one group of datasets from the served knowledge graph a
 :maxdepth: 1
 
 essentiality-smf
+amino-acid-betaxanthin
 ```

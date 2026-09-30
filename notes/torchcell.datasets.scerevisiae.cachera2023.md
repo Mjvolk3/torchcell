@@ -302,3 +302,14 @@ default to its own PR at 67 call sites. The honest order is therefore: flip `ove
 default `False` with a DDP-safe build-when-absent path first, then anchor these two defaults
 in the same PR. The `go.obo` download deserves the same treatment the release files got, a
 sha256-pinned tier entry with no download path, rather than an anchored relative path.
+
+## 2026.09.29 - Showcase page (group 3): medium, temperature and readout unsourced
+
+Shown on `docs/source/showcase/amino-acid-betaxanthin.md` ([[experiments.034-showcase-datasets.scripts.amino_acid_betaxanthin]]). The dev store differs from release `2026.09.21-ab6d8c5d` only in `perturbed_gene_name` (3,930 records, the #195 renames). Found while writing the caveats, measured by the script on the mirror OCR (`paper.md` sha256 `5fb7310d...`):
+
+- The screen plate is YPD with G418 (line 117, "final CRI-SPA screen plate (YPD-G418)"); the loader stores `Media(name="SC", state="solid")`.
+- No line holds a degree sign or the word "temperature"; the loader's `Temperature(value=30)` is unsourced.
+- The readout is colony yellowness, "the geometric mean of Value and Saturation of image pixels in the HSV color space" (line 58), not fluorescence; `measurement_type` says `cri_spa_corrected_fluorescence_intensity_24h`.
+- The *ARO4* and *ARO7* deletions share one `GenotypeAggregator` record because their gene set equals the cassette's.
+
+No issue filed yet; all three record fields would change, so a fix is a full-rebuild item.

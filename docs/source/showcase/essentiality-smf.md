@@ -108,6 +108,44 @@ What the query returned from the served release, and what the conversion, the ag
 
 `Neo4jCellDataset.label_df` is a convenience table, not a label policy: it keeps the last non-missing entry of each record, so its value for a record that holds a converted 0 and a measurement depends on entry order. Read labels for training through a `LabelPolicy` (`torchcell.data.label_table.build_label_table`).
 
+## Getting the data
+
+Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../guide/downloads`). The public endpoint is not yet deployed (its deployment on Radiant is pending), so today both loaders build their stores from the source files instead, and the commands in this section apply once an endpoint URL and key are issued.
+
+| dataset | loader | store slug |
+|---|---|---|
+| SGD essentiality | `torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset` | `gene_essentiality_sgd` |
+| Costanzo 2016 SMF | `torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset` | `smf_costanzo2016` |
+
+From Python, with `TC_DATA_URL` and `TC_DATA_API_KEY` set:
+
+```python
+from pathlib import Path
+
+from torchcell.datasets.client import DatasetClient, unpack_artifact
+
+client = DatasetClient.from_env()  # TC_DATA_URL, TC_DATA_API_KEY
+for slug in ("gene_essentiality_sgd", "smf_costanzo2016"):
+    artifact = client.select(slug)  # newest supported row on this major.minor
+    if artifact is None:
+        raise SystemExit(f"nothing for {slug} compatible with the installed torchcell")
+    archive = client.download(artifact, dest=Path("artifacts") / artifact.archive)  # verifies sha256
+    unpack_artifact(archive, Path("data/torchcell") / slug)
+```
+
+With curl, one dataset at a time (the archive name comes from the index row):
+
+```bash
+curl -H "X-API-Key: $TC_DATA_API_KEY" "$TC_DATA_URL/datasets/smf_costanzo2016"
+curl -C - -H "X-API-Key: $TC_DATA_API_KEY" \
+  -o "$ARCHIVE" "$TC_DATA_URL/datasets/smf_costanzo2016/$ARCHIVE"
+sha256sum "$ARCHIVE"   # must equal the row's archive_sha256
+mkdir -p data/torchcell/smf_costanzo2016
+tar -xf "$ARCHIVE" -C data/torchcell/smf_costanzo2016
+```
+
+The loaders do this themselves. With both variables set, constructing a loader whose `processed/lmdb` is absent selects, downloads, verifies and unpacks that dataset's archive instead of running `process()`, and raises, naming the slug, when the endpoint has nothing compatible with the installed version; it never falls back to the source files while `TC_DATA_URL` is set. With the variables unset, `SmfCostanzo2016Dataset` downloads the Costanzo 2016 supplementary archive and `GeneEssentialitySgdDataset` reads the SGD locus JSON files under `$DATA_ROOT/data/sgd/genome/genes`, fetching them from SGD first when fewer than 100 are present; each then runs `process()`.
+
 ## Caveats
 
 **Temperature shown, and issue #410.** For deletion and DAmP strains Costanzo 2016 released one temperature-combined fitness. The supplementary text says: "Because we observed a close correlation between fitness measured at [26 °C] and [30 °C] for deletion mutants , we combined measurements from different temperatures in the average for each deletion mutant. Fitness associated with TS mutants was computed separately at either [26 °C] or [30 °C] ." (mirror OCR `costanzoGlobalGeneticInteraction2016/si/si1.md`, line 96, sha256 `1828703b0ff739fd...`; bracketed temperatures replace OCR-garbled tokens, the rest is verbatim). `SmfCostanzo2016Dataset` nevertheless emits each deletion and DAmP strain twice, once at 26 °C and once at 30 °C, with the same value (issue [#410](https://github.com/Mjvolk3/torchcell/issues/410); the twin counts are in the summary above). The two temperature panels of the histogram therefore differ only through the TS alleles. The per-strain-type tables use the 30 °C records: for deletion and DAmP strains that record carries the one combined value exactly once, for TS alleles it is the 30 °C measurement, and 30 °C is the first Costanzo source in the default `LabelPolicy`. The 26 °C label on a deletion or DAmP record is not a 26 °C measurement.

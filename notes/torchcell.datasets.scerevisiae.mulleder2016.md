@@ -141,3 +141,7 @@ A read-only Fable 5.1 agent graded eight recorded claims against the mirror, the
 - The reference `n_replicates = {aa: 1}` misdescribes the MCD robust mean, a statistic over 4,678 strains. #489 (before the next build).
 - The complemented WT rows (YOR202W batch 04, YLR303W batch 02) exist in `data_raw` but not in the mM sheet, which bears on review flag 1.
 - The citation is Cell 167(2):553-565.e12 (PMC5055083), not "Cell 165:1282".
+
+## 2026.09.29 - Showcase page (group 3)
+
+Shown on `docs/source/showcase/amino-acid-betaxanthin.md` ([[experiments.034-showcase-datasets.scripts.amino_acid_betaxanthin]]). The dev store's content sha256 differs from release `2026.09.21-ab6d8c5d`: every record differs only in `environment.media` (dev `SM_AGAR` from the 2026.09.23 rebuild, served `SM` stub); no phenotype field differs. The page's caveats cite the 2026.09.29 re-verification (#487, #488, #489, claim M3) and the open medium-state question (#143).

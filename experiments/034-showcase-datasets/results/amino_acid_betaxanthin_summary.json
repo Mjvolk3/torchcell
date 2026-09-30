@@ -1,0 +1,707 @@
+{
+  "script": "experiments/034-showcase-datasets/scripts/amino_acid_betaxanthin.py",
+  "generated_utc": "2026-09-30T04:15:28+00:00",
+  "sources": {
+    "AminoAcidMulleder2016Dataset": "/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_mulleder2016/processed/lmdb",
+    "AminoAcidCooper2010Dataset": "/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_cooper2010/processed/lmdb",
+    "BetaxanthinCachera2023Dataset": "/scratch/projects/torchcell-scratch/data/torchcell/betaxanthin_cachera2023/processed/lmdb"
+  },
+  "datasets": {
+    "AminoAcidMulleder2016Dataset": {
+      "records": 4678,
+      "deleted_genes": 4678,
+      "n_keys": 19,
+      "measurement_type": "intracellular_concentration_mM",
+      "media_name": "SM agar (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose + 2% agar)",
+      "media_state": "solid",
+      "temperature": "30 \u00b0C",
+      "strain": "BY4741",
+      "n_replicates_range": "1 on every key",
+      "se_stored": "none"
+    },
+    "AminoAcidCooper2010Dataset": {
+      "records": 4313,
+      "deleted_genes": 4291,
+      "n_keys": 17,
+      "measurement_type": "ce_lif_peak_area_ratio_to_plate_mean",
+      "media_name": "SC minus Ala/Asn/Cys/Gln/Gly/Pro/Ura (Cooper 2010 synthetic complete recipe)",
+      "media_state": "liquid",
+      "temperature": "not recorded (typed gap)",
+      "strain": "BY4741",
+      "n_replicates_range": "1 on every key",
+      "se_stored": "none"
+    },
+    "BetaxanthinCachera2023Dataset": {
+      "records": 4719,
+      "deleted_genes": 4719,
+      "n_keys": 1,
+      "measurement_type": "cri_spa_corrected_fluorescence_intensity_24h",
+      "media_name": "SC",
+      "media_state": "solid",
+      "temperature": "30 \u00b0C",
+      "strain": "BY4741",
+      "n_replicates_range": "1 to 44",
+      "se_stored": "4,719 records"
+    }
+  },
+  "overlap": {
+    "mulleder_and_cooper": 4074,
+    "mulleder_and_cachera": 4477,
+    "cooper_and_cachera": 4249,
+    "all_three": 4052,
+    "union": 4940
+  },
+  "mulleder_levels": {
+    "glutamine": {
+      "n": 4678,
+      "min": 0.38340837645493,
+      "q1": 26.072565031287827,
+      "median": 28.2441873448774,
+      "mean": 27.95135849115012,
+      "q3": 29.95960796708915,
+      "max": 95.4843724609407,
+      "reference": 28.51698198
+    },
+    "glutamate": {
+      "n": 4678,
+      "min": 3.43507915445609,
+      "q1": 20.33775900488525,
+      "median": 21.4655727606026,
+      "mean": 21.80540213718094,
+      "q3": 22.82464804176685,
+      "max": 77.9857567001164,
+      "reference": 21.59646307
+    },
+    "alanine": {
+      "n": 4678,
+      "min": 2.58025016705769,
+      "q1": 5.8077674312674725,
+      "median": 6.12709409654799,
+      "mean": 6.317622004205331,
+      "q3": 6.50428458048037,
+      "max": 19.6187723540163,
+      "reference": 6.03930334
+    },
+    "aspartate": {
+      "n": 4678,
+      "min": 1.1447991991975,
+      "q1": 4.784660305082495,
+      "median": 5.03558632403167,
+      "mean": 5.106073203304186,
+      "q3": 5.358382825551668,
+      "max": 13.2913595051229,
+      "reference": 5.04046833
+    },
+    "histidine": {
+      "n": 4678,
+      "min": 0.9924245173440931,
+      "q1": 4.284170321446943,
+      "median": 4.77491431250596,
+      "mean": 4.8104153600224775,
+      "q3": 5.322324415460528,
+      "max": 9.67789020438452,
+      "reference": 4.86394531
+    },
+    "threonine": {
+      "n": 4678,
+      "min": 2.26242933204069,
+      "q1": 3.846015128366695,
+      "median": 3.99645376419888,
+      "mean": 4.019888760784071,
+      "q3": 4.165574127161291,
+      "max": 10.1550898522488,
+      "reference": 3.99375517
+    },
+    "arginine": {
+      "n": 4678,
+      "min": 0.230185149681806,
+      "q1": 2.2769519493469197,
+      "median": 2.916543995924715,
+      "mean": 3.18974003132922,
+      "q3": 3.72079124586128,
+      "max": 17.999248244336002,
+      "reference": 2.95610903
+    },
+    "tyrosine": {
+      "n": 4678,
+      "min": 0.6797430861261761,
+      "q1": 2.3988520948709326,
+      "median": 2.7418651386635498,
+      "mean": 2.8634662575103267,
+      "q3": 3.120223696077187,
+      "max": 19.9806860226811,
+      "reference": 2.67655545
+    },
+    "serine": {
+      "n": 4678,
+      "min": 0.49902137955059206,
+      "q1": 2.1652575393365274,
+      "median": 2.277089016366125,
+      "mean": 2.2818469955224776,
+      "q3": 2.4145503809409723,
+      "max": 13.4679849796234,
+      "reference": 2.31180604
+    },
+    "glycine": {
+      "n": 4678,
+      "min": 0.0202754793286238,
+      "q1": 1.6582679229620976,
+      "median": 1.82996107041558,
+      "mean": 1.9117266975214506,
+      "q3": 2.0653131485532326,
+      "max": 19.749540283424,
+      "reference": 1.8442543
+    },
+    "valine": {
+      "n": 4678,
+      "min": 0.37753359827646904,
+      "q1": 1.2939415156050473,
+      "median": 1.35022585812751,
+      "mean": 1.3702249994483484,
+      "q3": 1.3951265131457076,
+      "max": 6.33947683419447,
+      "reference": 1.34027512
+    },
+    "asparagine": {
+      "n": 4678,
+      "min": 0.15854653660214502,
+      "q1": 1.1652823761990825,
+      "median": 1.22442530550694,
+      "mean": 1.2267063421336615,
+      "q3": 1.2830630003758476,
+      "max": 2.93449355152073,
+      "reference": 1.22273623
+    },
+    "proline": {
+      "n": 4678,
+      "min": 0.133710006383251,
+      "q1": 1.064812535550325,
+      "median": 1.12802677449486,
+      "mean": 1.1237164794795924,
+      "q3": 1.19104425058767,
+      "max": 2.07242069991448,
+      "reference": 1.1420071
+    },
+    "lysine": {
+      "n": 4678,
+      "min": 0.0760895838101083,
+      "q1": 0.6720268602644488,
+      "median": 0.7732601540038301,
+      "mean": 0.8161928088622249,
+      "q3": 0.9075269292912808,
+      "max": 9.5596631147094,
+      "reference": 0.76744249
+    },
+    "isoleucine": {
+      "n": 4678,
+      "min": 0.21952549339491903,
+      "q1": 0.38307073283326903,
+      "median": 0.39936557691247,
+      "mean": 0.39970735273378466,
+      "q3": 0.41314814716179804,
+      "max": 0.7343890500608681,
+      "reference": 0.39595666
+    },
+    "phenylalanine": {
+      "n": 4678,
+      "min": 0.12808028165494,
+      "q1": 0.257747073834233,
+      "median": 0.279850072505099,
+      "mean": 0.2814170731913086,
+      "q3": 0.30135264592872,
+      "max": 1.83642965625141,
+      "reference": 0.27907031
+    },
+    "leucine": {
+      "n": 4678,
+      "min": 0.0358604329567945,
+      "q1": 0.24065024120621925,
+      "median": 0.26769644146562,
+      "mean": 0.2673077164160332,
+      "q3": 0.29404791758171156,
+      "max": 0.7432400275230051,
+      "reference": 0.27384106
+    },
+    "methionine": {
+      "n": 4678,
+      "min": 0.0016098754066288601,
+      "q1": 0.11338838827453751,
+      "median": 0.126497929700501,
+      "mean": 0.12395549524469565,
+      "q3": 0.1366944352333975,
+      "max": 0.4705417069139,
+      "reference": 0.130254
+    },
+    "tryptophan": {
+      "n": 4678,
+      "min": 0.0115982267986631,
+      "q1": 0.03547384257497485,
+      "median": 0.0388393711641798,
+      "mean": 0.038977088112697525,
+      "q3": 0.041974838719940503,
+      "max": 0.16214526427075301,
+      "reference": 0.038977950000000004
+    }
+  },
+  "cooper_levels": {
+    "glutamine+valine": {
+      "n": 4310,
+      "min": 0.067312272,
+      "q1": 0.84952309,
+      "median": 0.980339973,
+      "mean": 0.9977955635211135,
+      "q3": 1.1219439895,
+      "max": 3.458326719,
+      "zeros": 0
+    },
+    "alanine": {
+      "n": 4309,
+      "min": 0.019690355,
+      "q1": 0.78442789,
+      "median": 0.963105973,
+      "mean": 0.997369559692272,
+      "q3": 1.17774972,
+      "max": 3.024751176,
+      "zeros": 0
+    },
+    "lysine_a": {
+      "n": 4307,
+      "min": 0.019105325,
+      "q1": 0.5436662765,
+      "median": 0.770156042,
+      "mean": 1.015865020785001,
+      "q3": 1.1075818905,
+      "max": 14.43559655,
+      "zeros": 0
+    },
+    "arginine": {
+      "n": 4305,
+      "min": 0.035390867,
+      "q1": 0.620554307,
+      "median": 0.869182982,
+      "mean": 1.0038179607828108,
+      "q3": 1.22898712,
+      "max": 8.273555767,
+      "zeros": 0
+    },
+    "leucine+isoleucine+citrulline": {
+      "n": 4305,
+      "min": 0.073435359,
+      "q1": 0.835485273,
+      "median": 0.953770672,
+      "mean": 1.0053136141535424,
+      "q3": 1.11924142,
+      "max": 4.811522943,
+      "zeros": 0
+    },
+    "glycine": {
+      "n": 4305,
+      "min": 0.029038065,
+      "q1": 0.725150169,
+      "median": 0.923517103,
+      "mean": 1.0040329284211384,
+      "q3": 1.162748073,
+      "max": 5.729256032,
+      "zeros": 0
+    },
+    "asparagine+tyrosine": {
+      "n": 4304,
+      "min": 0.022226953,
+      "q1": 0.816181203,
+      "median": 0.9504088555000001,
+      "mean": 1.0063378520550652,
+      "q3": 1.1049540225,
+      "max": 5.064666856,
+      "zeros": 0
+    },
+    "methionine+proline": {
+      "n": 4297,
+      "min": 0.051740555,
+      "q1": 0.689349445,
+      "median": 0.930287855,
+      "mean": 1.0029811485424713,
+      "q3": 1.224270188,
+      "max": 5.869223206,
+      "zeros": 0
+    },
+    "lysine_b": {
+      "n": 4293,
+      "min": 0.0,
+      "q1": 0.511520813,
+      "median": 0.714711427,
+      "mean": 1.0234996978262287,
+      "q3": 1.043278437,
+      "max": 15.10812309,
+      "zeros": 1
+    },
+    "glutamate": {
+      "n": 4276,
+      "min": 0.0,
+      "q1": 0.9594304140000001,
+      "median": 1.4593093714999998,
+      "mean": 2.1423941478985036,
+      "q3": 2.6235740534999996,
+      "max": 20.06712234,
+      "zeros": 1
+    },
+    "ornithine": {
+      "n": 4030,
+      "min": 0.0,
+      "q1": 0.5964534875,
+      "median": 0.867073615,
+      "mean": 1.0553535567193548,
+      "q3": 1.2434224627500001,
+      "max": 36.18178121,
+      "zeros": 36
+    },
+    "serine": {
+      "n": 3992,
+      "min": 0.0,
+      "q1": 0.5448424935,
+      "median": 0.862370415,
+      "mean": 1.084355876750501,
+      "q3": 1.17866005,
+      "max": 47.12914863,
+      "zeros": 74
+    },
+    "threonine": {
+      "n": 3981,
+      "min": 0.0,
+      "q1": 0.540987569,
+      "median": 0.864023451,
+      "mean": 1.0940766751303692,
+      "q3": 1.252212916,
+      "max": 31.63541324,
+      "zeros": 21
+    },
+    "aspartate": {
+      "n": 3960,
+      "min": 0.0,
+      "q1": 0.723973846,
+      "median": 1.298405918,
+      "mean": 1.97928639680202,
+      "q3": 2.28094550925,
+      "max": 57.40667343,
+      "zeros": 57
+    },
+    "n_acetylornithine": {
+      "n": 3305,
+      "min": 0.0,
+      "q1": 0.380060847,
+      "median": 0.759670756,
+      "mean": 1.298337958042965,
+      "q3": 1.460469284,
+      "max": 40.62138616,
+      "zeros": 233
+    },
+    "gshbiotin": {
+      "n": 2831,
+      "min": 0.0,
+      "q1": 0.523152364,
+      "median": 0.983628271,
+      "mean": 1.5124658618318616,
+      "q3": 1.713926903,
+      "max": 24.52346433,
+      "zeros": 35
+    },
+    "lysine_related_peak1": {
+      "n": 2004,
+      "min": 0.0,
+      "q1": 0.41960586475,
+      "median": 0.6492258235,
+      "mean": 2.229048934025948,
+      "q3": 1.5447286779999998,
+      "max": 83.0,
+      "zeros": 201
+    }
+  },
+  "cooper_ledger": {
+    "n_source_rows": 4382,
+    "n_kept": 4313,
+    "n_dropped_orfs": 22,
+    "n_renamed": 47,
+    "n_normalized": 5,
+    "n_duplicate_rows": 47,
+    "n_excluded_non_deletion": 0,
+    "n_essentiality_flagged": 22
+  },
+  "cachera": {
+    "betaxanthin score": {
+      "n": 4719,
+      "min": -2.600495426201653,
+      "q1": -0.31663251528491154,
+      "median": -0.0075433116772117,
+      "mean": -0.014297917984252945,
+      "q3": 0.28512275454139985,
+      "max": 2.7043779620586794
+    },
+    "colonies per strain (n_replicates)": {
+      "n": 4719,
+      "min": 1.0,
+      "q1": 14.0,
+      "median": 15.0,
+      "mean": 14.457512184784912,
+      "q3": 16.0,
+      "max": 44.0
+    },
+    "standard error (non-NaN)": {
+      "n": 4681,
+      "min": 0.024473485839753926,
+      "q1": 0.14362202871268348,
+      "median": 0.20214943738411242,
+      "mean": 0.2141812281873901,
+      "q3": 0.2704912629924093,
+      "max": 1.9072514052156067
+    }
+  },
+  "cachera_se_nan": 38,
+  "agreement": [
+    {
+      "key": "alanine",
+      "n": 4071,
+      "spearman": -0.005907243420127041
+    },
+    {
+      "key": "arginine",
+      "n": 4067,
+      "spearman": 5.1876943302207446e-05
+    },
+    {
+      "key": "aspartate",
+      "n": 3756,
+      "spearman": 0.030382456919612593
+    },
+    {
+      "key": "glutamate",
+      "n": 4044,
+      "spearman": 0.04467723677524053
+    },
+    {
+      "key": "glycine",
+      "n": 4067,
+      "spearman": 0.058732658354932306
+    },
+    {
+      "key": "serine",
+      "n": 3778,
+      "spearman": 0.006900891741822464
+    },
+    {
+      "key": "threonine",
+      "n": 3773,
+      "spearman": 0.005951823622283841
+    }
+  ],
+  "cooper_duplicate_agreement": [
+    {
+      "key": "alanine",
+      "n": 47,
+      "spearman": -0.02092969472710453
+    },
+    {
+      "key": "arginine",
+      "n": 47,
+      "spearman": 0.06972710453283996
+    },
+    {
+      "key": "aspartate",
+      "n": 39,
+      "spearman": 0.037449392712550614
+    },
+    {
+      "key": "glutamate",
+      "n": 47,
+      "spearman": 0.012372802960222017
+    },
+    {
+      "key": "glycine",
+      "n": 47,
+      "spearman": 0.13309435707678077
+    },
+    {
+      "key": "serine",
+      "n": 41,
+      "spearman": 0.0018294276574340842
+    },
+    {
+      "key": "threonine",
+      "n": 42,
+      "spearman": 0.027065353938183354
+    }
+  ],
+  "cachera_cassette_genes": [
+    "CYP76AD1",
+    "DOD",
+    "YBR249C",
+    "YPR060C"
+  ],
+  "cachera_deletions_of_cassette_genes": [
+    [
+      "YBR249C",
+      "ARO4"
+    ],
+    [
+      "YPR060C",
+      "ARO7"
+    ]
+  ],
+  "cooper_genes_with_two_strains": 22,
+  "served_vs_dev": {
+    "AminoAcidMulleder2016Dataset": {
+      "dev_records": 4678,
+      "dev_content_sha256": "bc92df7f3359d556b63446a97094ce09585cf06375fa911419730525114e08f6",
+      "served_experiments": 4678,
+      "served_content_sha256": "6c5ad75d2ca8fa1d8cbe5483a67123478500552bf75b5b30b84f8ec3c89c262c",
+      "identical": false,
+      "returned_entries": 4678,
+      "dev_records_deleting_a_gene_outside_gene_set": 0,
+      "dev_genes_outside_gene_set": [],
+      "matched_one_to_one": 4678,
+      "matched_pairs_differing": 4678,
+      "genes_returned_more_than_once": [],
+      "differing_paths": {
+        "environment.media.components": 4678,
+        "environment.media.name": 4678,
+        "environment.media.provenance": 4678,
+        "environment.media.base_medium": 4678
+      },
+      "differing_path_examples": {
+        "environment.media.base_medium": {
+          "leaf": "environment.media.base_medium",
+          "served": "None",
+          "dev": "'SM'"
+        },
+        "environment.media.components": {
+          "leaf": "environment.media.components",
+          "served": "[]",
+          "dev": "'<absent>'"
+        },
+        "environment.media.name": {
+          "leaf": "environment.media.name",
+          "served": "'SM'",
+          "dev": "'SM agar (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose + 2% agar)'"
+        },
+        "environment.media.provenance": {
+          "leaf": "environment.media.provenance",
+          "served": "[]",
+          "dev": "'<absent>'"
+        }
+      }
+    },
+    "AminoAcidCooper2010Dataset": {
+      "dev_records": 4313,
+      "dev_content_sha256": "09ddfc956c239ac4aaec81d5b4f04d2e3e47c7023b7948a0ef616719f77ed42a",
+      "served_experiments": 4313,
+      "served_content_sha256": "09ddfc956c239ac4aaec81d5b4f04d2e3e47c7023b7948a0ef616719f77ed42a",
+      "identical": true,
+      "returned_entries": 4313,
+      "dev_records_deleting_a_gene_outside_gene_set": 0,
+      "dev_genes_outside_gene_set": []
+    },
+    "BetaxanthinCachera2023Dataset": {
+      "dev_records": 4719,
+      "dev_content_sha256": "bcf528614e48defaafcd950eae66786ac0e1f0875dfcd232718ce92ee0325c8e",
+      "served_experiments": 4719,
+      "served_content_sha256": "afc2eaa463e399d237adddfd023c52338430db59b2a19c4905dc94e7626733e1",
+      "identical": false,
+      "returned_entries": 4706,
+      "dev_records_deleting_a_gene_outside_gene_set": 13,
+      "dev_genes_outside_gene_set": [
+        "YCL074W",
+        "YCL075W",
+        "YDR134C",
+        "YER109C",
+        "YFL056C",
+        "YIL167W",
+        "YIL170W",
+        "YIR043C",
+        "YJR026W",
+        "YLL016W",
+        "YLL017W",
+        "YOL153C",
+        "YOR031W"
+      ],
+      "matched_one_to_one": 4706,
+      "matched_pairs_differing": 3930,
+      "genes_returned_more_than_once": [],
+      "differing_paths": {
+        "genotype.perturbations.perturbed_gene_name": 3930
+      },
+      "differing_path_examples": {
+        "genotype.perturbations.perturbed_gene_name": {
+          "leaf": "genotype.perturbations[3].perturbed_gene_name",
+          "served": "'YMR303C'",
+          "dev": "'ADH2'"
+        }
+      }
+    }
+  },
+  "query_slurm_job_id": "3056",
+  "served_release": "2026.09.21-ab6d8c5d",
+  "figures": {
+    "mulleder_levels": {
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/mulleder_amino_acid_levels.svg",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/mulleder_amino_acid_levels.png"
+    },
+    "cachera_score": {
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/cachera_betaxanthin_score.svg",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/cachera_betaxanthin_score.png"
+    },
+    "agreement": {
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/mulleder_cooper_agreement.svg",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/mulleder_cooper_agreement.png"
+    }
+  },
+  "record_gene": "YAL004W",
+  "record_indices": {
+    "AminoAcidMulleder2016Dataset": 1,
+    "AminoAcidCooper2010Dataset": 2958,
+    "BetaxanthinCachera2023Dataset": 3462
+  },
+  "cachera_sources": {
+    "paper_md": "$DATA_ROOT/torchcell-library/cacheraCRISPAHighthroughputMethod2023/paper.md",
+    "sha256": "5fb7310dacb44bc04fc121a990e4ccc70020c9598877c4b074656e91fc4f32d5",
+    "quotes": {
+      "we picked cells from each of the four colonies obtained for each strain on the final CRI-SPA screen plate (YPD-G418)": 117,
+      "filter taking the geometric mean of Value and Saturation of image pixels in the HSV color space": 58,
+      "which was our observation on YPD media": 58
+    },
+    "temperature_lines": []
+  },
+  "provenance": {
+    "AminoAcidMulleder2016Dataset": {
+      "store": "data/torchcell/amino_acid_mulleder2016/processed/lmdb",
+      "citation_key": "mullederFunctionalMetabolomicsDescribes2016",
+      "paper_md_sha256": "20412bec5b930d1fa43d326d8f9baca267130ddef5fdaa804f19e1209f925e6e",
+      "publication": "DOI `10.1016/j.cell.2016.09.007`, PubMed `27693354`",
+      "paper": "`$DATA_ROOT/torchcell-library/mullederFunctionalMetabolomicsDescribes2016/paper.md`, sha256 `20412bec5b930d1f...`",
+      "loader": "torchcell/datasets/scerevisiae/mulleder2016.py::AminoAcidMulleder2016Dataset",
+      "raw_sha256": "a7fcb4bc8aa5e394e7f6e2b99e327eaa88fa04111ab5602fc7cb3445f653802e",
+      "raw": "`$DATA_ROOT/data/torchcell/amino_acid_mulleder2016/raw/Table_S3_Complete_Dataset.xls`, sha256 `a7fcb4bc8aa5e394e7f6e2b99e327eaa88fa04111ab5602fc7cb3445f653802e`",
+      "source": "Table S3 of the paper (Cell SI `mmc3.xls`, byte-identical to the loader's pinned Mendeley Data copy, 10.17632/bnzdhd6ck8.1); no raw-mirror record under `$DATA_ROOT/torchcell-raw/` yet (issue #487)"
+    },
+    "AminoAcidCooper2010Dataset": {
+      "store": "data/torchcell/amino_acid_cooper2010/processed/lmdb",
+      "citation_key": "cooperHighthroughputProfilingAmino2010",
+      "paper_md_sha256": "b7739b1eeaf68b609a3e13b870f28649c331fe36b3c930bbbfd8a4c4fd19e52a",
+      "publication": "DOI `10.1101/gr.105825.110`, PubMed `20610602`",
+      "paper": "`$DATA_ROOT/torchcell-library/cooperHighthroughputProfilingAmino2010/paper.md`, sha256 `b7739b1eeaf68b60...`",
+      "loader": "torchcell/datasets/scerevisiae/cooper2010.py::AminoAcidCooper2010Dataset",
+      "raw_sha256": "3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb",
+      "raw": "`$DATA_ROOT/torchcell-raw/cooperHighthroughputProfilingAmino2010/data/SupplementalTable4.txt`, sha256 `3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb` (the dev store's `raw/` links to it)",
+      "source": "Genome Research Supplemental Table 4; raw-mirror `manifest.json` retrieval method `manual_browser` (the supplement sits behind an institutional login)"
+    },
+    "BetaxanthinCachera2023Dataset": {
+      "store": "data/torchcell/betaxanthin_cachera2023/processed/lmdb",
+      "citation_key": "cacheraCRISPAHighthroughputMethod2023",
+      "paper_md_sha256": "5fb7310dacb44bc04fc121a990e4ccc70020c9598877c4b074656e91fc4f32d5",
+      "publication": "DOI `10.1093/nar/gkad656`, PubMed `37572348`",
+      "paper": "`$DATA_ROOT/torchcell-library/cacheraCRISPAHighthroughputMethod2023/paper.md`, sha256 `5fb7310dacb44bc0...`",
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py::BetaxanthinCachera2023Dataset",
+      "raw_sha256": "71f55609067301e1430a1ab3226618c46428488753c6412603e8f0c21bbcac8a",
+      "mirror_sha256": "71f55609067301e1430a1ab3226618c46428488753c6412603e8f0c21bbcac8a",
+      "raw": "`$DATA_ROOT/data/torchcell/betaxanthin_cachera2023/raw/GA1_2_4_6.csv`, sha256 `71f55609067301e1430a1ab3226618c46428488753c6412603e8f0c21bbcac8a`",
+      "source": "the authors' CRI-SPA repository file named by the paper's Data Availability; mirrored at `$DATA_ROOT/torchcell-library/cacheraCRISPAHighthroughputMethod2023/si/GA1_2_4_6.csv`, sha256 identical to the raw file"
+    }
+  }
+}

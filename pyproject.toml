@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "torchcell"
 version = "1.5.0"
-description = "An example package"
+description = "Provenance-first experimental data for the S. cerevisiae virtual cell: sha256-pinned dataset loaders, a knowledge graph, and models"
 readme = "README.md"
 authors = [{ name = "Michael Volk", email = "michaeljvolk7@gmail.com" }]
 license = { file = "LICENSE" }
@@ -16,7 +16,7 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
 ]
-keywords = ["An example package", "starving artist"]
+keywords = ["yeast", "S. cerevisiae", "genotype-phenotype", "knowledge graph", "pytorch", "systems biology"]
 # dependencies = []
 # Floor tracks the torch / torch_geometric stack we run (env is 3.13.0);
 # backwards compatibility with older interpreters is a non-goal.
@@ -306,7 +306,12 @@ version_variables = [
     "torchcell/__version__.py:__version__",
 ]
 branch = "main"
-upload_to_pypi = "true"
+# Built inside the semantic-release action on a release-producing push; the two
+# publish steps in .github/workflows/semantic-release.yaml then upload dist/* to the
+# GitHub release and to PyPI (trusted publishing, no token). `upload_to_pypi` was a
+# python-semantic-release v7 option that v10 ignores, which is why PyPI sat at 0.2.8
+# (2024-09-20) while GitHub releases reached v1.5.0.
+build_command = "python -m pip install build && python -m build"
 # scripts/release_parser.py: the conventional parser (reads the TAG(scope): subject form
 # the repo writes; python-semantic-release 10.4.1's scipy parser does not) plus
 # major_tags. Tested by tests/scripts/test_release_parser.py on real subjects.

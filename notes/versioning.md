@@ -205,3 +205,13 @@ release-before-build recipe above is unchanged except that step 1 now reads `REL
 for the minor, `DB: ...` for the patch. `tests/scripts/test_release_parser.py` pins the
 map on the same 30 real subjects (now 28 no-release, 2 unparsed) and on one subject per
 bumping tag; `docs/source/guide/contributing.md` carries the same table.
+
+## 2026.09.30 - PyPI publishing rejoins the release
+
+PyPI stopped at 0.2.8 (uploaded 2024-09-20) while GitHub releases reached v1.5.0, because `upload_to_pypi = "true"` in `[tool.semantic_release]` is a python-semantic-release v7 option that the v8+ action ignores; nothing built a distribution and nothing uploaded one. The last hand path was the VS Code task `tc: publish pypi` (commit a36711669, 2024-02-13), which ran `python -m build` and `twine upload dist/*` from a local checkout.
+
+The release workflow now does the whole job on a bumping push. `build_command = "python -m pip install build && python -m build"` builds the wheel and sdist inside the semantic-release step; `python-semantic-release/publish-action` attaches `dist/*` to the GitHub release; `pypa/gh-action-pypi-publish` uploads them to PyPI through trusted publishing from the job's `pypi` environment (`id-token: write`), so no PyPI token is stored. Both publish steps are gated on `steps.release.outputs.released == 'true'`, so a push that parses with no bump publishes nothing. The action is pinned to `v10.7.0` instead of `master`.
+
+Checked locally on 293780e4b: `python -m build` produced `torchcell-1.5.0-py3-none-any.whl` (2.4 MB, 539 files, the `py.typed`, adapter and KG configuration, `.cql` queries and registry included, no `tests/` or `experiments/`) and `torchcell-1.5.0.tar.gz` (2.0 MB); `twine check` passed both. The PyPI page renders `README.md`, so its logo now points at the raw GitHub URL, and the placeholder `description` and `keywords` from the package template are replaced.
+
+One step is outside the repository: the trusted publisher has to be registered once on pypi.org (project `torchcell`, owner `Mjvolk3`, repository `torchcell`, workflow `semantic-release.yaml`, environment `pypi`). Until it is, the first bumping push still tags and creates the GitHub release with the dist attached, and only the PyPI step fails. The next `REL` commit after that registration is the first version on PyPI since 0.2.8.

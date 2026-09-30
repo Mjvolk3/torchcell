@@ -3,12 +3,16 @@ name: Semantic Release
 on:
   push:
     branches:
-      - main  # Change this to 'master' if your main branch is named 'master'
+      - main
 
 jobs:
   release:
     runs-on: ubuntu-latest
     concurrency: release
+    # The `pypi` environment is the trusted publisher registered on pypi.org for this
+    # repository and this workflow file; PyPI mints a short-lived token from the OIDC
+    # id-token, so no PyPI secret is stored.
+    environment: pypi
     permissions:
       id-token: write
       contents: write
@@ -21,7 +25,23 @@ jobs:
         # GITHUB_TOKEN / github-actions[bot] cannot bypass required status checks.
         token: ${{ secrets.TORCHCELL_SEMANTIC_RELEASE_TOKEN }}
 
+    # Parses the commits since the last tag with scripts/release_parser.py; on a
+    # bumping tag (API, REL, DB) it writes the version, commits, tags, runs
+    # `build_command` (pyproject.toml, [tool.semantic_release]) and creates the
+    # GitHub release. `released` is "false" on every other push.
     - name: Python Semantic Release
-      uses: python-semantic-release/python-semantic-release@master
+      id: release
+      uses: python-semantic-release/python-semantic-release@v10.7.0
       with:
         github_token: ${{ secrets.TORCHCELL_SEMANTIC_RELEASE_TOKEN }}
+
+    - name: Upload dist to the GitHub release
+      if: steps.release.outputs.released == 'true'
+      uses: python-semantic-release/publish-action@v10.7.0
+      with:
+        github_token: ${{ secrets.TORCHCELL_SEMANTIC_RELEASE_TOKEN }}
+        tag: ${{ steps.release.outputs.tag }}
+
+    - name: Publish dist to PyPI
+      if: steps.release.outputs.released == 'true'
+      uses: pypa/gh-action-pypi-publish@release/v1

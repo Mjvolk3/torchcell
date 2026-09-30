@@ -1,7 +1,7 @@
 # torchcell/datasets/fungal_up_down_transformer.py
 # [[torchcell.datasets.fungal_up_down_transformer]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/fungal_up_down_transformer.py
-# Test file: torchcell/datasets/test_fungal_up_down_transformer.py
+# Test file: tests/torchcell/datasets/test_datasets_fungal_up_down_transformer.py
 """Embedding dataset built from the fungal up/down-stream sequence transformer."""
 
 import os

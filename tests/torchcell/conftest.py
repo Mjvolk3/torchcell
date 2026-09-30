@@ -15,6 +15,8 @@ Everything here is tiny and built in memory, so no fixture needs ``DATA_ROOT``:
   layout ``torchcell.models.dcell.DCell`` reads.
 """
 
+from typing import Any
+
 import pytest
 import torch
 from torch_geometric.data import HeteroData
@@ -222,3 +224,109 @@ def make_dcell_regression_batch() -> HeteroData:
     batch.batch = batch["gene"].batch
     batch.fitness = torch.tensor([1.0, 0.0, 0.5])
     return batch
+
+
+# Embedding datasets (``torchcell/datasets/{esm2,protT5,nucleotide_transformer,
+# fungal_up_down_transformer,codon_language_model,random_embedding}.py``) read only
+# ``genome.gene_set`` and ``genome[gene_id]``. ``embedding_genome`` builds REAL
+# ``SCerevisiaeGene`` objects (so every window method is the production one) over one
+# 6,100 nt chromosome I drawn from ``random.Random(1809)``, with a dict-backed stand-in
+# for the gffutils database. GFF coordinates are 1-based inclusive:
+#
+# * ``YAL001W`` ``+`` 101..112, Verified, protein ``MKPG*``, CDS = ``chrI[100:112]``;
+# * ``YAL002C`` ``-`` 21..32, Dubious, protein ``MSK*``, CDS ``ATGGCCTAA`` (9 nt, a
+#   spliced CDS shorter than the 12 nt locus);
+# * ``YAL003W`` ``+`` 2001..5100, Uncharacterized, protein ``MKKS*``,
+#   CDS = ``chrI[2000:5100]`` (3,100 nt).
+EMBEDDING_CHROMOSOME_LENGTH = 6100
+EMBEDDING_GENES: tuple[tuple[str, str, int, int, str, str], ...] = (
+    ("YAL001W", "+", 101, 112, "Verified", "MKPG*"),
+    ("YAL002C", "-", 21, 32, "Dubious", "MSK*"),
+    ("YAL003W", "+", 2001, 5100, "Uncharacterized", "MKKS*"),
+)
+
+
+class _EmbeddingStubDb:
+    """The two gffutils ``FeatureDB`` calls ``SCerevisiaeGene`` makes."""
+
+    def __init__(self, features: dict[str, Any]) -> None:
+        """Index gffutils features by id."""
+        self.features = features
+
+    def __getitem__(self, key: str) -> Any:
+        """The feature with id ``key``."""
+        return self.features[key]
+
+    def region(
+        self, region: tuple[str, int, int], completely_within: bool
+    ) -> list[Any]:
+        """Every feature on ``region[0]`` lying inside ``[region[1], region[2]]``."""
+        chrom, start, end = region
+        return [
+            f
+            for f in self.features.values()
+            if f.chrom == chrom and f.start >= start and f.end <= end
+        ]
+
+
+class EmbeddingStubGenome:
+    """``gene_set`` plus ``__getitem__`` over real ``SCerevisiaeGene`` objects."""
+
+    def __init__(self) -> None:
+        """Build the chromosome, the three genes and their FASTA records."""
+        import random
+
+        from Bio.Seq import Seq
+        from Bio.SeqRecord import SeqRecord
+        from gffutils import Feature
+
+        from torchcell.sequence.data import GeneSet
+        from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGene
+
+        rng = random.Random(1809)
+        self.chromosome = "".join(
+            rng.choice("ACGT") for _ in range(EMBEDDING_CHROMOSOME_LENGTH)
+        )
+        features = {
+            gid: Feature(
+                seqid="chrI",
+                source="SGD",
+                featuretype="gene",
+                start=start,
+                end=end,
+                strand=strand,
+                attributes={"ID": [gid], "orf_classification": [orf]},
+                id=gid,
+            )
+            for gid, strand, start, end, orf, _ in EMBEDDING_GENES
+        }
+        cds = {
+            "YAL001W": self.chromosome[100:112],
+            "YAL002C": "ATGGCCTAA",
+            "YAL003W": self.chromosome[2000:5100],
+        }
+        fasta_dna = {"NC_001133": SeqRecord(Seq(self.chromosome), id="NC_001133")}
+        db = _EmbeddingStubDb(features)
+        self.genes = {
+            gid: SCerevisiaeGene(
+                id=gid,
+                db=db,
+                fasta_dna=fasta_dna,
+                fasta_protein={gid: SeqRecord(Seq(protein), id=gid)},
+                fasta_cds={gid: SeqRecord(Seq(cds[gid]), id=gid)},
+                chr_to_nc={1: "NC_001133"},
+                chromosome_lengths={1: EMBEDDING_CHROMOSOME_LENGTH},
+            )
+            for gid, _, _, _, _, protein in EMBEDDING_GENES
+        }
+        self.gene_set = GeneSet(self.genes)
+
+    def __getitem__(self, gene_id: str) -> Any:
+        """The ``SCerevisiaeGene`` for ``gene_id``."""
+        return self.genes[gene_id]
+
+
+@pytest.fixture
+def embedding_genome() -> EmbeddingStubGenome:
+    """Three real ``SCerevisiaeGene`` objects on a 6,100 nt synthetic chromosome I."""
+    return EmbeddingStubGenome()

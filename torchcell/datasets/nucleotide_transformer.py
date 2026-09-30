@@ -3,7 +3,7 @@
 # torchcell/datasets/nucleotide_transformer.py
 # [[torchcell.datasets.nucleotide_transformer]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/nucleotide_transformer.py
-# Test file: tests/torchcell/datasets/test_nucleotide_transformer.py
+# Test file: tests/torchcell/datasets/test_datasets_nucleotide_transformer.py
 import os
 import os.path as osp
 from collections.abc import Callable

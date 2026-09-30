@@ -260,6 +260,8 @@ paths = [
 "torchcell/viz/fitness.py" = "tests/torchcell/viz/test_viz_fitness.py"
 "torchcell/datasets/server.py" = "tests/torchcell/datasets/test_datasets_server.py"
 "torchcell/data/data.py" = "tests/torchcell/data/test_data_data.py"
+"torchcell/datasets/nucleotide_transformer.py" = "tests/torchcell/datasets/test_datasets_nucleotide_transformer.py"
+"torchcell/datasets/fungal_up_down_transformer.py" = "tests/torchcell/datasets/test_datasets_fungal_up_down_transformer.py"
 "torchcell/knowledge_graphs/supported_queries/registry.py" = "tests/torchcell/knowledge_graphs/supported_queries/test_supported_queries_registry.py"
 
 [tool.coverage.run]

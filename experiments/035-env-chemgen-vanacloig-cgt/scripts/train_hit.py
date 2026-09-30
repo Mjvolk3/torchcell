@@ -94,7 +94,8 @@ class HitConfig(BaseModel):
     heads: int = 4
     hops: int = 2
     hit_temperature: float = 1.0
-    prop_graphs: list[str] = list(GRAPHS)
+    # relation names as the cell graph spells them (physical_interaction, ...); None = all
+    prop_graphs: list[str] | None = None
     embeddings: list[str] = ["fcfp4_count"]
     pca_dim: int | None = None
     dropout: float = 0.2
@@ -191,7 +192,8 @@ class HitModel(nn.Module):
             self.hit_scale = nn.Linear(1, d)
             parts += 2
         if cfg.mix == "hit_prop":
-            n_feat = len(cfg.prop_graphs) * cfg.hops + 1
+            self.prop_graphs = cfg.prop_graphs or list(nets.per_graph)
+            n_feat = len(self.prop_graphs) * cfg.hops + 1
             self.prop = nn.Sequential(
                 nn.Linear(n_feat, d),
                 nn.GELU(),
@@ -248,7 +250,7 @@ class HitModel(nn.Module):
         with torch.autocast(device_type=s.device.type, enabled=False):
             x0 = s.T.float()  # [N, C]
             feats = [x0]
-            for g in self.cfg.prop_graphs:
+            for g in self.prop_graphs:
                 x = x0
                 for _ in range(self.cfg.hops):
                     x = torch.sparse.mm(self.nets.adjacency_t[g], x)

@@ -197,3 +197,41 @@ as any pretrained embedding here. The gene side is not the limit: every gene is 
 training. So the cell graph transformer, which acts on the gene side, is not expected to move
 this number (hypothesis, being measured in round 2c, slurm 3038), and the lever is more
 compounds (round 3, slurm 3040).
+
+## 2026.09.29 - Rounds 3 to 5, the transformer verdict, and the input audits of the other stores
+
+**Transformer, five folds (`r2_cgt`, slurm 3038).** Cell graph transformer as the gene
+encoder of the factorized model, graph prior 1: centered median 0.061, paired -0.229 vs
+ridge (CI -0.29 to -0.17, 5 wins of 41). With the identity skip 0.030. The round-1 arm with
+the transformer unchanged (slurm 3016) scored 0.134, 0.002 and 0.043 on folds 0 to 2. The
+identity-skip round-1 job (3030) was cancelled after fold 0 (0.040, partial).
+
+**Other stores as auxiliary training (`r3`, `r3b`, slurm 3040, 3042).** Shared compound
+encoder and gene table, per-source bias and adapter, every Vanacloig compound removed from
+the other stores. Over 123 compound-evaluations Wildenhain (5,160 compounds) is -0.008 vs
+ridge (CI -0.042, +0.026); its plain mean with ridge +0.013 (CI -0.013, +0.038). Hillenmeyer
+and Hoepfner as sources are below that. Graph smoothness on the shared gene table (`r4`,
+slurm 3046) is -0.02 to -0.05. A predicted profile in another store as a compound embedding
+(`phenotypic_embeddings.py`) is +0.003 at best; inside Wildenhain, structure predicts the
+profile's first principal direction at r 0.39 out of fold, the median direction at 0.11.
+
+**Coverage, not model (`similarity_vs_score.py`, slurm 3043).** The ridge score of a held-out
+compound tracks its nearest training compound's FCFP4 Tanimoto (Spearman +0.29, n 123,
+p 0.001). Gamma-valerolactone (-0.20), methylglyoxal (-0.07) and MMS (-0.03) have ceilings
+above 0.89 and no analog.
+
+![](./assets/images/035-similarity_vs_score.svg)
+
+**Input audits of the other stores** (report-only agents, issues carry the `dataset` label):
+Wildenhain #504 (33 of 242 strains are essential genes served as haploid deletions; the
+served release is the uncited 2016 Scientific Data extension; z is relative to the strain's
+own median well), Hillenmeyer #505 (no strain background; HIS3, LYS2, MET15 dosage wrong on the
+BY marker loci; 33 arrays where the matrix header and the key file disagree; minimal medium
+served as plain SD; merged strains), Hoepfner pending. Vanacloig: #500 and #501.
+
+**Round 6, launched (`train_hit.py`).** Where the molecule enters: readout only, the compound
+attending over all gene nodes (a hit distribution), the hit distribution propagated over the
+nine networks (the ego net around the molecule's targets), and the deleted gene attending
+over the compound as one more perturbation token; each with 0 or 2 layers of message passing
+(`r6_mix`, slurm 3053), and a sizing sweep over width, depth, heads, hops and temperature
+(`r6_size`, slurm 3054).

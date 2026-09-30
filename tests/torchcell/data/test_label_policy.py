@@ -718,7 +718,9 @@ def test_roles_resolve_on_every_sampled_triple_of_a_real_build() -> None:
     resolved = 0
     with env.begin() as txn:
         for i in sample:
-            for item in json.loads(txn.get(str(i).encode())):
+            raw = txn.get(str(i).encode())
+            assert raw is not None, f"record {i} is missing from the 029 store"
+            for item in json.loads(raw):
                 experiment = item["experiment"]
                 if experiment["experiment_type"] != "fitness":
                     continue

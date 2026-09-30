@@ -28,6 +28,20 @@ Expected values, derived from the fixture:
 The two SGD-backed filter tests at the end read the real genome and stay behind
 ``--data``; ``tests/torchcell/graph/test_gene_graph.py`` pins the filters on hand-built
 graphs.
+
+2026.09.30 - the filters on the built GO graph, downloads and entry points (Phase 15).
+The ``_rewired`` variant of the stub rewrites YAL002W's GO:0000001 annotation to
+evidence IGI dated 2019-03-03, so GO:0000001 (parent of GO:0000002, child of the BP
+root) and GO:0000011 (IGI, 2020-05-05) are the two terms any IGI or 2017-07-19 cutoff
+filter empties. Emptying GO:0000001 forwards its in-edge: the surviving child
+GO:0000002 is re-attached to GO:0008150, the date cutoff of the GO perturbation
+comparison (``filter_by_date(G_go, "2017-07-19")``). Containment with no gene set on
+the unmodified stub: GO:0000002, GO:0000003, GO:0000004 and GO:0000011 each hold one
+gene (their own); every other term holds two or three, so ``n = 2`` removes exactly the
+four leaves. STRING downloads are faked at ``torchcell.graph.graph.requests.get`` with
+the same three-row table gzip-compressed and split in two chunks; the TFLink download
+likewise. The two entry points run with ``DATA_ROOT`` pointed at ``tmp_path`` and a
+fake ``SCerevisiaeGenome`` that records its keyword arguments.
 """
 
 import gzip
@@ -52,6 +66,7 @@ from torchcell.graph.graph import (
     SCEREVISIAE_GENE_GRAPH_VALID_NAMES,
     GeneGraph,
     build_gene_multigraph,
+    filter_by_contained_genes,
 )
 from torchcell.sequence import GeneSet, ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -750,3 +765,449 @@ def test_filter_by_date(get_sample_graph: nx.DiGraph) -> None:
     assert check_no_genes_after_date(G_filtered, cutoff_date), (
         f"Found genes annotated after {cutoff_date} in the filtered graph."
     )
+
+
+# ----------------------------------------------------------------- Phase 15 additions
+
+
+def _rewired(root: Path) -> SCerevisiaeGraph:
+    """The stub with YAL002W's GO:0000001 annotation made IGI and dated 2019-03-03."""
+    graph = _make_graph(root, _StubGenome(ALIASES))
+    data = _raw_nodes()["YAL002W"]
+    data["go_details"] = [
+        _detail("GO:0000004"),
+        _detail("GO:0000001", "IGI", "2019-03-03"),
+    ]
+    (root / "sgd" / "genes" / "YAL002W.json").write_text(json.dumps(data))
+    return graph
+
+
+REWIRED_KEPT_EDGES = [
+    ("GO:0000002", "GO:0008150"),
+    ("GO:0000003", "GO:0003674"),
+    ("GO:0000004", "GO:0005575"),
+    ("GO:0003674", "GO:ROOT"),
+    ("GO:0005575", "GO:ROOT"),
+    ("GO:0008150", "GO:ROOT"),
+]
+
+
+def test_date_filter_on_the_built_go_graph_reattaches_the_surviving_child(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Cutoff 2017-07-19 empties GO:0000001 (2019) and GO:0000011 (2020).
+
+    GO:0000002 (2015) loses its parent and is re-attached to the BP root; the input
+    graph keeps both terms. A cutoff after every date leaves the graph unchanged.
+    """
+    go = _rewired(tmp_path).G_go
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger="torchcell.graph.graph"):
+        filtered = filter_by_date(go, "2017-07-19")
+    assert caplog.messages == [
+        "Filtering result: 2 GO terms and 2 gene annotations after 2017-07-19 removed"
+    ]
+    assert sorted(filtered.edges) == REWIRED_KEPT_EDGES
+    assert "GO:0000001" in go
+    assert "GO:0000011" in go
+    assert list(filtered.nodes["GO:0008150"]["gene_set"]) == ["YAL003W"]
+    unfiltered = filter_by_date(go, "2099-01-01")
+    assert sorted(unfiltered.edges) == sorted(go.edges)
+
+
+def test_igi_filter_on_the_built_go_graph_reattaches_the_surviving_child(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Both IGI annotations are the only gene of their term, so both terms go.
+
+    GO:ROOT carries no ``gene_set`` and is passed over, not removed.
+    """
+    go = _rewired(tmp_path).G_go
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger="torchcell.graph.graph"):
+        filtered = filter_go_IGI(go)
+    assert caplog.messages == [
+        "Filtering result: 2 GO terms and 2 IGI gene annotations removed"
+    ]
+    assert sorted(filtered.edges) == REWIRED_KEPT_EDGES
+    assert "gene_set" not in filtered.nodes["GO:ROOT"]
+
+
+def test_contained_genes_filter_on_the_built_go_graph_without_a_gene_set(
+    sgd_graph: SCerevisiaeGraph,
+) -> None:
+    """``gene_set=None`` counts every descendant gene: n = 2 drops the four one-gene leaves."""
+    no_gene_set: Any = None
+    filtered = filter_by_contained_genes(sgd_graph.G_go, n=2, gene_set=no_gene_set)
+    assert sorted(filtered.edges) == [
+        ("GO:0000001", "GO:0008150"),
+        ("GO:0003674", "GO:ROOT"),
+        ("GO:0005575", "GO:ROOT"),
+        ("GO:0008150", "GO:ROOT"),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("evidence", "kept"), [(["IGI", "IDA"], ["YAL001C"]), (["IDA", "IGI"], [])]
+)
+def test_two_evidence_rows_for_one_term_keep_only_the_last(
+    tmp_path: Path, evidence: list[str], kept: list[str]
+) -> None:
+    """Finding: graph.py:1074-1077 overwrites ``genes[gene]`` for every matching row, so
+    a gene with two evidence rows for GO:0000002 keeps only the last one, and
+    ``filter_go_IGI`` keeps or drops it by row ORDER: IGI then IDA survives, IDA then
+    IGI is removed although IDA evidence exists. ``go_to_genes`` counts the gene once
+    either way. Pinned until the node keeps every evidence row.
+    """
+    graph = _make_graph(tmp_path, _StubGenome(ALIASES))
+    data = _raw_nodes()["YAL001C"]
+    data["go_details"] = [_detail("GO:0000002", code) for code in evidence]
+    (tmp_path / "sgd" / "genes" / "YAL001C.json").write_text(json.dumps(data))
+    assert list(graph.go_to_genes["GO:0000002"]) == ["YAL001C"]
+    node = graph.G_go.nodes["GO:0000002"]
+    assert node["genes"]["YAL001C"]["go_details"]["experiment"] == {
+        "display_name": evidence[-1]
+    }
+    filtered = filter_go_IGI(graph.G_go)
+    if kept:
+        assert list(filtered.nodes["GO:0000002"]["gene_set"]) == kept
+    else:
+        assert "GO:0000002" not in filtered
+        assert ("GO:0000001", "GO:0008150") in filtered.edges
+
+
+def test_gene_genetic_regulatory_and_go_prefer_a_pickle(
+    sgd_graph: SCerevisiaeGraph,
+) -> None:
+    """A saved ``G_gene``, ``G_genetic``, ``G_regulatory`` or ``G_go`` pickle is returned
+    as is: each property reads back the saved object's name, gene set and (empty) node
+    list instead of building from the stub genome, and the saved GO graph comes back
+    with its one edge.
+    """
+    saved = {
+        name: GeneGraph(name=f"saved_{name}", graph=nx.Graph(), max_gene_set=GENES)
+        for name in ("gene", "genetic", "regulatory")
+    }
+    for name, graph in saved.items():
+        sgd_graph.save_graph(graph, f"G_{name}", root_type="sgd")
+    go = nx.DiGraph(name="saved_go")
+    go.add_edge("GO:X", "GO:Y")
+    sgd_graph.save_graph(go, "G_go", root_type="sgd")
+    for name, graph in saved.items():
+        loaded = getattr(sgd_graph, f"G_{name}")
+        assert loaded.name == graph.name
+        assert loaded.max_gene_set == graph.max_gene_set
+        assert list(loaded.graph.nodes) == []
+    assert sgd_graph.G_go.graph == {"name": "saved_go"}
+    assert list(sgd_graph.G_go.edges) == [("GO:X", "GO:Y")]
+
+
+def test_every_lazy_graph_is_memoized_after_its_first_read(  # test-quality: allow asserts the names the properties read back after the helper rewrites each pickle
+    sgd_graph: SCerevisiaeGraph,
+) -> None:
+    """A pickle rewritten after the first read is not seen: the instance keeps the first.
+
+    Covers the 22 multigraph names plus ``G_gene`` and ``G_go``.
+    """
+    roots = {"tflink": "tflink"}
+
+    def save(name: str, tag: str) -> None:
+        root = "string" if name.startswith("string") else roots.get(name, "sgd")
+        sgd_graph.save_graph(
+            GeneGraph(name=tag, graph=nx.Graph(), max_gene_set=GENES),
+            f"G_{name}",
+            root_type=root,
+        )
+
+    names = [*SCEREVISIAE_GENE_GRAPH_VALID_NAMES, "gene"]
+    for name in names:
+        save(name, f"first_{name}")
+    sgd_graph.save_graph(nx.DiGraph(name="first_go"), "G_go", root_type="sgd")
+    first = [getattr(sgd_graph, f"G_{n}").name for n in names]
+    first_go = sgd_graph.G_go.graph["name"]
+    for name in names:
+        save(name, f"second_{name}")
+    sgd_graph.save_graph(nx.DiGraph(name="second_go"), "G_go", root_type="sgd")
+    assert [getattr(sgd_graph, f"G_{n}").name for n in names] == first
+    assert first == [f"first_{n}" for n in names]
+    assert (first_go, sgd_graph.G_go.graph["name"]) == ("first_go", "first_go")
+
+
+class _Response:
+    """A streamed ``requests`` response over fixed bytes, served in two chunks."""
+
+    def __init__(self, payload: bytes) -> None:
+        self.payload = payload
+
+    def iter_content(self, chunk_size: int) -> list[bytes]:
+        half = len(self.payload) // 2
+        return [self.payload[:half], self.payload[half:]]
+
+
+STRING_TABLE = (
+    "protein1 protein2 neighborhood fusion cooccurence coexpression "
+    "experimental database textmining combined_score\n"
+    "4932.YAL001C 4932.YAL002W 0 0 0 150 900 0 0 910\n"
+    "4932.YAL001C 4932.YZZ999W 300 0 0 0 0 0 0 300\n"
+    "4932.YAL002W 4932.YAL003W 0 0 0 0 0 500 0 500\n"
+)
+
+
+@pytest.mark.parametrize(
+    ("version", "url"),
+    [
+        (
+            "9.1",
+            "http://string91.embl.de/newstring_download/protein.links.detailed.v9.1/"
+            "4932.protein.links.detailed.v9.1.txt.gz",
+        ),
+        (
+            "11.0",
+            "https://stringdb-static.org/download/protein.links.detailed.v11.0/"
+            "4932.protein.links.detailed.v11.0.txt.gz",
+        ),
+        (
+            "12.0",
+            "https://stringdb-downloads.org/download/protein.links.detailed.v12.0/"
+            "4932.protein.links.detailed.v12.0.txt.gz",
+        ),
+    ],
+)
+def test_a_missing_string_table_is_downloaded_then_built(
+    sgd_graph: SCerevisiaeGraph, monkeypatch: pytest.MonkeyPatch, version: str, url: str
+) -> None:
+    """No table under ``v<version>/``: one streamed GET of the version's URL, then the build.
+
+    The table is written byte for byte from the two chunks, and the channel graphs carry
+    the version string.
+    """
+    calls: list[tuple[str, bool]] = []
+    payload = gzip.compress(STRING_TABLE.encode())
+
+    def fake_get(target: str, stream: bool) -> _Response:
+        calls.append((target, stream))
+        return _Response(payload)
+
+    monkeypatch.setattr("torchcell.graph.graph.requests.get", fake_get)
+    v = version.replace(".", "_")
+    experimental = getattr(sgd_graph, f"G_string{v}_experimental")
+    assert calls == [(url, True)]
+    path = osp.join(
+        sgd_graph.string_root,
+        f"v{version}",
+        f"4932.protein.links.detailed.v{version}.txt.gz",
+    )
+    assert Path(path).read_bytes() == payload
+    assert list(experimental.graph.edges(data=True)) == [
+        ("YAL001C", "YAL002W", {"weight": 900, "version": version})
+    ]
+    assert list(getattr(sgd_graph, f"G_string{v}_database").graph.edges) == [
+        ("YAL002W", "YAL003W")
+    ]
+
+
+def test_a_missing_tflink_table_is_downloaded_then_built(
+    sgd_graph: SCerevisiaeGraph, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No TFLink TSV: one streamed GET of the netbiol URL, then TFA1 -> TGT1 (two edges)."""
+    calls: list[str] = []
+    tsv = (
+        b"UniprotID.TF\tUniprotID.Target\tName.TF\tName.Target\tDetection.method\n"
+        b"P1\tP2\tTFA1\tTGT1\tchip\n"
+    )
+
+    def fake_get(target: str, stream: bool) -> _Response:
+        calls.append(target)
+        return _Response(tsv)
+
+    monkeypatch.setattr("torchcell.graph.graph.requests.get", fake_get)
+    tflink = sgd_graph.G_tflink
+    assert calls == [
+        "https://cdn.netbiol.org/tflink/download_files/"
+        "TFLink_Saccharomyces_cerevisiae_interactions_All_simpleFormat_v1.0.tsv"
+    ]
+    assert Path(sgd_graph.tflink_root, TFLINK_FILE).read_bytes() == tsv
+    assert sorted(tflink.graph.edges) == [
+        ("YAL001C", "YAL002W"),
+        ("YAL001C", "YAL003W"),
+    ]
+
+
+def test_tflink_still_missing_after_the_download_gives_an_empty_graph(
+    sgd_graph: SCerevisiaeGraph,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A download that writes nothing is reported and yields an empty directed graph."""
+    monkeypatch.setattr(
+        SCerevisiaeGraph, "download_tflink_data", lambda self, path: None
+    )
+    path = osp.join(sgd_graph.tflink_root, TFLINK_FILE)
+    with caplog.at_level(logging.INFO, logger="torchcell.graph.graph"):
+        tflink = sgd_graph.create_G_tflink()
+    assert caplog.messages == [
+        f"TFLink file not found at {path}, downloading...",
+        f"TFLink file {path} still not found after download attempt! "
+        "Cannot create G_tflink.",
+    ]
+    assert type(tflink) is nx.DiGraph
+    assert tflink.number_of_nodes() == 0
+
+
+def test_genetic_edges_drop_an_absent_partner_and_regulatory_edges_extend_a_graph() -> (
+    None
+):
+    """Genetic: A-Z is dropped because Z is not a raw node. Regulatory: an existing
+    X -> Y edge in the supplied graph stays, and A -> B is added with its locus dicts.
+    """
+    raw = nx.Graph()
+    genetic_ab = {
+        "interaction_type": "Genetic",
+        "locus1": {"format_name": "A"},
+        "locus2": {"format_name": "B"},
+    }
+    genetic_az = {
+        "interaction_type": "Genetic",
+        "locus1": {"format_name": "A"},
+        "locus2": {"format_name": "Z"},
+    }
+    regulation = {
+        "locus1": {"format_name": "A", "display_name": "a1"},
+        "locus2": {"format_name": "B", "display_name": "b1"},
+    }
+    raw.add_node(
+        "A",
+        interaction_details=[genetic_ab, genetic_az],
+        regulation_details=[regulation],
+    )
+    raw.add_node("B")
+    genetic = SCerevisiaeGraph.add_genetic_edges(raw, nx.Graph())
+    assert list(genetic.edges(data=True)) == [("A", "B", genetic_ab)]
+    existing = nx.DiGraph()
+    existing.add_edge("X", "Y", note="kept")
+    regulatory = SCerevisiaeGraph.add_regulatory_edges(raw, existing)
+    assert list(regulatory.edges(data=True)) == [
+        ("X", "Y", {"note": "kept"}),
+        ("A", "B", regulation),
+    ]
+    assert regulatory.nodes["B"] == {"format_name": "B", "display_name": "b1"}
+
+
+def test_build_gene_multigraph_omits_a_graph_that_loads_as_none(
+    sgd_graph: SCerevisiaeGraph, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A ``G_physical.pkl`` holding None loads as None; the name is logged and left out."""
+    nothing: Any = None
+    sgd_graph.save_graph(nothing, "G_physical", root_type="sgd")
+    with caplog.at_level(logging.WARNING, logger="torchcell.graph.graph"):
+        multi = build_gene_multigraph(sgd_graph, ["physical", "genetic"])
+    assert caplog.messages == ["Graph 'physical' is None and will not be included"]
+    assert list(multi) == ["genetic"]
+
+
+class _RecordingGenome(_StubGenome):
+    """A stub genome that records the keyword arguments it was built with."""
+
+    calls: list[dict[str, Any]] = []
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(ALIASES)
+        _RecordingGenome.calls.append(kwargs)
+
+
+def _entry_point_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """DATA_ROOT at tmp_path, the stub JSON under data/sgd/genome, a recording genome;
+    ``load_dotenv`` is stubbed so the entry points cannot read the repo ``.env``.
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    genes_dir = tmp_path / "data" / "sgd" / "genome" / "genes"
+    genes_dir.mkdir(parents=True)
+    for gene, data in _raw_nodes().items():
+        (genes_dir / f"{gene}.json").write_text(json.dumps(data), encoding="utf-8")
+    monkeypatch.setattr(_RecordingGenome, "calls", [])
+    monkeypatch.setattr(
+        "torchcell.sequence.genome.scerevisiae.s288c.SCerevisiaeGenome",
+        _RecordingGenome,
+    )
+    monkeypatch.setattr("torchcell.graph.graph.SCerevisiaeGenome", _RecordingGenome)
+    return tmp_path
+
+
+def test_check_regulatory_nodes_reports_all_connected_then_self_loops(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The stub's one regulation (YAL001C -> YAL003W) connects both nodes.
+
+    With a saved regulatory graph holding a self-loop on S and an isolated I, those two
+    are reported in node order. The genome is built with ``overwrite=False``.
+    """
+    import torchcell.graph.graph as graph_module
+
+    root = _entry_point_root(tmp_path, monkeypatch)
+    graph_module.check_regulatory_nodes_have_edges()
+    assert capsys.readouterr().out == (
+        "All nodes in the Regulatory graph have at least one connection to another "
+        "node.\n"
+    )
+    assert _RecordingGenome.calls == [
+        {
+            "genome_root": str(root / "data/sgd/genome"),
+            "go_root": str(root / "data/go"),
+            "overwrite": False,
+        }
+    ]
+    loops = nx.DiGraph()
+    loops.add_edge("S", "S")
+    loops.add_node("I")
+    loops.add_edge("YAL001C", "YAL003W")
+    with open(root / "data/sgd/genome/graph/G_regulatory.pkl", "wb") as handle:
+        pickle.dump(
+            GeneGraph(name="regulatory", graph=loops, max_gene_set=GENES), handle
+        )
+    graph_module.check_regulatory_nodes_have_edges()
+    assert capsys.readouterr().out == (
+        "Found 2 nodes without non-self edges in the Regulatory graph:\n"
+        "Sample: ['S', 'I']\n"
+    )
+
+
+def test_main_rebuilds_the_genome_with_overwrite_true(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Finding: graph.py:1449 builds the genome with ``overwrite=True``, the setting that
+    races a concurrent rebuild of the shared genome (``check_regulatory_nodes_have_edges``
+    and the SGD-backed tests use ``overwrite=False``). Pinned until main passes False.
+
+    It prints the obsolete id met while collecting terms, the term container's type,
+    and the term-to-gene map.
+    """
+    import torchcell.graph.graph as graph_module
+
+    root = _entry_point_root(tmp_path, monkeypatch)
+    graph_module.main()
+    assert _RecordingGenome.calls == [
+        {
+            "genome_root": str(root / "data/sgd/genome"),
+            "go_root": str(root / "data/go"),
+            "overwrite": True,
+        }
+    ]
+    out = capsys.readouterr().out
+    lines = out.split("\n")
+    assert lines[:2] == [
+        "obsolete: GO:0000009",
+        "<class 'sortedcontainers.sortedset.SortedSet'>",
+    ]
+    assert lines[2].startswith("SortedDict({'GO:0000001': GeneSet(")
+    assert re.findall(r"'(GO:\d+)': GeneSet", lines[2]) == [
+        "GO:0000001",
+        "GO:0000002",
+        "GO:0000003",
+        "GO:0000004",
+        "GO:0000011",
+        "GO:0003674",
+        "GO:0005575",
+        "GO:0008150",
+    ]
+    assert lines[3:] == ["", ""]

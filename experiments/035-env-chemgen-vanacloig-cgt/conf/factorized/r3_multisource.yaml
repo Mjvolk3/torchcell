@@ -1,0 +1,10 @@
+# Round 3: the compound encoder also trained on the other chemogenomic stores (every
+# Vanacloig compound removed from them), selected and scored on Vanacloig only.
+- {name: ms_none, aux_sources: [], steps: 3000}
+- {name: ms_wildenhain, aux_sources: [wildenhain]}
+- {name: ms_hillenmeyer, aux_sources: [hillenmeyer_het]}
+- {name: ms_hoepfner, aux_sources: [hoepfner_hip, hoepfner_hop]}
+- {name: ms_all, aux_sources: [wildenhain, hillenmeyer_het, hoepfner_hip, hoepfner_hop]}
+- {name: ms_all_w03, aux_sources: [wildenhain, hillenmeyer_het, hoepfner_hip, hoepfner_hop], aux_weight: 0.3}
+- {name: ms_all_w3, aux_sources: [wildenhain, hillenmeyer_het, hoepfner_hip, hoepfner_hop], aux_weight: 3.0}
+- {name: ms_all_multi, aux_sources: [wildenhain, hillenmeyer_het, hoepfner_hip, hoepfner_hop], embeddings: [fcfp4_count, maccs, rdkit_2d, molformer_xl, chemberta2_mtr], pca_dim: 32}

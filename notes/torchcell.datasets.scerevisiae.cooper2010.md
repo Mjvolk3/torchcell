@@ -182,3 +182,7 @@ is by rank or by log ratio to each dataset's own center, never by value.
 - [ ] strain_id-aware L1 for metabolite datasets, then re-admit the 47 duplicate rows
 - [ ] `target_metabolite_ids` (keys -> Yeast9 s_NNNN) from YeastGEM
 - [ ] migrate `COOPER_SC` into `media.py` in the next full-rebuild window
+
+## 2026.09.29 - Showcase page (group 3)
+
+Shown on `docs/source/showcase/amino-acid-betaxanthin.md` ([[experiments.034-showcase-datasets.scripts.amino_acid_betaxanthin]]). The dev store's content sha256 equals release `2026.09.21-ab6d8c5d`'s. Measured there: Spearman between Mulleder mM and the Cooper ratio over the shared genes is -0.006 to 0.059 on the seven single-amino-acid keys, and between the kept and ledger rows of the duplicated Table 4 identifiers (39 to 47 pairs) -0.021 to 0.133. The duplicate strains do not reproduce each other, which bears on how much a Cooper value can say about a gene.

@@ -1,0 +1,131 @@
+<mxfile host="app.diagrams.net" agent="claude-code">
+  <!-- Column grid (units; 100 units = 1 inch): panel a x 0 to 226; panel b x 238 to 464; panel c x 476 to 702. Rows: letters and titles y 0; content from y 24. Type ladder: 8.3 body, 9.7 titles, 11.1 bold panel letters. Written by hand from the three loaders and the query. -->
+  <diagram name="showcase-amino-acid-betaxanthin" id="showcase-amino-acid-betaxanthin">
+    <mxGraphModel dx="1400" dy="1000" grid="0" page="1" pageWidth="703" pageHeight="340" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="a_letter" value="a" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=11.1;align=left;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="14" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="a_title" value="What was measured" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=9.7;align=left;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="14" y="1" width="212" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="a_mul_head" value="Mulleder et al. 2016" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D79B00;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="0" y="24" width="226" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="a_mul_body" value="19 intracellular amino acids (cysteine omitted) by LC-SRM/MS, in mM.&lt;br&gt;Prototrophic BY4741 deletion collection, synthetic minimal medium, 30 &#176;C.&lt;br&gt;Reference: robust mean over all strains." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="0" y="42" width="226" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="a_mul_class" value="AminoAcidMulleder2016Dataset" style="text;html=1;whiteSpace=wrap;fontFamily=Courier New;fontSize=8.3;align=right;verticalAlign=top;fontColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="0" y="114" width="226" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="a_coo_head" value="Cooper et al. 2010" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B85450;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="0" y="134" width="226" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="a_coo_body" value="17 amine peaks by CE-LIF, some holding two or three amino acids, as a ratio to the plate mean.&lt;br&gt;MATa deletion collection, synthetic complete medium; temperature not stated. Reference: 1.0." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="0" y="152" width="226" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="a_coo_class" value="AminoAcidCooper2010Dataset" style="text;html=1;whiteSpace=wrap;fontFamily=Courier New;fontSize=8.3;align=right;verticalAlign=top;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="0" y="212" width="226" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="a_cac_head" value="Cachera et al. 2023" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#9673A6;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="0" y="232" width="226" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="a_cac_body" value="CRI-SPA moves the Btx cassette (CYP76AD1, DOD, ARO4 K229L, ARO7 G141S) into each deletion strain; colony yellowness score, centered at 0.&lt;br&gt;Screen plate YPD + G418 (the record stores SC, 30 &#176;C; see Caveats)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="0" y="250" width="226" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="a_cac_class" value="BetaxanthinCachera2023Dataset" style="text;html=1;whiteSpace=wrap;fontFamily=Courier New;fontSize=8.3;align=right;verticalAlign=top;fontColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="0" y="322" width="226" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b_letter" value="b" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=11.1;align=left;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="238" y="0" width="14" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="b_title" value="The record" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=9.7;align=left;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="252" y="1" width="212" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="b_exp" value="Experiment" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;spacingTop=2;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="238" y="24" width="226" height="154" as="geometry" />
+        </mxCell>
+        <mxCell id="b_geno" value="&lt;b&gt;genotype&lt;/b&gt;.perturbations: one KanMX deletion; Cachera adds the four cassette genes as gene_addition" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="246" y="46" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b_env" value="&lt;b&gt;environment&lt;/b&gt;: media (name, state), temperature" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="246" y="92" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="b_phen" value="&lt;b&gt;phenotype&lt;/b&gt; (MetabolitePhenotype): metabolite_level {key: value}, n_replicates, metabolite_level_se, measurement_type" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="246" y="128" width="210" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="b_ref" value="Reference" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;spacingTop=2;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="238" y="186" width="226" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="b_ref_g" value="&lt;b&gt;genome_reference&lt;/b&gt;: strain BY4741" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="246" y="206" width="210" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="b_ref_p" value="&lt;b&gt;phenotype_reference&lt;/b&gt;: robust mean, 1.0 or 0 per key" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="246" y="232" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="b_pub" value="&lt;b&gt;Publication&lt;/b&gt;: DOI and PubMed id" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="238" y="276" width="226" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="b_note" value="All three are MetabolitePhenotype records with graph_level 'metabolism'; keys and units differ by dataset." style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="238" y="302" width="226" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="c_letter" value="c" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=11.1;align=left;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="476" y="0" width="14" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="c_title" value="Query and aggregation" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=9.7;align=left;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="490" y="1" width="212" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="c_q" value="&lt;b&gt;amino_acid_betaxanthin.cql&lt;/b&gt;: the three datasets; every deletion in $gene_set, at least one deletion; gene additions pass" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="476" y="24" width="226" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="c_raw" value="&lt;b&gt;Neo4jQueryRaw&lt;/b&gt;: one entry per Experiment node" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="476" y="94" width="226" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="c_agg" value="&lt;b&gt;GenotypeAggregator&lt;/b&gt; (no converter, no deduplicator): one record per perturbed gene set" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="476" y="132" width="226" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="c_rec1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;spacingTop=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="476" y="190" width="226" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c_r1a" value="Mulleder" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="481" y="195" width="106" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="c_r1b" value="Cooper" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="591" y="195" width="106" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="c_r1t" value="deletion of gene X alone" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=8.3;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="476" y="221" width="226" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="c_rec2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;spacingTop=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="476" y="240" width="226" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c_r2a" value="Cachera" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="481" y="245" width="216" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="c_r2t" value="gene X plus the four cassette genes: a different gene set, so a record of its own" style="text;html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=8.3;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="476" y="271" width="226" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="c_ar1" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="589" y="78" as="sourcePoint" />
+            <mxPoint x="589" y="94" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c_ar2" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="589" y="116" as="sourcePoint" />
+            <mxPoint x="589" y="132" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c_ar3" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="589" y="174" as="sourcePoint" />
+            <mxPoint x="589" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

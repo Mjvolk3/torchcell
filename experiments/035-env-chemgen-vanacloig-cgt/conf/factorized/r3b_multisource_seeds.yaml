@@ -6,3 +6,7 @@
 - {name: ms_none_fs2, aux_sources: [], pca_dim: null, fold_seed: 2}
 - {name: ms_wildenhain_fs2, aux_sources: [wildenhain], pca_dim: null, fold_seed: 2}
 - {name: ms_all_fs2, aux_sources: [wildenhain, hillenmeyer_het, hoepfner_hip, hoepfner_hop], pca_dim: null, fold_seed: 2}
+# fold seed 0 again under the code that saves predictions (round 3 ran before it did)
+- {name: ms_none_fs0, aux_sources: [], pca_dim: null, fold_seed: 0}
+- {name: ms_wildenhain_fs0, aux_sources: [wildenhain], pca_dim: null, fold_seed: 0}
+- {name: ms_all_fs0, aux_sources: [wildenhain, hillenmeyer_het, hoepfner_hip, hoepfner_hop], pca_dim: null, fold_seed: 0}

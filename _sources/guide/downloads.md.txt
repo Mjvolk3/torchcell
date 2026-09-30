@@ -7,8 +7,19 @@ directory (the records LMDB and its `interned` sibling) and `preprocess/` direct
 as the loader wrote them, so a download replaces the build step. The raw files each
 loader consumed are served from the same endpoint, hash-pinned by their `manifest.json`.
 
-Ask the maintainers for the endpoint URL and a named API key; every request except
-`/health` carries the key in the `X-API-Key` header.
+The endpoint runs on the database host, `torchcell-database.ncsa.illinois.edu`, port
+8724, serving the archive store and the raw mirror from the Taiga project storage. The
+port is not yet open to the internet, so until it is, reach it through an ssh tunnel to
+that host and use `http://127.0.0.1:8724` as the URL:
+
+```bash
+ssh -N -L 8724:127.0.0.1:8724 rocky@torchcell-database.ncsa.illinois.edu
+```
+
+Ask the maintainers for a named API key; every request except `/health` carries the
+key in the `X-API-Key` header. The store currently holds `amino_acid_cooper2010`,
+`amino_acid_mulleder2016` and `betaxanthin_cachera2023`; `GET /datasets` is the
+authoritative list.
 
 ## Swagger
 
@@ -36,7 +47,7 @@ the release manifest), the archive name, `archive_sha256`, `archive_bytes`, and
 ## curl
 
 ```bash
-export TC_DATA_URL=http://<host>:8724
+export TC_DATA_URL=http://127.0.0.1:8724   # through the tunnel above, or the host once port 8724 is open
 export TC_DATA_API_KEY=<your key>
 
 curl -H "X-API-Key: $TC_DATA_API_KEY" "$TC_DATA_URL/datasets" | python -m json.tool

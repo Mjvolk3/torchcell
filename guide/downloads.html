@@ -134,8 +134,17 @@ directory (the records LMDB and its <code class="docutils literal notranslate"><
 (<code class="docutils literal notranslate"><span class="pre">build_manifest.json</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_set.json</span></code>, <code class="docutils literal notranslate"><span class="pre">experiment_reference_index.json</span></code>), exactly
 as the loader wrote them, so a download replaces the build step. The raw files each
 loader consumed are served from the same endpoint, hash-pinned by their <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code>.</p>
-<p>Ask the maintainers for the endpoint URL and a named API key; every request except
-<code class="docutils literal notranslate"><span class="pre">/health</span></code> carries the key in the <code class="docutils literal notranslate"><span class="pre">X-API-Key</span></code> header.</p>
+<p>The endpoint runs on the database host, <code class="docutils literal notranslate"><span class="pre">torchcell-database.ncsa.illinois.edu</span></code>, port
+8724, serving the archive store and the raw mirror from the Taiga project storage. The
+port is not yet open to the internet, so until it is, reach it through an ssh tunnel to
+that host and use <code class="docutils literal notranslate"><span class="pre">http://127.0.0.1:8724</span></code> as the URL:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh<span class="w"> </span>-N<span class="w"> </span>-L<span class="w"> </span><span class="m">8724</span>:127.0.0.1:8724<span class="w"> </span>rocky@torchcell-database.ncsa.illinois.edu
+</pre></div>
+</div>
+<p>Ask the maintainers for a named API key; every request except <code class="docutils literal notranslate"><span class="pre">/health</span></code> carries the
+key in the <code class="docutils literal notranslate"><span class="pre">X-API-Key</span></code> header. The store currently holds <code class="docutils literal notranslate"><span class="pre">amino_acid_cooper2010</span></code>,
+<code class="docutils literal notranslate"><span class="pre">amino_acid_mulleder2016</span></code> and <code class="docutils literal notranslate"><span class="pre">betaxanthin_cachera2023</span></code>; <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/datasets</span></code> is the
+authoritative list.</p>
 <section id="swagger">
 <h2>Swagger<a class="headerlink" href="#swagger" title="Link to this heading"></a></h2>
 <p>The interactive documentation lives at <code class="docutils literal notranslate"><span class="pre">&lt;TC_DATA_URL&gt;/docs</span></code> and the OpenAPI schema at
@@ -182,7 +191,7 @@ the release manifest), the archive name, <code class="docutils literal notransla
 </section>
 <section id="curl">
 <h2>curl<a class="headerlink" href="#curl" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TC_DATA_URL</span><span class="o">=</span>http://&lt;host&gt;:8724
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TC_DATA_URL</span><span class="o">=</span>http://127.0.0.1:8724<span class="w">   </span><span class="c1"># through the tunnel above, or the host once port 8724 is open</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">TC_DATA_API_KEY</span><span class="o">=</span>&lt;your<span class="w"> </span>key&gt;
 
 curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool

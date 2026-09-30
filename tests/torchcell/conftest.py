@@ -155,3 +155,70 @@ def dcell_graph() -> HeteroData:
 def dcell_batch() -> HeteroData:
     """Two samples: gene 0 knocked out; genes 2 and 3 knocked out."""
     return make_dcell_batch([[0], [2, 3]])
+
+
+# The legacy DCell trainers (``torchcell.trainers.dcell_regression`` and
+# ``dcell_regression_slim``) take ``models={"dcell": ..., "dcell_linear": ...}`` where
+# ``dcell(batch)`` returns one hidden tensor per GO term and ``dcell_linear`` maps each
+# to a ``[B, 1]`` prediction. The pair below does that with no random weights, so every
+# prediction is a closed form of the knockouts in a ``make_dcell_batch`` batch:
+# ``GO:1`` = intact genes of term 1, ``GO:2`` = intact genes of term 2, and ``GO:ROOT``
+# = ``GO:1 - GO:2`` (the root annotates no gene, so it gets a feature of its own that is
+# not proportional to the subsystem mean). Each feature is scaled by a learnable
+# per-term scalar (1.0) and passed through an identity ``Linear(1, 1)`` head.
+DCELL_TERM_NAMES = ("GO:ROOT", "GO:1", "GO:2")
+
+
+class DCellCountSubsystems(torch.nn.Module):
+    """Per-term intact-gene counts from ``go_gene_strata_state``, times ``scale``."""
+
+    def __init__(self) -> None:
+        """One learnable scale per term, initialized to 1."""
+        super().__init__()
+        self.scale = torch.nn.Parameter(torch.ones(DCELL_TERMS))
+
+    def forward(self, batch: HeteroData) -> dict[str, torch.Tensor]:
+        """Map each term name to its ``[B, 1]`` scaled count (root = GO:1 - GO:2)."""
+        go = batch["gene_ontology"]
+        rows = go.go_gene_strata_state
+        ptr = go.go_gene_strata_state_ptr
+        n = len(ptr) - 1
+        sample = torch.arange(n).repeat_interleave(ptr.diff())
+        counts = torch.zeros(n, DCELL_TERMS).index_put_(
+            (sample, rows[:, 0]), rows[:, 3].float(), accumulate=True
+        )
+        counts[:, 0] = counts[:, 1] - counts[:, 2]
+        scaled = counts * self.scale
+        return {name: scaled[:, i : i + 1] for i, name in enumerate(DCELL_TERM_NAMES)}
+
+
+class DCellIdentityHeads(torch.nn.Module):
+    """One ``Linear(1, 1)`` per term, initialized to weight 1 and bias 0."""
+
+    def __init__(self) -> None:
+        """Three identity heads, one per entry of ``DCELL_TERM_NAMES``."""
+        super().__init__()
+        heads = [torch.nn.Linear(1, 1) for _ in DCELL_TERM_NAMES]
+        for head in heads:
+            torch.nn.init.ones_(head.weight)
+            torch.nn.init.zeros_(head.bias)
+        self.heads = torch.nn.ModuleList(heads)
+
+    def forward(self, hidden: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+        """Apply each term's head to that term's hidden tensor."""
+        return {
+            name: self.heads[i](hidden[name]) for i, name in enumerate(DCELL_TERM_NAMES)
+        }
+
+
+def make_dcell_regression_batch() -> HeteroData:
+    """Three samples for the DCell trainers, with the two top-level fields they read.
+
+    Knockouts {0, 1, 2, 3}, {0} and {2} give intact counts GO:1 = [0, 1, 2] and
+    GO:2 = [0, 2, 1], so GO:ROOT = [0, -1, 1]; ``fitness`` is [1.0, 0.0, 0.5] and
+    ``batch`` is the gene-level batch vector (its last entry + 1 is the batch size, 3).
+    """
+    batch = make_dcell_batch([[0, 1, 2, 3], [0], [2]])
+    batch.batch = batch["gene"].batch
+    batch.fitness = torch.tensor([1.0, 0.0, 0.5])
+    return batch

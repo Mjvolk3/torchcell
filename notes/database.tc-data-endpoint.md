@@ -63,3 +63,17 @@ Recipe for serving the artifact store and the raw mirror from the Radiant VM (`r
    With those two variables set, any `ExperimentDataset` loader whose LMDB is absent downloads its artifact instead of building ([[torchcell.data.experiment_dataset]]). Swagger is at `$TC_DATA_URL/docs`; the collaborator page is `docs/source/guide/downloads.md`.
 
 5. Deprecating an artifact: repackage the slug with `--status deprecated` (same bytes, same name, the row is replaced), rsync, and the row stays in the index while `select` skips it. Remove the file only after every checkout that could name it is gone.
+
+## 2026.09.30 - First archives in the local store: Cooper, Mulleder, Cachera
+
+Step 1 of the recipe above ran on GilaHyper for the three showcase group 3 stores, into `/bulk/tc-data` (`scripts/package_dataset_lmdb.py`, `--kg-release 2026.09.21-ab6d8c5d --kg-version 1.2`; the packager stamps its own `torchcell.__version__`, 1.5.0):
+
+| slug | archive | archive sha256 | bytes | content sha256 |
+|---|---|---|---:|---|
+| `amino_acid_cooper2010` | `amino_acid_cooper2010-1.5.0-cabcd04a.tar.xz` | `cabcd04ae4094ed0...` | 1,083,036 | `09ddfc956c239ac4...` (equals the served release) |
+| `amino_acid_mulleder2016` | `amino_acid_mulleder2016-1.5.0-633d0cf8.tar.xz` | `633d0cf88921ece4...` | 1,426,568 | `bc92df7f3359d556...` (dev store; the release serves `6c5ad75d...`, the #143 medium rebuild) |
+| `betaxanthin_cachera2023` | `betaxanthin_cachera2023-1.5.0-be734791.tar.xz` | `be734791cd86c11a...` | 289,016 | `bcf528614e48defa...` (dev store; the release serves `afc2eaa4...`, the #195 renames) |
+
+Acceptance check, run locally the same night: the server on `127.0.0.1:8799` with `TC_DATA_ROOT=/bulk/tc-data` listed the three rows (`/health` reports 3 artifacts, 19 raw keys; `/openapi.json` 200), and `DatasetClient.from_env()` selected, downloaded (sha256 verified), and unpacked each archive; opening each unpacked `processed/lmdb` gives 4,313, 4,678 and 4,719 entries, the dev-store record counts on the showcase page ([[experiments.034-showcase-datasets.scripts.amino_acid_betaxanthin]]).
+
+Two of the three content hashes differ from the served release because the dev stores were rebuilt after it (the page's served-versus-dev table names the fields). A collaborator who downloads them gets the dev stores, not byte-for-byte what the graph serves, until the next full build re-admits them. `gene_essentiality_sgd` and `smf_costanzo2016` (group 1) are not packaged yet. Steps 2 and 3 (key mint, container on Radiant) and the rsync to Taiga have still not run.

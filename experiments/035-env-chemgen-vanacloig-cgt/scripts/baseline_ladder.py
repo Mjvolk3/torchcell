@@ -161,10 +161,21 @@ def load_features(cells: VanacloigCells, name: str) -> NDArray[np.float64] | Non
     return x[:, finite]
 
 
-def tanimoto(x: NDArray[np.float64]) -> NDArray[np.float64]:
-    """Min/max Tanimoto, which is the bit Tanimoto on binary input."""
-    num = np.minimum(x[:, None, :], x[None, :, :]).sum(-1)
-    den = np.maximum(x[:, None, :], x[None, :, :]).sum(-1)
+def tanimoto(x: NDArray[np.float64], block: int = 16) -> NDArray[np.float64]:
+    """Min/max Tanimoto, which is the bit Tanimoto on binary input.
+
+    Computed ``block`` rows at a time in float32: over the 5,472-compound library the
+    full broadcast is 61 G values and was killed for memory (slurm 3045).
+    """
+    x32 = x.astype(np.float32)
+    total = x32.sum(1)
+    n = len(x32)
+    num = np.zeros((n, n), dtype=np.float64)
+    for start in range(0, n, block):
+        rows = x32[start : start + block]
+        num[start : start + block] = np.minimum(rows[:, None, :], x32[None]).sum(-1)
+    # sum(max(a, b)) = sum(a) + sum(b) - sum(min(a, b))
+    den = total[:, None] + total[None, :] - num
     return np.where(den > 0, num / np.where(den > 0, den, 1.0), 1.0)
 
 

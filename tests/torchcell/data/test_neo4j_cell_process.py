@@ -32,6 +32,13 @@ the cursor order): 0 is a valid fitness record for YAL001C, 1 is `not json`, 2 i
 of a valid fitness record for YAL002W followed by `{"experiment": {}}`, and x is a valid
 record under a non-integer key. Each index therefore holds {0, 2}: key 2 is announced as
 "Skipping this entry" but its first item was indexed before the second one raised.
+
+2026.09.30 (Phase 12): the aggregated-record rule of `label_df`. Three processed records,
+labels fitness and environment_response: key 0 holds fitness 0.8 then 0.5 (YAL001C), key 1
+a categorical response whose numeric value is None (YAL002W), key 2 a response of -1.25
+then a categorical None (YAL003W). By hand: fitness [0.5, NaN, NaN] (the last present
+value wins), environment_response [NaN, NaN, -1.25] (None never overwrites), while
+`phenotype_label_index` lists keys 1 and 2 under environment_response.
 """
 
 import errno
@@ -54,6 +61,9 @@ from torchcell.data.graph_processor import GraphProcessor, Perturbation
 from torchcell.data.neo4j_cell import Neo4jCellDataset, ProcessingStep
 from torchcell.datamodels.schema import (
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
+    EnvironmentResponsePhenotype,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
@@ -62,11 +72,13 @@ from torchcell.datamodels.schema import (
     GeneInteractionPhenotype,
     Genotype,
     KanMxDeletionPerturbation,
+    MeasurementType,
     Media,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
     ReferenceGenome,
+    ResponseCategory,
 )
 from torchcell.graph.graph import GeneGraph, GeneMultiGraph
 from torchcell.sequence import GeneSet
@@ -524,6 +536,81 @@ def test_label_df_leaves_dict_valued_labels_as_nan(tmp_path: Path) -> None:
         ),
     )
     assert ds.phenotype_label_index == {"metabolite_level": [0], "fitness": [1]}
+
+
+def _response(dataset_name: str, gene: str, value: float | None) -> dict[str, Any]:
+    """An environment-response record: numeric `log2_ratio` for a value, else a purely
+    categorical `reduced` call, whose `environment_response` is None by the schema.
+    """
+    if value is None:
+        phenotype = EnvironmentResponsePhenotype(
+            measurement_type=MeasurementType.categorical,
+            category=ResponseCategory.reduced,
+        )
+    else:
+        phenotype = EnvironmentResponsePhenotype(
+            measurement_type=MeasurementType.log2_ratio, environment_response=value
+        )
+    return {
+        "experiment": EnvironmentResponseExperiment(
+            dataset_name=dataset_name,
+            genotype=Genotype(perturbations=[_deletion(gene)]),
+            environment=ENVIRONMENT,
+            phenotype=phenotype,
+        ).model_dump(mode="json"),
+        "experiment_reference": EnvironmentResponseExperimentReference(
+            dataset_name=dataset_name,
+            genome_reference=GENOME,
+            environment_reference=ENVIRONMENT,
+            phenotype_reference=phenotype,
+        ).model_dump(mode="json"),
+    }
+
+
+def test_label_df_takes_the_last_present_value_of_an_aggregated_record(
+    tmp_path: Path,
+) -> None:
+    """An aggregated record (several experiments under one key) fills each label from the
+    LAST experiment whose value is present; an absent value (None) never erases one
+    already taken (`neo4j_cell.py:717-720`).
+
+    Key 0: fitness 0.8 then fitness 0.5 for YAL001C, so fitness 0.5 (last wins, not the
+    first and not the mean 0.65). Key 1: a categorical response for YAL002W, whose
+    `environment_response` is None, so the cell stays NaN. Key 2: response -1.25 then a
+    categorical None for YAL003W, so -1.25 survives the later None.
+
+    Finding: `phenotype_label_index` reads only the stored `label_name`, so it lists key 1
+    under environment_response although its label_df cell is NaN; a split drawn from the
+    index therefore contains a record with no scalar target. Pinned until the index and
+    the table agree on what "labeled" means.
+    """
+    entries = {
+        b"0": json.dumps(
+            [_fitness("toy", "YAL001C", 0.8), _fitness("toy", "YAL001C", 0.5)]
+        ).encode(),
+        b"1": json.dumps([_response("toy", "YAL002W", None)]).encode(),
+        b"2": json.dumps(
+            [_response("toy", "YAL003W", -1.25), _response("toy", "YAL003W", None)]
+        ).encode(),
+    }
+    _write_processed(tmp_path, entries, ["fitness", "environment_response"])
+    ds = Neo4jCellDataset(
+        root=str(tmp_path),
+        gene_set=GENES,
+        graph_processor=Perturbation(),
+        phenotype_labels=["fitness", "environment_response"],
+    )
+    pd.testing.assert_frame_equal(
+        ds.label_df,
+        pd.DataFrame(
+            {
+                "index": [0, 1, 2],
+                "fitness": [0.5, np.nan, np.nan],
+                "environment_response": [np.nan, np.nan, -1.25],
+            }
+        ),
+    )
+    assert ds.phenotype_label_index == {"fitness": [0], "environment_response": [1, 2]}
 
 
 class _RecordingProcessor(GraphProcessor):

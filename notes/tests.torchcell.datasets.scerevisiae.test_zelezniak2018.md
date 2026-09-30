@@ -73,3 +73,9 @@ reference because the only SE is NaN; two reference-index entries `[[0], [1]]`;
   omitting the key; the proteome never collapses an all-NaN SE dict to None, the metabolome does.
 - In the metabolome, the genotype regex check runs before `build_metabolite_s_id_map` (zero stub
   calls on failure) and the missing-WT check runs after it (one stub call on failure).
+
+## 2026.09.30 - Phase 12: downloads, the metabolite id map, one build per modality
+
+Thirteen to twenty-five cases, 70 to 96 percent. Both downloads pin the URL, User-Agent and 300 s timeout, refuse a mismatch with both digests and write nothing, skip a present file; `build_metabolite_s_id_map` on a fake YeastGEM pins KEGG over BiGG, cytosol preferred, the first-listed compartment as fallback, the first token of a merged id, list annotations, the `nan` KEGG fallback and the no-match refusal; one proteome and one metabolome build.
+
+Findings: `_aggregate` never reads the `replicate` column, so a repeated (ORF, strain, replicate) row inflates n and shrinks the SE (line 162); a protein with every value blank in one strain aborts with a pydantic `ValidationError` ("n_replicates for YBR002C must be >= 1"), not a loader message (255).

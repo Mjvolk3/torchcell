@@ -29,14 +29,33 @@ Metabolome fixture (``metabolites_dataset.data_prep.tsv``; rows pooled across th
     YDR003W  pyr      1, 3                  -> mean 2.0, SE 1.0, n 2
     YDR003W  atp      5, 5                  -> mean 5.0, SE 0.0, n 2 (WT never measured atp)
     YER004W  3pg;2pg  7                     -> n 1, SE NaN -> all-NaN SE collapses to None
+
+2026.09.30 (Phase 12): the uncovered paths. ``download()`` for both loaders runs against a
+fake ``urllib.request.urlopen`` that records the ``Request`` (URL, User-Agent, timeout
+300) and returns synthetic bytes: a digest mismatch refuses with both digests and writes
+nothing, a present raw file short-circuits without a request, and a proteome build with
+no raw file downloads (pin set to the synthetic TSV's digest) and then builds.
+``build_metabolite_s_id_map`` runs on a fake ``YeastGEM`` whose model carries six
+metabolites: KEGG wins over BiGG, a cytosolic form wins over the first-listed one, a
+metabolite with no cytosolic form takes the first listed compartment, a ``;``-merged id
+resolves through its first token, a list-valued annotation indexes every token, a
+``nan`` KEGG id falls back to BiGG, and an unmatched id refuses with both tokens. A
+proteome edge fixture pins the replicate handling: a repeated (ORF, strain, replicate)
+row counts as a second replicate, a blank value drops out of ``n``, the first
+``KO_gene_name`` of a strain wins, and a protein whose every value in a strain is blank
+aborts the build in schema validation.
 """
 
+import hashlib
 import json
 import math
 import socket
+import urllib.request
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
+import pydantic
 import pytest
 
 from torchcell.datamodels.media import SM_DEFERRED
@@ -501,3 +520,313 @@ def test_metabolome_missing_wt_raises_after_mapping(
     ):
         MetaboliteZelezniak2018Dataset(root=str(_metabolite_root(tmp_path, rows)))
     assert s_id_calls == [{"pyr": "C00022"}]
+
+
+# --------------------------------------------------------------------------- #
+# Downloads (2026.09.30)
+# --------------------------------------------------------------------------- #
+
+
+class _Response:
+    """The context-manager face of an ``urlopen`` response."""
+
+    def __init__(self, payload: bytes) -> None:
+        self.payload = payload
+
+    def __enter__(self) -> "_Response":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return self.payload
+
+
+def _fake_urlopen(
+    monkeypatch: pytest.MonkeyPatch, payload: bytes
+) -> list[tuple[str, str | None, int]]:
+    """Record (url, User-Agent, timeout) per request and answer with ``payload``."""
+    calls: list[tuple[str, str | None, int]] = []
+
+    def urlopen(req: Any, timeout: int) -> _Response:
+        calls.append((req.full_url, req.get_header("User-agent"), timeout))
+        return _Response(payload)
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    return calls
+
+
+def _bare(cls: Any, root: Path) -> Any:
+    """A loader instance without the PyG init, rooted at ``root``."""
+    dataset = cls.__new__(cls)
+    dataset.root = str(root)
+    return dataset
+
+
+@pytest.mark.parametrize(
+    ("cls", "filename", "url", "pinned", "label"),
+    [
+        (
+            ProteomeZelezniak2018Dataset,
+            PROTEOME_FILENAME,
+            "https://zenodo.org/records/1320289/files/"
+            "proteins_dataset.data_prep.tsv?download=1",
+            zelezniak2018.DATA_SHA256,
+            "proteome",
+        ),
+        (
+            MetaboliteZelezniak2018Dataset,
+            METABOLITE_DATA_FILENAME,
+            "https://zenodo.org/api/records/1320289/files/"
+            "metabolites_dataset.data_prep.tsv/content",
+            zelezniak2018.METABOLITE_DATA_SHA256,
+            "metabolome",
+        ),
+    ],
+)
+def test_download_refuses_a_digest_mismatch_and_writes_nothing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    cls: type[Any],
+    filename: str,
+    url: str,
+    pinned: str,
+    label: str,
+) -> None:
+    """The proteome uses the ``?download=1`` URL, the metabolome the API content
+    endpoint (the other 403s); both send a browser User-Agent with a 300 s timeout.
+    """
+    calls = _fake_urlopen(monkeypatch, b"tampered")
+    got = hashlib.sha256(b"tampered").hexdigest()
+    with pytest.raises(RuntimeError) as info:
+        _bare(cls, tmp_path / "ds").download()
+    assert str(info.value) == (
+        f"Zelezniak {label} sha256 mismatch: got {got}, expected {pinned}"
+    )
+    assert calls == [(url, "Mozilla/5.0", 300)]
+    assert (tmp_path / "ds" / "raw").is_dir()
+    assert not (tmp_path / "ds" / "raw" / filename).exists()
+
+
+@pytest.mark.parametrize(
+    ("cls", "filename", "pin_name"),
+    [
+        (ProteomeZelezniak2018Dataset, PROTEOME_FILENAME, "DATA_SHA256"),
+        (
+            MetaboliteZelezniak2018Dataset,
+            METABOLITE_DATA_FILENAME,
+            "METABOLITE_DATA_SHA256",
+        ),
+    ],
+)
+def test_download_writes_verified_bytes_and_skips_when_present(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    cls: type[Any],
+    filename: str,
+    pin_name: str,
+) -> None:
+    """With the pin set to the payload's digest the bytes land in ``raw/``; a second
+    call finds the file and makes no request.
+    """
+    calls = _fake_urlopen(monkeypatch, b"payload bytes")
+    monkeypatch.setattr(
+        zelezniak2018, pin_name, hashlib.sha256(b"payload bytes").hexdigest()
+    )
+    dataset = _bare(cls, tmp_path / "ds")
+    dataset.download()
+    assert (tmp_path / "ds" / "raw" / filename).read_bytes() == b"payload bytes"
+    dataset.download()
+    assert len(calls) == 1
+
+
+def test_proteome_build_without_raw_downloads_then_builds(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No ``raw/`` file: PyG calls ``download()``, which fetches the (synthetic) matrix,
+    verifies it against the pin (set to its digest) and writes it; ``process()`` then
+    builds the two records of the main fixture.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    source = _proteome_root(tmp_path / "source", PROTEOME_ROWS)
+    payload = (source / "raw" / PROTEOME_FILENAME).read_bytes()
+    calls = _fake_urlopen(monkeypatch, payload)
+    monkeypatch.setattr(
+        zelezniak2018, "DATA_SHA256", hashlib.sha256(payload).hexdigest()
+    )
+    root = tmp_path / "proteome_zelezniak2018"
+    ds = ProteomeZelezniak2018Dataset(root=str(root))
+    assert len(calls) == 1
+    assert (root / "raw" / PROTEOME_FILENAME).read_bytes() == payload
+    assert len(ds) == 2
+    assert ds[1]["experiment"]["phenotype"]["protein_abundance"] == {
+        "YAL001C": 2.0,
+        "YBR002C": 22.0,
+    }
+    assert ds.experiment_class is ProteinAbundanceExperiment
+    assert ds.reference_class is ProteinAbundanceExperimentReference
+
+
+# --------------------------------------------------------------------------- #
+# Proteome replicate edges (2026.09.30)
+# --------------------------------------------------------------------------- #
+
+
+def test_proteome_repeated_row_counts_twice_and_blank_value_drops_out(
+    tmp_path: Path,
+) -> None:
+    """Strain YDR003W: YAL001C rows (rep 1: 8), (rep 1: 8, a repeat), (rep 2: blank);
+    YBR002C (rep 1: 6). The repeat is pooled as a second replicate (mean 8.0, SD 0.0,
+    SE 0.0, n 2), the blank is excluded by pandas (not an n of 3), YBR002C is n 1 with
+    SE NaN. The first row's ``KO_gene_name`` (KIN3) is stored over the later ``kin3x``.
+
+    Finding: ``_aggregate`` never looks at the ``replicate`` column, so a repeated
+    (ORF, strain, replicate) row inflates ``n`` and shrinks the SE. Pinned until the
+    loader deduplicates or refuses a repeated replicate id.
+    """
+    rows = [
+        ("YAL001C", "WT", "WT", 1, 10.0),
+        ("YAL001C", "WT", "WT", 2, 12.0),
+        ("YBR002C", "WT", "WT", 1, 5.0),
+        ("YAL001C", "YDR003W", "KIN3", 1, 8.0),
+        ("YAL001C", "YDR003W", "kin3x", 1, 8.0),
+        ("YAL001C", "YDR003W", "KIN3", 2, ""),
+        ("YBR002C", "YDR003W", "KIN3", 1, 6.0),
+    ]
+    root = _proteome_root(tmp_path, rows)
+    ds = ProteomeZelezniak2018Dataset(root=str(root))
+    assert len(ds) == 1
+    (perturbation,) = ds[0]["experiment"]["genotype"]["perturbations"]
+    assert perturbation["perturbed_gene_name"] == "KIN3"
+    phenotype = ds[0]["experiment"]["phenotype"]
+    assert phenotype["protein_abundance"] == {"YAL001C": 8.0, "YBR002C": 6.0}
+    assert phenotype["n_replicates"] == {"YAL001C": 2, "YBR002C": 1}
+    se = phenotype["protein_abundance_se"]
+    assert list(se) == ["YAL001C", "YBR002C"]
+    assert se["YAL001C"] == 0.0
+    assert math.isnan(se["YBR002C"])
+    assert (root / "preprocess" / "data.csv").read_text() == "orf,gene\nYDR003W,KIN3\n"
+    reference = ds[0]["reference"]["phenotype_reference"]
+    assert reference["n_replicates"] == {"YAL001C": 2, "YBR002C": 1}
+
+
+def test_proteome_all_blank_protein_aborts_in_schema_validation(tmp_path: Path) -> None:
+    """Finding: a protein whose every value in one strain is blank aggregates to count
+    0 and mean NaN, and the build aborts in ``ProteinAbundancePhenotype`` validation
+    ("n_replicates for YBR002C must be >= 1") instead of a loader message naming the
+    strain. Pinned until the loader drops or reports such a cell.
+    """
+    rows = [
+        ("YAL001C", "WT", "WT", 1, 10.0),
+        ("YBR002C", "WT", "WT", 1, 5.0),
+        ("YAL001C", "YDR003W", "KIN3", 1, 8.0),
+        ("YBR002C", "YDR003W", "KIN3", 1, ""),
+    ]
+    with pytest.raises(pydantic.ValidationError) as info:
+        ProteomeZelezniak2018Dataset(root=str(_proteome_root(tmp_path, rows)))
+    (error,) = info.value.errors()
+    assert error["msg"] == "Value error, n_replicates for YBR002C must be >= 1"
+
+
+# --------------------------------------------------------------------------- #
+# build_metabolite_s_id_map on a fake YeastGEM (2026.09.30)
+# --------------------------------------------------------------------------- #
+
+
+def _met(met_id: str, compartment: str, **annotation: Any) -> SimpleNamespace:
+    keys = {"kegg": "kegg.compound", "bigg": "bigg.metabolite"}
+    return SimpleNamespace(
+        id=met_id,
+        compartment=compartment,
+        annotation={keys[k]: v for k, v in annotation.items()},
+    )
+
+
+_FAKE_METABOLITES = [
+    _met("s_1400", "m", kegg="C00022", bigg="pyr"),  # mitochondrial pyruvate, first
+    _met("s_1399", "c", kegg="C00022", bigg="pyr"),  # cytosolic pyruvate
+    _met("s_0454", "m", kegg="C04236", bigg="3c3hmp"),  # no cytosolic form
+    _met("s_0188", "c", kegg=["C00197", "C99999"], bigg="3pg"),  # list annotation
+    _met("s_0434", "c", bigg="atp"),  # BiGG only
+    _met("s_9999", "c"),  # no annotation at all
+]
+
+
+@pytest.fixture
+def fake_gem(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``YeastGEM().model.metabolites`` is the six-metabolite list above."""
+
+    class _FakeGEM:
+        def __init__(self) -> None:
+            self.model = SimpleNamespace(metabolites=_FAKE_METABOLITES)
+
+    monkeypatch.setattr(zelezniak2018, "YeastGEM", _FakeGEM)
+
+
+def test_s_id_map_prefers_kegg_then_cytosol_then_first_listed(fake_gem: None) -> None:
+    """``pyr`` (C00022) has m and c forms: the cytosolic s_1399 wins over the first
+    listed s_1400. ``3c3hmp`` (C04236) has only the m form: s_0454. ``3pg;2pg`` resolves
+    through its first KEGG token C00197, which sits in a list-valued annotation. ``atp``
+    carries the string ``nan`` as its KEGG id (a blank cell after ``str()``), so the
+    BiGG token ``atp`` decides. ``g6p`` (KEGG C99999, the second token of s_0188's
+    list) maps to s_0188, so every token of a list annotation is indexed.
+    """
+    assert zelezniak2018.build_metabolite_s_id_map(
+        {
+            "pyr": "C00022",
+            "3c3hmp": "C04236",
+            "3pg;2pg": "C00197;C00631",
+            "atp": "nan",
+            "g6p": "C99999",
+        }
+    ) == {
+        "pyr": "s_1399",
+        "3c3hmp": "s_0454",
+        "3pg;2pg": "s_0188",
+        "atp": "s_0434",
+        "g6p": "s_0188",
+    }
+
+
+def test_s_id_map_bigg_fallback_uses_the_first_merged_token(fake_gem: None) -> None:
+    """An empty KEGG id skips the KEGG index; ``3pg;2pg`` then matches BiGG ``3pg``."""
+    assert zelezniak2018.build_metabolite_s_id_map({"3pg;2pg": ""}) == {
+        "3pg;2pg": "s_0188"
+    }
+
+
+def test_s_id_map_refuses_an_unmatched_metabolite(fake_gem: None) -> None:
+    with pytest.raises(RuntimeError) as info:
+        zelezniak2018.build_metabolite_s_id_map({"xyz;abc": "C00001;C00002"})
+    assert str(info.value) == (
+        "no Yeast9 s_NNNN found for metabolite 'xyz;abc' (kegg 'C00001', bigg 'xyz')"
+    )
+
+
+def test_metabolome_build_runs_the_real_mapper_on_the_fake_model(
+    tmp_path: Path, fake_gem: None
+) -> None:
+    """Without the mapper stub, ``process()`` feeds the deduplicated metabolite -> KEGG
+    map to ``build_metabolite_s_id_map``; the fake model maps pyr to the cytosolic
+    s_1399, so record 0's targets are exactly {pyr: s_1399}.
+    """
+    rows = [
+        ("pyr", "C00022", "Pyruvate", 1, "WT", 1, 2.0),
+        ("pyr", "C00022", "Pyruvate", 2, "WT", 1, 4.0),
+        ("pyr", "C00022", "Pyruvate", 1, "YDR003W", 1, 1.0),
+        ("pyr", "C00022", "Pyruvate", 1, "YDR003W", 2, 3.0),
+    ]
+    ds = MetaboliteZelezniak2018Dataset(root=str(_metabolite_root(tmp_path, rows)))
+    assert len(ds) == 1
+    phenotype = ds[0]["experiment"]["phenotype"]
+    assert phenotype["target_metabolite_ids"] == {"pyr": "s_1399"}
+    assert phenotype["metabolite_level"] == {"pyr": 2.0}
+    assert ds.experiment_class is MetaboliteExperiment
+    assert ds.reference_class is MetaboliteExperimentReference
+
+
+def test_preprocess_raw_is_identity_for_both_loaders(tmp_path: Path) -> None:
+    frame = object()
+    for cls in (ProteomeZelezniak2018Dataset, MetaboliteZelezniak2018Dataset):
+        assert _bare(cls, tmp_path).preprocess_raw(frame) is frame

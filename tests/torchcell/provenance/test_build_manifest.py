@@ -1,11 +1,31 @@
 # tests/torchcell/provenance/test_build_manifest.py
-"""Tests for build_manifest: manifest round-trip, drift detection, and fleet staleness scan."""
+# [[tests.torchcell.provenance.test_build_manifest]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/provenance/test_build_manifest.py
+"""Tests for build_manifest: manifest round-trip, drift detection, and fleet staleness scan.
+
+2026.09.30 (Phase 12). On the three-class synthetic schema (``ModelStrict`` base,
+``Media``, ``Environment`` holding a ``Media``), a loader importing ``Environment`` has
+the closure {Environment, Media, ModelStrict}, each mapped to the surface's own
+fingerprint, and ``surface_modules`` is ["schema"] (the source key). Fingerprints are
+per symbol: adding ``ph`` to ``Media`` drifts ``Media`` alone, so a loader importing only
+``Media`` goes stale while an ``Environment`` edit leaves it fresh. Added: every
+manifest field, the exact drift records, the scan's directory rule (only
+``data/torchcell/<slug>/processed/lmdb`` counts) and its use of the manifest's own
+``dataset_name``, the refusal of a malformed manifest, ``_git_info`` on a throwaway repo
+(commit, clean, dirty) and outside any repo, and the CLI: the exact report lines and
+exit codes 0 (fresh), 1 (stale), 0 with only unmanifested stores (Finding), the
+``$DATA_ROOT`` default, and the ``KeyError`` when neither is given.
+"""
 
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 from pathlib import Path
+
+import pydantic
+import pytest
 
 from torchcell.provenance import build_manifest as bm
 from torchcell.provenance import schema_deps as sd
@@ -159,3 +179,242 @@ def test_write_build_manifest_end_to_end(tmp_path: Path) -> None:
         assert {"Environment", "Media"} <= set(manifest.closure)
     finally:
         sys.modules.pop("fake_loader_mod", None)
+
+
+ENV_EDIT = SCHEMA.replace("    temperature: float\n", "    temperature: int\n")
+MEDIA_EDIT = SCHEMA.replace("    name: str\n", "    name: str\n    ph: float\n")
+
+
+def test_manifest_records_every_field(tmp_path: Path) -> None:
+    """Closure {Environment, Media, ModelStrict} at the surface's fingerprints, sorted."""
+    surface = _surface(SCHEMA)
+    manifest = _manifest(tmp_path, surface)
+    assert manifest.model_dump() == {
+        "manifest_schema_version": 1,
+        "dataset_name": "slug",
+        "loader_class": "MyDataset",
+        "loader_module": "pkg.loader",
+        "surface_modules": ["schema"],
+        "closure": {
+            name: surface.fingerprints[name]
+            for name in ("Environment", "Media", "ModelStrict")
+        },
+        "built_at": "2026-07-15T00:00:00+00:00",
+        "hostname": "testhost",
+        "torchcell_commit": None,
+        "torchcell_dirty": None,
+    }
+    assert list(manifest.closure) == ["Environment", "Media", "ModelStrict"]
+
+
+def test_drift_lists_exactly_the_changed_symbol(tmp_path: Path) -> None:
+    """A field added to Media drifts Media only; Environment's fingerprint is unchanged."""
+    manifest = _manifest(tmp_path, _surface(SCHEMA))
+    changed = _surface(MEDIA_EDIT)
+    result = bm.check_manifest(manifest, changed, "/pre")
+    assert result == bm.StaleResult(
+        dataset_name="slug",
+        preprocess_dir="/pre",
+        is_stale=True,
+        drift=[
+            bm.SymbolDrift(
+                symbol="Media",
+                stored_fingerprint=manifest.closure["Media"],
+                current_fingerprint=changed.fingerprints["Media"],
+            )
+        ],
+    )
+
+
+def test_change_outside_the_closure_leaves_a_loader_fresh(tmp_path: Path) -> None:
+    """A loader importing only Media: closure {Media, ModelStrict}; an Environment edit
+    is outside it (fresh), a Media edit is inside it (stale).
+    """
+    surface = _surface(SCHEMA)
+    manifest = bm.compute_manifest(
+        dataset_name="media_only",
+        loader_module="pkg.loader",
+        loader_class="MyDataset",
+        loader_path=_loader(tmp_path, imports="Media"),
+        surface=surface,
+        built_at="2026-07-15T00:00:00+00:00",
+        hostname="testhost",
+        torchcell_commit="abc",
+        torchcell_dirty=True,
+    )
+    assert list(manifest.closure) == ["Media", "ModelStrict"]
+    env_edit = _surface(ENV_EDIT)
+    assert env_edit.fingerprints["Environment"] != surface.fingerprints["Environment"]
+    assert (manifest.torchcell_commit, manifest.torchcell_dirty) == ("abc", True)
+    assert not bm.check_manifest(manifest, env_edit, "p").is_stale
+    stale = bm.check_manifest(manifest, _surface(MEDIA_EDIT), "p")
+    assert [d.symbol for d in stale.drift] == ["Media"]
+
+
+def _write(slug_dir: Path, manifest: bm.BuildManifest) -> None:
+    (slug_dir / "preprocess" / bm.MANIFEST_FILENAME).write_text(
+        manifest.model_dump_json()
+    )
+
+
+def test_scan_counts_only_built_lmdbs_and_reports_the_manifest_name(
+    tmp_path: Path,
+) -> None:
+    """A slug without ``processed/lmdb`` is ignored even with a manifest; a manifest in
+    ``ds_dir`` naming itself ``renamed`` is reported as ``renamed`` (the name comes from
+    the file, not the directory).
+    """
+    surface = _surface(SCHEMA)
+    unbuilt = tmp_path / "data" / "torchcell" / "ds_unbuilt" / "preprocess"
+    unbuilt.mkdir(parents=True)
+    (unbuilt / bm.MANIFEST_FILENAME).write_text(
+        _manifest(tmp_path, surface).model_dump_json()
+    )
+    _write(
+        _build_dataset_dir(tmp_path, "ds_dir"),
+        _manifest(tmp_path, surface, name="renamed"),
+    )
+    assert bm.check_all(tmp_path, surface) == [
+        bm.DatasetCheck(dataset_name="renamed", status="fresh", drift=[])
+    ]
+
+
+def test_malformed_manifest_is_refused(tmp_path: Path) -> None:
+    """A manifest missing required fields raises instead of being counted."""
+    slug_dir = _build_dataset_dir(tmp_path, "ds_bad")
+    (slug_dir / "preprocess" / bm.MANIFEST_FILENAME).write_text('{"dataset_name": "x"}')
+    with pytest.raises(pydantic.ValidationError, match="loader_class"):
+        bm.check_all(tmp_path, _surface(SCHEMA))
+
+
+def _fleet(tmp_path: Path, stale: bool, bare: bool) -> sd.SchemaSurface:
+    """``ds_fresh`` always; ``ds_stale`` (Media drifted) and ``ds_bare`` on request."""
+    surface = _surface(SCHEMA)
+    fresh = _manifest(tmp_path, surface, name="ds_fresh")
+    _write(_build_dataset_dir(tmp_path, "ds_fresh"), fresh)
+    if stale:
+        closure = {**fresh.closure, "Media": "deadbeef", "ModelStrict": "cafe"}
+        _write(
+            _build_dataset_dir(tmp_path, "ds_stale"),
+            fresh.model_copy(update={"dataset_name": "ds_stale", "closure": closure}),
+        )
+    if bare:
+        _build_dataset_dir(tmp_path, "ds_bare")
+    return surface
+
+
+def _cli(
+    monkeypatch: pytest.MonkeyPatch, surface: sd.SchemaSurface, argv: list[str]
+) -> int:
+    monkeypatch.setattr(bm, "load_default_surface", lambda: surface)
+    monkeypatch.setattr(bm, "load_dotenv", lambda: False)
+    return bm.main(argv)
+
+
+def test_cli_all_fresh_exits_zero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """One fresh store: the count line, a blank line, the all-fresh line; exit 0."""
+    surface = _fleet(tmp_path, stale=False, bare=False)
+    assert _cli(monkeypatch, surface, ["--data-root", str(tmp_path)]) == 0
+    assert capsys.readouterr().out == (
+        "Built datasets: 1  (fresh 1, stale 0, unmanifested 0)\n"
+        "\n"
+        "  All built datasets are fresh against the local schema.\n"
+    )
+
+
+def test_cli_stale_exits_one_and_names_the_changed_symbols(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Stale lines first (symbols sorted), then unmanifested; exit 1."""
+    surface = _fleet(tmp_path, stale=True, bare=True)
+    assert _cli(monkeypatch, surface, ["--data-root", str(tmp_path)]) == 1
+    assert capsys.readouterr().out == (
+        "Built datasets: 3  (fresh 1, stale 1, unmanifested 1)\n"
+        "\n"
+        "  [STALE] ds_stale  -> rebuild; changed: Media, ModelStrict\n"
+        "  [no manifest] ds_bare  -> written on next rebuild\n"
+    )
+
+
+def test_cli_unmanifested_only_exits_zero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Finding: a store with no manifest is listed but the exit code is 0
+    (``build_manifest.py:281`` counts only ``stale``), so a script gating a full rebuild on
+    this exit code (CLAUDE.md: every mapped dev store must read ``fresh``) passes a store
+    whose freshness is unknown. Pinned until unmanifested stores fail the gate.
+    """
+    surface = _fleet(tmp_path, stale=False, bare=True)
+    assert _cli(monkeypatch, surface, ["--data-root", str(tmp_path)]) == 0
+    assert capsys.readouterr().out.splitlines() == [
+        "Built datasets: 2  (fresh 1, stale 0, unmanifested 1)",
+        "",
+        "  [no manifest] ds_bare  -> written on next rebuild",
+    ]
+
+
+def test_cli_defaults_to_the_data_root_environment_variable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """No ``--data-root``: ``$DATA_ROOT`` is scanned (here a stale fleet, exit 1)."""
+    surface = _fleet(tmp_path, stale=True, bare=False)
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    assert _cli(monkeypatch, surface, []) == 1
+    assert capsys.readouterr().out.splitlines()[0] == (
+        "Built datasets: 2  (fresh 1, stale 1, unmanifested 0)"
+    )
+
+
+def test_cli_without_any_data_root_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Neither the flag nor ``$DATA_ROOT`` (and no ``.env``): ``KeyError('DATA_ROOT')``."""
+    monkeypatch.delenv("DATA_ROOT", raising=False)
+    with pytest.raises(KeyError, match="^'DATA_ROOT'$"):
+        _cli(monkeypatch, _surface(SCHEMA), [])
+
+
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.run(
+        [
+            "git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t",
+            "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", *args,
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()  # fmt: skip
+
+
+def test_git_info_on_a_throwaway_repo(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A clean checkout gives (HEAD, False); an untracked file makes it (HEAD, True)."""
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", "/dev/null")
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path))
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "a.txt").write_text("a\n")
+    _git(repo, "init", "-q")
+    _git(repo, "add", "a.txt")
+    _git(repo, "commit", "-q", "-m", "one")
+    head = _git(repo, "rev-parse", "HEAD")
+    assert len(head) == 40
+    assert bm._git_info(repo) == (head, False)
+    (repo / "b.txt").write_text("b\n")
+    assert bm._git_info(repo) == (head, True)
+
+
+def test_git_info_outside_a_repo_is_absent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Not a checkout (ceiling stops the upward search): ``(None, None)``, no raise."""
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", "/dev/null")
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path))
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    assert bm._git_info(plain) == (None, None)

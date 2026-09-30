@@ -1,4 +1,37 @@
-"""Tests for COO regression-to-classification label transforms."""
+# tests/torchcell/transforms/test_coo_regression_to_classification.py
+# [[tests.torchcell.transforms.test_coo_regression_to_classification]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/transforms/test_coo_regression_to_classification.py
+"""Tests for COO regression-to-classification label transforms.
+
+2026.09.30 (Phase 12): closed-form tests for the branches the classes above left open.
+Every fixture is a hand-built `label_df` on a stand-in dataset (only `label_df` is read)
+and a hand-built COO `HeteroData`; every number is worked here and was checked with a
+two-line Python run.
+
+* Normalization statistics use population std (`np.std`, ddof 0) and linear percentiles,
+  after +-inf becomes NaN and NaN is dropped. On `index` [0, 10, 20, 30] with fitness
+  [1, 2, 3, inf]: mean 2, std sqrt(2/3) = 0.816496580927726, min 1, max 3, q25 1.5,
+  q75 2.5. `fit_indices` [10, 20, 20] resolves through the `index` COLUMN (a set, so the
+  repeat collapses) to fitness [2, 3]: mean 2.5, std 0.5, q25 2.25, q75 2.75.
+* Robust scaling on [0, 1, 2, 3, 4]: q25 1, q75 3, iqr 2, so x -> (x - 1) / (2 + 1e-8)
+  maps [0, 1, 4] to [-0.5, 0, 1.5], and the inverse x * 2 + 1 maps back.
+* Bin edges: equal width on [0..4, NaN] with 4 bins is [0, 1, 2, 3, 4] (widths 1, mean 2,
+  std sqrt 2); equal frequency on 0..8 with 4 bins is the 0/25/50/75/100th percentiles
+  [0, 2, 4, 6, 8] with histogram counts [2, 2, 2, 3] (numpy closes the last bin); auto on
+  [0..4] picks int(range / std) = int(4 / 1.414) = 2 bins, edges [0, 2, 4].
+* Label assignment on edges [0, 1, 2, 3, 4]: one-hot is left-closed ([1, 2) is bin 1)
+  after clamping to [0, 4], and the right edge 4 folds into bin 3; ordinal uses a
+  STRICT `>` against the interior edges [1, 2, 3], so 1 -> [0, 0, 0] (a Finding, below).
+* Soft labels on edges [0, 1, 2] (centers 0.5, 1.5, sigma = 1 * sigma_scale = 1):
+  0.5 -> [1, e^-0.5] / (1 + e^-0.5) = [0.6224593, 0.3775407]; -3 clamps to 0, distances
+  [0.5, 1.5] -> [e^-0.125, e^-1.125] normalized = [0.7310586, 0.2689414].
+* Inverse (class to value) draws are seeded: after `torch.manual_seed(42)` the first two
+  `torch.rand(1)` are 0.8822692632675171 and 0.9150039553642273, one per sample in
+  sorted sample order.
+"""
+
+from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -8,9 +41,12 @@ from torch_geometric.data import Batch, HeteroData
 from torch_geometric.transforms import Compose
 
 from torchcell.transforms.coo_regression_to_classification import (
+    AutoBinStrategy,
     COOInverseCompose,
     COOLabelBinningTransform,
     COOLabelNormalizationTransform,
+    EqualFrequencyStrategy,
+    EqualWidthStrategy,
 )
 
 
@@ -652,3 +688,687 @@ class TestModelOutputSimulationCOO:
             assert torch.allclose(
                 recovered["gene"]["phenotype_values"][i], expected, atol=1e-6
             )
+
+
+# ---------------------------------------------------------------------------------------
+# 2026.09.30 (Phase 12): closed-form branch tests. Values derived in the module docstring.
+# ---------------------------------------------------------------------------------------
+
+SEED42_U0 = 0.8822692632675171
+SEED42_U1 = 0.9150039553642273
+
+
+def _dataset(df: pd.DataFrame) -> Any:
+    """A stand-in for `Neo4jCellDataset`: the transforms read only `label_df`."""
+    return SimpleNamespace(label_df=df)
+
+
+def _coo(
+    values: list[float] | float,
+    type_indices: list[int],
+    sample_indices: list[int],
+    types: list[str] | list[list[str]],
+) -> HeteroData:
+    data = HeteroData()
+    data["gene"].phenotype_values = torch.tensor(values, dtype=torch.float)
+    data["gene"].phenotype_type_indices = torch.tensor(type_indices, dtype=torch.long)
+    data["gene"].phenotype_sample_indices = torch.tensor(
+        sample_indices, dtype=torch.long
+    )
+    data["gene"].phenotype_types = types
+    return data
+
+
+def _robust() -> COOLabelNormalizationTransform:
+    df = pd.DataFrame({"fitness": [0.0, 1.0, 2.0, 3.0, 4.0]})
+    return COOLabelNormalizationTransform(
+        _dataset(df), {"fitness": {"strategy": "robust"}}
+    )
+
+
+def _bins(label_type: str, **extra: Any) -> COOLabelBinningTransform:
+    """Equal-width, 4 bins over gene_interaction [0..4]: edges [0, 1, 2, 3, 4]."""
+    df = pd.DataFrame({"gene_interaction": [0.0, 1.0, 2.0, 3.0, 4.0]})
+    config = {
+        "gene_interaction": {
+            "strategy": "equal_width",
+            "num_bins": 4,
+            "label_type": label_type,
+            **extra,
+        }
+    }
+    return COOLabelBinningTransform(_dataset(df), config)
+
+
+def test_statistics_drop_infinities_and_use_population_std() -> None:
+    """Inf is replaced by NaN and dropped, so fitness [1, 2, 3, inf] gives mean 2 and the
+    ddof-0 std sqrt(2/3); percentiles interpolate linearly (q25 1.5, q75 2.5).
+    """
+    df = pd.DataFrame({"index": [0, 10, 20, 30], "fitness": [1.0, 2.0, 3.0, np.inf]})
+    t = COOLabelNormalizationTransform(
+        _dataset(df), {"fitness": {"strategy": "robust"}}
+    )
+    assert t.stats == {
+        "fitness": {
+            "mean": 2.0,
+            "std": pytest.approx(0.816496580927726, abs=1e-15),
+            "min": 1.0,
+            "max": 3.0,
+            "q25": 1.5,
+            "q75": 2.5,
+            "strategy": "robust",
+        }
+    }
+
+
+def test_fit_indices_resolve_through_the_index_column() -> None:
+    """Records 10 and 20 sit at rows 1 and 2; a positional read of [10, 20] would fail,
+    and a read of rows [1, 2] with the wrong column would give different numbers. The
+    repeated 20 collapses in the set, so no record is reported missing.
+    """
+    df = pd.DataFrame({"index": [0, 10, 20, 30], "fitness": [1.0, 2.0, 3.0, np.inf]})
+    t = COOLabelNormalizationTransform(
+        _dataset(df), {"fitness": {"strategy": "standard"}}, fit_indices=[10, 20, 20]
+    )
+    assert t.stats["fitness"] == {
+        "mean": 2.5,
+        "std": 0.5,
+        "min": 2.0,
+        "max": 3.0,
+        "q25": 2.25,
+        "q75": 2.75,
+        "strategy": "standard",
+    }
+
+
+def test_fit_indices_absent_from_label_df_are_refused() -> None:
+    """Record 99 is not in the `index` column: one missing index, named in the error."""
+    df = pd.DataFrame({"index": [0, 10, 20, 30], "fitness": [1.0, 2.0, 3.0, 4.0]})
+    with pytest.raises(
+        ValueError, match=r"^fit_indices names 1 record indices absent from label_df$"
+    ):
+        COOLabelNormalizationTransform(
+            _dataset(df), {"fitness": {"strategy": "standard"}}, fit_indices=[10, 99]
+        )
+
+
+def test_normalization_refuses_a_label_the_dataset_lacks() -> None:
+    df = pd.DataFrame({"fitness": [1.0, 2.0]})
+    with pytest.raises(
+        ValueError, match=r"^Label gene_interaction not found in dataset$"
+    ):
+        COOLabelNormalizationTransform(
+            _dataset(df), {"gene_interaction": {"strategy": "standard"}}
+        )
+
+
+def test_robust_normalize_and_denormalize_in_closed_form() -> None:
+    """(x - q25) / (iqr + eps) with q25 1, iqr 2: [0, 1, 4] -> [-0.5, 0, 1.5]; the
+    inverse x * iqr + q25 (no eps) maps [-0.5, 0, 1.5] back to [0, 1, 4].
+    """
+    t = _robust()
+    torch.testing.assert_close(
+        t.normalize(torch.tensor([0.0, 1.0, 4.0]), "fitness"),
+        torch.tensor([-0.5, 0.0, 1.5]),
+    )
+    torch.testing.assert_close(
+        t.denormalize(torch.tensor([-0.5, 0.0, 1.5]), "fitness"),
+        torch.tensor([0.0, 1.0, 4.0]),
+    )
+
+
+def test_all_nan_values_short_circuit_before_the_strategy_is_read() -> None:
+    """An all-NaN tensor comes back all NaN from normalize and denormalize without the
+    strategy being read: a transform whose ``stats`` were emptied, which would raise on
+    any lookup, still returns it. A partly NaN tensor does reach the strategy: the robust
+    transform maps [nan, 4.0] to [nan, 1.5] (median 1, IQR 2).
+    """
+    values = torch.tensor([float("nan"), float("nan")])
+    emptied = _robust()
+    emptied.stats = {}
+    for transform in (_robust(), emptied):
+        for out in (
+            transform.normalize(values, "fitness"),
+            transform.denormalize(values, "fitness"),
+        ):
+            assert out.shape == (2,)
+            assert torch.isnan(out).all()
+    mixed = _robust().normalize(torch.tensor([float("nan"), 4.0]), "fitness")
+    assert torch.isnan(mixed[0])
+    assert mixed[1].item() == 1.5
+
+
+def test_unknown_strategy_is_accepted_at_construction_and_fails_on_use() -> None:
+    """Finding: the strategy name is stored unchecked in `stats`
+    (`coo_regression_to_classification.py:87`), so a typo builds a transform that only
+    fails on the first normalize or denormalize (lines 112 and 132). Pinned until the
+    constructor validates the strategy.
+    """
+    df = pd.DataFrame({"fitness": [1.0, 2.0]})
+    t = COOLabelNormalizationTransform(
+        _dataset(df), {"fitness": {"strategy": "zscore"}}
+    )
+    assert t.stats["fitness"]["strategy"] == "zscore"
+    with pytest.raises(ValueError, match=r"^Unknown normalization strategy: zscore$"):
+        t.normalize(torch.tensor([1.0]), "fitness")
+    with pytest.raises(ValueError, match=r"^Unknown normalization strategy: zscore$"):
+        t.denormalize(torch.tensor([1.0]), "fitness")
+
+
+def test_normalization_passes_through_data_without_phenotype_values() -> None:
+    """No `phenotype_values`: `forward` and `inverse` return the object they were given
+    (`BaseTransform.__call__` would shallow-copy first) and add no original copy.
+    """
+    t = _robust()
+    data = HeteroData()
+    data["gene"].x = torch.tensor([1.0])
+    assert t.forward(data) is data
+    assert t.inverse(data) is data
+    assert list(data["gene"].keys()) == ["x"]
+
+
+def test_normalization_keeps_a_scalar_label_scalar() -> None:
+    """A 0-d value 4.0 is normalized to the 0-d 1.5 and back to the 0-d 4.0; the stored
+    original is the 0-d 4.0.
+    """
+    t = _robust()
+    data = _coo(4.0, [0], [0], ["fitness"])
+    out = t(data)
+    torch.testing.assert_close(out["gene"].phenotype_values, torch.tensor(1.5))
+    torch.testing.assert_close(out["gene"].phenotype_values_original, torch.tensor(4.0))
+    back = t.inverse(out)
+    torch.testing.assert_close(back["gene"].phenotype_values, torch.tensor(4.0))
+
+
+def test_second_normalization_keeps_the_first_original() -> None:
+    """`phenotype_values_original` is written once: applying the transform twice keeps
+    the RAW [4.0] as the original while the values are normalized twice,
+    4 -> 1.5 -> (1.5 - 1) / 2 = 0.25.
+    """
+    t = _robust()
+    data = t(t(_coo([4.0], [0], [0], ["fitness"])))
+    torch.testing.assert_close(data["gene"].phenotype_values, torch.tensor([0.25]))
+    torch.testing.assert_close(
+        data["gene"].phenotype_values_original, torch.tensor([4.0])
+    )
+
+
+def test_batched_phenotype_types_use_the_first_list() -> None:
+    """A collated batch carries `phenotype_types` as a list of per-item lists; the first
+    is used, so type index 1 is fitness here and [0, 4] becomes [-0.5, 1.5] while the
+    type-0 value 9.0 (gene_interaction, not configured) is untouched. The inverse reads
+    the same list and restores [0, 4].
+    """
+    t = _robust()
+    types = [["gene_interaction", "fitness"], ["gene_interaction", "fitness"]]
+    data = _coo([0.0, 9.0, 4.0], [1, 0, 1], [0, 0, 1], types)
+    out = t(data)
+    torch.testing.assert_close(
+        out["gene"].phenotype_values, torch.tensor([-0.5, 9.0, 1.5])
+    )
+    back = t.inverse(out)
+    torch.testing.assert_close(
+        back["gene"].phenotype_values, torch.tensor([0.0, 9.0, 4.0])
+    )
+
+
+def test_configured_label_with_no_entries_leaves_values_untouched() -> None:
+    """Fitness is listed in `phenotype_types` but no entry has its type index (1), so the
+    mask is empty and every value passes through, forward and inverse.
+    """
+    t = _robust()
+    data = _coo([4.0, 2.0], [0, 0], [0, 1], ["gene_interaction", "fitness"])
+    torch.testing.assert_close(
+        t(data)["gene"].phenotype_values, torch.tensor([4.0, 2.0])
+    )
+    torch.testing.assert_close(
+        t.inverse(data)["gene"].phenotype_values, torch.tensor([4.0, 2.0])
+    )
+
+
+def test_equal_width_bins_ignore_nan() -> None:
+    edges, meta = EqualWidthStrategy().compute_bins(
+        np.array([0.0, 1.0, 2.0, 3.0, 4.0, np.nan]), 4
+    )
+    np.testing.assert_array_equal(edges, [0.0, 1.0, 2.0, 3.0, 4.0])
+    np.testing.assert_array_equal(meta["bin_widths"], [1.0, 1.0, 1.0, 1.0])
+    assert (meta["min"], meta["max"], meta["mean"]) == (0.0, 4.0, 2.0)
+    assert meta["std"] == pytest.approx(np.sqrt(2.0), abs=1e-15)
+    assert meta["strategy"] == "equal_width"
+
+
+def test_equal_frequency_bins_are_percentiles_and_close_the_last_bin() -> None:
+    """0..8 at the 0/25/50/75/100th percentiles is [0, 2, 4, 6, 8]; `np.histogram` puts
+    8 in the last (closed) bin, so the counts are [2, 2, 2, 3], not four equal bins.
+    """
+    edges, meta = EqualFrequencyStrategy().compute_bins(np.arange(9.0), 4)
+    np.testing.assert_array_equal(edges, [0.0, 2.0, 4.0, 6.0, 8.0])
+    np.testing.assert_array_equal(meta["bin_counts"], [2, 2, 2, 3])
+    assert (meta["min"], meta["max"], meta["mean"]) == (0.0, 8.0, 4.0)
+    assert meta["strategy"] == "equal_frequency"
+
+
+def test_auto_bins_truncate_range_over_std() -> None:
+    """Finding: auto picks int(4 / sqrt 2) = int(2.83) = 2 bins, and its metadata reports
+    `strategy` "equal_width" because it delegates (line 403), so a saved config cannot
+    tell auto from equal width. An explicit num_bins 4 overrides the rule. Pinned until
+    auto labels its own metadata.
+    """
+    values = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+    edges, meta = AutoBinStrategy().compute_bins(values)
+    np.testing.assert_array_equal(edges, [0.0, 2.0, 4.0])
+    assert meta["strategy"] == "equal_width"
+    edges4, _ = AutoBinStrategy().compute_bins(values, 4)
+    np.testing.assert_array_equal(edges4, [0.0, 1.0, 2.0, 3.0, 4.0])
+
+
+def test_onehot_labels_are_left_closed_and_clamped() -> None:
+    """Edges [0, 1, 2, 3, 4]: -1 clamps to 0 (bin 0); 0 and 0.5 are bin 0; the edge 1
+    starts bin 1; 3.999 is bin 3; the right edge 4 and the clamped 5 fold into bin 3;
+    NaN gives a NaN row.
+    """
+    edges = torch.tensor([0.0, 1.0, 2.0, 3.0, 4.0])
+    values = torch.tensor([-1.0, 0.0, 0.5, 1.0, 3.999, 4.0, 5.0, float("nan")])
+    nan = float("nan")
+    expected = torch.tensor(
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+            [nan, nan, nan, nan],
+        ]
+    )
+    torch.testing.assert_close(
+        EqualWidthStrategy().compute_onehot_labels(values, edges),
+        expected,
+        equal_nan=True,
+    )
+
+
+def test_ordinal_labels_count_strict_crossings_of_interior_edges() -> None:
+    """Finding: ordinal compares with a strict `>` (line 291), so a value ON an interior
+    edge counts as below it: 1 -> [0, 0, 0], the same class as 0, while the one-hot path
+    puts 1 in bin 1. Other rows: -1 -> [0, 0, 0], 1.5 -> [1, 0, 0], 3 -> [1, 1, 0],
+    5 (clamped to 4) -> [1, 1, 1], NaN -> NaN. Pinned until the two paths share one
+    edge convention.
+    """
+    edges = torch.tensor([0.0, 1.0, 2.0, 3.0, 4.0])
+    values = torch.tensor([-1.0, 1.0, 1.5, 3.0, 5.0, float("nan")])
+    nan = float("nan")
+    expected = torch.tensor(
+        [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0],
+            [1.0, 1.0, 1.0],
+            [nan, nan, nan],
+        ]
+    )
+    torch.testing.assert_close(
+        EqualWidthStrategy().compute_ordinal_labels(values, edges),
+        expected,
+        equal_nan=True,
+    )
+
+
+def test_soft_labels_are_normalized_gaussians_on_bin_centers() -> None:
+    """Edges [0, 1, 2], sigma 1: 0.5 -> [0.6224593, 0.3775407]; 1.0 sits midway ->
+    [0.5, 0.5]; -3 clamps to 0 -> [0.7310586, 0.2689414]; NaN -> NaN row.
+    """
+    out = EqualWidthStrategy().compute_soft_labels(
+        torch.tensor([0.5, 1.0, -3.0, float("nan")]),
+        torch.tensor([0.0, 1.0, 2.0]),
+        sigma_scale=1,
+    )
+    nan = float("nan")
+    expected = torch.tensor(
+        [
+            [0.6224593312018546, 0.37754066879814546],
+            [0.5, 0.5],
+            [0.7310585786300049, 0.2689414213699951],
+            [nan, nan],
+        ]
+    )
+    torch.testing.assert_close(out, expected, equal_nan=True)
+
+
+def test_soft_labels_underflow_to_an_all_zero_row_when_sigma_is_narrow() -> None:
+    """Finding: with sigma = 1 * 0.01, the value 0 sits 0.5 and 1.5 from the centers, so
+    both weights are exp(-0.5 * 50^2) = exp(-1250), which is 0.0 in float32 and float64;
+    the sum-to-one step is skipped (line 320) and the row stays [0, 0], which is not a
+    distribution. The center 0.5 still gives [1, 0]. Pinned until a narrow sigma falls
+    back to the one-hot bin.
+    """
+    out = EqualWidthStrategy().compute_soft_labels(
+        torch.tensor([0.0, 0.5]), torch.tensor([0.0, 1.0, 2.0]), sigma_scale=0.01
+    )
+    torch.testing.assert_close(out, torch.tensor([[0.0, 0.0], [1.0, 0.0]]))
+
+
+def test_binning_forward_expands_each_value_into_its_bins() -> None:
+    """gene_interaction is type 1 of ["fitness", "gene_interaction"]; values 0.5 (sample
+    7) and 2.0 (sample 9) become one-hot [1, 0, 0, 0] and [0, 0, 1, 0], with sample
+    indices repeated per bin and the pre-binning values kept as
+    `gene_interaction_continuous`.
+
+    Finding: the new type indices are `label_idx * num_bins + j` = 4..7 (line 560), but
+    the rewritten `phenotype_types` holds only the four gene_interaction bins, so every
+    index points past the list; and the fitness entry 0.9 (not configured) is dropped
+    from the COO entirely. Pinned until the binning keeps unconfigured labels and
+    indexes into its own type list.
+    """
+    t = _bins("categorical")
+    data = _coo([0.9, 0.5, 2.0], [0, 1, 1], [7, 7, 9], ["fitness", "gene_interaction"])
+    out = t(data)["gene"]
+    torch.testing.assert_close(
+        out.phenotype_values, torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0])
+    )
+    assert out.phenotype_type_indices.tolist() == [4, 5, 6, 7, 4, 5, 6, 7]
+    assert out.phenotype_sample_indices.tolist() == [7, 7, 7, 7, 9, 9, 9, 9]
+    assert out.phenotype_types == [
+        "gene_interaction_bin_0",
+        "gene_interaction_bin_1",
+        "gene_interaction_bin_2",
+        "gene_interaction_bin_3",
+    ]
+    torch.testing.assert_close(
+        out.gene_interaction_continuous, torch.tensor([0.5, 2.0])
+    )
+
+
+def test_binning_forward_continuous_copy_is_optional_and_written_once() -> None:
+    """`store_continuous: False` writes no copy; with the default an existing
+    `gene_interaction_continuous` is not overwritten.
+    """
+    off = _bins("categorical", store_continuous=False)
+    out = off(_coo([0.5], [0], [0], ["gene_interaction"]))["gene"]
+    assert "gene_interaction_continuous" not in out.keys()
+
+    on = _bins("categorical")
+    data = _coo([0.5], [0], [0], ["gene_interaction"])
+    data["gene"].gene_interaction_continuous = torch.tensor([-7.0])
+    out = on(data)["gene"]
+    torch.testing.assert_close(out.gene_interaction_continuous, torch.tensor([-7.0]))
+
+
+def test_binning_forward_scalar_and_batched_types() -> None:
+    """A 0-d 3.5 with batched types [["gene_interaction"]] is unsqueezed and one-hot
+    encoded into bin 3; the ordinal variant gives [1, 1, 1] (3.5 > 1, 2, 3).
+    """
+    data = _coo(3.5, [0], [0], [["gene_interaction"]])
+    out = _bins("categorical")(data)["gene"]
+    torch.testing.assert_close(out.phenotype_values, torch.tensor([0.0, 0.0, 0.0, 1.0]))
+    ordinal = _bins("ordinal")(_coo(3.5, [0], [0], [["gene_interaction"]]))["gene"]
+    torch.testing.assert_close(ordinal.phenotype_values, torch.tensor([1.0, 1.0, 1.0]))
+    assert ordinal.phenotype_type_indices.tolist() == [0, 1, 2]
+
+
+def test_binning_forward_leaves_data_without_the_label_unchanged() -> None:
+    """No phenotype_values: same object back. The configured label absent from the types,
+    or present with no entries, produces no binned values, so the COO is untouched.
+    """
+    t = _bins("categorical")
+    bare = HeteroData()
+    bare["gene"].x = torch.tensor([1.0])
+    assert t.forward(bare) is bare
+
+    absent = t(_coo([0.9], [0], [0], ["fitness"]))["gene"]
+    torch.testing.assert_close(absent.phenotype_values, torch.tensor([0.9]))
+    assert absent.phenotype_types == ["fitness"]
+
+    empty = t(_coo([0.9], [0], [0], ["fitness", "gene_interaction"]))["gene"]
+    torch.testing.assert_close(empty.phenotype_values, torch.tensor([0.9]))
+    assert empty.phenotype_types == ["fitness", "gene_interaction"]
+
+
+def test_unknown_label_type_raises_unbound_local() -> None:
+    """Finding: `label_type` is not validated; an unknown one ("hard") falls through the
+    if/elif chain (lines 539-553) and the next line reads an unbound `binned_values`.
+    Pinned until an unknown label type raises a named ValueError.
+    """
+    t = _bins("hard")
+    with pytest.raises(
+        UnboundLocalError,
+        match=r"^cannot access local variable 'binned_values' where it is not "
+        r"associated with a value$",
+    ):
+        t(_coo([0.5], [0], [0], ["gene_interaction"]))
+
+
+def test_binning_construction_errors() -> None:
+    """A label missing from `label_df` is a ValueError (even with a normalizer, which
+    skips it rather than failing first); an unknown strategy name is a KeyError.
+    """
+    df = pd.DataFrame({"fitness": [0.0, 1.0]})
+    with pytest.raises(
+        ValueError, match=r"^Label gene_interaction not found in dataset$"
+    ):
+        COOLabelBinningTransform(
+            _dataset(df), {"gene_interaction": {"strategy": "equal_width"}}
+        )
+    norm = COOLabelNormalizationTransform(
+        _dataset(df), {"fitness": {"strategy": "minmax"}}
+    )
+    with pytest.raises(
+        ValueError, match=r"^Label gene_interaction not found in dataset$"
+    ):
+        COOLabelBinningTransform(
+            _dataset(df),
+            {"gene_interaction": {"strategy": "equal_width"}},
+            normalizer=norm,
+        )
+    with pytest.raises(KeyError, match=r"^'quantile'$"):
+        COOLabelBinningTransform(
+            _dataset(df), {"fitness": {"strategy": "quantile", "num_bins": 2}}
+        )
+
+
+def test_bins_are_computed_on_normalized_values_and_denormalized_back() -> None:
+    """Minmax on [0, 2, 4, 6, 8] maps to [0, 0.25, 0.5, 0.75, 1]; four equal-width bins
+    on that are [0, 0.25, 0.5, 0.75, 1], and the inverse normalization gives the raw
+    edges [0, 2, 4, 6, 8]. `get_bin_info` returns this metadata. The exact equality on
+    the normalized edges holds because line 443 casts to float32 (8 + 1e-8 rounds to 8).
+    """
+    df = pd.DataFrame({"gene_interaction": [0.0, 2.0, 4.0, 6.0, 8.0]})
+    norm = COOLabelNormalizationTransform(
+        _dataset(df), {"gene_interaction": {"strategy": "minmax"}}
+    )
+    t = COOLabelBinningTransform(
+        _dataset(df),
+        {"gene_interaction": {"strategy": "equal_width", "num_bins": 4}},
+        normalizer=norm,
+    )
+    info = t.get_bin_info("gene_interaction")
+    np.testing.assert_array_equal(info["bin_edges"], [0.0, 0.25, 0.5, 0.75, 1.0])
+    np.testing.assert_array_equal(
+        info["bin_edges_denormalized"], [0.0, 2.0, 4.0, 6.0, 8.0]
+    )
+    with pytest.raises(
+        ValueError, match=r"^No binning metadata found for label fitness$"
+    ):
+        t.get_bin_info("fitness")
+
+
+def _binned(
+    rows: dict[int, list[float]], num_bins: int, label: str = "gene_interaction"
+) -> HeteroData:
+    """COO of per-sample bin vectors: sample s contributes bin j at type index j."""
+    values: list[float] = []
+    types: list[int] = []
+    samples: list[int] = []
+    for sample, vector in rows.items():
+        for j, v in enumerate(vector):
+            values.append(v)
+            types.append(j)
+            samples.append(sample)
+    names = [f"{label}_bin_{j}" for j in range(num_bins)]
+    return _coo(values, types, samples, names)
+
+
+def test_categorical_inverse_draws_seeded_uniforms_in_the_argmax_bin() -> None:
+    """Samples are decoded in sorted order (3 before 5), each consuming one draw of the
+    seed-42 stream: sample 3 argmax bin 0 -> 0 + 0.8822693; sample 5 argmax bin 2 ->
+    2 + 0.9150040. A NaN in sample 8's vector decodes to NaN. Calling again reseeds, so
+    the result repeats exactly.
+    """
+    t = _bins("categorical")
+    data = _binned(
+        {
+            5: [0.0, 0.0, 1.0, 0.0],
+            3: [1.0, 0.0, 0.0, 0.0],
+            8: [float("nan"), 0.0, 0.0, 0.0],
+        },
+        4,
+    )
+    out = t.inverse(data)["gene"]
+    expected = torch.tensor([SEED42_U0, 2.0 + SEED42_U1, float("nan")])
+    torch.testing.assert_close(out.phenotype_values, expected, equal_nan=True)
+    assert out.phenotype_sample_indices.tolist() == [3, 5, 8]
+    assert out.phenotype_type_indices.tolist() == [0, 0, 0]
+    assert out.phenotype_types == ["gene_interaction"]
+
+    again = t.inverse(_binned({3: [1.0, 0.0, 0.0, 0.0]}, 4))["gene"]
+    torch.testing.assert_close(again.phenotype_values, torch.tensor([SEED42_U0]))
+
+
+def test_categorical_inverse_fills_missing_bins_with_zero() -> None:
+    """Sample 0 carries only its bin-2 entry; bins 0, 1, 3 are filled with 0, so the
+    vector is [0, 0, 1, 0] and the draw lands in [2, 3): 2 + 0.8822693.
+    """
+    t = _bins("categorical")
+    data = _coo([1.0], [2], [0], [f"gene_interaction_bin_{j}" for j in range(4)])
+    out = t.inverse(data)["gene"]
+    torch.testing.assert_close(out.phenotype_values, torch.tensor([2.0 + SEED42_U0]))
+
+
+def test_ordinal_round_trip_counts_crossings_under_the_given_seed() -> None:
+    """Forward: 2.5 crosses thresholds 1 and 2, giving [1, 1, 0].
+
+    Finding: the ordinal forward emits 3 values per sample (one per interior edge) but
+    names 4 types, `gene_interaction_bin_0..3` (the names use `len(bin_edges) - 1`,
+    line 579, while the values use `binned_values.shape[1]`, line 556). Pinned until
+    ordinal names its thresholds.
+
+    Inverse of that output: two crossings select bin 2 = [2, 3), so the default seed 42
+    gives 2 + 0.8822693 and `seed=0` gives 2 + 0.4962566 (the first `torch.rand(1)`
+    after `torch.manual_seed(0)`).
+    """
+    t = _bins("ordinal")
+    forward = t(_coo([2.5], [0], [0], ["gene_interaction"]))["gene"]
+    torch.testing.assert_close(forward.phenotype_values, torch.tensor([1.0, 1.0, 0.0]))
+    assert forward.phenotype_types == [
+        "gene_interaction_bin_0",
+        "gene_interaction_bin_1",
+        "gene_interaction_bin_2",
+        "gene_interaction_bin_3",
+    ]
+    snapshot = forward.phenotype_values.clone()
+    seeded = t.inverse(
+        _coo(snapshot.tolist(), [0, 1, 2], [0, 0, 0], forward.phenotype_types)
+    )
+    torch.testing.assert_close(
+        seeded["gene"].phenotype_values, torch.tensor([2.0 + SEED42_U0])
+    )
+    zero = t.inverse(
+        _coo(snapshot.tolist(), [0, 1, 2], [0, 0, 0], forward.phenotype_types), seed=0
+    )
+    torch.testing.assert_close(
+        zero["gene"].phenotype_values, torch.tensor([2.0 + 0.49625658988952637])
+    )
+
+
+def test_soft_inverse_averages_a_five_bin_window_of_softmaxed_scores() -> None:
+    """Eight bins over [0, 8] (centers 0.5..7.5), `label_df` 0..8.
+
+    Finding: the decode applies softmax to the soft labels, which are already
+    probabilities (line 688), so weights are exp(p), not p. For
+    p = [0, 0, 0, 0.2, 0.4, 0.1, 0, 0] the argmax is bin 4 and the window is bins 2..6:
+    weights [1, e^0.2, e^0.4, e^0.1, 1] on centers [2.5, 3.5, 4.5, 5.5, 6.5] give
+    4.480023396, where a probability-weighted mean would give
+    (0.2 * 3.5 + 0.4 * 4.5 + 0.1 * 5.5) / 0.7 = 4.357. Near an end the window is short
+    (argmax bin 1: bins 0..3, 4 < 5) and the decode snaps to the center 1.5. Pinned
+    until the decode weights by the probabilities it is given.
+    """
+    df = pd.DataFrame({"gene_interaction": np.arange(9.0)})
+    t = COOLabelBinningTransform(
+        _dataset(df),
+        {
+            "gene_interaction": {
+                "strategy": "equal_width",
+                "num_bins": 8,
+                "label_type": "soft",
+            }
+        },
+    )
+    data = _binned(
+        {
+            0: [0.0, 0.0, 0.0, 0.2, 0.4, 0.1, 0.0, 0.0],
+            1: [0.1, 0.6, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0],
+        },
+        8,
+    )
+    out = t.inverse(data)["gene"]
+    torch.testing.assert_close(
+        out.phenotype_values, torch.tensor([4.480023396024864, 1.5])
+    )
+
+
+def test_inverse_ignores_types_that_are_not_bins_of_a_configured_label() -> None:
+    """No phenotype_values: same object. Types that are not `<label>_bin_<j>` of a
+    configured label decode nothing, so the COO is left as it was.
+    """
+    t = _bins("categorical")
+    bare = HeteroData()
+    bare["gene"].x = torch.tensor([1.0])
+    assert t.inverse(bare) is bare
+
+    data = _coo([0.3], [0], [0], [["fitness_bin_0"]])
+    out = t.inverse(data)["gene"]
+    torch.testing.assert_close(out.phenotype_values, torch.tensor([0.3]))
+    assert out.phenotype_types == [["fitness_bin_0"]]
+
+
+class _Recorder:
+    """A stand-in transform whose `inverse` logs its name and returns its input."""
+
+    def __init__(self, name: str, log: list[str]) -> None:
+        self.name = name
+        self.log = log
+
+    def inverse(self, data: HeteroData) -> HeteroData:
+        self.log.append(self.name)
+        return data
+
+    def __repr__(self) -> str:
+        return f"_Recorder({self.name})"
+
+
+def test_inverse_compose_runs_inverses_last_first_and_reprs_its_members() -> None:
+    """A list [a, b] is inverted as b then a, each seeing the previous output (here the
+    same object, since `forward` is called directly); the repr lists members one per
+    line.
+    """
+    log: list[str] = []
+    compose = COOInverseCompose([_Recorder("a", log), _Recorder("b", log)])
+    data = HeteroData()
+    assert compose.forward(data) is data
+    assert log == ["b", "a"]
+    assert repr(compose) == "COOInverseCompose(\n  _Recorder(a)\n  _Recorder(b)\n)"
+
+
+def test_inverse_compose_rejects_bad_inputs() -> None:
+    """A tuple is neither a Compose nor a list; a member without `inverse` is named."""
+    with pytest.raises(
+        ValueError,
+        match=r"^transforms must be either a Compose object or a list of transforms$",
+    ):
+        COOInverseCompose((_robust(),))
+    with pytest.raises(
+        ValueError, match=r"^Transform Compose does not implement inverse method$"
+    ):
+        COOInverseCompose([Compose([])])

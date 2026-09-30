@@ -312,4 +312,4 @@ Shown on `docs/source/showcase/amino-acid-betaxanthin.md` ([[experiments.034-sho
 - The readout is colony yellowness, "the geometric mean of Value and Saturation of image pixels in the HSV color space" (line 58), not fluorescence; `measurement_type` says `cri_spa_corrected_fluorescence_intensity_24h`.
 - The *ARO4* and *ARO7* deletions share one `GenotypeAggregator` record because their gene set equals the cassette's.
 
-No issue filed yet; all three record fields would change, so a fix is a full-rebuild item.
+Issue #509 (labels `dataset`, `before-next-kg-build`) tracks the fix; all three record fields would change, so it is a full-rebuild item.

@@ -110,7 +110,7 @@ What the query returned from the served release, and what the conversion, the ag
 
 ## Getting the data
 
-Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../../guide/downloads`). The endpoint runs on the database host (see the downloads guide for the tunnel and the key), but these two datasets are not packaged in its store yet, so today both loaders build their stores from the source files; the commands in this section apply once their archives are published.
+Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../../guide/downloads`). The endpoint runs on the database host and its store holds both archives (see the downloads guide for the tunnel and the key); with the variables unset, both loaders build their stores from the source files instead.
 
 | dataset | loader | store slug |
 |---|---|---|

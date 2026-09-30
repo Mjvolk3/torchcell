@@ -17,9 +17,9 @@ ssh -N -L 8724:127.0.0.1:8724 rocky@torchcell-database.ncsa.illinois.edu
 ```
 
 Ask the maintainers for a named API key; every request except `/health` carries the
-key in the `X-API-Key` header. The store currently holds `amino_acid_cooper2010`,
-`amino_acid_mulleder2016` and `betaxanthin_cachera2023`; `GET /datasets` is the
-authoritative list.
+key in the `X-API-Key` header. The store currently holds `gene_essentiality_sgd`,
+`smf_costanzo2016`, `amino_acid_cooper2010`, `amino_acid_mulleder2016` and
+`betaxanthin_cachera2023`; `GET /datasets` is the authoritative list.
 
 ## Swagger
 

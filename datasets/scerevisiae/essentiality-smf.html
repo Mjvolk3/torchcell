@@ -863,7 +863,7 @@ LabelPolicy(name='default').select(entries, 'fitness') = 0.9247 from 'costanzo20
 </section>
 <section id="getting-the-data">
 <h2>Getting the data<a class="headerlink" href="#getting-the-data" title="Link to this heading"></a></h2>
-<p>Each dataset’s built store is packaged as an archive for the <code class="docutils literal notranslate"><span class="pre">tc-data</span></code> download endpoint (<a class="reference internal" href="../../guide/downloads.html"><span class="doc">Downloading datasets</span></a>). The endpoint runs on the database host (see the downloads guide for the tunnel and the key), but these two datasets are not packaged in its store yet, so today both loaders build their stores from the source files; the commands in this section apply once their archives are published.</p>
+<p>Each dataset’s built store is packaged as an archive for the <code class="docutils literal notranslate"><span class="pre">tc-data</span></code> download endpoint (<a class="reference internal" href="../../guide/downloads.html"><span class="doc">Downloading datasets</span></a>). The endpoint runs on the database host and its store holds both archives (see the downloads guide for the tunnel and the key); with the variables unset, both loaders build their stores from the source files instead.</p>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>dataset</p></th>

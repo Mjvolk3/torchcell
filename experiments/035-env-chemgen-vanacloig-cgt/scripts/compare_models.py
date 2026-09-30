@@ -28,6 +28,7 @@ import argparse
 import glob
 import os
 import os.path as osp
+import re
 import sys
 
 import numpy as np
@@ -70,8 +71,12 @@ def load_scores(ladder_tag: str) -> pd.DataFrame:
     models = [ladder[KEY + ["name", "spearman", "ceiling"]]]
     for path in sorted(glob.glob(osp.join(RESULTS, "factorized", "*", "*_scores.csv"))):
         sweep = osp.basename(osp.dirname(path))
-        if sweep == "smoke":
+        if sweep.startswith("smoke"):
             continue
+        # a round repeated per fold seed is the sweep <round>_fs<seed>, and its "b"
+        # continuation (r6b_mix_fs1) belongs with the round it continues (r6_mix)
+        sweep = re.sub(r"_fs\d$", "", sweep)
+        sweep = re.sub(r"^(r\d+)b_", r"\1_", sweep)
         d = pd.read_csv(path)
         # a config repeated per fold seed is named <name>_fs<seed>; pool it under <name>
         d["name"] = f"{sweep}:" + d["name"].str.replace(r"_fs\d$", "", regex=True)

@@ -74,6 +74,12 @@ EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 RESULTS_DIR = osp.join(
     EXPERIMENT_ROOT, "035-env-chemgen-vanacloig-cgt", "results", "ladder"
 )
+PREDICTIONS = osp.join(
+    os.environ["DATA_ROOT"],
+    "experiments",
+    "035-env-chemgen-vanacloig-cgt",
+    "predictions",
+)
 EMBEDDING_DIR = (
     "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/"
     "031-env-chemgen-vanacloig-hillenmeyer/experiments/"
@@ -315,6 +321,14 @@ def run_fold(
             )
             tested[f"{model}|{name}"] = scores
             frames.append(scores)
+            if model == "krr" and name == "linear:fcfp4_count":
+                # the ridge reference's full prediction, for stacking offline
+                np.save(
+                    osp.join(
+                        PREDICTIONS, f"ridge_fold{fold_index}_seed{fold_seed}.npy"
+                    ),
+                    prediction.astype(np.float32),
+                )
             if best_overall is None or inner[best] > best_overall[0]:
                 best_overall = (float(inner[best]), f"{model}|{name}", chosen)
     assert best_overall is not None
@@ -346,6 +360,7 @@ def main() -> None:
     parser.add_argument("--tag", default="ladder")
     args = parser.parse_args()
     os.makedirs(RESULTS_DIR, exist_ok=True)
+    os.makedirs(PREDICTIONS, exist_ok=True)
 
     cells = load_cells(args.cell_table, osp.join(EMBEDDING_DIR, "fcfp4_count.npz"))
     features: dict[str, NDArray[np.float64]] = {}

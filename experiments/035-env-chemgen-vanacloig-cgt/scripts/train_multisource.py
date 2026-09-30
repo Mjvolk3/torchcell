@@ -52,6 +52,7 @@ from train_factorized import (  # noqa: E402
     CELL_TABLE,
     COUNT_FINGERPRINTS,
     EMBEDDING_DIR,
+    PREDICTIONS,
     centered_val_score,
 )
 from vanacloig_data import Fold, load_cells, make_folds, score_compounds  # noqa: E402
@@ -295,6 +296,8 @@ def run(cfg: MultiSourceConfig, sweep: str, device: torch.device) -> pd.DataFram
 
     out_dir = osp.join(EXPERIMENT, "results", "factorized", sweep)
     os.makedirs(out_dir, exist_ok=True)
+    pred_dir = osp.join(PREDICTIONS, sweep)
+    os.makedirs(pred_dir, exist_ok=True)
     run_wandb = wandb.init(
         mode=WANDB_MODE,
         project="torchcell_035-env-chemgen-vanacloig-cgt",
@@ -329,8 +332,13 @@ def run(cfg: MultiSourceConfig, sweep: str, device: torch.device) -> pd.DataFram
                 f"{hist['seconds'].iloc[-1]:.0f} s",
                 flush=True,
             )
+        ensemble = np.mean(preds, axis=0)
+        np.save(
+            osp.join(pred_dir, f"{cfg.name}_fold{fold.fold}_seed{cfg.fold_seed}.npy"),
+            ensemble.astype(np.float32),
+        )
         frames.append(
-            score_compounds(cells, np.mean(preds, axis=0), pool, fold.test).assign(
+            score_compounds(cells, ensemble, pool, fold.test).assign(
                 member="ensemble", selected_step=-1, fold=fold.fold
             )
         )

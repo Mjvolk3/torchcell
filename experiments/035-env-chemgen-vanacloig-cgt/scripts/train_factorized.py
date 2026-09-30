@@ -85,6 +85,9 @@ EMBEDDING_DIR = (
     "031-env-chemgen-inhibitor-tolerance/results/embeddings"
 )
 COUNT_FINGERPRINTS = ("fcfp4_count", "ecfp4_count")
+PREDICTIONS = osp.join(
+    DATA_ROOT, "experiments", "035-env-chemgen-vanacloig-cgt", "predictions"
+)
 
 
 class FactorizedConfig(BaseModel):
@@ -429,6 +432,9 @@ def run(cfg: FactorizedConfig, sweep: str, device: torch.device) -> pd.DataFrame
 
     out_dir = osp.join(EXPERIMENT, "results", "factorized", sweep)
     os.makedirs(out_dir, exist_ok=True)
+    # the seed-ensemble prediction for every gene and compound, for stacking offline
+    pred_dir = osp.join(PREDICTIONS, sweep)
+    os.makedirs(pred_dir, exist_ok=True)
     run_wandb = wandb.init(
         mode=WANDB_MODE,
         project="torchcell_035-env-chemgen-vanacloig-cgt",
@@ -465,6 +471,10 @@ def run(cfg: FactorizedConfig, sweep: str, device: torch.device) -> pd.DataFrame
                 flush=True,
             )
         ensemble = np.mean(preds, axis=0)
+        np.save(
+            osp.join(pred_dir, f"{cfg.name}_fold{fold.fold}_seed{cfg.fold_seed}.npy"),
+            ensemble.astype(np.float32),
+        )
         frames.append(
             score_compounds(cells, ensemble, pool, fold.test).assign(
                 member="ensemble", selected_step=-1, fold=fold.fold

@@ -5,6 +5,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/cell_adapter
 # Test file: tests/torchcell/adapters/test_cell_adapter.py
 
+import copy
 import gc
 import hashlib
 import json
@@ -566,6 +567,25 @@ class CellAdapter:
         self.dataset.close_lmdb()
         self._record_bytes = max(1, sizes[len(sizes) // 2])
         return self._record_bytes
+
+    def __getstate__(self) -> dict[str, Any]:
+        """Pickle for a pool task WITHOUT the parent's subset index list.
+
+        Every chunk task pickles the bound chunk method, hence this adapter, hence
+        ``self.dataset``. For a subset view (a capped or prefiltered build, the
+        benchmark ladder) that dataset carries the whole index list: 2M entries, 10 MB
+        per task, and the worker's heap grew 0.08 GB per chunk unpickling it
+        (``experiments/tcdb-002-build-speed/scripts/worker_heap_ratchet.py``). The
+        worker only reads records through the chunk view it is handed, so it gets the
+        underlying store with no index list.
+        """
+        state = self.__dict__.copy()
+        dataset = state["dataset"]
+        if getattr(dataset, "_indices", None) is not None:
+            unindexed = copy.copy(dataset)
+            unindexed._indices = None
+            state["dataset"] = unindexed
+        return state
 
     def _pack_chunk(self, datas: list[Any]) -> list[Any]:
         """Return a chunk's output as objects, or as one RenderedChunk when rendering."""

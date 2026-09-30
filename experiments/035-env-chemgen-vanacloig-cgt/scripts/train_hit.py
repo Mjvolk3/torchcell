@@ -202,9 +202,10 @@ class HitModel(nn.Module):
             )
             parts += 1
         if cfg.mix == "gene_attend":
-            self.attend = nn.MultiheadAttention(
-                d, cfg.heads, dropout=cfg.dropout, batch_first=True
-            )
+            self.aq = nn.Linear(d, d)
+            self.ak = nn.Linear(d, d)
+            self.av = nn.Linear(d, d)
+            self.ao = nn.Linear(d, d)
             self.null_bias = nn.Parameter(torch.zeros(1))
             self.attend_norm = nn.LayerNorm(d)
             parts = 2
@@ -269,17 +270,18 @@ class HitModel(nn.Module):
         if self.cfg.mix == "gene_attend":
             # keys: the deleted gene, the compound, and a zero null sink whose logit
             # carries a learned bias so the attention weight depends on the query
-            keys = torch.stack([hh, uu, torch.zeros_like(hh)], dim=2).reshape(
-                b * c, 3, d
-            )
-            query = hh.reshape(b * c, 1, d)
-            mask = torch.cat(
-                [torch.zeros(1, 2, device=h.device), self.null_bias.view(1, 1)], dim=1
-            ).expand(b * c, 3)
-            attended, _ = self.attend(
-                query, keys, keys, attn_mask=mask.unsqueeze(1), need_weights=False
-            )
-            out = self.attend_norm(query + attended).reshape(b, c, d)
+            heads, dh = self.cfg.heads, d // self.cfg.heads
+            keys = torch.stack([hh, uu, torch.zeros_like(hh)], dim=2)  # [B, C, 3, d]
+            q = self.aq(hh).view(b, c, heads, dh)
+            k = self.ak(keys).view(b, c, 3, heads, dh)
+            v = self.av(keys).view(b, c, 3, heads, dh)
+            logits = torch.einsum("bchd,bcshd->bchs", q, k) / dh**0.5
+            logits = logits + torch.cat(
+                [torch.zeros(2, device=h.device), self.null_bias], dim=0
+            ).view(1, 1, 1, 3)
+            a = torch.softmax(logits, dim=-1)
+            attended = torch.einsum("bchs,bcshd->bchd", a, v).reshape(b, c, d)
+            out = self.attend_norm(hh + self.ao(attended))
             return base + self.head(torch.cat([out, uu], -1)).squeeze(-1)
         parts = [hh, uu, hh * self.pair(u)[None]]
         if self.cfg.mix in ("hit", "hit_prop"):

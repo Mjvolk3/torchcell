@@ -73,7 +73,9 @@ def load_scores(ladder_tag: str) -> pd.DataFrame:
         if sweep == "smoke":
             continue
         d = pd.read_csv(path)
-        d["name"] = f"{sweep}:" + d["name"] + ":" + d["member"]
+        # a config repeated per fold seed is named <name>_fs<seed>; pool it under <name>
+        d["name"] = f"{sweep}:" + d["name"].str.replace(r"_fs\d$", "", regex=True)
+        d["name"] = d["name"] + ":" + d["member"]
         models.append(d[KEY + ["name", "spearman", "ceiling"]])
     scores = pd.concat(models, ignore_index=True)
     scores["subset"] = np.where(

@@ -1,0 +1,247 @@
+compound,target,n_genes,spearman,pearson,ceiling,member,selected_step,fold,fold_seed,name
+"2,2'-bipyridine",raw,3489,-0.03302742052006524,-0.21602046399396588,0.9331732906177713,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,2'-bipyridine",centered,3489,0.11856709909747329,0.39868715887851747,0.9536503665291391,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,4-dimethylimidazole",raw,3491,0.03470847719515373,-0.11075645358051074,0.7305743732158305,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,4-dimethylimidazole",centered,3491,0.5077907732966117,0.6341656597403633,0.8612685815254334,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,6-dimethylpyrazine",raw,3504,0.1994002826156267,0.28613209582470833,0.8729821697732166,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,6-dimethylpyrazine",centered,3504,0.32327840363781074,0.2807922124116239,0.8732567034681548,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ethanol,raw,3486,0.18721572310043114,0.24888370189873446,0.9100766609130951,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ethanol,centered,3486,0.35553031922562106,0.2305105828161101,0.9075088632924206,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+furfural,raw,3493,0.14251744846853004,0.14726524477673808,0.877833605571729,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+furfural,centered,3493,0.3007709037461435,0.3218152007500365,0.8893403223606451,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+isobutanol,raw,3480,0.3492580068783348,0.39858371873497506,0.886756227316329,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+isobutanol,centered,3480,0.3387063675748762,0.3163779340128991,0.8797261537140619,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+levulinic acid,raw,3487,0.21697980408283227,0.24700512029051183,0.38592988486577784,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+levulinic acid,centered,3487,0.2163249984581907,0.3815659126265257,0.62423890352989,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium acetate,raw,3510,0.3021488992047746,0.2931538893748255,0.6082211129787902,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium acetate,centered,3510,0.3031639789735484,0.32033894863471,0.6217179585073968,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium butyrate,raw,3490,0.012529479510765787,-0.0007573589219869208,0.0,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium butyrate,centered,3490,0.2519703800140679,0.5373360051862501,0.4561049401794552,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.47469384238986617,0.5615485853909131,0.898719369187085,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.4890875532882917,0.6460126959496828,0.9132019348286584,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-methylimidazole,raw,3501,-0.0784425689211467,-0.180991773706075,0.12769961661112678,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-methylimidazole,centered,3501,0.19301334522378097,0.25729142782701875,0.6113571150364794,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+5-(hydroxymethyl)furfural,raw,3505,0.29443005036805175,0.2339049221091729,0.0,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+5-(hydroxymethyl)furfural,centered,3505,0.35499353088689933,0.369469370305514,0.45493740241417274,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+caffeic acid,raw,3497,0.45107327564338745,0.42749363396310974,0.672719508661378,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+caffeic acid,centered,3497,0.09786540186946491,0.007505440730777777,0.5530421168156869,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+crystal violet,raw,3387,0.533126278786533,0.6979004359583948,0.9246970150673822,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+crystal violet,centered,3387,0.6324188813409097,0.7474358000660121,0.9218257378922377,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulic acid,raw,3500,0.5422451587580676,0.7017892712419727,0.9222047795661907,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulic acid,centered,3500,0.5299646379213115,0.6668337269788155,0.9036014305354326,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methyl methanesulfonate,raw,3489,0.28576399479504483,0.1972781196936521,0.9375622227212969,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methyl methanesulfonate,centered,3489,0.18428226018210023,0.1025280135127219,0.9361871296703799,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringaldehyde,raw,3514,0.22623030064029473,0.39133149970955283,0.8382422102191949,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringaldehyde,centered,3514,-0.10046660300511183,0.08728442048489862,0.8053444540840908,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5930313155948457,0.6796390160650024,0.811477012409954,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.5711572301354364,0.7255601868546262,0.8336253666167436,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.23696069735346628,0.5189178622948758,0.9128873232893497,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,-0.07448522542599788,0.1051291886658056,0.8825490828239687,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzoic acid,raw,3507,0.4420603944813437,0.4924276830639326,0.5007832696964534,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzoic acid,centered,3507,0.3641506285592381,0.42623003906053386,0.5773539375980108,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benzoic acid,raw,3490,0.42170582509775456,0.391247199413456,0.685375384120187,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benzoic acid,centered,3490,0.35759932539738404,0.35008328837838737,0.7374718689615183,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulamide,raw,3490,0.3305543337090764,0.6251069423641703,0.8930954305048072,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulamide,centered,3490,0.21041797706053764,0.4459777495179459,0.8660552782796856,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+p-coumaric acid,raw,3510,0.290139079558077,0.3923910402346925,0.27549278107492503,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+p-coumaric acid,centered,3510,0.14908969092997973,0.12005700294834026,0.0,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium glyoxylate,raw,3490,0.17043873449623473,0.1531548028040777,0.0,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium glyoxylate,centered,3490,0.33378007117797526,0.4578121381721369,0.0,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillic acid,raw,3486,0.49556398103635757,0.5316215307252694,0.8722616635995127,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillic acid,centered,3486,0.3473304902378405,0.2855989359419574,0.8284074918108438,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzaldehyde,raw,3492,0.5576098874262809,0.6313740283136253,0.8136005615775869,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzaldehyde,centered,3492,0.3978970411772406,0.46265803318652465,0.7486310389734667,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetamide,raw,3489,0.20691387407210524,0.21926679596123747,0.5260040030106069,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetamide,centered,3489,0.10241879614977575,0.08551707552833972,0.669534696041139,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetosyringone,raw,3493,0.2665552963965668,0.566021315018498,0.8953367924490198,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetosyringone,centered,3493,0.09957226132376165,0.36673720328147763,0.8657663958795743,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benomyl,raw,3492,0.38625247753807496,0.3899320668937584,0.8675396020249485,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benomyl,centered,3492,0.5129933845252839,0.5179692102242922,0.8853017425875782,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+cinnamic acid,raw,3504,0.15523067727454418,0.243126906710708,0.8069010615379222,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+cinnamic acid,centered,3504,-0.040513014299157796,-0.01416671659023496,0.791306367778296,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+gamma-valerolactone,raw,3473,0.515832323216365,0.4749544656217359,0.8971840735794596,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+gamma-valerolactone,centered,3473,0.5054736729684329,0.41731735195286984,0.8921636147026369,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+myclobutanil,raw,3496,0.44040879945649264,0.602591211861691,0.746076298727284,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+myclobutanil,centered,3496,0.5585104225460147,0.7045904934151737,0.7816400701736069,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringic acid,raw,3500,0.5311310911943747,0.5282780299067549,0.8765976686189016,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringic acid,centered,3500,0.48921197854791665,0.4146791192167386,0.8599322607107426,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+2-methylimidazole,raw,3488,0.20718721981458688,0.2759850072176189,0.15199773365650238,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+2-methylimidazole,centered,3488,0.07795021251512903,0.33802182776517,0.5746959188181814,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4'-hydroxyacetophenone,raw,3506,0.5290290373580734,0.6071174979417976,0.8379928898821091,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4'-hydroxyacetophenone,centered,3506,0.580240078621669,0.6302613230588969,0.8090940914763887,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetovanillone,raw,3509,0.4923214688147864,0.6122895839913326,0.9141428331679445,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetovanillone,centered,3509,0.6522680801352392,0.6429295806280281,0.9082113767287752,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+azelaic acid,raw,3496,0.15997492215230766,0.3166518613797909,0.8670875046979807,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+azelaic acid,centered,3496,0.09413297380578982,0.1154639455958666,0.8527287439731305,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methylglyoxal,raw,3481,-0.18810071230655914,-0.041645081737919504,0.9178330549514648,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methylglyoxal,centered,3481,-0.279159544731526,-0.08640788368488725,0.9244906432852036,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+nonylacridine orange,raw,3506,0.6847241451431257,0.7656629072547627,0.8449681878437812,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+nonylacridine orange,centered,3506,0.6918810279323833,0.7769232017117637,0.8366325723887487,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sinapic acid,raw,3493,0.4598011060679639,0.6430509721605967,0.5642822086005129,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sinapic acid,centered,3493,0.32153647376734246,0.4608994335339634,0.3238018158316301,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillin,raw,3505,0.5748312796689014,0.6778626464722721,0.8097403963300162,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillin,centered,3505,0.44137693542911705,0.5621502732064333,0.7304551685344388,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5631801249182752,0.6488669451261551,0.811477012409954,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.6002963576899973,0.6863862256343739,0.8292558297828654,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.6412937281004188,0.7289419238018672,0.9128873232893497,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.4944296142431497,0.611471832099062,0.8808271018966328,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4'-hydroxyacetophenone,raw,3507,0.7109932707013855,0.7822053565178775,0.8379928898821091,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4'-hydroxyacetophenone,centered,3507,0.641260164461454,0.7116537683477451,0.7943510975172879,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzoic acid,raw,3507,0.36721367893960266,0.41206131942504626,0.5007832696964534,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzoic acid,centered,3507,0.23206434250815478,0.24040948492237452,0.49775174760269264,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+crystal violet,raw,3387,0.514236970939011,0.7144487730357207,0.9246970150673822,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+crystal violet,centered,3387,0.6814408979178566,0.8043738798423513,0.9223391675707808,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulic acid,raw,3499,0.47088329408601404,0.6610971587190677,0.9222047795661907,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulic acid,centered,3499,0.4096117417662442,0.6055924300302735,0.9080060977912938,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+furfural,raw,3493,0.2593665504828355,0.25064032431989913,0.877833605571729,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+furfural,centered,3493,0.23541214736796703,0.22540424463764033,0.8763986094014646,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+myclobutanil,raw,3496,0.24055026624026912,0.23431360167428408,0.746076298727284,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+myclobutanil,centered,3496,0.3161875858011934,0.31950495217506836,0.7753715138115954,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillic acid,raw,3486,0.5152151318102715,0.5558609003650193,0.8722616635995127,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillic acid,centered,3486,0.24981630302767757,0.25477988281987396,0.8241144912313376,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,4-dimethylimidazole",raw,3491,0.06863915673808883,-0.0036002339210805742,0.7305743732158305,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,4-dimethylimidazole",centered,3491,0.40281157685512703,0.48216158041953683,0.8327319817928159,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+azelaic acid,raw,3496,0.11707097371393657,0.24827114115476862,0.8670875046979807,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+azelaic acid,centered,3496,0.009491669144119218,0.07803735899648999,0.8486867844617119,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benomyl,raw,3492,0.436096624093088,0.4238858958334081,0.8675396020249485,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benomyl,centered,3492,0.5345559674679307,0.5108876211666561,0.8858892884910788,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benzoic acid,raw,3490,0.3966703113385354,0.3714610810301142,0.685375384120187,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benzoic acid,centered,3490,0.37048775960342195,0.4463786324873778,0.7302189227161497,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+cinnamic acid,raw,3504,0.13424431967731593,0.2082564776522468,0.8069010615379222,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+cinnamic acid,centered,3504,-0.06277750075158003,-0.027751480986716814,0.783892263289116,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulamide,raw,3490,0.6048057302725623,0.7341815836061999,0.8930954305048072,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulamide,centered,3490,0.515476186896238,0.6342352643665533,0.8585858925749198,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methylglyoxal,raw,3481,-0.2118313838812,-0.04705593250503905,0.9178330549514648,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methylglyoxal,centered,3481,-0.2428377426539202,-0.036745890684841194,0.9257318774492264,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+nonylacridine orange,raw,3507,0.672528812566168,0.7664007087346043,0.8449681878437812,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+nonylacridine orange,centered,3507,0.6539488306874952,0.7559715756517646,0.8336523661619658,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.45679287662432344,0.5179932483390043,0.898719369187085,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.40163017903505377,0.6305086298816766,0.9168123496399989,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+5-(hydroxymethyl)furfural,raw,3505,0.19484838512233743,0.15516338744552846,0.0,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+5-(hydroxymethyl)furfural,centered,3505,0.45767387421942607,0.521748246030646,0.5292874155662355,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+gamma-valerolactone,raw,3473,0.18691294182364745,0.23407525000362553,0.8971840735794596,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+gamma-valerolactone,centered,3473,-0.01750451164381742,0.10586959114934233,0.8890452902831322,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+levulinic acid,raw,3487,0.23384124399262132,0.24657873395587152,0.38592988486577784,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+levulinic acid,centered,3487,0.2632697350012186,0.4490572848030287,0.5910325375246532,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methyl methanesulfonate,raw,3489,0.17766281887627086,0.16512967435931264,0.9375622227212969,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methyl methanesulfonate,centered,3489,0.2412165782097394,0.24587863741442192,0.9381039702727801,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sinapic acid,raw,3493,0.5297793262377799,0.6678575026054455,0.5642822086005129,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sinapic acid,centered,3493,0.3762079037060159,0.4231491463139467,0.07933482194825014,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium acetate,raw,3510,0.15166212809961055,0.16897300405100257,0.6082211129787902,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium acetate,centered,3510,0.10072425429498454,0.24054444160166838,0.6416764594276576,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium butyrate,raw,3490,0.00827802875347075,-0.016783765494911458,0.0,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium butyrate,centered,3490,0.20309856670981638,0.47447651494958604,0.4154944587607023,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,2'-bipyridine",raw,3489,0.09735060798000024,-0.1220737770817243,0.9331732906177713,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,2'-bipyridine",centered,3489,0.4538917650917574,0.6337155368835662,0.9491678055239965,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,6-dimethylpyrazine",raw,3504,0.1379281122905403,0.22311369895426775,0.8729821697732166,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,6-dimethylpyrazine",centered,3504,0.3797501379832944,0.2740906382877721,0.873539479693467,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetovanillone,raw,3509,0.49268448535174447,0.5852668137055194,0.9141428331679445,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetovanillone,centered,3509,0.3880755542165379,0.44681408458872174,0.8942413274157337,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ethanol,raw,3487,0.20605181064523423,0.2577452776396305,0.9100766609130951,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ethanol,centered,3487,0.359225647699479,0.2348778482857624,0.9068810672420646,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+isobutanol,raw,3480,0.389755140930164,0.394651085952532,0.886756227316329,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+isobutanol,centered,3480,0.18467935184720455,0.19801079846224154,0.8740236766683434,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium glyoxylate,raw,3490,0.08559507417500441,0.05974182731328716,0.0,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium glyoxylate,centered,3490,0.49144361867393377,0.6228847595820888,0.0,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringaldehyde,raw,3514,0.23141305360962716,0.37333832579441545,0.8382422102191949,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringaldehyde,centered,3514,0.0543781343797603,0.08123462032600916,0.815206887225573,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillin,raw,3505,0.4998705701172812,0.5929309603852299,0.8097403963300162,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillin,centered,3505,0.3470792470479404,0.3598828651685696,0.7298831011607608,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+2-methylimidazole,raw,3488,0.20918250627200993,0.31970559578738633,0.15199773365650238,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+2-methylimidazole,centered,3488,0.34792862333782376,0.5559607070394309,0.6165798690293909,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzaldehyde,raw,3492,0.584510871822542,0.6621179785417117,0.8136005615775869,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzaldehyde,centered,3492,0.44888573885352595,0.5031391964733913,0.746178085575299,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-methylimidazole,raw,3501,-0.11714241083160495,-0.17184210762867166,0.12769961661112678,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-methylimidazole,centered,3501,0.20070131157761725,0.29242449291689465,0.6141195281836963,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetamide,raw,3489,0.20594912607641983,0.22256311989146357,0.5260040030106069,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetamide,centered,3489,0.10701513236962526,0.09699588050779916,0.6866303993435534,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetosyringone,raw,3492,0.6248947511872555,0.7574528345194472,0.8953367924490198,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetosyringone,centered,3492,0.5918963246429799,0.6812186387473523,0.8698090092048968,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+caffeic acid,raw,3496,0.11890989123792862,0.10767329312101595,0.672719508661378,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+caffeic acid,centered,3496,-0.08812555028633474,-0.19160547629138155,0.6373670032191323,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+p-coumaric acid,raw,3510,0.3232819631622758,0.4426919142417018,0.27549278107492503,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+p-coumaric acid,centered,3510,0.1934609874440715,0.18197988423503003,0.0,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringic acid,raw,3500,0.3951381993932058,0.4196277459612432,0.8765976686189016,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringic acid,centered,3500,0.31499788264705747,0.2742330126488722,0.8584531456857164,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,4-dimethylimidazole",raw,3491,0.07578976977226387,-0.06520549737040661,0.7305743732158305,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,4-dimethylimidazole",centered,3491,0.3337144924660634,0.31968306180538475,0.8229137348628133,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+2-methylimidazole,raw,3488,0.21302739665662337,0.20074000570448067,0.15199773365650238,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+2-methylimidazole,centered,3488,0.2690549240784578,0.47422118346206255,0.6024605878402992,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.5694070572118012,0.6670120576399439,0.9128873232893497,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.49529495196903267,0.5436923303211041,0.883457280259025,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4'-hydroxyacetophenone,raw,3507,0.4624403313656794,0.5332151422809067,0.8379928898821091,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4'-hydroxyacetophenone,centered,3507,0.4685590820991995,0.4774067241075829,0.7935960254022186,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulic acid,raw,3499,0.3059422749293729,0.4796869683762389,0.9222047795661907,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulic acid,centered,3499,0.26394169566702963,0.3467682534031679,0.9096820756778564,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+furfural,raw,3493,0.2047508842464571,0.21708690230351477,0.877833605571729,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+furfural,centered,3493,0.33620355652156697,0.27604080271278614,0.8788688565797801,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+levulinic acid,raw,3487,0.24839434133380672,0.2289383972514893,0.38592988486577784,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+levulinic acid,centered,3487,0.30156143441637884,0.44866690271526033,0.5248811647424081,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+p-coumaric acid,raw,3510,0.3762130814586191,0.466431786721876,0.27549278107492503,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+p-coumaric acid,centered,3510,0.05479679867957105,0.09045531603626178,0.0,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sinapic acid,raw,3493,0.37759374937591894,0.5304317324313482,0.5642822086005129,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sinapic acid,centered,3493,0.22247031944241055,0.29891323284606,0.3846465212693307,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzoic acid,raw,3507,0.31791609367917983,0.35505199961930733,0.5007832696964534,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzoic acid,centered,3507,0.33187794105016866,0.34391135531207323,0.6603549121483774,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-methylimidazole,raw,3501,-0.011047770055185575,-0.10741733247261695,0.12769961661112678,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-methylimidazole,centered,3501,0.3741142809883082,0.41616452977445795,0.6602537705690545,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetamide,raw,3489,0.2532802970560591,0.2343289369736324,0.5260040030106069,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetamide,centered,3489,0.3128048174613972,0.38915458404715025,0.6945331352340456,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetovanillone,raw,3509,0.4898802404354101,0.5858521104996709,0.9141428331679445,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetovanillone,centered,3509,0.4603108370829621,0.5103719139729533,0.9007497050254465,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+gamma-valerolactone,raw,3473,0.25037801236812257,0.27113737545550254,0.8971840735794596,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+gamma-valerolactone,centered,3473,0.25248371269637304,0.1269105827936919,0.8904865526111276,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium acetate,raw,3510,0.10009146482724303,0.11266377867073782,0.6082211129787902,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium acetate,centered,3510,0.13523907795382398,0.228757577385908,0.6540251876535728,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringaldehyde,raw,3514,0.20796687063538935,0.3891115024392059,0.8382422102191949,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringaldehyde,centered,3514,0.014899704994984803,0.11122521524131343,0.8164755033930678,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringic acid,raw,3500,0.26748242575366743,0.3776817617229978,0.8765976686189016,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+syringic acid,centered,3500,0.23453624967642858,0.23984767116298952,0.8669117581200528,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,2'-bipyridine",raw,3489,0.3140108594413682,0.19876815847667978,0.9331732906177713,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,2'-bipyridine",centered,3489,0.2566779136205103,0.2860125103626232,0.942534078087761,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+azelaic acid,raw,3496,0.3133463271234312,0.40139084012954834,0.8670875046979807,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+azelaic acid,centered,3496,0.17546177305434468,0.1876123024441037,0.847310814069945,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benomyl,raw,3492,0.3661177236777767,0.30163143914828316,0.8675396020249485,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benomyl,centered,3492,0.42696147068987167,0.3426983006610045,0.8794179243054676,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+crystal violet,raw,3387,0.06336667808641164,0.24208066977375287,0.9246970150673822,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+crystal violet,centered,3387,0.0773196198247994,0.2051374464934178,0.9220312622117617,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulamide,raw,3490,0.44449261096348436,0.6833499427652308,0.8930954305048072,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ferulamide,centered,3490,0.34663892441423594,0.592982548860696,0.8688733613509745,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methyl methanesulfonate,raw,3489,0.32361595148906513,0.18768036568970087,0.9375622227212969,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methyl methanesulfonate,centered,3489,0.22148891719376948,0.11665182792522005,0.9366128421896852,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillic acid,raw,3486,0.47971328205944846,0.499621098162065,0.8722616635995127,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillic acid,centered,3486,0.2777574308999186,0.2086547772881473,0.8223602732176184,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillin,raw,3505,0.6106222879062823,0.7222864551890861,0.8097403963300162,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+vanillin,centered,3505,0.45736770748987454,0.5888306402770377,0.7267599792119376,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5654329199042053,0.6608069253595547,0.811477012409954,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.5599541568727704,0.7237146855689424,0.8400804963478274,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,6-dimethylpyrazine",raw,3504,0.3619724280093265,0.3011145966620795,0.8729821697732166,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+"2,6-dimethylpyrazine",centered,3504,0.34487096657602484,0.26801317289748866,0.8681927632775254,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+5-(hydroxymethyl)furfural,raw,3505,0.26918263176233537,0.23164301153705508,0.0,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+5-(hydroxymethyl)furfural,centered,3505,0.3088063686496649,0.2838968665464999,0.4748857338004678,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetosyringone,raw,3493,0.5346709099578125,0.7183403572195352,0.8953367924490198,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+acetosyringone,centered,3493,0.43427861849918314,0.5468033439008227,0.8633078995110798,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benzoic acid,raw,3490,0.3950912924566917,0.36534858174386825,0.685375384120187,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+benzoic acid,centered,3490,0.374833817126292,0.43301503757752946,0.7465144765242345,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+caffeic acid,raw,3496,0.31959037398234585,0.335118960885921,0.672719508661378,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+caffeic acid,centered,3496,0.08877213542197274,0.050105727576562266,0.6348437831240964,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+cinnamic acid,raw,3504,0.1275044854317417,0.2489906812172942,0.8069010615379222,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+cinnamic acid,centered,3504,-0.056812948697437644,0.022193457646761044,0.7857923264270728,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+isobutanol,raw,3480,0.23253515030546373,0.4007483513363108,0.886756227316329,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+isobutanol,centered,3480,0.2024433512571047,0.3268901943986159,0.8738205260546376,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.4959524724808074,0.6118322334778385,0.898719369187085,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.5287709408375559,0.7048593873685914,0.9207372710131602,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzaldehyde,raw,3493,0.5418158939351276,0.6447527241736988,0.8136005615775869,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+4-hydroxybenzaldehyde,centered,3493,0.3119066022144971,0.43829628621799704,0.7330278514305723,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ethanol,raw,3487,0.3330619092456497,0.44164313785308895,0.9100766609130951,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+ethanol,centered,3487,0.18600481804130622,0.3282469318615113,0.8992724015184042,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methylglyoxal,raw,3481,-0.09204755543727244,0.06757654998333237,0.9178330549514648,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+methylglyoxal,centered,3481,0.0942940637519953,0.2856208856259299,0.9293286685803472,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+myclobutanil,raw,3496,0.2037706962166896,0.18950555279482142,0.746076298727284,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+myclobutanil,centered,3496,0.26882132585239604,0.34870536283941156,0.806521750219523,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+nonylacridine orange,raw,3507,0.6301270215527663,0.7142750887457194,0.8449681878437812,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+nonylacridine orange,centered,3507,0.638559479311886,0.7349041911689254,0.8353957290395438,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium butyrate,raw,3490,0.12944375809578246,0.12825599938688692,0.0,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium butyrate,centered,3490,0.30753696437166106,0.3605200646058975,0.42785463831799814,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium glyoxylate,raw,3490,0.13722780876206933,0.10406466759629994,0.0,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*
+sodium glyoxylate,centered,3490,0.3121512103226041,0.37115183261481405,0.10426711163393412,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_wildenhain_fs*

@@ -1,0 +1,19 @@
+/* docs/source/_static/custom.css
+ * Overrides for torchcell_sphinx_theme (mytheme.css), loaded after it through
+ * html_css_files in conf.py. The theme paints h1 with a four-stop orange to blue
+ * gradient; the logo is red and purple, so the heading runs purple to red in the
+ * logo's own colors (sampled from notes/assets/drawio/torchcell-logo.drawio.png:
+ * "Cell" #7752C1, "Torch" #D23943).
+ */
+h1 {
+  background: linear-gradient(92deg, #7752c1 0%, #d23943 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* The theme caps .wy-nav-content at 800px, too narrow for the dataset pages' tables
+ * and full-width figures. */
+.wy-nav-content {
+  max-width: 1400px;
+}

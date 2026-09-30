@@ -305,7 +305,7 @@ sha256-pinned tier entry with no download path, rather than an anchored relative
 
 ## 2026.09.29 - Showcase page (group 3): medium, temperature and readout unsourced
 
-Shown on `docs/source/showcase/amino-acid-betaxanthin.md` ([[experiments.034-showcase-datasets.scripts.amino_acid_betaxanthin]]). The dev store differs from release `2026.09.21-ab6d8c5d` only in `perturbed_gene_name` (3,930 records, the #195 renames). Found while writing the caveats, measured by the script on the mirror OCR (`paper.md` sha256 `5fb7310d...`):
+Shown on `docs/source/datasets/scerevisiae/amino-acid-betaxanthin.md` ([[experiments.034-showcase-datasets.scripts.amino_acid_betaxanthin]]). The dev store differs from release `2026.09.21-ab6d8c5d` only in `perturbed_gene_name` (3,930 records, the #195 renames). Found while writing the caveats, measured by the script on the mirror OCR (`paper.md` sha256 `5fb7310d...`):
 
 - The screen plate is YPD with G418 (line 117, "final CRI-SPA screen plate (YPD-G418)"); the loader stores `Media(name="SC", state="solid")`.
 - No line holds a degree sign or the word "temperature"; the loader's `Temperature(value=30)` is unsourced.

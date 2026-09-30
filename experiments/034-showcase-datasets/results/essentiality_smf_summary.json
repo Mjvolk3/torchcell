@@ -1,6 +1,6 @@
 {
   "script": "experiments/034-showcase-datasets/scripts/essentiality_smf.py",
-  "generated_utc": "2026-09-29T23:39:58+00:00",
+  "generated_utc": "2026-09-30T06:52:00+00:00",
   "sources": {
     "essentiality": "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_sgd/processed/lmdb",
     "smf": "/scratch/projects/torchcell-scratch/data/torchcell/smf_costanzo2016/processed/lmdb"
@@ -171,12 +171,12 @@
   },
   "figures": {
     "histogram": {
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-essentiality-smf/notes/assets/images/034-showcase-datasets/smf_fitness_histogram.svg",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-essentiality-smf/notes/assets/images/034-showcase-datasets/smf_fitness_histogram.png"
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/docs/logo-gradient/notes/assets/images/034-showcase-datasets/smf_fitness_histogram.svg",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/docs/logo-gradient/notes/assets/images/034-showcase-datasets/smf_fitness_histogram.png"
     },
     "strain_types": {
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-essentiality-smf/notes/assets/images/034-showcase-datasets/smf_records_by_strain_type.svg",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-essentiality-smf/notes/assets/images/034-showcase-datasets/smf_records_by_strain_type.png"
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/docs/logo-gradient/notes/assets/images/034-showcase-datasets/smf_records_by_strain_type.svg",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/docs/logo-gradient/notes/assets/images/034-showcase-datasets/smf_records_by_strain_type.png"
     }
   },
   "record_indices": {

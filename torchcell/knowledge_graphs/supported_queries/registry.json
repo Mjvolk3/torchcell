@@ -14,7 +14,7 @@
       "deprecated_in": null,
       "validated_release": "2026.09.21-ab6d8c5d",
       "dataset_composite": "684edad79ca7df16bd4983cd644e2915c6110f3c5f1d6625990e0cc59ca17d2d",
-      "docs_page": "docs/source/showcase/amino-acid-betaxanthin.md"
+      "docs_page": "docs/source/datasets/scerevisiae/amino-acid-betaxanthin.md"
     },
     {
       "id": "essentiality_smf",
@@ -30,7 +30,7 @@
       "deprecated_in": null,
       "validated_release": "2026.09.21-ab6d8c5d",
       "dataset_composite": "9704a2985f8935417ae027176c3eab73d52c65cb6a523fc894e146b02b07ea5f",
-      "docs_page": "docs/source/showcase/essentiality-smf.md"
+      "docs_page": "docs/source/datasets/scerevisiae/essentiality-smf.md"
     },
     {
       "id": "expression_proteome_morphology",

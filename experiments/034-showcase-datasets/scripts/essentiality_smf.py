@@ -8,7 +8,7 @@ and ``$DATA_ROOT/data/torchcell/smf_costanzo2016``, the stores ``GeneEssentialit
 and ``SmfCostanzo2016Dataset`` build), resolves interned ``$ref`` pointers the way
 ``ExperimentDataset.get_single_item`` does, and writes:
 
-- MyST fragments to ``docs/source/showcase/_generated/essentiality-smf/``
+- MyST fragments to ``docs/source/datasets/scerevisiae/_generated/essentiality-smf/``
   (``record_essentiality.md``, ``record_smf.md``, ``summary_tables.md``, ``figures.md``),
   each opening with an HTML comment naming this script and the run timestamp;
 - figures as true-size SVG (``torchcell.utils.savefig_true_size_svg``) plus PNG to
@@ -56,11 +56,12 @@ from torchcell.utils import (  # noqa: E402
     PLOT_PALETTE,
     apply_paper_style,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
 SCRIPT = "experiments/034-showcase-datasets/scripts/essentiality_smf.py"
-FRAGMENT_DIR = Path("docs/source/showcase/_generated/essentiality-smf")
+FRAGMENT_DIR = Path("docs/source/datasets/scerevisiae/_generated/essentiality-smf")
 RESULTS_JSON = Path(
     "experiments/034-showcase-datasets/results/essentiality_smf_summary.json"
 )
@@ -314,6 +315,8 @@ def figure_histogram(rows: list[dict[str, Any]], out_dir: str) -> dict[str, str]
         _box(ax)
     axes[0].set_xlim(0.0, upper)
     axes[1].set_xlabel("single-mutant fitness (SmfCostanzo2016Dataset)")
+    for ax, letter in zip(axes, "ab"):
+        panel_label(ax, letter)
     return _save(fig, out_dir, "smf_fitness_histogram")
 
 
@@ -495,11 +498,11 @@ def figures_fragment(stamp: str, s: dict[str, Any]) -> str:
         + "```{figure} _generated/essentiality-smf/smf_fitness_histogram.svg\n"
         + ":name: fig-smf-histogram\n"
         + ":width: 88mm\n\n"
-        + f"Single-mutant fitness in `SmfCostanzo2016Dataset`, 0.02-wide bins, one panel per "
-        f"temperature (26 °C: n = {q26['n']:,}, median {_fmt(q26['median'])}; "
-        f"30 °C: n = {q30['n']:,}, median {_fmt(q30['median'])}). Deletion and DAmP "
-        "strains contribute the same value to both panels (issue #410), so the panels differ "
-        "only through the temperature-sensitive alleles.\n"
+        + "Single-mutant fitness in `SmfCostanzo2016Dataset`, 0.02-wide bins. "
+        f"**a**, the 26 °C records (n = {q26['n']:,}, median {_fmt(q26['median'])}). "
+        f"**b**, the 30 °C records (n = {q30['n']:,}, median {_fmt(q30['median'])}). "
+        "Deletion and DAmP strains contribute the same value to both panels (issue #410), "
+        "so the panels differ only through the temperature-sensitive alleles.\n"
         + "```\n\n"
         + "```{figure} _generated/essentiality-smf/smf_records_by_strain_type.svg\n"
         + ":name: fig-smf-strain-types\n"

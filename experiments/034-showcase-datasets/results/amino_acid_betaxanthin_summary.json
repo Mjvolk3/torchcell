@@ -1,6 +1,6 @@
 {
   "script": "experiments/034-showcase-datasets/scripts/amino_acid_betaxanthin.py",
-  "generated_utc": "2026-09-30T04:15:28+00:00",
+  "generated_utc": "2026-09-30T06:52:06+00:00",
   "sources": {
     "AminoAcidMulleder2016Dataset": "/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_mulleder2016/processed/lmdb",
     "AminoAcidCooper2010Dataset": "/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_cooper2010/processed/lmdb",
@@ -561,9 +561,9 @@
       "genes_returned_more_than_once": [],
       "differing_paths": {
         "environment.media.components": 4678,
-        "environment.media.name": 4678,
+        "environment.media.base_medium": 4678,
         "environment.media.provenance": 4678,
-        "environment.media.base_medium": 4678
+        "environment.media.name": 4678
       },
       "differing_path_examples": {
         "environment.media.base_medium": {
@@ -640,16 +640,16 @@
   "served_release": "2026.09.21-ab6d8c5d",
   "figures": {
     "mulleder_levels": {
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/mulleder_amino_acid_levels.svg",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/mulleder_amino_acid_levels.png"
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/docs/logo-gradient/notes/assets/images/034-showcase-datasets/mulleder_amino_acid_levels.svg",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/docs/logo-gradient/notes/assets/images/034-showcase-datasets/mulleder_amino_acid_levels.png"
     },
     "cachera_score": {
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/cachera_betaxanthin_score.svg",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/cachera_betaxanthin_score.png"
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/docs/logo-gradient/notes/assets/images/034-showcase-datasets/cachera_betaxanthin_score.svg",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/docs/logo-gradient/notes/assets/images/034-showcase-datasets/cachera_betaxanthin_score.png"
     },
     "agreement": {
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/mulleder_cooper_agreement.svg",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/showcase-group3/notes/assets/images/034-showcase-datasets/mulleder_cooper_agreement.png"
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/docs/logo-gradient/notes/assets/images/034-showcase-datasets/mulleder_cooper_agreement.svg",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/docs/logo-gradient/notes/assets/images/034-showcase-datasets/mulleder_cooper_agreement.png"
     }
   },
   "record_gene": "YAL004W",

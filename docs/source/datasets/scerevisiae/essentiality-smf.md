@@ -49,7 +49,7 @@ Counts and distributions over the two dataset stores. Where a table names one te
 
 The supported query ships with the package as `torchcell/knowledge_graphs/queries/essentiality_smf.cql`. It selects both datasets from the served graph, keeps experiments whose perturbed genes are all in `$gene_set` and whose medium is solid, and returns each experiment's serialized record with its reference:
 
-```{literalinclude} ../../../torchcell/knowledge_graphs/queries/essentiality_smf.cql
+```{literalinclude} ../../../../torchcell/knowledge_graphs/queries/essentiality_smf.cql
 :language: text
 ```
 
@@ -83,19 +83,19 @@ dataset = Neo4jCellDataset(
 
 `CompositeFitnessConverter` passes Costanzo fitness entries through and hands each essentiality entry to `GeneEssentialityToFitnessConverter`, whose experiment and reference functions are:
 
-```{literalinclude} ../../../torchcell/datamodels/gene_essentiality_to_fitness_conversion.py
+```{literalinclude} ../../../../torchcell/datamodels/gene_essentiality_to_fitness_conversion.py
 :language: python
 :pyobject: gene_essentiality_to_fitness_experiment
 ```
 
-```{literalinclude} ../../../torchcell/datamodels/gene_essentiality_to_fitness_conversion.py
+```{literalinclude} ../../../../torchcell/datamodels/gene_essentiality_to_fitness_conversion.py
 :language: python
 :pyobject: gene_essentiality_to_fitness_reference
 ```
 
 A converted 0 is a statement about the gene, not a measurement of a strain. `torchcell.data.label_policy` gives it its own source key, and the default `LabelPolicy` admits it only when the record holds no measured fitness:
 
-```{literalinclude} ../../../torchcell/data/label_policy.py
+```{literalinclude} ../../../../torchcell/data/label_policy.py
 :language: python
 :start-at: "# A converted 0 is a statement about the gene"
 :end-at: "_CONVERTED_ZERO_DATASETS ="
@@ -110,7 +110,7 @@ What the query returned from the served release, and what the conversion, the ag
 
 ## Getting the data
 
-Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../guide/downloads`). The public endpoint is not yet deployed (its deployment on Radiant is pending), so today both loaders build their stores from the source files instead, and the commands in this section apply once an endpoint URL and key are issued.
+Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../../guide/downloads`). The public endpoint is not yet deployed (its deployment on Radiant is pending), so today both loaders build their stores from the source files instead, and the commands in this section apply once an endpoint URL and key are issued.
 
 | dataset | loader | store slug |
 |---|---|---|
@@ -148,13 +148,13 @@ The loaders do this themselves. With both variables set, constructing a loader w
 
 ## Caveats
 
-**Temperature shown, and issue #410.** For deletion and DAmP strains Costanzo 2016 released one temperature-combined fitness. The supplementary text says: "Because we observed a close correlation between fitness measured at [26 °C] and [30 °C] for deletion mutants , we combined measurements from different temperatures in the average for each deletion mutant. Fitness associated with TS mutants was computed separately at either [26 °C] or [30 °C] ." (mirror OCR `costanzoGlobalGeneticInteraction2016/si/si1.md`, line 96, sha256 `1828703b0ff739fd...`; bracketed temperatures replace OCR-garbled tokens, the rest is verbatim). `SmfCostanzo2016Dataset` nevertheless emits each deletion and DAmP strain twice, once at 26 °C and once at 30 °C, with the same value (issue [#410](https://github.com/Mjvolk3/torchcell/issues/410); the twin counts are in the summary above). The two temperature panels of the histogram therefore differ only through the TS alleles. The per-strain-type tables use the 30 °C records: for deletion and DAmP strains that record carries the one combined value exactly once, for TS alleles it is the 30 °C measurement, and 30 °C is the first Costanzo source in the default `LabelPolicy`. The 26 °C label on a deletion or DAmP record is not a 26 °C measurement.
+**Temperature shown, and issue #410.** For deletion and DAmP strains Costanzo 2016 released one temperature-combined fitness. The supplementary text says: "Because we observed a close correlation between fitness measured at [26 °C] and [30 °C] for deletion mutants , we combined measurements from different temperatures in the average for each deletion mutant. Fitness associated with TS mutants was computed separately at either [26 °C] or [30 °C] ." (mirror OCR `costanzoGlobalGeneticInteraction2016/si/si1.md`, line 96, sha256 `1828703b0ff739fd...`; bracketed temperatures replace OCR-garbled tokens, the rest is verbatim). `SmfCostanzo2016Dataset` nevertheless emits each deletion and DAmP strain twice, once at 26 °C and once at 30 °C, with the same value (issue [#410](https://github.com/Mjvolk3/torchcell/issues/410); the twin counts are in the summary above). The two panels of {numref}`fig-smf-histogram` therefore differ only through the TS alleles. The per-strain-type tables use the 30 °C records: for deletion and DAmP strains that record carries the one combined value exactly once, for TS alleles it is the 30 °C measurement, and 30 °C is the first Costanzo source in the default `LabelPolicy`. The 26 °C label on a deletion or DAmP record is not a 26 °C measurement.
 
 **SGD "inviable" includes conditionally inviable genes.** The essentiality store holds every SGD null-mutant "inviable" annotation in strain S288C. Some annotated genes have viable deletion-collection strains (the `cooper2010.py` docstring lists 21 such hits, among them ATG1, ERG24 and VPS30), and those genes still become a fitness-0 entry through the converter. The overlap table above shows the same tension: SGD-essential genes that carry a KanMX or NatMX deletion strain with a measured fitness well above 0.
 
 **The essentiality environment is assumed, not recorded.** SGD phenotype annotations carry no medium or temperature. The loader writes the same environment on every record, marked in the source:
 
-```{literalinclude} ../../../torchcell/datasets/scerevisiae/sgd.py
+```{literalinclude} ../../../../torchcell/datasets/scerevisiae/sgd.py
 :language: python
 :start-at: "# HACK for this dataset all meta data is guessed"
 :end-at: "temperature=Temperature(value=30)"

@@ -55,7 +55,7 @@ Counts and distributions over the three dev-tree stores. The Caveats section say
 
 The supported query ships with the package as `torchcell/knowledge_graphs/queries/amino_acid_betaxanthin.cql`. It selects the three datasets from the served graph, keeps experiments whose deletions are all of genes in `$gene_set` and that carry at least one deletion, lets gene additions pass, and returns each experiment's serialized record with its reference:
 
-```{literalinclude} ../../../torchcell/knowledge_graphs/queries/amino_acid_betaxanthin.cql
+```{literalinclude} ../../../../torchcell/knowledge_graphs/queries/amino_acid_betaxanthin.cql
 :language: text
 ```
 
@@ -91,7 +91,7 @@ dataset = Neo4jCellDataset(
 
 `GenotypeAggregator` keys a record on the set of every perturbed gene's systematic name, gene additions included:
 
-```{literalinclude} ../../../torchcell/data/genotype_aggregate.py
+```{literalinclude} ../../../../torchcell/data/genotype_aggregate.py
 :language: python
 :pyobject: _hash_gene_set
 ```
@@ -105,7 +105,7 @@ A metabolite label is a dictionary, so `Neo4jCellDataset.label_df` leaves it mis
 
 ## Getting the data
 
-Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../guide/downloads`). The public endpoint is not yet deployed (its deployment on Radiant is pending), so today every loader below builds its store from the source files instead, and the commands in this section apply once an endpoint URL and key are issued.
+Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../../guide/downloads`). The public endpoint is not yet deployed (its deployment on Radiant is pending), so today every loader below builds its store from the source files instead, and the commands in this section apply once an endpoint URL and key are issued.
 
 | dataset | loader | store slug |
 |---|---|---|
@@ -163,11 +163,11 @@ The Mulleder difference is the medium: the dev store carries the sourced `SM_AGA
 
 **Cooper 2010: strains, replicates and temperature.** Later rows of a duplicated Table 4 identifier are written to the build ledger, not served, and genes renamed onto one current systematic name carry two Cooper entries in one processed record (counts in the ledger line and in the query tables above). `n_replicates` is 1 on every key, the conservative lower end: strains were screened in duplicate but a strain with one quality trace was used alone, and no per-row count was released. The paper states no growth temperature, so the record stores `temperature = None` with a typed provenance gap (module docstring, "RECORD SHAPE" and "ENVIRONMENT").
 
-**Mulleder and Cooper do not agree on the same gene.** Over the deletions both stores hold, the Spearman correlation between the two measurements of each shared amino acid is close to 0, and Cooper's own duplicate strains correlate about as weakly (tables and figure above). The two screens differ in medium (minimal vs synthetic complete), platform and normalization; which of these removes the agreement is not measured here.
+**Mulleder and Cooper do not agree on the same gene.** Over the deletions both stores hold, the Spearman correlation between the two measurements of each shared amino acid is close to 0, and Cooper's own duplicate strains correlate about as weakly (the tables above and {numref}`fig-mulleder-cooper`). The two screens differ in medium (minimal vs synthetic complete), platform and normalization; which of these removes the agreement is not measured here.
 
 **Cachera 2023: the cassette and the query filter.** Every Cachera genotype holds one deletion and the four Btx-cassette genes as `gene_addition` perturbations. Two of them, *CYP76AD1* and *DOD*, are not yeast genes, so a rule requiring every perturbed gene to be in `$gene_set` would drop every Cachera record; the query therefore constrains deletions only, as its header states:
 
-```{literalinclude} ../../../torchcell/knowledge_graphs/queries/amino_acid_betaxanthin.cql
+```{literalinclude} ../../../../torchcell/knowledge_graphs/queries/amino_acid_betaxanthin.cql
 :language: text
 :lines: 15-21
 ```

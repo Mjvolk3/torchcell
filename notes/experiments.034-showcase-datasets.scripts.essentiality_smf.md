@@ -8,7 +8,7 @@ created: 1790725109355
 
 ## 2026.09.29 - Store summaries for the essentiality + SMF page
 
-Reads `$DATA_ROOT/data/torchcell/gene_essentiality_sgd/processed/lmdb` and `$DATA_ROOT/data/torchcell/smf_costanzo2016/processed/lmdb` read-only, resolving interned `$ref` pointers the way `ExperimentDataset.get_single_item` does. Writes `record_essentiality.md`, `record_smf.md`, `summary_tables.md`, `figures.md` and `provenance.md` to `docs/source/showcase/_generated/essentiality-smf/`, and `experiments/034-showcase-datasets/results/essentiality_smf_summary.json`.
+Reads `$DATA_ROOT/data/torchcell/gene_essentiality_sgd/processed/lmdb` and `$DATA_ROOT/data/torchcell/smf_costanzo2016/processed/lmdb` read-only, resolving interned `$ref` pointers the way `ExperimentDataset.get_single_item` does. Writes `record_essentiality.md`, `record_smf.md`, `summary_tables.md`, `figures.md` and `provenance.md` to `docs/source/datasets/scerevisiae/_generated/essentiality-smf/`, and `experiments/034-showcase-datasets/results/essentiality_smf_summary.json`.
 
 Measured from the stores (results JSON of the 2026.09.29 run):
 

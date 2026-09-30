@@ -19,7 +19,7 @@ Writes what the showcase page embeds:
   datasets, the metabolite keys each dataset returns, one processed record of each shape,
   the served release reported by ``python -m torchcell.knowledge_graphs.releases status
   --json``, and the slurm job id;
-- ``docs/source/showcase/_generated/amino-acid-betaxanthin/query_results.md``: the same
+- ``docs/source/datasets/scerevisiae/_generated/amino-acid-betaxanthin/query_results.md``: the same
   numbers as a MyST fragment.
 
 The served graph is queried only under slurm
@@ -51,7 +51,9 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 SCRIPT = "experiments/034-showcase-datasets/scripts/query_amino_acid_betaxanthin.py"
 EXPERIMENT_DIR = Path("experiments/034-showcase-datasets")
 RESULTS_JSON = EXPERIMENT_DIR / "results" / "amino_acid_betaxanthin_query.json"
-FRAGMENT_DIR = Path("docs/source/showcase/_generated/amino-acid-betaxanthin")
+FRAGMENT_DIR = Path(
+    "docs/source/datasets/scerevisiae/_generated/amino-acid-betaxanthin"
+)
 QUERY_PATH = (
     Path(torchcell.__file__).parent
     / "knowledge_graphs"

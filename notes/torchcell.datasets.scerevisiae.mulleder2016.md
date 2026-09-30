@@ -144,4 +144,4 @@ A read-only Fable 5.1 agent graded eight recorded claims against the mirror, the
 
 ## 2026.09.29 - Showcase page (group 3)
 
-Shown on `docs/source/showcase/amino-acid-betaxanthin.md` ([[experiments.034-showcase-datasets.scripts.amino_acid_betaxanthin]]). The dev store's content sha256 differs from release `2026.09.21-ab6d8c5d`: every record differs only in `environment.media` (dev `SM_AGAR` from the 2026.09.23 rebuild, served `SM` stub); no phenotype field differs. The page's caveats cite the 2026.09.29 re-verification (#487, #488, #489, claim M3) and the open medium-state question (#143).
+Shown on `docs/source/datasets/scerevisiae/amino-acid-betaxanthin.md` ([[experiments.034-showcase-datasets.scripts.amino_acid_betaxanthin]]). The dev store's content sha256 differs from release `2026.09.21-ab6d8c5d`: every record differs only in `environment.media` (dev `SM_AGAR` from the 2026.09.23 rebuild, served `SM` stub); no phenotype field differs. The page's caveats cite the 2026.09.29 re-verification (#487, #488, #489, claim M3) and the open medium-state question (#143).

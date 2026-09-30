@@ -18,7 +18,7 @@ Writes what the showcase page embeds:
   which other sources, what ``label_df`` and the default ``LabelPolicy`` pick for them,
   ``label_df['fitness'].describe()``, one processed record, the served release reported
   by ``python -m torchcell.knowledge_graphs.releases status --json``, and the slurm job id;
-- ``docs/source/showcase/_generated/essentiality-smf/query_results.md``: the same numbers
+- ``docs/source/datasets/scerevisiae/_generated/essentiality-smf/query_results.md``: the same numbers
   as a MyST fragment.
 
 The served graph is queried only under slurm
@@ -53,7 +53,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 SCRIPT = "experiments/034-showcase-datasets/scripts/query_essentiality_smf.py"
 EXPERIMENT_DIR = Path("experiments/034-showcase-datasets")
 RESULTS_JSON = EXPERIMENT_DIR / "results" / "essentiality_smf_query.json"
-FRAGMENT_DIR = Path("docs/source/showcase/_generated/essentiality-smf")
+FRAGMENT_DIR = Path("docs/source/datasets/scerevisiae/_generated/essentiality-smf")
 QUERY_PATH = (
     Path(torchcell.__file__).parent
     / "knowledge_graphs"

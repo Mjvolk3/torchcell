@@ -85,3 +85,14 @@ parses with no bump, so `main` is "latest" between releases.
 
 A message whose tag is not in `allowed_tags`, or whose tag is lowercase, does not parse
 and does not contribute to a release.
+
+## Adding a dataset page
+
+A dataset page under `docs/source/datasets/<organism>/` follows the section contract on the {doc}`../datasets/index` page: introduction and terms, the draw.io diagram, the record dumps, the data tables and figures with one exploration, the supported query and its results from a named release, the download section, sourced caveats, and the provenance table. The checklist before opening the PR:
+
+- a generator script and a query script (with its slurm launcher) under `experiments/034-showcase-datasets/scripts/`, with paired Dendron notes;
+- every fragment the page includes written by those scripts into the page's `_generated/` directory, and the query and summary JSON committed under `experiments/034-showcase-datasets/results/`;
+- the diagram source under `notes/assets/drawio/` and its SVG export in `_generated/`;
+- `docs_page` set on the supported query in `registry.json`, and `python -m torchcell.knowledge_graphs.supported_queries check` reporting no drift;
+- the page in the organism's `index.md` toctree, and `sphinx-build -b html docs/source build/docs` adding no warnings.
+

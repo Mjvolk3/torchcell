@@ -43,12 +43,20 @@ myst_enable_extensions = ["colon_fence", "deflist", "dollarmath"]
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 
 templates_path = ["_templates"]
-exclude_patterns: list[str] = ["showcase/_generated"]
+exclude_patterns: list[str] = ["datasets/_generated", "datasets/scerevisiae/_generated"]
 
 html_theme = "torchcell_sphinx_theme"
 html_logo = "_static/torchcell-logo.png"
 html_favicon = "_static/torchcell-logo.png"
 html_static_path = ["_static"]
+# Loaded after the theme stylesheet: the purple-to-red h1 gradient in the logo colors.
+html_css_files = ["custom.css"]
+
+# Figures are numbered ("Fig. 1") and referenced with {numref}, as in the paper; multi-
+# panel figures carry bold lowercase panel letters (torchcell.utils.panel_label) and
+# their captions name the panels ("**a**, ...; **b**, ...").
+numfig = True
+numfig_format = {"figure": "Fig. %s", "table": "Table %s"}
 html_baseurl = "https://mjvolk3.github.io/torchcell/"
 
 # Copied verbatim into the site root, no theme and no RST wrapper. The docs workflow

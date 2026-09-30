@@ -15,7 +15,7 @@ query job's cached raw LMDB (``$DATA_ROOT/data/torchcell/showcase_amino_acid_bet
 written by ``query_amino_acid_betaxanthin.py`` under slurm; this script never opens Neo4j).
 Writes:
 
-- MyST fragments to ``docs/source/showcase/_generated/amino-acid-betaxanthin/``
+- MyST fragments to ``docs/source/datasets/scerevisiae/_generated/amino-acid-betaxanthin/``
   (``record_mulleder.md``, ``record_cooper.md``, ``record_cachera.md``,
   ``summary_tables.md``, ``served_vs_dev.md``, ``figures.md``, ``provenance.md``), each
   opening with an HTML comment naming this script and the run timestamp;
@@ -67,11 +67,14 @@ from torchcell.utils import (  # noqa: E402
     PLOT_PALETTE_FILL,
     apply_paper_style,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
 SCRIPT = "experiments/034-showcase-datasets/scripts/amino_acid_betaxanthin.py"
-FRAGMENT_DIR = Path("docs/source/showcase/_generated/amino-acid-betaxanthin")
+FRAGMENT_DIR = Path(
+    "docs/source/datasets/scerevisiae/_generated/amino-acid-betaxanthin"
+)
 RESULTS_DIR = Path("experiments/034-showcase-datasets/results")
 RESULTS_JSON = RESULTS_DIR / "amino_acid_betaxanthin_summary.json"
 QUERY_JSON = RESULTS_DIR / "amino_acid_betaxanthin_query.json"
@@ -559,11 +562,12 @@ def figure_cachera_histogram(
     )
     axes[1].set_xlabel("colonies per strain (n_replicates)")
     axes[1].set_ylabel("strains")
-    for ax in axes:
+    for ax, letter in zip(axes, "ab"):
         ax.tick_params(which="minor", length=0)
         ax.grid(True, which="both", axis="x", linewidth=0.3, color="0.85")
         ax.set_axisbelow(True)
         _box(ax)
+        panel_label(ax, letter)
     return _save(fig, out_dir, "cachera_betaxanthin_score")
 
 
@@ -834,9 +838,9 @@ def figures_fragment(stamp: str, s: dict[str, Any]) -> str:
         + f"```{{figure}} {base}/cachera_betaxanthin_score.svg\n"
         + ":name: fig-cachera-score\n"
         + ":width: 88mm\n\n"
-        + "Top: betaxanthin CRI-SPA score in `BetaxanthinCachera2023Dataset`, 0.125-wide "
-        f"bins (n = {cach['n']:,}, median {_fmt(cach['median'])}); the dashed line is the "
-        "reference level 0. Bottom: colonies behind each strain's score "
+        + "Betaxanthin in `BetaxanthinCachera2023Dataset`. **a**, the CRI-SPA score, "
+        f"0.125-wide bins (n = {cach['n']:,}, median {_fmt(cach['median'])}); the dashed "
+        "line is the reference level 0. **b**, colonies behind each strain's score "
         f"(`n_replicates`, median {_fmt(col['median'])}).\n"
         + "```\n\n"
         + f"```{{figure}} {base}/mulleder_cooper_agreement.svg\n"

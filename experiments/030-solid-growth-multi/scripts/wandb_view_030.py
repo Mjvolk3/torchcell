@@ -87,7 +87,46 @@ SECTIONS: list[tuple[str, list[tuple[list[str], str]]]] = [
         ],
     ),
     (
-        "3 per source token (interaction Pearson of the entry rows under each token)",
+        "3 per label type: smf, dmf, tmf fitness and dmi, tmi interaction (val is triples only)",
+        [
+            (
+                [
+                    "train/fitness/smf/Pearson",
+                    "train/fitness/dmf/Pearson",
+                    "train/fitness/tmf/Pearson",
+                    "val/fitness/tmf/Pearson",
+                ],
+                "fitness Pearson by type (train smf, dmf, tmf; val tmf)",
+            ),
+            (
+                [
+                    "train/gene_interaction/dmi/Pearson",
+                    "train/gene_interaction/tmi/Pearson",
+                    "val/gene_interaction/tmi/Pearson",
+                ],
+                "interaction Pearson by type (train dmi, tmi; val tmi)",
+            ),
+            (
+                [
+                    "train/fitness/smf/MSE",
+                    "train/fitness/dmf/MSE",
+                    "train/fitness/tmf/MSE",
+                    "val/fitness/tmf/MSE",
+                ],
+                "fitness MSE by type",
+            ),
+            (
+                [
+                    "train/gene_interaction/dmi/MSE",
+                    "train/gene_interaction/tmi/MSE",
+                    "val/gene_interaction/tmi/MSE",
+                ],
+                "interaction MSE by type",
+            ),
+        ],
+    ),
+    (
+        "4 per source token (interaction Pearson of the entry rows under each token)",
         [
             (
                 [f"val/token/{t}/gene_interaction/Pearson" for t in TOKENS],

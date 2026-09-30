@@ -9,6 +9,7 @@
   <title>Contributing &mdash; TorchCell 1.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=51c9007c" />
 
   
     <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
@@ -64,9 +65,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Showcase datasets</span></p>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../showcase/index.html">Showcase</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../datasets/index.html">Datasets</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
@@ -282,6 +283,17 @@ parses with no bump, so <code class="docutils literal notranslate"><span class="
 </table>
 <p>A message whose tag is not in <code class="docutils literal notranslate"><span class="pre">allowed_tags</span></code>, or whose tag is lowercase, does not parse
 and does not contribute to a release.</p>
+</section>
+<section id="adding-a-dataset-page">
+<h2>Adding a dataset page<a class="headerlink" href="#adding-a-dataset-page" title="Link to this heading"></a></h2>
+<p>A dataset page under <code class="docutils literal notranslate"><span class="pre">docs/source/datasets/&lt;organism&gt;/</span></code> follows the section contract on the <a class="reference internal" href="../datasets/index.html"><span class="doc">Datasets</span></a> page: introduction and terms, the draw.io diagram, the record dumps, the data tables and figures with one exploration, the supported query and its results from a named release, the download section, sourced caveats, and the provenance table. The checklist before opening the PR:</p>
+<ul class="simple">
+<li><p>a generator script and a query script (with its slurm launcher) under <code class="docutils literal notranslate"><span class="pre">experiments/034-showcase-datasets/scripts/</span></code>, with paired Dendron notes;</p></li>
+<li><p>every fragment the page includes written by those scripts into the page’s <code class="docutils literal notranslate"><span class="pre">_generated/</span></code> directory, and the query and summary JSON committed under <code class="docutils literal notranslate"><span class="pre">experiments/034-showcase-datasets/results/</span></code>;</p></li>
+<li><p>the diagram source under <code class="docutils literal notranslate"><span class="pre">notes/assets/drawio/</span></code> and its SVG export in <code class="docutils literal notranslate"><span class="pre">_generated/</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs_page</span></code> set on the supported query in <code class="docutils literal notranslate"><span class="pre">registry.json</span></code>, and <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">torchcell.knowledge_graphs.supported_queries</span> <span class="pre">check</span></code> reporting no drift;</p></li>
+<li><p>the page in the organism’s <code class="docutils literal notranslate"><span class="pre">index.md</span></code> toctree, and <code class="docutils literal notranslate"><span class="pre">sphinx-build</span> <span class="pre">-b</span> <span class="pre">html</span> <span class="pre">docs/source</span> <span class="pre">build/docs</span></code> adding no warnings.</p></li>
+</ul>
 </section>
 </section>
 

@@ -1,0 +1,407 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Datasets &mdash; TorchCell 1.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=51c9007c" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-logo.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/datasets/index.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=e0a75244"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="S. cerevisiae" href="scerevisiae/index.html" />
+    <link rel="prev" title="Database releases and package compatibility" href="../database/compatibility.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Datasets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#size-of-the-collection">Size of the collection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-every-dataset-page-provides">What every dataset page provides</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Datasets</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/datasets/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="datasets">
+<h1>Datasets<a class="headerlink" href="#datasets" title="Link to this heading"></a></h1>
+<p>torchcell provides built datasets the way <code class="docutils literal notranslate"><span class="pre">torchvision.datasets</span></code> provides image datasets: a loader class per source publication, a versioned archive of the built records (<code class="docutils literal notranslate"><span class="pre">{doc}</span></code>../guide/downloads``), and a supported query that returns the records from the served knowledge graph. The pages under each organism take one group of datasets and show what the experiments measured, what one stored record looks like, how the values are distributed, the query that returns them, and how to download the built stores. Every table, figure, record dump and query result on these pages is written by a script under <code class="docutils literal notranslate"><span class="pre">experiments/034-showcase-datasets/scripts/</span></code>, and query results come from a slurm job against the served release named on the page. Caveats that change how a value should be read are stated on the page that shows the value.</p>
+<section id="size-of-the-collection">
+<h2>Size of the collection<a class="headerlink" href="#size-of-the-collection" title="Link to this heading"></a></h2>
+<!-- generated by experiments/034-showcase-datasets/scripts/served_dataset_counts.py from database/releases/2026.09.21-ab6d8c5d.json at 2026-09-30T06:56:25+00:00; do not edit -->
+<p>Release <code class="docutils literal notranslate"><span class="pre">2026.09.21-ab6d8c5d</span></code> (knowledge-graph version 1.2, built 2026-09-21 from torchcell 1.2.0) serves <strong>51 datasets</strong> and <strong>52,743,047 experiments</strong> over 99,724,909 graph nodes. One experiment is one genotype, environment and phenotype record with its reference; the guide’s supported-datasets table gives each dataset’s genotype count, environments, phenotype shape and graph role.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>dataset</p></th>
+<th class="head text-right"><p>experiments served</p></th>
+<th class="head"><p>page</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DmfCostanzo2016Dataset</span></code></p></td>
+<td class="text-right"><p>20,705,612</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DmiCostanzo2016Dataset</span></code></p></td>
+<td class="text-right"><p>20,705,612</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EnvChemgenHoepfner2014Dataset</span></code></p></td>
+<td class="text-right"><p>3,124,319</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">HetHillenmeyer2008Dataset</span></code></p></td>
+<td class="text-right"><p>2,698,797</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">HomHillenmeyer2008Dataset</span></code></p></td>
+<td class="text-right"><p>1,088,620</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DmfKuzmin2020Dataset</span></code></p></td>
+<td class="text-right"><p>632,998</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DmiKuzmin2020Dataset</span></code></p></td>
+<td class="text-right"><p>632,797</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Bloom2019Dataset</span></code></p></td>
+<td class="text-right"><p>530,100</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EnvChemgenWildenhain2015Dataset</span></code></p></td>
+<td class="text-right"><p>428,206</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DmfKuzmin2018Dataset</span></code></p></td>
+<td class="text-right"><p>410,571</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DmiKuzmin2018Dataset</span></code></p></td>
+<td class="text-right"><p>410,399</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TmfKuzmin2020Dataset</span></code></p></td>
+<td class="text-right"><p>301,798</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TmiKuzmin2020Dataset</span></code></p></td>
+<td class="text-right"><p>301,798</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CrisprMagicLian2019Dataset</span></code></p></td>
+<td class="text-right"><p>266,304</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EnvChemgenVanacloig2022Dataset</span></code></p></td>
+<td class="text-right"><p>143,218</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TmfKuzmin2018Dataset</span></code></p></td>
+<td class="text-right"><p>91,111</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TmiKuzmin2018Dataset</span></code></p></td>
+<td class="text-right"><p>91,111</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">EnvChemgenCostanzo2021Dataset</span></code></p></td>
+<td class="text-right"><p>61,430</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SmfCostanzo2016Dataset</span></code></p></td>
+<td class="text-right"><p>20,484</p></td>
+<td><p><a class="reference internal" href="scerevisiae/essentiality-smf.html"><span class="doc">Gene essentiality and single-mutant fitness</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SynthLethalityYeastSynthLethDbDataset</span></code></p></td>
+<td class="text-right"><p>14,000</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FattyAcidSmith2006Dataset</span></code></p></td>
+<td class="text-right"><p>12,747</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CrispriChemgenSmith2016Dataset</span></code></p></td>
+<td class="text-right"><p>7,053</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SynthRescueYeastSynthLethDbDataset</span></code></p></td>
+<td class="text-right"><p>6,948</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NadalRibellesPerturbSeq2025Dataset</span></code></p></td>
+<td class="text-right"><p>6,188</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SmfBaryshnikova2010Dataset</span></code></p></td>
+<td class="text-right"><p>5,993</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BetaxanthinCachera2023Dataset</span></code></p></td>
+<td class="text-right"><p>4,719</p></td>
+<td><p><a class="reference internal" href="scerevisiae/amino-acid-betaxanthin.html"><span class="doc">Amino acids and betaxanthin</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ScmdOhya2005Dataset</span></code></p></td>
+<td class="text-right"><p>4,718</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ProteomeMessner2023Dataset</span></code></p></td>
+<td class="text-right"><p>4,699</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AminoAcidMulleder2016Dataset</span></code></p></td>
+<td class="text-right"><p>4,678</p></td>
+<td><p><a class="reference internal" href="scerevisiae/amino-acid-betaxanthin.html"><span class="doc">Amino acids and betaxanthin</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">IsobutanolScreenLopez2024Dataset</span></code></p></td>
+<td class="text-right"><p>4,554</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CarotenoidOzaydin2013Dataset</span></code></p></td>
+<td class="text-right"><p>4,474</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AminoAcidCooper2010Dataset</span></code></p></td>
+<td class="text-right"><p>4,313</p></td>
+<td><p><a class="reference internal" href="scerevisiae/amino-acid-betaxanthin.html"><span class="doc">Amino acids and betaxanthin</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ScmdOhnuki2022Dataset</span></code></p></td>
+<td class="text-right"><p>1,979</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SmfKuzmin2018Dataset</span></code></p></td>
+<td class="text-right"><p>1,539</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MicroarrayKemmeren2014Dataset</span></code></p></td>
+<td class="text-right"><p>1,484</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SmfODuibhir2014Dataset</span></code></p></td>
+<td class="text-right"><p>1,312</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EnvChemgenMota2024Dataset</span></code></p></td>
+<td class="text-right"><p>1,270</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GeneEssentialitySgdDataset</span></code></p></td>
+<td class="text-right"><p>1,140</p></td>
+<td><p><a class="reference internal" href="scerevisiae/essentiality-smf.html"><span class="doc">Gene essentiality and single-mutant fitness</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ScmdOhnuki2018Dataset</span></code></p></td>
+<td class="text-right"><p>1,112</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CaudalPanTranscriptome2024Dataset</span></code></p></td>
+<td class="text-right"><p>943</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EnvChemgenAuesukaree2009Dataset</span></code></p></td>
+<td class="text-right"><p>525</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SmfKuzmin2020Dataset</span></code></p></td>
+<td class="text-right"><p>472</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">IsobutanolValidatedLopez2024Dataset</span></code></p></td>
+<td class="text-right"><p>224</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FattyAcidXue2025Dataset</span></code></p></td>
+<td class="text-right"><p>176</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MetaboliteDaSilveira2014Dataset</span></code></p></td>
+<td class="text-right"><p>127</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ProteomeZelezniak2018Dataset</span></code></p></td>
+<td class="text-right"><p>97</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MetaboliteZelezniak2018Dataset</span></code></p></td>
+<td class="text-right"><p>95</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SmMicroarraySameith2015Dataset</span></code></p></td>
+<td class="text-right"><p>82</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DmMicroarraySameith2015Dataset</span></code></p></td>
+<td class="text-right"><p>72</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">OrganicAcidYoshida2012Dataset</span></code></p></td>
+<td class="text-right"><p>17</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CrispriMormino2022Dataset</span></code></p></td>
+<td class="text-right"><p>12</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>total</strong></p></td>
+<td class="text-right"><p><strong>52,743,047</strong></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p>The full list of loaders, with the phenotype class, the genotype count and the record count of each, is on the guide’s <a class="reference internal" href="../guide/datasets.html"><span class="doc">Datasets</span></a> page; the served counts above come from the committed release snapshot, so the two agree only for datasets admitted at that release.</p>
+</section>
+<section id="what-every-dataset-page-provides">
+<h2>What every dataset page provides<a class="headerlink" href="#what-every-dataset-page-provides" title="Link to this heading"></a></h2>
+<p>A dataset page is a fixed set of sections, in this order, so two pages can be read the same way. <code class="docutils literal notranslate"><span class="pre">essentiality-smf</span></code> and <code class="docutils literal notranslate"><span class="pre">amino-acid-betaxanthin</span></code> are the reference pages; a new page copies their structure.</p>
+<ol class="arabic simple">
+<li><p><strong>Introduction and terms.</strong> One paragraph naming each loader class, what it records and from which paper, and the supported query that joins them. A term list, alphabetical, defines every abbreviation and every torchcell term (entry, processed record, reference, source key) before the text uses it.</p></li>
+<li><p><strong>What the experiments measured.</strong> One draw.io diagram (<code class="docutils literal notranslate"><span class="pre">notes/assets/drawio/&lt;page&gt;.drawio</span></code>, exported headless to SVG) with three panels: <strong>a</strong> the sources and what each screen measured, in which strain, medium and temperature; <strong>b</strong> the stored record (experiment, reference, publication) and the phenotype class; <strong>c</strong> the query, the conversion or aggregation, and what one processed record holds. The diagram is composed from the loaders and the query, never redrawn from a published figure, and follows the repository figure standard (Nature print size, the palette, the font ladder).</p></li>
+<li><p><strong>The records.</strong> One record per dataset as its loader stored it, re-validated through the pydantic class and printed from <code class="docutils literal notranslate"><span class="pre">model_dump()</span></code>, cut to the named fields with every cut marked by the number of fields it hides. The records show the same gene where the datasets share one.</p></li>
+<li><p><strong>The data.</strong> Counts per dataset (records, genes, measurement type, medium, temperature, parent strain, replicate counts, uncertainty stored), the overlap of genes between the datasets, the distribution of every stored value as a table and at least one figure, and one exploration that a reader of the group would ask for (agreement between two datasets on the same gene, a histogram by strain type, a per-key summary). Figures follow the repository plotting standard (<code class="docutils literal notranslate"><span class="pre">torchcell.utils.apply_paper_style</span></code>: Arial 6 pt, the palette, boxed axes, a standard panel width, true-size SVG). A figure with more than one panel carries bold lowercase panel letters drawn by <code class="docutils literal notranslate"><span class="pre">torchcell.utils.panel_label</span></code>, and its caption names the panels in the paper’s form: <code class="docutils literal notranslate"><span class="pre">**a**,</span> <span class="pre">...;</span> <span class="pre">**b**,</span> <span class="pre">...</span></code>. Every figure has a <code class="docutils literal notranslate"><span class="pre">:name:</span></code>, Sphinx numbers it (<code class="docutils literal notranslate"><span class="pre">Fig.</span> <span class="pre">1</span></code>), and the text refers to it with <code class="docutils literal notranslate"><span class="pre">{numref}</span></code>, never “the figure above”.</p></li>
+<li><p><strong>Querying the graph.</strong> The supported query as a <code class="docutils literal notranslate"><span class="pre">literalinclude</span></code> of its <code class="docutils literal notranslate"><span class="pre">.cql</span></code> file, the <code class="docutils literal notranslate"><span class="pre">Neo4jCellDataset</span></code> construction with the converter, deduplicator and aggregator the group needs, the source of any converter as a <code class="docutils literal notranslate"><span class="pre">literalinclude</span></code>, and what the query returned from a named served release: the slurm job id, entries per dataset at each pipeline stage, processed records by dataset membership, and one processed record per membership pattern.</p></li>
+<li><p><strong>Getting the data.</strong> The <code class="docutils literal notranslate"><span class="pre">tc-data</span></code> slug of each dataset, the <code class="docutils literal notranslate"><span class="pre">DatasetClient</span></code> and curl forms, what the loader does with and without <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code>, and the state of the public endpoint.</p></li>
+<li><p><strong>Caveats.</strong> Every statement that changes how a value should be read, each with its source: the mirror OCR file, line and sha256, the verification report and claim id, the loader line, or the issue number. A caveat with no issue names that fact.</p></li>
+<li><p><strong>Provenance.</strong> A table per dataset: loader, dev store, raw input with sha256, source of record, paper mirror with sha256, DOI and PubMed id. Then the generating scripts.</p></li>
+</ol>
+<p>Two rules hold for every number on a page. Every table, figure, record dump and query count is written by a committed script under <code class="docutils literal notranslate"><span class="pre">experiments/034-showcase-datasets/scripts/</span></code> into the page’s <code class="docutils literal notranslate"><span class="pre">_generated/</span></code> directory, and the page only includes those fragments; nothing is typed by hand. Every query against the served graph runs as a slurm job whose id the fragment records, and the page names the release the job read. The page path is registered as <code class="docutils literal notranslate"><span class="pre">docs_page</span></code> on its supported query in <code class="docutils literal notranslate"><span class="pre">torchcell/knowledge_graphs/supported_queries/registry.json</span></code>, and the Sphinx build must add no warnings.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="scerevisiae/index.html">S. cerevisiae</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scerevisiae/essentiality-smf.html">Gene essentiality and single-mutant fitness</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scerevisiae/amino-acid-betaxanthin.html">Amino acids and betaxanthin</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../database/compatibility.html" class="btn btn-neutral float-left" title="Database releases and package compatibility" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="scerevisiae/index.html" class="btn btn-neutral float-right" title="S. cerevisiae" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -192,6 +192,7 @@ def test_build_runs_download_then_process_once_and_reads_back_the_records(
     assert len(dataset) == 3
     assert repr(dataset) == "ToyDataset(3)"
     assert [dataset[i] for i in range(3)] == [_dumped(i) for i in range(3)]
+    dataset.close_lmdb()  # the CI py-lmdb refuses a second open of one path per process
     again = _build(tmp_path)
     assert ToyDataset.calls == ["download", "process"]
     assert again[2] == _dumped(2)
@@ -380,38 +381,28 @@ def test_transform_item_round_trips_a_stored_record_to_typed_objects(
     assert type(item["reference"]) is FitnessExperimentReference
 
 
-class _CountingReference(FitnessExperimentReference):
-    """Counts constructions so a duplicated constructor call is observable."""
-
-    built: ClassVar[int] = 0
-
-    def __init__(self, **data: Any) -> None:
-        _CountingReference.built += 1
-        super().__init__(**data)
-
-
-class _CountingToyDataset(ToyDataset):
-    """The toy with a counting reference class."""
-
-    @property
-    def reference_class(self) -> type[FitnessExperimentReference]:
-        """The counting subclass."""
-        return _CountingReference
-
-
 def test_transform_item_builds_the_reference_twice(
-    tmp_path: Path, no_git: None
+    tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Finding: ``transform_item`` repeats ``reference = self.reference_class(...)``
     (experiment_dataset.py:639-640), so every item validates its reference twice and
-    discards the first; the returned value is unaffected. Pinned until the duplicate line
-    is removed, when the count becomes 1.
+    discards the first; the returned value is unaffected. The count is taken by wrapping
+    the real class's ``__init__`` for this test only (a counting subclass would enter
+    the schema's subclass discovery and break the ontology tree tests). Pinned until the
+    duplicate line is removed, when the count becomes 1.
     """
-    dataset = _CountingToyDataset(root=str(tmp_path / "toy_slug"))
-    _CountingReference.built = 0
+    dataset = _build(tmp_path)
+    original_init = FitnessExperimentReference.__init__
+    constructions: list[int] = []
+
+    def counting_init(self: FitnessExperimentReference, **data: Any) -> None:
+        constructions.append(1)
+        original_init(self, **data)
+
+    monkeypatch.setattr(FitnessExperimentReference, "__init__", counting_init)
     item = dataset.transform_item(dataset[0])
-    assert _CountingReference.built == 2
-    assert item["reference"] == _CountingReference(**REF_A.model_dump())
+    assert len(constructions) == 2
+    assert item["reference"] == REF_A
 
 
 def test_serialize_for_hashing_sorts_only_top_level_keys_of_a_model() -> None:

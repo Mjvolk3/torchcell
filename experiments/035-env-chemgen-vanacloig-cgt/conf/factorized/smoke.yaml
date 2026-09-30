@@ -1,0 +1,2 @@
+- {name: smoke_table, steps: 100, eval_every: 50, seeds: [0], folds: [0]}
+- {name: smoke_cgt, gene_encoder: cgt, gene_batch: 64, steps: 4, eval_every: 2, seeds: [0], folds: [0], cgt_layers: 2}

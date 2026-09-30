@@ -177,6 +177,9 @@ def main(cfg: DictConfig) -> None:
     # consumed as they complete instead of in submission order.
     inprocess_max_mb = float(wandb.config.adapters.get("inprocess_max_mb", 0))
     completion_order = bool(wandb.config.adapters.get("completion_order", False))
+    # r11: recycle a pool once the container's memory is above this fraction of its
+    # cgroup limit (0 keeps the fixed chunks_per_worker groups).
+    pool_memory_fraction = float(wandb.config.adapters.get("pool_memory_fraction", 0))
     # r5: rows rendered in the chunk workers, the main process only dedups and
     # appends (torchcell.fast_csv). The specs are frozen from THIS BioCypher instance
     # before any adapter forks a pool, so every worker inherits them.
@@ -330,6 +333,7 @@ def main(cfg: DictConfig) -> None:
         )
         adapters[-1].inprocess_max_bytes = int(inprocess_max_mb * 2**20)
         adapters[-1].completion_order = completion_order
+        adapters[-1].pool_memory_fraction = pool_memory_fraction
     log.info(
         "Built %d adapters; skipped %d with no LMDB: %s",
         len(adapters),

@@ -15,6 +15,7 @@ from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import FIRST_COMPLETED, Future, ProcessPoolExecutor, wait
 from datetime import datetime
 from functools import wraps
+from itertools import chain
 from typing import Any, cast
 
 import wandb
@@ -62,6 +63,29 @@ r7: the budget is a per-adapter attribute (``single_pass_chunk_budget_bytes``) b
 2.7x more chunks, and the pool is rebuilt every chunks_per_worker x workers of them.
 """
 SINGLE_PASS_MIN_CHUNK = 256
+CGROUP_MEMORY_CURRENT = "/sys/fs/cgroup/memory.current"
+CGROUP_MEMORY_MAX = "/sys/fs/cgroup/memory.max"
+
+
+def cgroup_memory_fraction() -> float:
+    """Current cgroup v2 memory use as a fraction of the container's limit.
+
+    Raises when the container has no memory limit (``memory.max`` is ``max``) or the
+    cgroup files are absent: the memory-driven pool recycling needs a real limit to
+    measure against, and running without one is a configuration error, not a case
+    to fall back from.
+    """
+    with open(CGROUP_MEMORY_MAX) as fh:
+        limit = fh.read().strip()
+    if limit == "max":
+        raise RuntimeError(
+            "pool_memory_fraction needs a cgroup memory limit; memory.max is 'max'"
+        )
+    with open(CGROUP_MEMORY_CURRENT) as fh:
+        current = int(fh.read().strip())
+    return current / int(limit)
+
+
 """Phase names of the r3 single-pass traversals (one per adapter per kind)."""
 """Chunks a pool worker may handle before the pool is rebuilt with fresh workers.
 
@@ -136,6 +160,9 @@ class CellAdapter:
         # only after consuming it, so one slow chunk idles the rest of the pool: job
         # 2959's Costanzo passes averaged 18 of 64 cores with peaks at 50.
         self.completion_order = False
+        # r11: recycle a pool once the container's memory is above this fraction of
+        # its cgroup limit (0 keeps the fixed chunks_per_worker groups).
+        self.pool_memory_fraction = 0.0
         self._record_bytes: int | None = None
         self.event = 0
         wandb.init()
@@ -444,7 +471,43 @@ class CellAdapter:
         # while the next pool forks. With the byte-budgeted chunks the groups would be
         # 2.7x shorter still, so chunks_per_worker (default CHUNKS_PER_WORKER) sets it.
         group_size = self.process_workers * self.chunks_per_worker
-        for group_start in range(0, len(data_chunks), group_size):
+        remaining = iter(data_chunks)
+
+        def pool_chunks() -> Iterator[Any]:
+            """The chunks one pool handles: at most group_size, fewer under memory pressure.
+
+            r11: with ``pool_memory_fraction`` set, a pool stops taking chunks once the
+            container's cgroup memory is above that fraction of its limit (checked at
+            each submission after every worker has had one chunk), so the group size
+            follows the box instead of a fixed count. Job 3067's telemetry: live
+            workers retain about 1 GB per chunk handled and only the pool teardown
+            releases it; at 22 workers x 8 chunks that crossed 96 GB in 89 s, while
+            22 x 2 peaked near 57 GB per group.
+            """
+            n = 0
+            for chunk in remaining:
+                yield chunk
+                n += 1
+                if n >= group_size:
+                    return
+                if (
+                    self.pool_memory_fraction > 0
+                    and n >= self.process_workers
+                    and cgroup_memory_fraction() >= self.pool_memory_fraction
+                ):
+                    log.info(
+                        "pool recycled at %d chunks: cgroup memory at %.2f of its limit",
+                        n,
+                        cgroup_memory_fraction(),
+                    )
+                    return
+
+        while True:
+            group = pool_chunks()
+            first = next(group, None)
+            if first is None:
+                break
+            group = chain([first], group)
             # Move everything currently reachable into the GC's permanent generation
             # before forking this group's pool. Workers inherit the parent's heap
             # copy-on-write, but one collection inside a worker traverses every tracked
@@ -461,8 +524,6 @@ class CellAdapter:
             # group's workers.
             gc.collect()
             gc.freeze()
-
-            group = iter(data_chunks[group_start : group_start + group_size])
 
             def submit_next(
                 executor: ProcessPoolExecutor, group: Iterator[Any] = group

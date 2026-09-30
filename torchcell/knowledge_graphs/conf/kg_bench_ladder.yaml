@@ -51,6 +51,10 @@ adapters:
   # and the window refilled at once, instead of in submission order). false is
   # production.
   completion_order: false
+  # r11 arm: adapters.pool_memory_fraction=F (a pool stops taking chunks once the
+  # container's cgroup memory is above F of its limit, so the group size follows the
+  # box; chunks_per_worker stays the upper bound). 0 is production.
+  pool_memory_fraction: 0
 
 datasets:
   - MetaboliteZelezniak2018Dataset # 95 records

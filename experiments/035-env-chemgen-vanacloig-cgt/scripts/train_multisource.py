@@ -274,6 +274,7 @@ def train_seed(
             e = edges[:, pick]
             z = model.table.weight
             smooth = ((z[e[0]] - z[e[1]]) ** 2).sum(1).mean()
+            assert torch.isfinite(smooth)
             loss = loss + cfg.graph_smooth * smooth
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
@@ -290,6 +291,7 @@ def train_seed(
                     "step": step + 1,
                     "loss_vanacloig": float(loss_v),
                     "loss_aux": float(loss_aux),
+                    "loss_smooth": float(smooth) if edges is not None else 0.0,
                     "val_centered_mean": val,
                     "seconds": time.time() - started,
                 }
@@ -358,7 +360,7 @@ def run(cfg: MultiSourceConfig, sweep: str, device: torch.device) -> pd.DataFram
         preds = []
         for seed in cfg.seeds:
             pred, hist = train_seed(
-                cfg, vanacloig, aux, features, y_raw, fold, seed, device
+                cfg, vanacloig, aux, features, y_raw, fold, seed, device, edges
             )
             preds.append(pred)
             histories.append(hist.assign(fold=fold.fold))

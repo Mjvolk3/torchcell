@@ -271,3 +271,36 @@ plus the ten-seed gene table +0.013 (-0.004, +0.030; 70 of 123 wins); ridge plus
 (`r7a`, slurm 3064) and propagation over one network family at a time: physical, coexpression,
 regulatory plus TFLink, STRING experimental plus database (`r7b`, slurm 3065). The launcher
 now packs four configs per GPU, since each model uses 2 GB and left the card idle.
+
+## 2026.09.30 - Round 7: ten-seed ensembles and which network carries the hit; the search converges
+
+Slurm 3064 (`r7a`, ten seeds per fold, every fold seed) and 3065 (`r7b`), 123
+compound-evaluations each, paired vs ridge.
+
+| model | median | vs ridge |
+|---|---|---|
+| gene attends over compound, 2 layers, 10 seeds | 0.297 | -0.006 (-0.036, +0.025) |
+| readout, 2 layers, 10 seeds | 0.271 | -0.009 (-0.036, +0.017) |
+| hit and propagate, 2 layers, 10 seeds | 0.277 | -0.010 (-0.038, +0.014) |
+| hit mass propagated over regulatory + TFLink only | 0.276 | -0.007 (-0.033, +0.017) |
+| over coexpression only | 0.281 | -0.013 (-0.040, +0.014) |
+| over physical only | 0.276 | -0.014 (-0.039, +0.011) |
+| over STRING experimental + database only | 0.264 | -0.020 (-0.049, +0.007) |
+| ridge + gene-attention ensemble, plain mean | 0.315 | +0.013 (-0.010, +0.037) |
+| ridge + ten-seed gene table, plain mean | 0.313 | +0.013 (-0.004, +0.030) |
+| ridge + three neural ensembles, plain mean | 0.315 | +0.009 (-0.013, +0.033) |
+
+Ten seeds instead of three move each arm by under 0.01. Which network carries the
+molecule's hit mass makes no measurable difference. The best anything reaches is a plain
+mean of ridge with a neural ensemble, +0.013 with an interval that includes zero.
+
+**Where this leaves the question.** On Vanacloig alone, compound-cold, every model family
+tried (twelve compound embeddings under kernel ridge and nearest neighbors; gene tables;
+the cell graph transformer; four ways of letting the molecule reach the genes, with and
+without message passing over the nine networks; auxiliary training on four other stores;
+phenotypic embeddings; graph smoothness; seed ensembles and stacks) lands within 0.03 of
+nested ridge on the raw FCFP4 counts, and none clears it. The two measured facts that
+explain it: with 28 to 32 training compounds the score of a held-out compound tracks its
+nearest training analog, and even inside Wildenhain's 5,160 compounds structure predicts a
+chemical-genetic profile weakly. The gains available are in the data: more compounds in the
+same assay, a correctly defined input (#500, #501, #504 to #507), and a dose axis.

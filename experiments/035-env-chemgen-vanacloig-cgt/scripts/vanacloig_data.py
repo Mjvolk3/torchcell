@@ -33,6 +33,24 @@ from scipy.stats import pearsonr, spearmanr
 VANACLOIG = "EnvChemgenVanacloig2022Dataset"
 #: The three efflux-regulator deletions of the sensitized host (PDR1, PDR3, SNQ2).
 HOST_GENES: tuple[str, str, str] = ("YGL013C", "YBL005W", "YDR011W")
+#: Served compounds the paper never reports. Its Figure 1B and text count 34 inhibitors,
+#: which are 32 of the served 41 plus DMSO and MBO (both dropped by the loader); these nine
+#: are in the GEO matrix only, and their replicate reliability is near or below zero
+#: (issue #501, audit of 2026-09-29). They stay in every fold; scores are also reported
+#: over the 32 published compounds.
+UNREPORTED_COMPOUNDS: frozenset[str] = frozenset(
+    {
+        "2,4-dimethylimidazole",
+        "2-methylimidazole",
+        "4-methylimidazole",
+        "caffeic acid",
+        "levulinic acid",
+        "myclobutanil",
+        "sodium acetate",
+        "sodium butyrate",
+        "sodium glyoxylate",
+    }
+)
 #: A compound is scored only over at least this many genes.
 MIN_GENES = 10
 #: A prediction whose spread over genes is below this is a constant and is not scored.

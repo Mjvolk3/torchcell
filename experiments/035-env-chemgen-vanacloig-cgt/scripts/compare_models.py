@@ -5,15 +5,19 @@
 
 Reads the ladder (``results/ladder/<tag>_scores.csv``) and every factorized sweep
 (``results/factorized/*/<name>_scores.csv``). A row of the output is one model on one
-fold seed and target: its median and mean Spearman over the held-out compounds it
-scored, and its PAIRED difference from each reference on exactly those compounds, with
-a bootstrap 95% interval over compounds for the mean difference.
+fold seed, target and compound subset: its median and mean Spearman over the held-out
+compounds it scored, and its PAIRED difference from each reference on exactly those
+compounds, with a bootstrap 95% interval over compounds for the mean difference.
 
 REFERENCES, both from the ladder and both nested (no test compound touches a choice):
 
 ``ridge``     ``krr`` over the linear kernel of standardized FCFP4 counts, the ridge map
               of 031 with its penalty chosen by leave-one-compound-out.
 ``selected``  the ladder's whole-pipeline pick, per fold.
+
+SUBSETS: ``all`` is the 41 served compounds; ``published`` is the 32 the paper reports,
+since the nine unreported ones have replicate reliability near or below zero
+(``vanacloig_data.UNREPORTED_COMPOUNDS``, issue #501).
 
 Writes ``results/compare_models.csv``.
 """
@@ -24,16 +28,31 @@ import argparse
 import glob
 import os
 import os.path as osp
+import sys
 
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+
+sys.path.insert(0, osp.dirname(__file__))
+from vanacloig_data import UNREPORTED_COMPOUNDS  # noqa: E402
 
 load_dotenv()
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 RESULTS = osp.join(EXPERIMENT_ROOT, "035-env-chemgen-vanacloig-cgt", "results")
 KEY = ["fold_seed", "compound", "target"]
 N_BOOT = 2000
+COLUMNS = [
+    "name",
+    "fold_seed",
+    "compounds",
+    "spearman_median",
+    "spearman_mean",
+    "vs_ridge_mean_diff",
+    "vs_ridge_ci_low",
+    "vs_ridge_ci_high",
+    "vs_ridge_wins",
+]
 
 
 def bootstrap_mean(diff: np.ndarray, rng: np.random.Generator) -> tuple[float, float]:
@@ -41,13 +60,8 @@ def bootstrap_mean(diff: np.ndarray, rng: np.random.Generator) -> tuple[float, f
     return float(np.quantile(draws, 0.025)), float(np.quantile(draws, 0.975))
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--ladder-tag", default="ladder_r2")
-    args = parser.parse_args()
-    rng = np.random.default_rng(0)
-
-    ladder = pd.read_csv(osp.join(RESULTS, "ladder", f"{args.ladder_tag}_scores.csv"))
+def load_scores(ladder_tag: str) -> pd.DataFrame:
+    ladder = pd.read_csv(osp.join(RESULTS, "ladder", f"{ladder_tag}_scores.csv"))
     ladder["name"] = np.where(
         ladder["model"] == "selected",
         "ladder:selected",
@@ -62,61 +76,74 @@ def main() -> None:
         d["name"] = f"{sweep}:" + d["name"] + ":" + d["member"]
         models.append(d[KEY + ["name", "spearman", "ceiling"]])
     scores = pd.concat(models, ignore_index=True)
+    scores["subset"] = np.where(
+        scores["compound"].isin(UNREPORTED_COMPOUNDS), "unreported", "published"
+    )
+    return scores
 
+
+def summarize(
+    g: pd.DataFrame, references: dict[str, pd.DataFrame], rng: np.random.Generator
+) -> dict[str, float | int]:
+    """Median, mean, fraction of ceiling, and the paired differences from each reference."""
+    g = g.dropna(subset=["spearman"])
+    row: dict[str, float | int] = {
+        "compounds": len(g),
+        "spearman_median": g["spearman"].median(),
+        "spearman_mean": g["spearman"].mean(),
+        "fraction_of_ceiling_median": (
+            g["spearman"] / g["ceiling"].where(g["ceiling"] > 0)
+        ).median(),
+    }
+    for ref_name, ref in references.items():
+        paired = g.merge(ref, on=KEY, suffixes=("", "_ref")).dropna(
+            subset=["spearman_ref"]
+        )
+        diff = (paired["spearman"] - paired["spearman_ref"]).to_numpy()
+        if len(diff) == 0:
+            continue
+        low, high = bootstrap_mean(diff, rng)
+        row |= {
+            f"vs_{ref_name}_mean_diff": float(diff.mean()),
+            f"vs_{ref_name}_ci_low": low,
+            f"vs_{ref_name}_ci_high": high,
+            f"vs_{ref_name}_wins": int((diff > 0).sum()),
+            f"vs_{ref_name}_paired": len(diff),
+        }
+    return row
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ladder-tag", default="ladder_r2")
+    args = parser.parse_args()
+    rng = np.random.default_rng(0)
+    scores = load_scores(args.ladder_tag)
     references = {
         "ridge": scores[scores["name"] == "ladder:krr|linear:fcfp4_count"],
         "selected": scores[scores["name"] == "ladder:selected"],
     }
     rows = []
-    for (name, fold_seed, target), g in scores.groupby(["name", "fold_seed", "target"]):
-        g = g.dropna(subset=["spearman"])
-        row = {
-            "name": name,
-            "fold_seed": fold_seed,
-            "target": target,
-            "compounds": len(g),
-            "spearman_median": g["spearman"].median(),
-            "spearman_mean": g["spearman"].mean(),
-            "fraction_of_ceiling_median": (
-                g["spearman"] / g["ceiling"].where(g["ceiling"] > 0)
-            ).median(),
-        }
-        for ref_name, ref in references.items():
-            paired = g.merge(ref, on=KEY, suffixes=("", "_ref")).dropna(
-                subset=["spearman_ref"]
+    for view in ("all", "published"):
+        table = scores if view == "all" else scores[scores["subset"] == "published"]
+        for (name, fold_seed, target), g in table.groupby(
+            ["name", "fold_seed", "target"]
+        ):
+            rows.append(
+                {"name": name, "fold_seed": fold_seed, "target": target, "subset": view}
+                | summarize(g, references, rng)
             )
-            diff = (paired["spearman"] - paired["spearman_ref"]).to_numpy()
-            if len(diff) == 0:
-                continue
-            low, high = bootstrap_mean(diff, rng)
-            row |= {
-                f"vs_{ref_name}_mean_diff": float(diff.mean()),
-                f"vs_{ref_name}_ci_low": low,
-                f"vs_{ref_name}_ci_high": high,
-                f"vs_{ref_name}_wins": int((diff > 0).sum()),
-                f"vs_{ref_name}_paired": len(diff),
-            }
-        rows.append(row)
     out = pd.DataFrame(rows).sort_values(
-        ["target", "fold_seed", "spearman_median"], ascending=[True, True, False]
+        ["subset", "target", "fold_seed", "spearman_median"],
+        ascending=[True, True, True, False],
     )
     out.to_csv(osp.join(RESULTS, "compare_models.csv"), index=False)
     pd.set_option("display.width", 260)
     pd.set_option("display.max_rows", 200)
-    cols = [
-        "name",
-        "fold_seed",
-        "compounds",
-        "spearman_median",
-        "spearman_mean",
-        "vs_ridge_mean_diff",
-        "vs_ridge_ci_low",
-        "vs_ridge_ci_high",
-        "vs_ridge_wins",
-    ]
-    print(
-        out[out["target"] == "centered"][cols].head(60).round(3).to_string(index=False)
-    )
+    for view in ("all", "published"):
+        print(f"== {view} compounds, centered target")
+        shown = out[(out["target"] == "centered") & (out["subset"] == view)]
+        print(shown[COLUMNS].head(40).round(3).to_string(index=False))
 
 
 if __name__ == "__main__":

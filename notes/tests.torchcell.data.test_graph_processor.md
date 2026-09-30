@@ -13,3 +13,9 @@ Exact tensors on a cell graph that carries one physical edge (four after self lo
 ## 2026.09.27 - Two-class phenotype info and dict-valued labels
 
 Two more `Perturbation` tests: with two phenotype classes in `phenotype_info` the type and statistic indices follow the class order and the reference phenotypes are excluded; a dict-valued CalMorph label with its CV is flattened in sorted-key order. The subgraph processors now run hermetically in [[tests.torchcell.data.test_graph_processor_subgraph]] and [[tests.torchcell.data.test_graph_processor_unperturbed_dcell]]. Phase 6 of [[plan.test-suite-buildout.2026.09.25]].
+
+## 2026.09.30 - Phase 14: the subgraph family on a three-gene graph, DCell on the conftest graph
+
+Six to twenty-eight tests (35 cases); this file alone 14 to 79 percent, the four `test_graph_processor*.py` files together 84 to 96 percent. What remains is dead or unobservable (the `if not reaction_info` returns, the `device is None` checks, a subsystem-derived `w_growth` computed and discarded, the neighbor `process` tail behind the list/`.tolist()` finding on record). Pinned: each processor's exact output on a hand-built perturbation (removed and masked nodes, the edge index after subsetting, the mask tensors, per-graph attributes), the incidence handling, the error messages.
+
+Findings: Subgraph and Incidence take `w_growth` from the stored tensor while Lazy takes it from the subsystem labels, [0.5, 0, 1] versus [1, 0, 1] on the same graph (lines 367, 1725); a tensor `subsystem` can never mark Growth (1604); the incidence cache is never tied to the graph it was built from, so processing a second graph reuses the first graph's cache and emits an edge with node index -1 (664, 1350); `Unperturbed` raises `TypeError` on a phenotype with no statistic name (1926-1929); DCell omits `perturbation_indices_batch` when no perturbed gene is a node (2275-2279); the neighbor processor writes no phenotype placeholder when there is no value.

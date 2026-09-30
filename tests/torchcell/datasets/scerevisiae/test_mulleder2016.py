@@ -19,20 +19,41 @@ order):
 
 ``robust_summary_statistics`` sheet (amino acid, mean (mM), sd (mM)): mean 0.25 * (i + 1)
 per amino acid; every record's reference is that table, n = 1 per amino acid, SE None.
+
+2026.09.30 (Phase 14). Added, each on its own synthetic workbook under ``tmp_path``:
+
+- the replicate counts as Findings: a ``data_raw`` sheet giving YAL001C three raw rows
+  leaves its ``n_replicates`` at 1 on all 19 keys (issue #488: 191 released strains have
+  two to four raw rows), and the reference, the MCD robust mean over the whole
+  collection, also says n = 1 on all 19 keys (issue #489);
+- the medium as a Finding: the record and its reference carry ``SM_AGAR`` (solid), not
+  the liquid ``SM`` subculture the amino acids are extracted from (issue #143);
+- the build ledger: four YBR001C rows, one blank ORF and one ``WT`` row log exactly
+  "2 usable ORFs, 2 non-systematic ORF names skipped, 1 ORF collisions deduped" although
+  three rows were dropped as collisions (Finding: the ledger counts ORFs, not rows);
+- a blank concentration cell is stored as NaN in a served record (Finding) and a text
+  cell (``n.d.``) aborts the build with the ``float()`` message;
+- ``download()`` on a faked ``urlopen``: the request (URL, User-Agent, timeout 300), the
+  sha256 refusal with its exact message and no file written, and the write on a match;
+- ``main()`` under a stubbed ``load_dotenv`` and a ``tmp_path`` ``DATA_ROOT``.
 """
 
 from __future__ import annotations
 
 import hashlib
+import io
 import json
+import logging
+import math
 import re
+import urllib.request
 from pathlib import Path
 from typing import Any
 
 import openpyxl
 import pytest
 
-from torchcell.datamodels.media import SM_AGAR
+from torchcell.datamodels.media import SM, SM_AGAR
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
@@ -63,17 +84,25 @@ def _write_workbook(
     raw: Path,
     conc_columns: list[str] = _AA,
     summary_means: dict[str, float] = _SUMMARY_MEANS,
+    conc_rows: list[list[Any]] = _CONC_ROWS,
+    raw_rows: list[list[Any]] | None = None,
 ) -> None:
     workbook = openpyxl.Workbook()
     conc = workbook.active
     conc.title = m._CONC_SHEET
     conc.append(["ORF", *conc_columns])
-    for row in _CONC_ROWS:
+    for row in conc_rows:
         conc.append(row[: 1 + len(conc_columns)])
     summary = workbook.create_sheet(m._SUMMARY_SHEET)
     summary.append(["amino acid", "mean (mM)", "sd (mM)"])
     for aa, mean in summary_means.items():
         summary.append([aa, mean, 0.1])
+    if raw_rows is not None:
+        # the released workbook's per-injection sheet (identifier, ORF, batch, uM)
+        data_raw = workbook.create_sheet("data_raw")
+        data_raw.append(["identifier", "ORF", "batch", *_AA])
+        for raw_row in raw_rows:
+            data_raw.append(raw_row)
     workbook.save(raw / m.DATA_FILENAME)
 
 
@@ -227,3 +256,220 @@ def test_download_trusts_a_present_file_without_hashing(
     assert hashlib.sha256(before).hexdigest() != m.DATA_SHA256
     dataset.download()
     assert dest.read_bytes() == before
+
+
+def test_n_replicates_is_one_even_for_a_strain_with_three_raw_rows(
+    tmp_path: Path,
+) -> None:
+    """Finding (issue #488): ``n_replicates`` is the constant 1 on every amino acid
+    (source line 249). The released workbook's ``data_raw`` sheet holds 2 to 4 raw rows
+    for 191 of the 4,678 released strains, and the issue's diagnostic suggests their
+    released value is the mean of those rows; the loader never opens ``data_raw``. Here
+    YAL001C has three raw rows (batches 01, 02, 12) and its record still says n = 1 on all
+    19 keys with no SE. Pinned until #488 sets ``n_replicates`` per record from the
+    ``data_raw`` row count.
+    """
+    raw_rows = [
+        [f"S{i:03d}", "YAL001C", batch, *([10.0 * (i + 1)] * 19)]
+        for i, batch in enumerate(["01", "02", "12"])
+    ] + [["S003", "YBR001C", "01", *([20.0] * 19)]]
+    root = _root(tmp_path, raw_rows=raw_rows)
+    dataset = m.AminoAcidMulleder2016Dataset(root=str(root))
+    phenotype = dataset[0]["experiment"]["phenotype"]
+    assert dataset[0]["experiment"]["genotype"]["perturbations"][0][
+        "systematic_gene_name"
+    ] == ("YAL001C")
+    assert phenotype["n_replicates"] == dict.fromkeys(_AA, 1)
+    assert phenotype["metabolite_level_se"] is None
+    assert phenotype["metabolite_level"] == dict(zip(_AA, _LEVELS_YAL001C, strict=True))
+
+
+def test_reference_is_the_population_robust_mean_but_says_n_one(
+    dataset: m.AminoAcidMulleder2016Dataset,
+) -> None:
+    """Finding (issue #489): the reference phenotype is the ``robust_summary_statistics``
+    ``mean (mM)`` column, the Minimum Covariance Determinant mean over the whole
+    collection (0.25 * (i + 1) mM for amino acid i here: alanine 0.25, tyrosine 4.75),
+    and it is stored with ``n_replicates = 1`` on all 19 keys and no SE, which describes
+    one measurement, not a population estimate over 4,678 strains. The same reference is
+    attached to all three records. Pinned until #489 decides how a population-statistic
+    reference is represented.
+    """
+    for index in range(3):
+        reference = dataset[index]["reference"]["phenotype_reference"]
+        assert reference["metabolite_level"] == _SUMMARY_MEANS
+        assert reference["metabolite_level"]["alanine"] == 0.25
+        assert reference["metabolite_level"]["tyrosine"] == 4.75
+        assert reference["n_replicates"] == dict.fromkeys(_AA, 1)
+        assert reference["metabolite_level_se"] is None
+        assert reference["measurement_type"] == "intracellular_concentration_mM"
+
+
+def test_medium_is_sm_agar_not_the_liquid_subculture(
+    dataset: m.AminoAcidMulleder2016Dataset,
+) -> None:
+    """Finding (issue #143, and the open question on ``SM_AGAR``'s docstring in
+    ``torchcell/datamodels/media.py``): record and reference both carry ``SM_AGAR``,
+    ``state="solid"`` with agar at 2% among its components, while the amino acids are
+    extracted from the liquid SM subculture the spots inoculate (``SM``, same recipe
+    without agar). #143 recorded this loader's solid SM as a bare stub; the recipe has
+    since been sourced, so what remains pinned is the state. Pinned until #143 (or its
+    successor) decides whether the record should carry ``SM``.
+    """
+    experiment_media = dataset[0]["experiment"]["environment"]["media"]
+    reference_media = dataset[0]["reference"]["environment_reference"]["media"]
+    assert experiment_media == SM_AGAR.model_dump()
+    assert reference_media == SM_AGAR.model_dump()
+    assert experiment_media != SM.model_dump()
+    assert experiment_media["state"] == "solid"
+    agar = experiment_media["components"][-1]
+    assert (agar["compound"]["name"], agar["concentration"]["value"]) == ("agar", 2.0)
+    assert dataset[0]["experiment"]["environment"]["temperature"]["value"] == 30.0
+
+
+def test_ledger_counts_collided_orfs_not_dropped_rows(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Six rows: YBR001C four times (2.0, 3.0, 4.0, 5.0), a blank ORF cell (read as NaN,
+    stringified to ``"nan"``), ``WT``, and YAL001C. Kept: YBR001C (the first row, 2.0 on
+    every key) and YAL001C, so two records. The ledger line counts the blank and ``WT``
+    as two non-systematic names.
+
+    Finding: the collision count is the number of distinct ORFs that collided (1), not
+    the three rows discarded, so the ledger under-reports what the build dropped (source
+    lines 182-193). Pinned until the ledger counts discarded rows.
+    """
+    rows: list[list[Any]] = [
+        ["YBR001C", *([2.0] * 19)],
+        ["YBR001C", *([3.0] * 19)],
+        [None, *([1.0] * 19)],
+        ["YBR001C", *([4.0] * 19)],
+        ["WT", *([1.0] * 19)],
+        ["YBR001C", *([5.0] * 19)],
+        ["YAL001C", *_LEVELS_YAL001C],
+    ]
+    root = _root(tmp_path, conc_rows=rows)
+    caplog.set_level(logging.INFO, logger=m.__name__)
+    dataset = m.AminoAcidMulleder2016Dataset(root=str(root))
+    assert len(dataset) == 2
+    assert dataset[0]["experiment"] == _experiment("YBR001C", [2.0] * 19)
+    assert dataset[1]["experiment"] == _experiment("YAL001C", _LEVELS_YAL001C)
+    messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
+    assert messages == [
+        "Mulleder: 2 usable ORFs, 2 non-systematic ORF names skipped, "
+        "1 ORF collisions deduped",
+        "Wrote 2 Mulleder amino-acid experiments to LMDB",
+    ]
+
+
+def test_blank_concentration_is_served_as_nan(tmp_path: Path) -> None:
+    """Finding: a blank concentration cell is read as NaN and ``float(nan)`` passes, so
+    the record serves ``metabolite_level["tyrosine"] = nan`` with ``n_replicates`` 1 for
+    it; ``MetabolitePhenotype`` does not reject a non-finite level. The other 18 keys
+    keep their values. Pinned until the loader refuses or omits an unmeasured key.
+    """
+    rows: list[list[Any]] = [["YAL001C", *_LEVELS_YAL001C[:-1], None]]
+    root = _root(tmp_path, conc_rows=rows)
+    dataset = m.AminoAcidMulleder2016Dataset(root=str(root))
+    level = dataset[0]["experiment"]["phenotype"]["metabolite_level"]
+    assert math.isnan(level["tyrosine"])
+    assert {aa: v for aa, v in level.items() if aa != "tyrosine"} == dict(
+        zip(_AA[:-1], _LEVELS_YAL001C[:-1], strict=True)
+    )
+    assert dataset[0]["experiment"]["phenotype"]["n_replicates"]["tyrosine"] == 1
+
+
+def test_text_concentration_aborts_the_build(tmp_path: Path) -> None:
+    """A non-numeric cell reaches ``float(row[aa])`` (source line 186) and the build
+    stops with Python's own message, naming the cell text; nothing is written to LMDB.
+    """
+    rows: list[list[Any]] = [["YAL001C", "n.d.", *_LEVELS_YAL001C[1:]]]
+    root = _root(tmp_path, conc_rows=rows)
+    with pytest.raises(
+        ValueError, match=re.escape("could not convert string to float: 'n.d.'")
+    ):
+        m.AminoAcidMulleder2016Dataset(root=str(root))
+    assert not (root / "processed" / "lmdb").exists()
+
+
+class _Response(io.BytesIO):
+    """The context-manager body ``urlopen`` returns."""
+
+    def __enter__(self) -> _Response:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+
+def _fake_urlopen(
+    monkeypatch: pytest.MonkeyPatch, payload: bytes
+) -> list[tuple[urllib.request.Request, float]]:
+    calls: list[tuple[urllib.request.Request, float]] = []
+
+    def urlopen(request: urllib.request.Request, timeout: float) -> _Response:
+        calls.append((request, timeout))
+        return _Response(payload)
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    return calls
+
+
+def test_download_refuses_a_payload_with_the_wrong_sha256(
+    dataset: m.AminoAcidMulleder2016Dataset, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With the raw file absent, ``download()`` requests ``DATA_URL`` once with a
+    ``Mozilla/5.0`` User-Agent and a 300 s timeout, hashes the body, and refuses a
+    mismatch with the exact message, writing nothing.
+    """
+    dest = Path(dataset.root) / "raw" / m.DATA_FILENAME
+    dest.unlink()
+    payload = b"not the Mendeley workbook"
+    calls = _fake_urlopen(monkeypatch, payload)
+    got = hashlib.sha256(payload).hexdigest()
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            f"Mulleder Table S3 sha256 mismatch: got {got}, expected {m.DATA_SHA256}"
+        ),
+    ):
+        dataset.download()
+    assert not dest.exists()
+    assert len(calls) == 1
+    request, timeout = calls[0]
+    assert request.full_url == m.DATA_URL
+    assert request.header_items() == [("User-agent", "Mozilla/5.0")]
+    assert timeout == 300
+
+
+def test_download_writes_a_payload_whose_sha256_matches_the_pin(
+    dataset: m.AminoAcidMulleder2016Dataset, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With the pin set to the payload's digest, the bytes land at ``raw/<filename>``
+    unchanged.
+    """
+    dest = Path(dataset.root) / "raw" / m.DATA_FILENAME
+    dest.unlink()
+    payload = b"stand-in workbook bytes"
+    monkeypatch.setattr(m, "DATA_SHA256", hashlib.sha256(payload).hexdigest())
+    calls = _fake_urlopen(monkeypatch, payload)
+    dataset.download()
+    assert dest.read_bytes() == payload
+    assert len(calls) == 1
+
+
+def test_main_prints_length_and_first_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``main()`` opens ``$DATA_ROOT/data/torchcell/amino_acid_mulleder2016`` and prints
+    ``len = 3`` then record 0. The store is built first (its progress lines go to stdout
+    and are discarded) so ``main()`` only loads it; ``load_dotenv`` is stubbed so the
+    repo ``.env`` is never read and ``DATA_ROOT`` is ``tmp_path``.
+    """
+    monkeypatch.setattr("dotenv.load_dotenv", lambda: None)
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    root = _root(tmp_path / "data" / "torchcell")
+    first = m.AminoAcidMulleder2016Dataset(root=str(root))[0]
+    capsys.readouterr()
+    m.main()
+    assert capsys.readouterr().out == f"len = 3\n{first}\n"

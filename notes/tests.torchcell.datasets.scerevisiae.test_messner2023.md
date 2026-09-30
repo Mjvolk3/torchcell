@@ -68,3 +68,7 @@ YCR002W 4.0 / NaN / 1; Q0250 2.0 / 0.0 / 2.
   between the ORF and the numeric suffix, so this only bites on a malformed filename.
 - A protein measured in one WT sample gets `float("nan")` as its reference SE (not None), and
   the reference dict still carries the key.
+
+## 2026.09.30 - Phase 14: numeric gene names, linear values, the GFF map, downloads
+
+Twelve to twenty-four tests, 81 to 100 percent. The real filename shape `10_9_hpr57_ko_YBL007C_2824_0.49` stores `perturbed_gene_name` "2824" beside a second strain named "SLA1" (issue #485, whole record); values are linear (WT samples 1 and 1001 give a reference of 501.0 with SE 500.0; 393221 and 0.0313 stored verbatim); `duration_hours` None (issue #486); a protein a KO measured but no WT sample did raises a bare `KeyError('YBR001C')` (line 360); the exact build-summary log lines; a GFF line with no ORF token skipped and a line with two accessions mapping both; `download` when the mirror file is missing, off the pin, and when both files copy; a raw file already present kept without hashing (190); `main` and the schema classes.

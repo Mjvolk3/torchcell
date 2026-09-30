@@ -25,13 +25,38 @@ regex (skipped); ``absent_ko`` is a ``ko`` row with no matrix column (ignored).
 
 WT reference (mean, sample SD / sqrt(n), n over non-blank WT cells):
     YBR001C: 11.0, 1.0, 2      YCR002W: 4.0, NaN, 1      Q0250: 2.0, 0.0, 2
+
+2026.09.30 (Phase 14): a second build (``_numeric_root``) on one protein (P00001 ->
+YBR001C) with two WT samples (1 and 1001) and two KO samples of the same ORF YBL007C
+whose filenames are the real shapes ``10_9_hpr1_ko_YBL007C_SLA1_0.47`` and
+``10_9_hpr57_ko_YBL007C_2824_0.49`` (the second is quoted in
+[[datasets.showcase-verification.2026.09.29]], C19), with KO values 393221 and 0.0313
+(the released matrix's max and min). Expected: two records (one per strain, not per
+ORF), gene names ``SLA1`` and ``2824``; the values stored verbatim (linear, no log2);
+the one shared reference is the arithmetic WT mean (1 + 1001) / 2 = 501.0 (a
+geometric or log2 mean would give 31.64 or 4.98), SE = sqrt(((1 - 501)^2 + (1001 -
+501)^2) / 1) / sqrt(2) = 500.0, n 2; the index is [[0, 1]]. Also pinned: the
+drop summary log line on the first fixture (2 strains, 3 reference proteins, 1 skipped
+ORF), a KO protein that no WT sample measured (a bare ``KeyError``, a Finding), a GFF
+line whose ninth column has no ORF token and a line with two accessions, the three
+``download`` outcomes against a mirror under ``tmp_path`` (missing, off the pin, copied)
+and the partial-raw case, and ``main``.
+
+Findings pinned: a numeric filename token is stored as ``perturbed_gene_name`` (issue
+#485, 156 served records); ``duration_hours`` is None although the 8 h culture is
+sourceable (issue #486); a protein a KO measured but no WT sample did raises
+``KeyError`` from ``create_experiment`` (line 360) rather than a named refusal;
+``download`` skips a raw file that is already present without hashing it (line 190).
 """
 
+import hashlib
 import json
+import logging
 import math
 import socket
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from torchcell.datamodels.media import SM
@@ -46,6 +71,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     Temperature,
 )
+from torchcell.datasets.scerevisiae import messner2023 as m
 from torchcell.datasets.scerevisiae.messner2023 import (
     MATRIX_FILENAME,
     MEASUREMENT_TYPE,
@@ -368,3 +394,304 @@ def test_missing_gff_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     root = _root(tmp_path)
     with pytest.raises(FileNotFoundError, match="SGD GFF not found under"):
         ProteomeMessner2023Dataset(root=str(root))
+
+
+# --------------------------------------------------------------------------- #
+# Phase 14: numeric gene tokens, linear values, refusals, download, main
+# --------------------------------------------------------------------------- #
+
+KO_SLA1 = "10_9_hpr1_ko_YBL007C_SLA1_0.47"
+KO_NUM = "10_9_hpr57_ko_YBL007C_2824_0.49"
+
+
+def _numeric_root(tmp_path: Path, wt: tuple[str, str] = ("1", "1001")) -> Path:
+    """One protein, two WT samples, two KO strains of YBL007C (module docstring)."""
+    root = tmp_path / "proteome_messner2023"
+    (root / "raw").mkdir(parents=True)
+    _write_csv(
+        root / "raw" / MATRIX_FILENAME,
+        [
+            ["Protein.Group", "wt_a", "wt_b", KO_SLA1, KO_NUM],
+            ["P00001", wt[0], wt[1], "393221", "0.0313"],
+        ],
+    )
+    _write_csv(
+        root / "raw" / METADATA_FILENAME,
+        [
+            ["Filename", "sampletype", "ORF", "plate"],
+            ["wt_a", "HIS3", "YOR202W", "1"],
+            ["wt_b", "HIS3", "YOR202W", "2"],
+            [KO_SLA1, "ko", "YBL007C", "10"],
+            [KO_NUM, "ko", "YBL007C", "10"],
+        ],
+    )
+    return root
+
+
+@pytest.fixture
+def numeric(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> ProteomeMessner2023Dataset:
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    _write_gff(tmp_path)
+    return ProteomeMessner2023Dataset(root=str(_numeric_root(tmp_path)))
+
+
+def _shared_reference() -> dict[str, object]:
+    return ProteinAbundanceExperimentReference(
+        dataset_name="ProteomeMessner2023Dataset",
+        genome_reference=BY4741,
+        environment_reference=ENVIRONMENT,
+        phenotype_reference=ProteinAbundancePhenotype(
+            protein_abundance={"YBR001C": 501.0},
+            protein_abundance_se={"YBR001C": 500.0},
+            n_replicates={"YBR001C": 2},
+            measurement_type=MEASUREMENT_TYPE,
+        ),
+    ).model_dump()
+
+
+def test_numeric_filename_token_is_stored_as_the_gene_name_issue_485(
+    numeric: ProteomeMessner2023Dataset,
+) -> None:
+    """Finding (issue #485): ``10_9_hpr57_ko_YBL007C_2824_0.49`` stores SLA1's deletion
+    with ``perturbed_gene_name`` "2824", beside a second strain of the same ORF named
+    "SLA1"; one ORF gets two spellings. The whole record is pinned, value 0.0313 stored
+    verbatim. Pinned until the gene name comes from the SGD GFF, not the filename.
+    """
+    expected = ProteinAbundanceExperiment(
+        dataset_name="ProteomeMessner2023Dataset",
+        genotype=Genotype(
+            perturbations=[
+                KanMxDeletionPerturbation(
+                    systematic_gene_name="YBL007C", perturbed_gene_name="2824"
+                )
+            ]
+        ),
+        environment=ENVIRONMENT,
+        phenotype=ProteinAbundancePhenotype(
+            protein_abundance={"YBR001C": 0.0313},
+            protein_abundance_se=None,
+            n_replicates={"YBR001C": 1},
+            measurement_type=MEASUREMENT_TYPE,
+        ),
+    )
+    assert numeric[1]["experiment"] == expected.model_dump()
+    assert numeric[1]["reference"] == _shared_reference()
+    first = numeric[0]["experiment"]["genotype"]["perturbations"][0]
+    assert (first["systematic_gene_name"], first["perturbed_gene_name"]) == (
+        "YBL007C",
+        "SLA1",
+    )
+
+
+def test_values_are_linear_and_the_reference_is_the_arithmetic_wt_mean(
+    numeric: ProteomeMessner2023Dataset,
+) -> None:
+    """The KO value 393221 is stored as 393221.0 (no log2); the WT reference over 1 and
+    1001 is 501.0 with SE 500.0 (a log2 mean would be 4.98), shared by both strains of
+    the ORF, so one reference covers [0, 1] and the two strains stay two records.
+    """
+    assert len(numeric) == 2
+    assert numeric[0]["experiment"]["phenotype"]["protein_abundance"] == {
+        "YBR001C": 393221.0
+    }
+    assert numeric[0]["reference"] == _shared_reference()
+    index = numeric.experiment_reference_index
+    assert index is not None
+    assert [e.member_indices for e in index] == [[0, 1]]
+    pre = Path(numeric.preprocess_dir)
+    assert json.loads((pre / "gene_set.json").read_text()) == ["YBL007C"]
+    assert (pre / "data.csv").read_text() == (
+        "filename,orf,gene,n_proteins\n"
+        f"{KO_SLA1},YBL007C,SLA1,1\n"
+        f"{KO_NUM},YBL007C,2824,1\n"
+    )
+
+
+def test_culture_duration_is_not_recorded_issue_486(
+    numeric: ProteomeMessner2023Dataset,
+) -> None:
+    """Finding (issue #486): the environment is SM at 30 C with ``duration_hours`` None,
+    although the paper states the 8 h post-dilution culture. Pinned until #486 records it.
+    """
+    environment = numeric[0]["experiment"]["environment"]
+    assert environment == ENVIRONMENT.model_dump()
+    assert environment["duration_hours"] is None
+    assert environment["temperature"]["value"] == 30.0
+    assert environment["media"] == SM.model_dump()
+
+
+def test_a_ko_protein_no_wt_sample_measured_raises_a_bare_key_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Finding: with both WT cells blank, YBR001C is dropped from the reference (``keep``
+    needs n >= 1, line 245) and the first KO that measured it fails the lookup at line
+    360 with ``KeyError('YBR001C')``, not a message naming the strain. Pinned until the
+    build refuses such a protein with a named error.
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    _write_gff(tmp_path)
+    root = _numeric_root(tmp_path, wt=("", ""))
+    with pytest.raises(KeyError) as excinfo:
+        ProteomeMessner2023Dataset(root=str(root))
+    assert excinfo.value.args == ("YBR001C",)
+
+
+def test_the_build_summary_is_logged_exactly(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """First fixture: 2 KO strains, 3 WT proteins, 1 skipped ORF (``bad_ko``; the
+    ``absent_ko`` row has no matrix column and is not counted).
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    _write_gff(tmp_path)
+    root = _root(tmp_path)
+    with caplog.at_level(logging.INFO, logger=m.log.name):
+        ProteomeMessner2023Dataset(root=str(root))
+    messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
+    assert messages == [
+        "Messner: 2 KO strains, WT reference with 3 proteins, 1 non-systematic "
+        "KO ORF skipped",
+        "Wrote 2 Messner proteome experiments to LMDB",
+    ]
+
+
+def test_gff_line_without_an_orf_token_is_skipped_and_two_accessions_share_one(
+    tmp_path: Path,
+) -> None:
+    """Line 139: a nine-column line with an accession but no ORF-shaped token adds
+    nothing; a line with two accessions maps both to its first ORF token.
+    """
+    text = (
+        "chrI\tSGD\tgene\t1\t9\t.\t+\t.\tID=tRNA-1;protein_id=UniProtKB:P77777\n"
+        "chrI\tSGD\tgene\t1\t9\t.\t+\t.\tID=YAL001C;Parent=YAL002W;"
+        "protein_id=UniProtKB:P11111,UniProtKB:P22222\n"
+    )
+    _write_gff(tmp_path, text)
+    assert build_uniprot_to_orf_map(str(tmp_path)) == {
+        "P11111": "YAL001C",
+        "P22222": "YAL001C",
+    }
+
+
+def _bare(root: Path) -> ProteomeMessner2023Dataset:
+    """An uninitialized instance whose ``raw_dir`` is ``root/raw``."""
+    dataset = ProteomeMessner2023Dataset.__new__(ProteomeMessner2023Dataset)
+    dataset.root = str(root)
+    return dataset
+
+
+def _mirror(data_root: Path) -> Path:
+    mirror = data_root / "torchcell-library" / m._CITATION_KEY / "data"
+    mirror.mkdir(parents=True)
+    return mirror
+
+
+def test_download_refuses_a_missing_mirror_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    dataset = _bare(tmp_path / "ds")
+    src = tmp_path / "torchcell-library" / m._CITATION_KEY / "data" / MATRIX_FILENAME
+    with pytest.raises(FileNotFoundError) as excinfo:
+        dataset.download()
+    assert str(excinfo.value) == (
+        f"Messner mirror file missing: {src}. The mirror is canonical; "
+        "restore it from backup (fetched once from Mendeley 10.17632/w8jtmnszd9.1)."
+    )
+
+
+def test_download_refuses_a_mirror_file_off_the_pin_and_copies_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    mirror = _mirror(tmp_path)
+    (mirror / MATRIX_FILENAME).write_bytes(b"not the matrix")
+    dataset = _bare(tmp_path / "ds")
+    with pytest.raises(RuntimeError) as excinfo:
+        dataset.download()
+    got = hashlib.sha256(b"not the matrix").hexdigest()
+    assert str(excinfo.value) == (
+        f"Messner {MATRIX_FILENAME} sha256 mismatch: got {got}, "
+        f"expected {m.MATRIX_SHA256}"
+    )
+    assert list((tmp_path / "ds" / "raw").iterdir()) == []
+
+
+def test_download_copies_both_files_on_the_pin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    mirror = _mirror(tmp_path)
+    (mirror / MATRIX_FILENAME).write_bytes(b"matrix bytes")
+    (mirror / METADATA_FILENAME).write_bytes(b"metadata bytes")
+    monkeypatch.setattr(m, "MATRIX_SHA256", hashlib.sha256(b"matrix bytes").hexdigest())
+    monkeypatch.setattr(
+        m, "METADATA_SHA256", hashlib.sha256(b"metadata bytes").hexdigest()
+    )
+    dataset = _bare(tmp_path / "ds")
+    dataset.download()
+    raw = tmp_path / "ds" / "raw"
+    assert (raw / MATRIX_FILENAME).read_bytes() == b"matrix bytes"
+    assert (raw / METADATA_FILENAME).read_bytes() == b"metadata bytes"
+
+
+def test_download_skips_a_present_raw_file_without_hashing_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Finding: a matrix already in ``raw/`` is kept as is (line 190 ``continue``) even
+    though its bytes are off the pin; only the absent metadata is fetched and verified.
+    Pinned until a present raw file is verified too.
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    mirror = _mirror(tmp_path)
+    (mirror / METADATA_FILENAME).write_bytes(b"metadata bytes")
+    monkeypatch.setattr(
+        m, "METADATA_SHA256", hashlib.sha256(b"metadata bytes").hexdigest()
+    )
+    raw = tmp_path / "ds" / "raw"
+    raw.mkdir(parents=True)
+    (raw / MATRIX_FILENAME).write_bytes(b"stale unverified matrix")
+    _bare(tmp_path / "ds").download()
+    assert (raw / MATRIX_FILENAME).read_bytes() == b"stale unverified matrix"
+    assert (raw / METADATA_FILENAME).read_bytes() == b"metadata bytes"
+
+
+def test_main_builds_from_data_root_and_prints_the_length(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``main`` builds ``$DATA_ROOT/data/torchcell/proteome_messner2023`` and prints its
+    length, then record 0.
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    _write_gff(tmp_path)
+    root = tmp_path / "data" / "torchcell" / "proteome_messner2023"
+    (root / "raw").mkdir(parents=True)
+    _write_csv(root / "raw" / MATRIX_FILENAME, [MATRIX_HEADER, *MATRIX_ROWS])
+    _write_csv(root / "raw" / METADATA_FILENAME, METADATA_ROWS)
+    m.main()
+    # the build's own progress line comes first; main's two prints are the last two
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[-2] == "proteome len = 2"
+    assert lines[-1] == str(ProteomeMessner2023Dataset(root=str(root))[0])
+
+
+def test_items_retype_through_the_abundance_classes_and_the_hooks_are_inert(
+    numeric: ProteomeMessner2023Dataset,
+) -> None:
+    """``transform_item`` rebuilds a stored item as a ``ProteinAbundanceExperiment`` with
+    its reference, dumping to exactly the stored dictionaries (``experiment_dataset.py``
+    lines 638 to 641); the raw file list is the two mirror files, and ``preprocess_raw``
+    is the documented identity.
+    """
+    item = numeric[0]
+    typed = numeric.transform_item(item)
+    assert type(typed["experiment"]) is ProteinAbundanceExperiment
+    assert type(typed["reference"]) is ProteinAbundanceExperimentReference
+    assert typed["experiment"].model_dump() == item["experiment"]
+    assert typed["reference"].model_dump() == item["reference"]
+    assert numeric.raw_file_names == [MATRIX_FILENAME, METADATA_FILENAME]
+    frame = pd.DataFrame({"a": [1]})
+    assert numeric.preprocess_raw(frame) is frame

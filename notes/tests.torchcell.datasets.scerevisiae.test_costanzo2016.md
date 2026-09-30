@@ -61,3 +61,9 @@ Both loaders are built with `io_workers=1, batch_size=2` (`io_workers=0` is impo
 - `download()` for all three classes (network + zip extraction). Deliberately excluded; the hermetic contract is that raw files are present.
 - The DMF build-time failure path when a batch raises inside the `ThreadPoolExecutor` (the DMI unknown-suffix case pinned above is exercised through the static `create_experiment`, not through a full build, to avoid leaving an open LMDB env behind in the test's tmp dir).
 - `main()`.
+
+## 2026.09.30 - Phase 14: the remaining SMF, DMF and DMI branches on the synthetic archive
+
+Eighteen to thirty tests, 81 to 99 percent (two branches left, an unknown query suffix in DMF and DMI). The issue #410 deletion twins as whole records 0 (26 C) and 3 (30 C) differing only in temperature, each with its own reference (0.02, 0.0225); a DAmP twin pair beside a TS allele with different values; a blank SMF stddev dropping a measured fitness (`dropna`, line 267) with the reference index [0..2] and [3..6]; DMF with a suppressor query, DAmP array and NatMX array, a blank DMF SD stored as a NaN SE typed `sample_sd` (730), the full KanMX x NatMX record and the shared 30 C reference; DMI whole records; `subset_n=2` keeping the same rows as DMF under seed 42; all three `download` paths on a faked archive; `main`'s seven roots.
+
+Findings: SMF at 22 C raises `UnboundLocalError` (377-381); DMF raises the same on a `TSA22` row (742-746) while DMI stores that row at 22 C; a blank DMF value refuses the whole build with "Fitness cannot be NaN".

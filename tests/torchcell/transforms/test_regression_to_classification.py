@@ -1,4 +1,29 @@
-"""Tests for the regression-to-classification label transforms."""
+# tests/torchcell/transforms/test_regression_to_classification.py
+# [[tests.torchcell.transforms.test_regression_to_classification]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/transforms/test_regression_to_classification.py
+"""Tests for the regression-to-classification label transforms.
+
+2026.09.30 (Phase 14): closed-form tests for the branches the classes above left open,
+on a stand-in dataset whose ``label_df`` fitness is [0, 1, 2, 3, 4, inf] (the inf becomes
+NaN and is dropped), each number checked with a two-line Python run.
+
+* Statistics: mean 2, population std sqrt(2), min 0, max 4, q25 1, q75 3. Robust
+  scaling x -> (x - 1) / (2 + 1e-8) maps [0, 1, 4] to [-0.5, 0, 1.5]; minmax
+  x / (4 + 1e-8) maps the equal-width edges [0..4] to [0, .25, .5, .75, 1].
+* Auto bins: int(range / std) = int(4 / 1.414) = 2, edges [0, 2, 4].
+* One-hot on edges [0, 1, 2, 3, 4] is left-closed after clamping, the right edge folds
+  into bin 3. Soft on edges [0, 1, 2] with sigma 1: 0.5 -> [1, e^-0.5] / (1 + e^-0.5).
+* Seeded inverses: after ``torch.manual_seed(42)`` the scalar draws are 0.8822692632675171,
+  0.9150039553642273, 0.38286375999450684; bins are visited in ascending order and each
+  bin draws one uniform per row in row order, value = low + r * (high - low).
+* Soft inverse on six unit bins: probabilities proportional to [1, 1, 3, 2, 1, 1] give
+  (0.5 + 1.5 + 7.5 + 7 + 4.5) / 8 = 2.625; a peak within two bins of an edge returns
+  its center.
+"""
+
+import math
+from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -8,6 +33,8 @@ from torch_geometric.data import HeteroData
 from torch_geometric.transforms import Compose
 
 from torchcell.transforms.regression_to_classification import (
+    AutoBinStrategy,
+    EqualWidthStrategy,
     InverseCompose,
     LabelBinningTransform,
     LabelNormalizationTransform,
@@ -967,3 +994,361 @@ class TestInverseComposeWithGrads:
 
         # x should now have gradients
         assert x.grad is not None
+
+
+# ---------------------------------------------------------------------------
+# 2026.09.30 (Phase 14): closed-form tests for the branches left open above.
+
+
+def _five_point_dataset() -> Any:
+    """``label_df`` fitness [0, 1, 2, 3, 4, inf]; the inf becomes NaN and is dropped."""
+    return SimpleNamespace(
+        label_df=pd.DataFrame({"fitness": [0.0, 1.0, 2.0, 3.0, 4.0, np.inf]})
+    )
+
+
+def _gene(values: Any) -> HeteroData:
+    data = HeteroData()
+    data["gene"]["fitness"] = values
+    return data
+
+
+def _binning(label_type: str, **extra: Any) -> LabelBinningTransform:
+    """Equal-width, 4 bins on [0, 4]: edges exactly [0, 1, 2, 3, 4]."""
+    config: dict[str, Any] = {
+        "strategy": "equal_width",
+        "num_bins": 4,
+        "label_type": label_type,
+        **extra,
+    }
+    return LabelBinningTransform(_five_point_dataset(), {"fitness": config})
+
+
+class TestNormalizationBranches:
+    """Robust scaling, the all-NaN pass-through, list inputs and the error paths."""
+
+    def test_robust_scaling_and_its_inverse_on_a_list_input(self) -> None:
+        """q25 = 1, q75 = 3 on [0..4] (inf dropped), iqr 2: x -> (x - 1) / (2 + 1e-8).
+
+        [0, 1, 4] -> [-0.5, 0, 1.5]; the inverse x * 2 + 1 maps back. A plain list
+        input is converted to a float tensor, and the original is kept alongside.
+        """
+        norm = LabelNormalizationTransform(
+            _five_point_dataset(), {"fitness": {"strategy": "robust"}}
+        )
+        assert norm.stats["fitness"] == {
+            "mean": 2.0,
+            "std": math.sqrt(2.0),
+            "min": 0.0,
+            "max": 4.0,
+            "q25": 1.0,
+            "q75": 3.0,
+            "strategy": "robust",
+        }
+        out = norm(_gene([0.0, 1.0, 4.0]))
+        assert torch.allclose(
+            out["gene"]["fitness"], torch.tensor([-0.5, 0.0, 1.5]), atol=1e-7
+        )
+        assert torch.equal(
+            out["gene"]["fitness_original"], torch.tensor([0.0, 1.0, 4.0])
+        )
+        back = norm.inverse(_gene([-0.5, 0.0, 1.5]))
+        assert torch.allclose(
+            back["gene"]["fitness"], torch.tensor([0.0, 1.0, 4.0]), atol=1e-7
+        )
+
+    def test_an_all_nan_tensor_passes_through_both_directions(self) -> None:
+        """An all-NaN input is returned as is; one finite value restores the arithmetic."""
+        norm = LabelNormalizationTransform(
+            _five_point_dataset(), {"fitness": {"strategy": "minmax"}}
+        )
+        nan2 = torch.full((2,), float("nan"))
+        assert torch.isnan(norm.normalize(nan2, "fitness")).all()
+        assert torch.isnan(norm.denormalize(nan2, "fitness")).all()
+        # a single finite value switches the arithmetic on: (4 - 0) / (4 + 1e-8)
+        mixed = norm.normalize(torch.tensor([float("nan"), 4.0]), "fitness")
+        assert torch.isnan(mixed[0])
+        assert mixed[1].item() == pytest.approx(1.0, abs=1e-7)
+
+    def test_an_unknown_strategy_is_accepted_at_construction_and_refused_at_use(
+        self,
+    ) -> None:
+        """Finding: the constructor stores any strategy string without checking it.
+
+        ``LabelNormalizationTransform.__init__`` (regression_to_classification.py:63)
+        records ``config["strategy"]`` verbatim; only ``normalize``/``denormalize``
+        (lines 88, 108) refuse it, so a misspelled config survives until the first
+        batch. Pinned until the constructor validates the strategy.
+        """
+        norm = LabelNormalizationTransform(
+            _five_point_dataset(), {"fitness": {"strategy": "zscore"}}
+        )
+        assert norm.stats["fitness"]["strategy"] == "zscore"
+        with pytest.raises(
+            ValueError, match=r"^Unknown normalization strategy: zscore$"
+        ):
+            norm.normalize(torch.tensor([1.0]), "fitness")
+        with pytest.raises(
+            ValueError, match=r"^Unknown normalization strategy: zscore$"
+        ):
+            norm.denormalize(torch.tensor([1.0]), "fitness")
+
+    def test_a_label_absent_from_the_dataset_is_refused(self) -> None:
+        """A configured label missing from ``label_df`` fails the constructor."""
+        with pytest.raises(ValueError, match=r"^Label growth not found in dataset$"):
+            LabelNormalizationTransform(
+                _five_point_dataset(), {"growth": {"strategy": "minmax"}}
+            )
+
+
+class TestBinningBranches:
+    """Exact one-hot, soft and ordinal encodings and their seeded inverses."""
+
+    def test_auto_strategy_picks_int_range_over_std_bins(self) -> None:
+        """Std of [0..4] is sqrt(2), range 4, int(4 / 1.4142) = 2 bins: edges [0, 2, 4].
+
+        An explicit ``num_bins`` overrides the inference.
+        """
+        auto = LabelBinningTransform(
+            _five_point_dataset(),
+            {"fitness": {"strategy": "auto", "label_type": "categorical"}},
+        )
+        assert auto.get_bin_info("fitness")["bin_edges"].tolist() == [0.0, 2.0, 4.0]
+        edges, meta = AutoBinStrategy().compute_bins(np.array([0.0, 4.0, np.nan]), 4)
+        assert edges.tolist() == [0.0, 1.0, 2.0, 3.0, 4.0]
+        assert meta["strategy"] == "equal_width"
+
+    def test_get_bin_info_refuses_an_unbinned_label(self) -> None:
+        """A label with no binning config has no metadata to return."""
+        with pytest.raises(
+            ValueError, match=r"^No binning metadata found for label growth$"
+        ):
+            _binning("categorical").get_bin_info("growth")
+
+    def test_a_binning_label_absent_from_the_dataset_is_refused_with_a_normalizer(
+        self,
+    ) -> None:
+        """With a normalizer the absent column is skipped while normalizing, then refused."""
+        norm = LabelNormalizationTransform(
+            _five_point_dataset(), {"fitness": {"strategy": "minmax"}}
+        )
+        with pytest.raises(ValueError, match=r"^Label growth not found in dataset$"):
+            LabelBinningTransform(
+                _five_point_dataset(),
+                {"growth": {"strategy": "equal_width", "num_bins": 2}},
+                norm,
+            )
+
+    def test_normalized_edges_and_their_denormalized_copy(self) -> None:
+        """Minmax maps [0..4] to [0..1] (divisor 4 + 1e-8); 4 equal bins there have
+        edges [0, .25, .5, .75, 1], and the inverse maps them back to [0, 1, 2, 3, 4].
+        """
+        norm = LabelNormalizationTransform(
+            _five_point_dataset(), {"fitness": {"strategy": "minmax"}}
+        )
+        binning = LabelBinningTransform(
+            _five_point_dataset(),
+            {"fitness": {"strategy": "equal_width", "num_bins": 4}},
+            norm,
+        )
+        info = binning.get_bin_info("fitness")
+        assert info["bin_edges"] == pytest.approx([0.0, 0.25, 0.5, 0.75, 1.0], abs=1e-7)
+        assert info["bin_edges_denormalized"] == pytest.approx(
+            [0.0, 1.0, 2.0, 3.0, 4.0], abs=1e-6
+        )
+
+    def test_onehot_is_left_closed_clamped_and_nan_propagating(self) -> None:
+        """Edges [0, 1, 2, 3, 4]: -5 clamps to 0 (bin 0); 1 opens bin 1; 1.999 stays in
+        bin 1; the right edge 4 and the clamped 9 fold into bin 3; NaN gives a NaN row.
+        The default label type is categorical, and a list input is converted.
+        """
+        binning = LabelBinningTransform(
+            _five_point_dataset(),
+            {"fitness": {"strategy": "equal_width", "num_bins": 4}},
+        )
+        out = binning(_gene([-5.0, 0.0, 1.0, 1.999, 4.0, 9.0, float("nan")]))
+        onehot = out["gene"]["fitness"]
+        assert onehot[:6].tolist() == [
+            [1.0, 0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        assert torch.isnan(onehot[6]).all()
+        # the continuous copy is the converted input, unclamped
+        assert out["gene"]["fitness_continuous"][:6].tolist() == pytest.approx(
+            [-5.0, 0.0, 1.0, 1.999, 4.0, 9.0]
+        )
+
+    def test_soft_labels_nan_row_and_the_closed_form(self) -> None:
+        """Edges [0, 1, 2], centers [0.5, 1.5], sigma = 1 * 1: 0.5 -> [1, e^-0.5]
+        normalized = [0.6224593, 0.3775407]; NaN gives a NaN row.
+        """
+        soft = EqualWidthStrategy().compute_soft_labels(
+            torch.tensor([0.5, float("nan")]), torch.tensor([0.0, 1.0, 2.0]), "x", 1
+        )
+        e = math.exp(-0.5)
+        assert soft[0].tolist() == pytest.approx([1 / (1 + e), e / (1 + e)], abs=1e-7)
+        assert torch.isnan(soft[1]).all()
+
+    def test_soft_labels_that_underflow_stay_all_zero(self) -> None:
+        """Finding: an underflowed Gaussian row is left at zero, not normalized.
+
+        Edges [0, 0.001, 100]: min width 0.001, sigma 0.003, centers [0.0005, 50.0005].
+        The value 100 sits 99.9995 and 49.9995 from them, 33333 and 16666 sigmas, so both
+        ``exp`` terms are 0.0 and the ``sum > 0`` guard (regression_to_classification.py
+        :217) skips the division, leaving a row that sums to 0 rather than 1. Pinned
+        until the row falls back to a one-hot on the nearest center.
+        """
+        soft = EqualWidthStrategy().compute_soft_labels(
+            torch.tensor([100.0, 0.0005]), torch.tensor([0.0, 1e-3, 100.0]), "x", 3
+        )
+        assert soft.tolist() == [[0.0, 0.0], [1.0, 0.0]]
+
+    def test_categorical_inverse_draws_seeded_uniforms_bin_by_bin(self) -> None:
+        """Edges [0..4]; argmax rows [2, 0, 2, NaN]. Under seed 42 the draws go to bin 0
+        first (0.8822692632675171), then bin 2 in row order (0.9150039553642273,
+        0.38286375999450684), each as low + r * width; the NaN row stays NaN.
+        """
+        binning = _binning("categorical")
+        logits = torch.tensor(
+            [
+                [0.0, 0.0, 5.0, 0.0],
+                [5.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 3.0, 0.0],
+                [0.0, float("nan"), 0.0, 0.0],
+            ]
+        )
+        values = binning.inverse(_gene(logits))["gene"]["fitness"]
+        assert values[:3].tolist() == pytest.approx(
+            [2.9150039553642273, 0.8822692632675171, 2.38286375999450684], abs=1e-6
+        )
+        assert torch.isnan(values[3])
+
+    def test_ordinal_inverse_counts_crossings_above_one_half(self) -> None:
+        """Crossings (entries > 0.5) per row: [1, 1, 0] -> 2, [0, 0, 0] -> 0 and
+        [0.9, 0.6, 0.7] -> 3, even though the last is not monotone. Bins 0, 2, 3 draw in
+        that order under seed 42: 0 + 0.88227, 2 + 0.91500, 3 + 0.38286.
+        """
+        binning = _binning("ordinal")
+        labels = torch.tensor([[1.0, 1.0, 0.0], [0.0, 0.0, 0.0], [0.9, 0.6, 0.7]])
+        values = binning.inverse(_gene(labels))["gene"]["fitness"]
+        assert values.tolist() == pytest.approx(
+            [2.9150039553642273, 0.8822692632675171, 3.38286375999450684], abs=1e-6
+        )
+
+    def test_an_all_nan_prediction_inverts_to_all_nan(self) -> None:
+        """Every row NaN: the inverse returns one NaN per row, shape (2,)."""
+        binning = _binning("ordinal")
+        values = binning.inverse(_gene(torch.full((2, 3), float("nan"))))
+        assert values["gene"]["fitness"].shape == (2,)
+        assert torch.isnan(values["gene"]["fitness"]).all()
+
+    def test_soft_inverse_is_a_windowed_expectation_only_away_from_the_edges(
+        self,
+    ) -> None:
+        """Finding: the soft inverse is deterministic and edge-dependent.
+
+        The ``inverse`` docstring promises "random sampling within bins", but the soft
+        branch (regression_to_classification.py:469-500) returns a probability-weighted
+        mean over a 5-bin window around the peak, and falls back to the bare peak center
+        when that window would cross an edge. On edges 0..6 (centers 0.5..5.5):
+        probabilities proportional to [1, 1, 3, 2, 1, 1] peak at bin 2, window bins 0-4,
+        (0.5 + 1.5 + 3 * 2.5 + 2 * 3.5 + 4.5) / 8 = 21 / 8 = 2.625; a peak at bin 1 has
+        a clipped window and returns its center 1.5; a uniform row peaks at bin 0, 0.5.
+        Pinned until the docstring and the edge behavior agree.
+        """
+        six_points: Any = SimpleNamespace(
+            label_df=pd.DataFrame({"fitness": [0.0, 6.0]})
+        )
+        six = LabelBinningTransform(
+            six_points,
+            {
+                "fitness": {
+                    "strategy": "equal_width",
+                    "num_bins": 6,
+                    "label_type": "soft",
+                }
+            },
+        )
+        logits = torch.log(
+            torch.tensor(
+                [
+                    [1.0, 1.0, 3.0, 2.0, 1.0, 1.0],
+                    [1.0, 3.0, 1.0, 1.0, 1.0, 1.0],
+                    [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                ]
+            )
+        )
+        values = six.inverse(_gene(logits))["gene"]["fitness"]
+        assert values.tolist() == pytest.approx([2.625, 1.5, 0.5], abs=1e-6)
+
+    def test_an_unknown_label_type_bins_nothing_and_inverts_to_nan(self) -> None:
+        """Finding: an unrecognized ``label_type`` is a silent no-op forward, NaN back.
+
+        ``forward`` (regression_to_classification.py:389-407) has no else branch, so the
+        label stays continuous; ``inverse`` (446-523) likewise, so every row becomes NaN.
+        With ``store_continuous=False`` no ``fitness_continuous`` copy is written.
+        Pinned until an unknown label type raises.
+        """
+        binning = _binning("bogus", store_continuous=False)
+        out = binning(_gene(torch.tensor([0.5, 2.5])))
+        assert out["gene"]["fitness"].tolist() == [0.5, 2.5]
+        assert "fitness_continuous" not in out["gene"]
+        back = binning.inverse(_gene(torch.tensor([[0.0, 1.0, 0.0, 0.0]])))
+        assert back["gene"]["fitness"].shape == (1,)
+        assert torch.isnan(back["gene"]["fitness"]).all()
+
+    def test_inverse_of_a_list_fails_before_its_own_conversion(self) -> None:
+        """Finding: the list-to-tensor conversion in ``inverse`` is unreachable.
+
+        ``inverse`` reads ``data["gene"][label].device`` (regression_to_classification.py
+        :418) before the ``isinstance`` conversion at 427-428, so a list prediction raises
+        ``AttributeError`` where ``forward`` would have converted it. Pinned until the
+        device lookup follows the conversion.
+        """
+        binning = _binning("ordinal")
+        with pytest.raises(
+            AttributeError, match=r"^'list' object has no attribute 'device'$"
+        ):
+            binning.inverse(_gene([[1.0, 0.0, 0.0]]))
+
+
+class TestInverseComposeBranches:
+    """Construction errors and the repr of ``InverseCompose``."""
+
+    def test_a_tuple_of_transforms_is_refused(self) -> None:
+        """Only a Compose or a list is accepted."""
+        norm = LabelNormalizationTransform(
+            _five_point_dataset(), {"fitness": {"strategy": "minmax"}}
+        )
+        as_tuple: Any = (norm,)
+        with pytest.raises(
+            ValueError,
+            match=r"^transforms must be either a Compose object or a list of transforms$",
+        ):
+            InverseCompose(as_tuple)
+
+    def test_a_transform_without_inverse_is_named_in_the_refusal(self) -> None:
+        """The refusal names the class that lacks ``inverse``."""
+
+        class NoInverse:
+            pass
+
+        with pytest.raises(
+            ValueError, match=r"^Transform NoInverse does not implement inverse method$"
+        ):
+            InverseCompose([NoInverse()])
+
+    def test_repr_lists_each_transform_on_its_own_indented_line(self) -> None:
+        """Each wrapped transform on its own two-space-indented line."""
+        norm = LabelNormalizationTransform(
+            _five_point_dataset(), {"fitness": {"strategy": "minmax"}}
+        )
+        binning = _binning("categorical")
+        assert repr(InverseCompose(Compose([norm, binning]))) == (
+            "InverseCompose(\n  LabelNormalizationTransform()\n"
+            "  LabelBinningTransform()\n)"
+        )

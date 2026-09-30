@@ -1,12 +1,35 @@
 # tests/torchcell/literature/test_bib_store.py
+# [[tests.torchcell.literature.test_bib_store]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/literature/test_bib_store.py
 """Tests for the served bibliography store (export side) and its /bib endpoint.
 
 Zotero is never contacted: the pull is monkeypatched to return canned entries, so
 what is exercised is spec discovery from the repo's Makefiles, the atomic write +
 manifest, the content-stable hash, and the endpoint's hash header.
+
+2026.09.30 (Phase 14). Added, with the three ``torchcell.literature.bib`` fetchers
+replaced by recorders (no Zotero, no network):
+
+- ``fetch_scope_entries`` dispatch on each scope shape (paired, tree, whole group,
+  an 8-character key, a name), which library each fetcher receives, the paired shape
+  winning over a tree, and the refusal of a personal collection with no group one;
+  Finding: any 8-character upper-case alphanumeric NAME is sent as a key;
+- the exact bytes of a store written from three specs (manuscript, notes-tex pair,
+  Dendron tree): banner lines, BibTeX body sorted case-insensitively by key, the
+  directory listing, and every manifest row (bytes, sha256, entries, scope, origin,
+  stamp) plus ``manifest.json`` as written;
+- refusals: the exact 0-entry message, an illegal spec name raised before any pull,
+  ``load_bib_store`` on an empty mirror; Findings: a failed export leaves the earlier
+  specs' ``.part`` files behind, and a spec dropped from the repo leaves its ``.bib``
+  on disk (the server stops listing and serving it);
+- ``discover_bib_specs`` on Makefiles using ``=``, ``?=`` and ``:=``, an empty personal
+  collection, a repeated assignment (the last wins), a dot directory (refused by name)
+  and, as a Finding, an inline comment after the value, which drops the document.
 """
 
 import hashlib
+import json
+import re
 from pathlib import Path
 from typing import Any, cast
 
@@ -248,3 +271,437 @@ def test_bib_404_when_no_store(tmp_path: Path) -> None:
     c = TestClient(create_app(config))
     assert c.get("/bib", headers=HEADERS).status_code == 404
     assert c.get("/health").json()["n_bibs"] == 0
+
+
+# --- scope dispatch, exact store bytes, refusals (Phase 14) --------------------- #
+
+
+class _Lib:
+    """A stand-in library: only its label is read, to see which one a fetcher got."""
+
+    def __init__(self, label: str) -> None:
+        self.label = label
+
+
+GROUP = cast(ZoteroLibrary, _Lib("group"))
+USER = cast(ZoteroLibrary, _Lib("user"))
+
+
+@pytest.fixture
+def fetch_calls(monkeypatch: pytest.MonkeyPatch) -> list[tuple[Any, ...]]:
+    """Replace the three bib fetchers with recorders returning one entry each."""
+    calls: list[tuple[Any, ...]] = []
+
+    def single(lib: Any, collection: Any = None, *, collection_key: Any = None) -> Any:
+        calls.append(("single", lib.label, collection, collection_key))
+        return [_entry("s2020", "Single")]
+
+    def paired(
+        group: Any, user: Any, *, group_collection: str, user_collection: str
+    ) -> Any:
+        calls.append(
+            ("paired", group.label, user.label, group_collection, user_collection)
+        )
+        return [_entry("p2020", "Paired")]
+
+    def union(group: Any, user: Any, *, user_root_collection: str) -> Any:
+        calls.append(("union", group.label, user.label, user_root_collection))
+        return [_entry("u2020", "Union")]
+
+    monkeypatch.setattr(store_mod, "fetch_bibtex_entries", single)
+    monkeypatch.setattr(store_mod, "fetch_paired_collection_entries", paired)
+    monkeypatch.setattr(store_mod, "fetch_union_bibtex_entries", union)
+    return calls
+
+
+def test_fetch_scope_entries_dispatches_on_the_scope_shape(
+    fetch_calls: list[tuple[Any, ...]],
+) -> None:
+    """Paired (group + personal collection) -> the paired pull with the group library
+    first; a personal tree -> the union pull; no collection -> the whole group; an
+    8-character upper-case alphanumeric collection -> ``collection_key``; anything else
+    -> ``collection`` by name. A scope carrying both a personal collection and a tree
+    takes the paired pull (the first branch).
+    """
+    scopes = [
+        BibScope(
+            group_library_id="6582362",
+            group_collection="VNDH4NMX",
+            user_library_id="1234",
+            user_collection="4VNJWJAW",
+        ),
+        BibScope(
+            group_library_id="6582362",
+            user_library_id="1234",
+            user_root_collection="torchcell",
+        ),
+        BibScope(group_library_id="6582362"),
+        BibScope(group_library_id="6582362", group_collection="W46ATS7B"),
+        BibScope(group_library_id="6582362", group_collection="ABCDEFG"),
+        BibScope(group_library_id="6582362", group_collection="w46ats7b"),
+        BibScope(
+            group_library_id="6582362",
+            group_collection="VNDH4NMX",
+            user_library_id="1234",
+            user_collection="4VNJWJAW",
+            user_root_collection="torchcell",
+        ),
+    ]
+    results = [store_mod.fetch_scope_entries(s, GROUP, USER) for s in scopes]
+    assert [r[0]["ID"] for r in results] == [
+        "p2020",
+        "u2020",
+        "s2020",
+        "s2020",
+        "s2020",
+        "s2020",
+        "p2020",
+    ]
+    assert fetch_calls == [
+        ("paired", "group", "user", "VNDH4NMX", "4VNJWJAW"),
+        ("union", "group", "user", "torchcell"),
+        ("single", "group", None, None),
+        ("single", "group", None, "W46ATS7B"),
+        ("single", "group", "ABCDEFG", None),
+        ("single", "group", "w46ats7b", None),
+        ("paired", "group", "user", "VNDH4NMX", "4VNJWJAW"),
+    ]
+
+
+def test_an_eight_character_upper_case_name_is_sent_as_a_key(
+    fetch_calls: list[tuple[Any, ...]],
+) -> None:
+    """Finding: the key test is ``re.fullmatch(r"[A-Z0-9]{8}", ...)`` on the value (source
+    line 267), so a collection NAMED ``RNASEQ01`` is looked up as a collection key and
+    would miss. Pinned until a key is marked as a key where it is declared.
+    """
+    scope = BibScope(group_library_id="6582362", group_collection="RNASEQ01")
+    entries = store_mod.fetch_scope_entries(scope, GROUP, USER)
+    assert entries == [_entry("s2020", "Single")]
+    assert fetch_calls == [("single", "group", None, "RNASEQ01")]
+
+
+def test_personal_collection_without_a_group_collection_is_refused(
+    fetch_calls: list[tuple[Any, ...]],
+) -> None:
+    scope = BibScope(
+        group_library_id="6582362", user_library_id="1234", user_collection="4VNJWJAW"
+    )
+    with pytest.raises(
+        ValueError, match="^a personal collection needs a group collection to pair$"
+    ):
+        store_mod.fetch_scope_entries(scope, GROUP, USER)
+    assert fetch_calls == []
+
+
+_BODY_P = "@article{p2020,\n  author = {Zotero, Zed},\n  title = {Paired},\n  year = {2020}\n}\n"
+_BODY_S = "@article{s2020,\n  author = {Zotero, Zed},\n  title = {Single},\n  year = {2020}\n}\n"
+_BODY_U = "@article{u2020,\n  author = {Zotero, Zed},\n  title = {Union},\n  year = {2020}\n}\n"
+
+
+def _three_specs() -> list[BibSpec]:
+    return [
+        BibSpec(
+            name="paper",
+            scope=BibScope(group_library_id="6582362", group_collection="W46ATS7B"),
+            origin="paper/nature-biotech/zotero_export_bib.py",
+        ),
+        BibSpec(
+            name="eqtl-data-model",
+            scope=BibScope(
+                group_library_id="6582362",
+                group_collection="VNDH4NMX",
+                user_library_id="1234",
+                user_collection="4VNJWJAW",
+            ),
+            origin="notes-tex/eqtl-data-model/Makefile",
+        ),
+        BibSpec(
+            name="library",
+            scope=BibScope(
+                group_library_id="6582362",
+                user_library_id="1234",
+                user_root_collection="torchcell",
+            ),
+            origin="scripts/lit_bib.py",
+        ),
+    ]
+
+
+def test_export_writes_exact_files_and_manifest_rows(
+    tmp_path: Path, fetch_calls: list[tuple[Any, ...]]
+) -> None:
+    """Each file is the banner (name and entry count, the scope parts joined by
+    `` + ``, the declaring file, the served path) then the BibTeX body. The paper scope
+    has no personal part; the pair adds ``personal 1234/4VNJWJAW``; the tree adds
+    ``personal 1234/torchcell/** (tree)`` and its group part is ``6582362/*``. Each
+    manifest row's ``bytes`` and ``sha256`` are of these exact texts, and
+    ``manifest.json`` is the model's two-space JSON.
+    """
+    expected = {
+        "paper": (
+            "% GENERATED by torchcell.literature.bib_store -- do not hand-edit.\n"
+            "% name: paper  entries: 1\n"
+            "% scope: group 6582362/W46ATS7B\n"
+            "% declared in: paper/nature-biotech/zotero_export_bib.py\n"
+            "% served by tc-lit at /bib/paper; verify X-Artifact-SHA256.\n\n" + _BODY_S
+        ),
+        "eqtl-data-model": (
+            "% GENERATED by torchcell.literature.bib_store -- do not hand-edit.\n"
+            "% name: eqtl-data-model  entries: 1\n"
+            "% scope: group 6582362/VNDH4NMX + personal 1234/4VNJWJAW\n"
+            "% declared in: notes-tex/eqtl-data-model/Makefile\n"
+            "% served by tc-lit at /bib/eqtl-data-model; verify X-Artifact-SHA256.\n\n"
+            + _BODY_P
+        ),
+        "library": (
+            "% GENERATED by torchcell.literature.bib_store -- do not hand-edit.\n"
+            "% name: library  entries: 1\n"
+            "% scope: group 6582362/* + personal 1234/torchcell/** (tree)\n"
+            "% declared in: scripts/lit_bib.py\n"
+            "% served by tc-lit at /bib/library; verify X-Artifact-SHA256.\n\n"
+            + _BODY_U
+        ),
+    }
+    specs = _three_specs()
+    manifest = export_bib_store(tmp_path, specs, GROUP, USER, generated_at="T0")
+    store = bib_store_dir(tmp_path)
+    assert sorted(p.name for p in store.iterdir()) == [
+        "eqtl-data-model.bib",
+        "library.bib",
+        "manifest.json",
+        "paper.bib",
+    ]
+    for name, text in expected.items():
+        assert (store / f"{name}.bib").read_text() == text
+    assert manifest.model_dump() == {
+        "version": 1,
+        "generated_at": "T0",
+        "bibs": [
+            {
+                "name": spec.name,
+                "path": f"{spec.name}.bib",
+                "bytes": len(expected[spec.name].encode()),
+                "sha256": hashlib.sha256(expected[spec.name].encode()).hexdigest(),
+                "n_entries": 1,
+                "scope": spec.scope.model_dump(),
+                "origin": spec.origin,
+                "generated_at": "T0",
+            }
+            for spec in specs
+        ],
+    }
+    assert json.loads((store / BIB_STORE_MANIFEST).read_text()) == json.loads(
+        manifest.model_dump_json()
+    )
+    assert (store / BIB_STORE_MANIFEST).read_text() == manifest.model_dump_json(
+        indent=2
+    )
+
+
+def test_body_is_sorted_case_insensitively_by_key(
+    tmp_path: Path, canned_pull: Canned
+) -> None:
+    """``b2020`` then ``A2021`` from the pull are written ``A2021`` first (keys are
+    compared lower-cased), and the banner counts both.
+    """
+    canned_pull["W46ATS7B"] = [
+        _entry("b2020", "Second"),
+        {"ID": "A2021", "ENTRYTYPE": "book", "title": "First", "year": "2021"},
+    ]
+    spec = _spec("paper", group_collection="W46ATS7B")
+    export_bib_store(tmp_path, [spec], NO_LIB, NO_LIB, generated_at="T0")
+    text = (bib_store_dir(tmp_path) / "paper.bib").read_text()
+    assert text.split("\n\n", 1)[1] == (
+        "@book{A2021,\n  title = {First},\n  year = {2021}\n}\n\n"
+        "@article{b2020,\n  author = {Zotero, Zed},\n  title = {Second},\n"
+        "  year = {2020}\n}\n"
+    )
+    assert "% name: paper  entries: 2\n" in text
+
+
+def test_empty_pull_message_and_part_files_left_by_a_failed_export(
+    tmp_path: Path, canned_pull: Canned
+) -> None:
+    """The refusal names the file and the scope without its None fields.
+
+    Finding: the specs before the failing one were already staged, and nothing removes
+    them, so ``paper.bib.part`` stays in ``_bib/`` after the raise (no manifest is
+    written, so nothing serves it). Pinned until a failed export cleans its staging.
+    """
+    canned_pull["W46ATS7B"] = [_entry("a2020", "First")]
+    canned_pull["VNDH4NMX"] = []
+    specs = [
+        _spec("paper", group_collection="W46ATS7B"),
+        _spec("eqtl-data-model", group_collection="VNDH4NMX"),
+    ]
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            "refusing to write eqtl-data-model.bib: Zotero returned 0 entries for "
+            "{'group_library_id': '6582362', 'group_collection': 'VNDH4NMX'}"
+        ),
+    ):
+        export_bib_store(tmp_path, specs, NO_LIB, NO_LIB, generated_at="T0")
+    assert sorted(p.name for p in bib_store_dir(tmp_path).iterdir()) == [
+        "paper.bib.part"
+    ]
+
+
+def test_illegal_spec_name_is_refused_before_any_pull(
+    tmp_path: Path, fetch_calls: list[tuple[Any, ...]]
+) -> None:
+    """``BibSpec`` accepts any name; ``export_bib_store`` validates each name before
+    pulling it, so ``../escape`` raises with the exact message, no fetcher runs, and
+    the store directory (created first) is empty.
+    """
+    spec = BibSpec(
+        name="../escape",
+        scope=BibScope(group_library_id="6582362", group_collection="W46ATS7B"),
+        origin="test",
+    )
+    with pytest.raises(
+        ValueError, match=re.escape("illegal bibliography name: '../escape'")
+    ):
+        export_bib_store(tmp_path, [spec], GROUP, USER, generated_at="T0")
+    assert fetch_calls == []
+    assert list(bib_store_dir(tmp_path).iterdir()) == []
+
+
+def test_load_bib_store_without_an_export_raises_file_not_found(tmp_path: Path) -> None:
+    manifest = tmp_path / "_bib" / "manifest.json"
+    with pytest.raises(
+        FileNotFoundError,
+        match=re.escape(f"[Errno 2] No such file or directory: '{manifest}'"),
+    ):
+        load_bib_store(tmp_path)
+
+
+def test_dropped_spec_is_unlisted_and_unserved_but_its_file_stays(
+    tmp_path: Path, canned_pull: Canned
+) -> None:
+    """Export two specs, then only ``paper``: the manifest lists ``paper`` alone and
+    ``/bib/eqtl-data-model`` answers 404 ``unknown bibliography``.
+
+    Finding: ``eqtl-data-model.bib`` from the first export is still in ``_bib/`` (the
+    export replaces the manifest wholesale but never prunes files). Pinned until the
+    export removes files no spec names.
+    """
+    canned_pull["W46ATS7B"] = [_entry("a2020", "First")]
+    canned_pull["VNDH4NMX"] = [_entry("q2020", "Doc")]
+    paper = _spec("paper", group_collection="W46ATS7B")
+    doc = _spec("eqtl-data-model", group_collection="VNDH4NMX")
+    export_bib_store(tmp_path, [paper, doc], NO_LIB, NO_LIB, generated_at="T0")
+    export_bib_store(tmp_path, [paper], NO_LIB, NO_LIB, generated_at="T1")
+    assert [b.name for b in load_bib_store(tmp_path).bibs] == ["paper"]
+    assert sorted(p.name for p in bib_store_dir(tmp_path).iterdir()) == [
+        "eqtl-data-model.bib",
+        "manifest.json",
+        "paper.bib",
+    ]
+    config = LiteratureServerConfig(
+        mirror_root=tmp_path, keys=LiteratureKeys.from_pairs(f"t:{KEY}"), port=8899
+    )
+    client = TestClient(create_app(config))
+    response = client.get("/bib/eqtl-data-model", headers=HEADERS)
+    assert (response.status_code, response.json()) == (
+        404,
+        {"detail": "unknown bibliography"},
+    )
+
+
+def _makefile(root: Path, slug: str, text: str) -> None:
+    directory = root / "notes-tex" / slug
+    directory.mkdir(parents=True)
+    (directory / "Makefile").write_text(text)
+
+
+def test_discover_reads_every_assignment_form(tmp_path: Path) -> None:
+    """``a-plain`` uses ``=`` with no personal collection (so no personal library on its
+    scope); ``b-cond`` uses ``?=`` and sets ``ZOTERO_COLLECTION`` twice (the last wins);
+    ``c-colon`` uses ``:=``. Documents are visited in sorted directory order between
+    ``paper`` and ``library``, and ``user_root_collection`` passes through.
+    """
+    _makefile(tmp_path, "a-plain", "ZOTERO_COLLECTION = AAAA1111\n")
+    _makefile(
+        tmp_path,
+        "b-cond",
+        "ZOTERO_COLLECTION ?= OLD00000\n"
+        "ZOTERO_PERSONAL_COLLECTION ?= PPPP2222\n"
+        "ZOTERO_COLLECTION ?= BBBB2222\n",
+    )
+    _makefile(tmp_path, "c-colon", "  ZOTERO_COLLECTION:=CCCC3333  \n")
+    specs = discover_bib_specs(
+        tmp_path,
+        group_library_id="6582362",
+        user_library_id="1234",
+        user_root_collection="lab",
+    )
+    assert [s.model_dump() for s in specs] == [
+        {
+            "name": "paper",
+            "scope": BibScope(
+                group_library_id="6582362", group_collection="W46ATS7B"
+            ).model_dump(),
+            "origin": "paper/nature-biotech/zotero_export_bib.py",
+        },
+        {
+            "name": "a-plain",
+            "scope": BibScope(
+                group_library_id="6582362", group_collection="AAAA1111"
+            ).model_dump(),
+            "origin": "notes-tex/a-plain/Makefile",
+        },
+        {
+            "name": "b-cond",
+            "scope": BibScope(
+                group_library_id="6582362",
+                group_collection="BBBB2222",
+                user_library_id="1234",
+                user_collection="PPPP2222",
+            ).model_dump(),
+            "origin": "notes-tex/b-cond/Makefile",
+        },
+        {
+            "name": "c-colon",
+            "scope": BibScope(
+                group_library_id="6582362", group_collection="CCCC3333"
+            ).model_dump(),
+            "origin": "notes-tex/c-colon/Makefile",
+        },
+        {
+            "name": "library",
+            "scope": BibScope(
+                group_library_id="6582362",
+                user_library_id="1234",
+                user_root_collection="lab",
+            ).model_dump(),
+            "origin": "scripts/lit_bib.py",
+        },
+    ]
+
+
+def test_inline_comment_after_the_value_drops_the_document(tmp_path: Path) -> None:
+    r"""Finding: the Makefile pattern ends ``(\S*)\s*$`` (source lines 82-84), so
+    ``ZOTERO_COLLECTION := VNDH4NMX  # eQTL`` does not match, the collection reads as
+    empty, and the document silently gets no bibliography. Pinned until the parser
+    strips a trailing ``#`` comment.
+    """
+    _makefile(tmp_path, "eqtl", "ZOTERO_COLLECTION := VNDH4NMX  # eQTL\n")
+    makefile = tmp_path / "notes-tex" / "eqtl" / "Makefile"
+    assert parse_makefile_collections(makefile) == ("", "")
+    specs = discover_bib_specs(
+        tmp_path, group_library_id="6582362", user_library_id="1"
+    )
+    assert [s.name for s in specs] == ["paper", "library"]
+
+
+def test_a_citing_dot_directory_is_refused_by_name(tmp_path: Path) -> None:
+    """``notes-tex/.draft/Makefile`` declares a collection; ``glob("*/Makefile")``
+    visits dot directories, and the slug fails the name rule with the exact message.
+    """
+    _makefile(tmp_path, ".draft", "ZOTERO_COLLECTION := AAAA1111\n")
+    with pytest.raises(
+        ValueError, match=re.escape("illegal bibliography name: '.draft'")
+    ):
+        discover_bib_specs(tmp_path, group_library_id="6582362", user_library_id="1")

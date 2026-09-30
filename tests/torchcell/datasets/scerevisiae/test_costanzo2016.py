@@ -14,6 +14,35 @@ The SMF fixture has six raw rows (five distinct strains covering the five pertur
 suffixes, one exact duplicate of the ``_dma1`` row, and one strain with no 26 C value)
 which become nine records. The SGA fixture has five rows across the four files, three
 at 30 C and two at 26 C.
+
+2026.09.30 (Phase 14): three more synthetic builds and the three ``download`` paths.
+
+- ``smf_twins`` (issue #410): four raw rows in the released shape, where a deletion or
+  DAmP strain repeats ONE temperature-combined value in both columns. ``_dma1`` (0.95,
+  0.01 at both), ``_damp1`` (0.80, 0.03 at both), ``_tsa1`` (0.85, 0.02 at 26 C; 0.60,
+  0.04 at 30 C) and ``_dma5`` (0.90 with a blank 26 C stddev; 0.90, 0.01 at 30 C). The
+  blank stddev drops that strain's 26 C row (``dropna`` over every column), so 7
+  records: 26 C [dma1, damp1, tsa1] = 0..2 and 30 C [dma1, damp1, tsa1, dma5] = 3..6.
+  Reference noise: 26 C (0.01 + 0.03 + 0.02) / 3 = 0.02; 30 C (0.01 + 0.03 + 0.04 +
+  0.01) / 4 = 0.0225 (both exact in float64, checked with pandas). Records 0 and 3 are
+  the phantom twins: identical but for the temperature.
+- ``_SGA_EDGE_FILES``: a suppressor query against a DAmP array at DMA30 with a blank
+  DMF stddev (in ``SGA_ExE.txt``) and a KanMX query against a NatMX array at DMA30
+  (in ``SGA_NxN.txt``; the other two files are header only). DMF: the blank SD is
+  stored as a NaN SE typed ``sample_sd``; the 30 C reference SD is the NaN-skipping
+  mean 0.05, SE 0.05 / sqrt(4) = 0.025. DMI: epsilon 0.1 / p 0.2 and -0.2 / 0.01 with
+  the suppressor, DAmP, KanMX and NatMX classes.
+- A ``TSA22`` row: DMF raises ``UnboundLocalError`` (no reference SD at 22 C), DMI
+  stores it at 22 C. A blank DMF value: DMF refuses with ``Fitness cannot be NaN``.
+- ``download``: ``download_url`` is faked to drop a zip with the released
+  subdirectory holding the spreadsheet, the four SGA files and a ``readme.txt``. SMF
+  keeps only the spreadsheet (every ``.txt`` removed); DMF and DMI keep the four SGA
+  files and ``readme.txt`` and remove the spreadsheet; the zip is removed in all three.
+
+Findings pinned: the 26 C and 30 C twins of issue #410 (lines 223-266); a blank SMF
+stddev drops a measured fitness (line 267); a blank DMF stddev passes the ``is not
+None`` guard as NaN (line 730); DMF and SMF crash with ``UnboundLocalError`` at a
+temperature other than 26 or 30 C (lines 377-381 and 742-746).
 """
 
 from __future__ import annotations
@@ -23,6 +52,7 @@ import math
 import os
 import os.path as osp
 import socket
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +60,7 @@ import lmdb
 import pandas as pd
 import pytest
 
+from torchcell.data import ExperimentDataset
 from torchcell.datamodels.media import SGA_DM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
@@ -46,6 +77,7 @@ from torchcell.datamodels.schema import (
     SgaDampPerturbation,
     SgaKanMxDeletionPerturbation,
     SgaNatMxDeletionPerturbation,
+    SgaSuppressorAllelePerturbation,
     SgaTsAllelePerturbation,
     Temperature,
     UncertaintyType,
@@ -846,3 +878,582 @@ def test_dmi_nan_interaction_score_is_rejected_by_the_phenotype() -> None:
         c.DmiCostanzo2016Dataset.create_experiment(
             "DmiCostanzo2016Dataset", cleaned.iloc[0]
         )
+
+
+# --------------------------------------------------------------------------- #
+# Phase 14: the #410 twins, the remaining strain classes, refusals, download, main
+# --------------------------------------------------------------------------- #
+_SMF_TWIN_ROWS: list[tuple[Any, ...]] = [
+    ("YAL002W_dma1", "YAL002W", "VPS8", 0.95, 0.01, 0.95, 0.01),
+    ("YAL005C_damp1", "YAL005C", "ssa1-damp", 0.80, 0.03, 0.80, 0.03),
+    ("YAL001C_tsa1", "YAL001C", "tfc3-1", 0.85, 0.02, 0.60, 0.04),
+    ("YAL017W_dma5", "YAL017W", "YAL017W", 0.90, None, 0.90, 0.01),
+]
+
+
+@pytest.fixture(scope="module")
+def smf_twins(tmp_path_factory: pytest.TempPathFactory) -> c.SmfCostanzo2016Dataset:
+    root = tmp_path_factory.mktemp("costanzo2016") / "smf_twins"
+    (root / "raw").mkdir(parents=True)
+    pd.DataFrame(_SMF_TWIN_ROWS, columns=_SMF_COLUMNS).to_excel(
+        root / "raw" / "strain_ids_and_single_mutant_fitness.xlsx", index=False
+    )
+    return c.SmfCostanzo2016Dataset(root=str(root))
+
+
+def _smf_experiment(
+    perturbation: Any, temperature: int, fitness: float, std: float
+) -> FitnessExperiment:
+    return FitnessExperiment(
+        dataset_name="SmfCostanzo2016Dataset",
+        genotype=Genotype(perturbations=[perturbation]),
+        environment=_environment(temperature),
+        phenotype=FitnessPhenotype(
+            fitness=fitness,
+            fitness_std=std,
+            fitness_uncertainty=std,
+            fitness_uncertainty_type=UncertaintyType.bootstrap_se,
+            n_samples=17,
+            sample_unit=SampleUnit.screen,
+        ),
+    )
+
+
+def _smf_reference(temperature: int, std: float) -> FitnessExperimentReference:
+    return FitnessExperimentReference(
+        dataset_name="SmfCostanzo2016Dataset",
+        genome_reference=_GENOME,
+        environment_reference=_environment(temperature),
+        phenotype_reference=FitnessPhenotype(
+            fitness=1.0,
+            fitness_std=std,
+            fitness_uncertainty=std,
+            fitness_uncertainty_type=UncertaintyType.bootstrap_se,
+            n_samples=17,
+            sample_unit=SampleUnit.screen,
+        ),
+    )
+
+
+def _dma1() -> SgaKanMxDeletionPerturbation:
+    return SgaKanMxDeletionPerturbation(
+        systematic_gene_name="YAL002W",
+        perturbed_gene_name="VPS8",
+        strain_id="YAL002W_dma1",
+    )
+
+
+def test_smf_deletion_strain_is_emitted_as_26c_and_30c_twins_issue_410(
+    smf_twins: c.SmfCostanzo2016Dataset,
+) -> None:
+    """Finding (issue #410): the released file repeats one temperature-combined value
+    for a deletion strain in both columns, and ``preprocess_raw`` emits a 26 C and a 30 C
+    record from it (lines 223-266). Records 0 and 3 are whole-equal to the hand-built
+    26 C and 30 C experiments, which differ only in ``temperature``; each points at its
+    own temperature's reference (noise 0.02 and 0.0225). Pinned until #410 stores one
+    record with a temperature-combined environment.
+    """
+    assert (
+        smf_twins[0]["experiment"]
+        == _smf_experiment(_dma1(), 26, 0.95, 0.01).model_dump()
+    )
+    assert (
+        smf_twins[3]["experiment"]
+        == _smf_experiment(_dma1(), 30, 0.95, 0.01).model_dump()
+    )
+    assert smf_twins[0]["reference"] == _smf_reference(26, 0.02).model_dump()
+    assert smf_twins[3]["reference"] == _smf_reference(30, 0.0225).model_dump()
+    twin_26 = dict(smf_twins[0]["experiment"], environment=None)
+    twin_30 = dict(smf_twins[3]["experiment"], environment=None)
+    assert twin_26 == twin_30
+
+
+def test_smf_damp_twins_and_the_genuine_ts_pair(
+    smf_twins: c.SmfCostanzo2016Dataset,
+) -> None:
+    """The DAmP strain gets an ``SgaDampPerturbation`` twin pair (records 1 and 4, 0.80
+    both), while the TS allele carries two different measurements (0.85 at 26 C, 0.60
+    at 30 C), the case #410 says the loader handles correctly.
+    """
+    damp = SgaDampPerturbation(
+        systematic_gene_name="YAL005C",
+        perturbed_gene_name="ssa1-damp",
+        strain_id="YAL005C_damp1",
+    )
+    assert (
+        smf_twins[1]["experiment"] == _smf_experiment(damp, 26, 0.80, 0.03).model_dump()
+    )
+    assert (
+        smf_twins[4]["experiment"] == _smf_experiment(damp, 30, 0.80, 0.03).model_dump()
+    )
+    fitness = [
+        (
+            smf_twins[i]["experiment"]["genotype"]["perturbations"][0]["strain_id"],
+            smf_twins[i]["experiment"]["environment"]["temperature"]["value"],
+            smf_twins[i]["experiment"]["phenotype"]["fitness"],
+        )
+        for i in range(len(smf_twins))
+    ]
+    assert fitness == [
+        ("YAL002W_dma1", 26.0, 0.95),
+        ("YAL005C_damp1", 26.0, 0.80),
+        ("YAL001C_tsa1", 26.0, 0.85),
+        ("YAL002W_dma1", 30.0, 0.95),
+        ("YAL005C_damp1", 30.0, 0.80),
+        ("YAL001C_tsa1", 30.0, 0.60),
+        ("YAL017W_dma5", 30.0, 0.90),
+    ]
+
+
+def test_smf_blank_stddev_drops_a_measured_fitness(
+    smf_twins: c.SmfCostanzo2016Dataset,
+) -> None:
+    """Finding: ``YAL017W_dma5`` has a 26 C fitness of 0.90 and a blank stddev; the
+    ``dropna`` over every column (line 267) drops that measurement, so the strain has a
+    30 C record only. Pinned until a blank stddev is stored as an uncertainty gap.
+    """
+    assert _reference_index(smf_twins.preprocess_dir) == [
+        ([0, 1, 2], 26.0),
+        ([3, 4, 5, 6], 30.0),
+    ]
+    with open(osp.join(smf_twins.preprocess_dir, "data.csv")) as f:
+        rows = f.read().splitlines()
+    assert [r.split(",")[0] for r in rows[1:]] == [
+        "YAL002W_dma1",
+        "YAL005C_damp1",
+        "YAL001C_tsa1",
+        "YAL002W_dma1",
+        "YAL005C_damp1",
+        "YAL001C_tsa1",
+        "YAL017W_dma5",
+    ]
+
+
+def test_smf_temperature_other_than_26_or_30_is_unbound() -> None:
+    """Finding: a row at 22 C binds no reference SD (lines 377-381) and raises
+    ``UnboundLocalError`` naming ``phenotype_reference_std``. Pinned until an unknown
+    temperature is refused with a named error.
+    """
+    row = pd.Series(
+        {
+            "Strain ID": "YAL002W_dma1",
+            "Systematic gene name": "YAL002W",
+            "Allele/Gene name": "VPS8",
+            "Single mutant fitness": 0.95,
+            "Single mutant fitness stddev": 0.01,
+            "perturbation_type": "KanMX_deletion",
+            "Temperature": 22,
+        }
+    )
+    with pytest.raises(UnboundLocalError) as excinfo:
+        c.SmfCostanzo2016Dataset.create_experiment("x", row, 0.02, 0.0225)
+    assert str(excinfo.value) == (
+        "cannot access local variable 'phenotype_reference_std' where it is not "
+        "associated with a value"
+    )
+
+
+_SGA_EMPTY: dict[str, list[tuple[Any, ...]]] = {
+    "SGA_DAmP.txt": [],
+    "SGA_ExE.txt": [],
+    "SGA_ExN_NxE.txt": [],
+    "SGA_NxN.txt": [],
+}
+_SUPPRESSOR_X_DAMP = (
+    "YAL013W_S2",
+    "erg-S2",
+    "YAL014C_damp2",
+    "ssa-damp",
+    "DMA30",
+    0.1,
+    0.2,
+    0.9,
+    0.8,
+    0.7,
+    None,
+)
+_KANMX_X_NATMX = (
+    "YAL015C_dma4",
+    "cdc-del",
+    "YAL016W_sn3",
+    "tps-del",
+    "DMA30",
+    -0.2,
+    0.01,
+    0.9,
+    0.8,
+    0.6,
+    0.05,
+)
+_SGA_EDGE_FILES = dict(
+    _SGA_EMPTY, **{"SGA_ExE.txt": [_SUPPRESSOR_X_DAMP], "SGA_NxN.txt": [_KANMX_X_NATMX]}
+)
+
+
+def _edge_pair() -> tuple[Genotype, Genotype]:
+    return (
+        Genotype(
+            perturbations=[
+                SgaSuppressorAllelePerturbation(
+                    systematic_gene_name="YAL013W",
+                    perturbed_gene_name="erg-S2",
+                    strain_id="YAL013W_S2",
+                ),
+                SgaDampPerturbation(
+                    systematic_gene_name="YAL014C",
+                    perturbed_gene_name="ssa-damp",
+                    strain_id="YAL014C_damp2",
+                ),
+            ]
+        ),
+        Genotype(
+            perturbations=[
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name="YAL015C",
+                    perturbed_gene_name="cdc-del",
+                    strain_id="YAL015C_dma4",
+                ),
+                SgaNatMxDeletionPerturbation(
+                    systematic_gene_name="YAL016W",
+                    perturbed_gene_name="tps-del",
+                    strain_id="YAL016W_sn3",
+                ),
+            ]
+        ),
+    )
+
+
+def _dmf_phenotype(fitness: float, std: float) -> FitnessPhenotype:
+    return FitnessPhenotype(
+        fitness=fitness,
+        fitness_std=std,
+        fitness_uncertainty=std,
+        fitness_uncertainty_type=UncertaintyType.sample_sd,
+        n_samples=4,
+        sample_unit=SampleUnit.colony,
+    )
+
+
+def test_dmf_suppressor_damp_and_natmx_classes_and_a_blank_sd(tmp_path: Path) -> None:
+    """Finding: the blank DMF SD of record 0 passes the ``is not None`` guard as NaN
+    (line 730), so it is stored as a NaN SE typed ``sample_sd`` rather than as a gap.
+    Record 1 (KanMX x NatMX, 0.60 +- 0.05) is compared whole; both share the 30 C
+    reference whose SD is the NaN-skipping mean 0.05 (SE 0.025). Pinned until a blank SD
+    is stored as ``None`` with no uncertainty type.
+    """
+    root = tmp_path / "dmf_edge"
+    _write_sga_raw(root, _SGA_EDGE_FILES)
+    ds = c.DmfCostanzo2016Dataset(root=str(root), io_workers=1, batch_size=2)
+    assert len(ds) == 2
+    first, second = _edge_pair()
+    blank = ds[0]["experiment"]
+    assert blank["genotype"] == first.model_dump()
+    phenotype = blank["phenotype"]
+    assert phenotype["fitness"] == 0.7
+    assert phenotype["fitness_uncertainty_type"] == UncertaintyType.sample_sd
+    assert math.isnan(phenotype["fitness_std"])
+    assert math.isnan(phenotype["fitness_se"])
+    assert math.isnan(phenotype["fitness_uncertainty"])
+    expected = FitnessExperiment(
+        dataset_name="DmfCostanzo2016Dataset",
+        genotype=second,
+        environment=_environment(30),
+        phenotype=_dmf_phenotype(0.6, 0.05),
+    )
+    assert ds[1]["experiment"] == expected.model_dump()
+    reference = FitnessExperimentReference(
+        dataset_name="DmfCostanzo2016Dataset",
+        genome_reference=_GENOME,
+        environment_reference=_environment(30),
+        phenotype_reference=_dmf_phenotype(1.0, 0.05),
+    ).model_dump()
+    assert ds[0]["reference"] == reference
+    assert ds[1]["reference"] == reference
+    assert reference["phenotype_reference"]["fitness_se"] == 0.025
+
+
+def test_dmi_suppressor_damp_and_natmx_classes(tmp_path: Path) -> None:
+    """The same two rows through DMI: epsilon 0.1 / p 0.2 and -0.2 / 0.01 at 30 C, the
+    edge-level reference at 0.0; the blank DMF SD is not read by DMI at all.
+    """
+    root = tmp_path / "dmi_edge"
+    _write_sga_raw(root, _SGA_EDGE_FILES)
+    ds = c.DmiCostanzo2016Dataset(root=str(root), io_workers=1, batch_size=2)
+    first, second = _edge_pair()
+    for index, genotype, score, p_value in (
+        (0, first, 0.1, 0.2),
+        (1, second, -0.2, 0.01),
+    ):
+        expected = GeneInteractionExperiment(
+            dataset_name="DmiCostanzo2016Dataset",
+            genotype=genotype,
+            environment=_environment(30),
+            phenotype=GeneInteractionPhenotype(
+                gene_interaction=score,
+                gene_interaction_p_value=p_value,
+                graph_level="edge",
+            ),
+        )
+        assert ds[index]["experiment"] == expected.model_dump()
+    assert (
+        ds[1]["reference"]
+        == GeneInteractionExperimentReference(
+            dataset_name="DmiCostanzo2016Dataset",
+            genome_reference=_GENOME,
+            environment_reference=_environment(30),
+            phenotype_reference=GeneInteractionPhenotype(
+                gene_interaction=0.0, gene_interaction_p_value=None, graph_level="edge"
+            ),
+        ).model_dump()
+    )
+
+
+_TSA22 = (
+    "YAL015C_tsa4",
+    "cdc-ts",
+    "YAL016W_dma3",
+    "tps-del",
+    "TSA22",
+    -0.2,
+    0.01,
+    0.9,
+    0.8,
+    0.5,
+    0.05,
+)
+
+
+def test_dmf_row_at_22c_crashes_unbound_while_dmi_stores_it(tmp_path: Path) -> None:
+    """Finding: ``TSA22`` parses to 22 C; DMF has a reference SD only for 26 and 30 C
+    (lines 742-746) and the build raises ``UnboundLocalError`` through the thread pool,
+    while DMI, which carries no reference SD, stores the row at 22 C. Pinned until DMF
+    refuses an unknown temperature by name or computes its reference SD.
+    """
+    files = dict(_SGA_EMPTY, **{"SGA_ExE.txt": [_TSA22]})
+    _write_sga_raw(tmp_path / "dmf22", files)
+    with pytest.raises(UnboundLocalError) as excinfo:
+        c.DmfCostanzo2016Dataset(root=str(tmp_path / "dmf22"), io_workers=1)
+    assert "'phenotype_reference_std'" in str(excinfo.value)
+    _write_sga_raw(tmp_path / "dmi22", files)
+    dmi22 = c.DmiCostanzo2016Dataset(root=str(tmp_path / "dmi22"), io_workers=1)
+    assert len(dmi22) == 1
+    assert dmi22[0]["experiment"]["environment"] == _environment(22).model_dump()
+
+
+def test_dmf_blank_fitness_refuses_the_whole_build(tmp_path: Path) -> None:
+    """A blank ``Double mutant fitness`` is refused at ``FitnessPhenotype`` with
+    ``Fitness cannot be NaN``; DMF has no ``dropna``, so one blank cell fails the build.
+    """
+    row = _KANMX_X_NATMX[:9] + (None, 0.05)
+    _write_sga_raw(tmp_path / "dmf_nan", dict(_SGA_EMPTY, **{"SGA_NxN.txt": [row]}))
+    with pytest.raises(ValueError, match="Fitness cannot be NaN"):
+        c.DmfCostanzo2016Dataset(root=str(tmp_path / "dmf_nan"), io_workers=1)
+
+
+def test_dmi_subset_n_samples_the_same_rows_as_dmf(tmp_path: Path) -> None:
+    """``subset_n=2`` with seed 42 keeps source rows 1 and 4, as for DMF: epsilon 0.08
+    (26 C) then 0.05 (30 C).
+    """
+    root = tmp_path / "dmi_subset"
+    _write_sga_raw(root, _SGA_FILES)
+    ds = c.DmiCostanzo2016Dataset(root=str(root), subset_n=2, io_workers=1)
+    kept = [
+        (
+            ds[i]["experiment"]["phenotype"]["gene_interaction"],
+            ds[i]["experiment"]["environment"]["temperature"]["value"],
+        )
+        for i in range(len(ds))
+    ]
+    assert kept == [(0.08, 26.0), (0.05, 30.0)]
+
+
+_ARCHIVE_DIR = (
+    "Data File S1. Raw genetic interaction datasets: Pair-wise interaction format"
+)
+_ARCHIVE_FILES = [
+    "strain_ids_and_single_mutant_fitness.xlsx",
+    "SGA_DAmP.txt",
+    "SGA_ExE.txt",
+    "SGA_ExN_NxE.txt",
+    "SGA_NxN.txt",
+    "readme.txt",
+]
+
+
+def _fake_download_url(
+    monkeypatch: pytest.MonkeyPatch, calls: list[tuple[str, str]]
+) -> None:
+    """``download_url`` writes the released zip layout into ``folder`` and returns it."""
+
+    def download_url(url: str, folder: str) -> str:
+        calls.append((url, folder))
+        os.makedirs(folder, exist_ok=True)
+        path = osp.join(folder, "archive.zip")
+        with zipfile.ZipFile(path, "w") as archive:
+            for name in _ARCHIVE_FILES:
+                archive.writestr(f"{_ARCHIVE_DIR}/{name}", name)
+        return path
+
+    monkeypatch.setattr(c, "download_url", download_url)
+
+
+@pytest.mark.parametrize(
+    ("cls", "kept"),
+    [
+        (c.SmfCostanzo2016Dataset, ["strain_ids_and_single_mutant_fitness.xlsx"]),
+        (
+            c.DmfCostanzo2016Dataset,
+            [
+                "SGA_DAmP.txt",
+                "SGA_ExE.txt",
+                "SGA_ExN_NxE.txt",
+                "SGA_NxN.txt",
+                "readme.txt",
+            ],
+        ),
+        (
+            c.DmiCostanzo2016Dataset,
+            [
+                "SGA_DAmP.txt",
+                "SGA_ExE.txt",
+                "SGA_ExN_NxE.txt",
+                "SGA_NxN.txt",
+                "readme.txt",
+            ],
+        ),
+    ],
+)
+def test_download_unpacks_the_archive_and_keeps_the_loader_files(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    cls: type[ExperimentDataset],
+    kept: list[str],
+) -> None:
+    """SMF removes every ``.txt`` (the SGA files included); DMF and DMI remove the
+    spreadsheet but keep any other text file (``readme.txt``); the zip and the
+    subdirectory are gone. The archive URL is the one CellMap URL all three share.
+    """
+    calls: list[tuple[str, str]] = []
+    _fake_download_url(monkeypatch, calls)
+    dataset = cls.__new__(cls)
+    dataset.root = str(tmp_path)
+    dataset.download()
+    raw = str(tmp_path / "raw")
+    assert calls == [
+        (
+            "https://thecellmap.org/costanzo2016/data_files/"
+            "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip",
+            raw,
+        )
+    ]
+    assert sorted(os.listdir(raw)) == kept
+    assert (tmp_path / "raw" / kept[0]).read_text() == kept[0]
+
+
+def test_dmf_and_dmi_items_retype_through_their_own_schema_classes(
+    dmf: c.DmfCostanzo2016Dataset, dmi: c.DmiCostanzo2016Dataset
+) -> None:
+    """``transform_item`` rebuilds a stored item through the dataset's declared classes
+    (``experiment_dataset.py`` lines 638 to 641): a DMF item comes back as a
+    ``FitnessExperiment`` and a DMI item as a ``GeneInteractionExperiment``, each dumping
+    to exactly the stored dictionary, so a class wired to the wrong schema would fail
+    here on the first record.
+    """
+    for dataset, experiment_class, reference_class in (
+        (dmf, FitnessExperiment, FitnessExperimentReference),
+        (dmi, GeneInteractionExperiment, GeneInteractionExperimentReference),
+    ):
+        item = dataset[0]
+        typed = dataset.transform_item(item)
+        assert type(typed["experiment"]) is experiment_class
+        assert type(typed["reference"]) is reference_class
+        assert typed["experiment"].model_dump() == item["experiment"]
+        assert typed["reference"].model_dump() == item["reference"]
+
+
+def test_main_builds_the_seven_datasets_under_data_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``main`` constructs SMF, three DMF and three DMI datasets with these exact roots
+    and arguments (the 1e5 and 5e5 subsets), printing each length and one record; the
+    classes are replaced by recorders so nothing is built.
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    calls: list[tuple[str, dict[str, Any]]] = []
+
+    def recorder(name: str) -> type[Any]:
+        class _Recorder:
+            def __init__(self, **kwargs: Any) -> None:
+                calls.append((name, kwargs))
+
+            def __len__(self) -> int:
+                return 7
+
+            def __getitem__(self, index: int) -> str:
+                return f"{name}[{index}]"
+
+        return _Recorder
+
+    for name in (
+        "SmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset",
+    ):
+        monkeypatch.setattr(c, name, recorder(name))
+    c.main()
+    base = osp.join(str(tmp_path), "data/torchcell")
+    assert calls == [
+        (
+            "SmfCostanzo2016Dataset",
+            {"root": f"{base}/smf_costanzo2016", "io_workers": 10},
+        ),
+        (
+            "DmfCostanzo2016Dataset",
+            {
+                "root": f"{base}/dmf_costanzo2016_1e5",
+                "io_workers": 10,
+                "batch_size": 10000,
+                "subset_n": 100000,
+            },
+        ),
+        (
+            "DmfCostanzo2016Dataset",
+            {
+                "root": f"{base}/dmf_costanzo2016_5e5",
+                "io_workers": 10,
+                "batch_size": 10000,
+                "subset_n": 500000,
+            },
+        ),
+        (
+            "DmfCostanzo2016Dataset",
+            {"root": f"{base}/dmf_costanzo2016", "io_workers": 10, "batch_size": 10000},
+        ),
+        (
+            "DmiCostanzo2016Dataset",
+            {
+                "root": f"{base}/dmi_costanzo2016_1e5",
+                "io_workers": 10,
+                "subset_n": 100000,
+            },
+        ),
+        (
+            "DmiCostanzo2016Dataset",
+            {
+                "root": f"{base}/dmi_costanzo2016_5e5",
+                "io_workers": 10,
+                "subset_n": 500000,
+            },
+        ),
+        (
+            "DmiCostanzo2016Dataset",
+            {"root": f"{base}/dmi_costanzo2016", "io_workers": 10},
+        ),
+    ]
+    assert capsys.readouterr().out.splitlines() == [
+        "7",
+        "SmfCostanzo2016Dataset[100]",
+        *["7", "DmfCostanzo2016Dataset[0]"] * 3,
+        *["7", "DmiCostanzo2016Dataset[0]"] * 3,
+    ]

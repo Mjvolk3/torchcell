@@ -1,15 +1,46 @@
-"""Tests for torchcell.sequence.data."""
+# tests/torchcell/sequence/test_data.py
+# [[tests.torchcell.sequence.test_data]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/sequence/test_data.py
+"""Tests for torchcell.sequence.data.
+
+2026.09.30 (Phase 16). Every fixture is a hand-built coordinate tuple, a short CDS string
+or a two-method ``Genome`` subclass; nothing reads a genome. Expected values, derived from
+the source:
+
+- ``calculate_window_bounds(40, 61, strand, 30, 100)``: the gene is 21 bp, the flank is
+  ``(30 - 21) // 2 = 4``, so the raw window is ``(36, 65)``, 29 bp. The one-base
+  correction adds upstream: ``start - 1`` on ``+`` gives ``(35, 65)``, ``end + 1`` on
+  ``-`` gives ``(36, 66)``. A strand that is neither matches no branch and the 29 bp
+  window is returned (Finding).
+- ``calculate_window_undersized`` with a strand other than ``+``/``-`` binds neither
+  window variable and raises ``UnboundLocalError`` (Finding).
+- ``compute_codon_frequency("ATGGCGGCGCTGAAA")``: five codons ATG, GCG, GCG, CTG, AAA, so
+  GCG = 2/5 = 0.4, ATG = CTG = AAA = 1/5 = 0.2, the other 60 codons 0.0. The repr sorts by
+  frequency with a stable sort over the SortedDict's alphabetical key order, so the
+  0.2 tie resolves to AAA, ATG (CTG drops out of the top three).
+- ``GeneSet.__repr__`` has branches for sizes above and below 3 only; size 3 returns None
+  and ``repr`` raises ``TypeError`` (Finding).
+- ``get_chr_from_description`` returns None for a description with neither a chromosome
+  nor a mitochondrion location (Finding against its ``-> int`` annotation).
+"""
 
 import logging
-from typing import cast
+from pathlib import Path
+from typing import Any, cast
 
+import pandas as pd
 import pytest
-from sortedcontainers import SortedDict
+from pydantic import ValidationError
+from sortedcontainers import SortedDict, SortedSet
 
 from torchcell.sequence.data import (
+    CodonFrequency,
     DnaSelectionResult,
     DnaWindowResult,
+    Gene,
     GeneSet,
+    Genome,
+    ParsedGenome,
     calculate_window_bounds,
     calculate_window_bounds_symmetric,
     calculate_window_undersized,
@@ -19,6 +50,7 @@ from torchcell.sequence.data import (
     mismatch_positions,
     roman_to_int,
 )
+from torchcell.sequence.db_connection import DatabaseConnectionManager
 
 log = logging.getLogger()
 
@@ -422,6 +454,311 @@ def test_compute_codon_frequency():
     assert sum(codon_frequency.values()) == pytest.approx(1.0), (
         "The sum of the frequencies is not 1.0"
     )
+
+
+def test_compute_codon_frequency_exact_values() -> None:
+    """ATG GCG GCG CTG AAA: GCG 2/5, the three singletons 1/5, the other 60 codons 0."""
+    freq = compute_codon_frequency("ATGGCGGCGCTGAAA")
+    assert len(freq) == 64
+    nonzero = {codon: value for codon, value in freq.items() if value != 0.0}
+    assert nonzero == {"AAA": 0.2, "ATG": 0.2, "CTG": 0.2, "GCG": 0.4}
+    assert list(freq.keys())[:3] == ["AAA", "AAC", "AAG"]
+
+
+def test_compute_codon_frequency_refuses_bad_cds() -> None:
+    """A length not divisible by 3 and a non-ACGT base are both refused, same message."""
+    message = "Invalid CDS string; length must be a multiple of 3 and only contain A, T, G, C."
+    with pytest.raises(ValueError) as short:
+        compute_codon_frequency("ATGC")
+    assert str(short.value) == message
+    with pytest.raises(ValueError) as ambiguous:
+        compute_codon_frequency("ATGNNN")
+    assert str(ambiguous.value) == message
+
+
+def test_compute_codon_frequency_empty_cds_divides_by_zero() -> None:
+    """Finding: the empty CDS passes the validator (0 % 3 == 0, the empty set is a subset).
+
+    It then divides by ``total_codons = 0`` at data.py line 694. Pinned until the
+    validator refuses an empty CDS.
+    """
+    with pytest.raises(ZeroDivisionError):
+        compute_codon_frequency("")
+
+
+def test_codon_frequency_repr_top_three_and_tie_order() -> None:
+    """GCG 0.4 first, then the 0.2 tie in alphabetical order: AAA, ATG (CTG is cut)."""
+    freq = compute_codon_frequency("ATGGCGGCGCTGAAA")
+    assert repr(freq) == (
+        "CodonFrequency(size=64, most_frequent_codons="
+        "[('GCG', 0.4), ('AAA', 0.2), ('ATG', 0.2)]...)"
+    )
+
+
+def test_codon_frequency_repr_rounds_to_four_decimals() -> None:
+    """Three distinct codons: each 1/3 renders as 0.3333, ordered alphabetically."""
+    freq = compute_codon_frequency("TTTGGGCCC")
+    assert repr(freq) == (
+        "CodonFrequency(size=64, most_frequent_codons="
+        "[('CCC', 0.3333), ('GGG', 0.3333), ('TTT', 0.3333)]...)"
+    )
+
+
+def test_codon_frequency_repr_flags_wrong_size_and_bad_sum() -> None:
+    """One codon is not 64; 64 codons summing to 0.5 fall outside [0.9999, 1.0001]."""
+    assert repr(CodonFrequency({"AAA": 1.0})) == (
+        "Invalid CodonFrequency: Expected 64 codons"
+    )
+    half = {codon: 0.0 for codon in compute_codon_frequency("AAA")}
+    half["AAA"] = 0.5
+    assert repr(CodonFrequency(half)) == (
+        "Invalid CodonFrequency: Frequencies do not sum to 1 (sum=0.5)"
+    )
+
+
+def test_geneset_repr_size_three_raises() -> None:
+    """Finding: ``GeneSet.__repr__`` covers ``> 3`` and ``< 3`` only (data.py 130 to 133).
+
+    Size 3 falls through and returns None, so ``repr`` raises TypeError. Pinned until the
+    ``elif`` becomes ``else``.
+    """
+    with pytest.raises(TypeError, match="__repr__ returned non-string"):
+        repr(GeneSet(["YAL001C", "YAL002W", "YAL003W"]))
+
+
+def test_geneset_sorts_and_deduplicates() -> None:
+    """Members come back sorted and a repeated id counts once."""
+    genes = GeneSet(["YBR002W", "YAL001C", "YBR002W"])
+    assert list(genes) == ["YAL001C", "YBR002W"]
+    assert repr(genes) == "GeneSet(size=2, items=['YAL001C', 'YBR002W'])"
+
+
+def test_get_chr_from_description_non_mito_location_and_no_tag() -> None:
+    """Finding: a non-mitochondrial location and a tagless description both return None.
+
+    The loop skips the ``[location=plastid]`` part and falls off the end (data.py line
+    321), against the ``-> int`` annotation. The first chromosome tag wins when a
+    location precedes it. Pinned until unmatched descriptions raise.
+    """
+    assert get_chr_from_description("ref|X| [location=plastid] [top=circular]") is None
+    assert get_chr_from_description("no tags here") is None
+    assert get_chr_from_description("[location=plastid] [chromosome=XVI]") == 16
+
+
+def test_roman_to_int_subtractive_pairs_and_refusal() -> None:
+    """XIV: 10, +1, then V > I so +5 - 2*1, total 14; MCMXC = 1990; a non-numeral is a KeyError."""
+    assert roman_to_int("XIV") == 14
+    assert roman_to_int("MCMXC") == 1990
+    assert roman_to_int("XVI") == 16
+    with pytest.raises(KeyError, match="Z"):
+        roman_to_int("XZ")
+
+
+def test_calculate_window_undersized_unknown_strand_unbound() -> None:
+    """Finding: a strand other than ``+``/``-`` binds no window variable (data.py 414 to 420).
+
+    The assertion line then raises UnboundLocalError instead of a named refusal. Pinned
+    until the function raises ValueError for an unknown strand.
+    """
+    with pytest.raises(UnboundLocalError, match="end_window"):
+        calculate_window_undersized(10, 50, ".", 20)
+
+
+def test_calculate_window_bounds_undersized_delegates_by_strand() -> None:
+    """A 5 bp window on a 10 bp gene keeps the 5' end: (10, 15) on +, (15, 20) on -."""
+    assert calculate_window_bounds(10, 20, "+", 5, 100) == (10, 15)
+    assert calculate_window_bounds(10, 20, "-", 5, 100) == (15, 20)
+
+
+def test_calculate_window_bounds_unknown_strand_returns_short_window() -> None:
+    """Finding: an unknown strand skips the one-base parity fix (data.py 493 to 504).
+
+    21 bp gene, 30 bp window: flank (30 - 21) // 2 = 4 gives (36, 65), 29 bp, returned
+    as is; ``+`` and ``-`` give (35, 65) and (36, 66). Pinned until the strand is
+    validated.
+    """
+    assert calculate_window_bounds(40, 61, ".", 30, 100) == (36, 65)
+    assert calculate_window_bounds(40, 61, "+", 30, 100) == (35, 65)
+    assert calculate_window_bounds(40, 61, "-", 30, 100) == (36, 66)
+
+
+def test_calculate_window_bounds_symmetric_clips_to_shorter_flank() -> None:
+    """Gene (3, 13) in a 100 bp chromosome with a 30 bp window: flank 10 is capped by 0.
+
+    The 5' side has only 3 bp, so both flanks shrink to 3: (0, 16), 16 bp, symmetric.
+    At the far end, gene (90, 98) with flank 11 is capped by the 2 bp to 100: (88, 100).
+    """
+    assert calculate_window_bounds_symmetric(3, 13, 30, 100) == (0, 16)
+    assert calculate_window_bounds_symmetric(90, 98, 30, 100) == (88, 100)
+
+
+def test_dna_selection_missing_start_is_type_error() -> None:
+    """Finding: the ``mode="before"`` validator compares ``None > end`` (data.py line 58).
+
+    A payload without ``start`` raises a bare TypeError rather than a pydantic missing
+    field error. Pinned until the validator guards absent keys.
+    """
+    with pytest.raises(TypeError, match="'>' not supported"):
+        DnaSelectionResult.model_validate(
+            {"id": "x", "chromosome": 1, "strand": "+", "end": 3, "seq": "A"}
+        )
+
+
+def test_dna_selection_refusal_messages() -> None:
+    """Each validator names its failure: start > end, a bad strand, a negative coordinate."""
+    with pytest.raises(ValidationError, match="Start must be less than end"):
+        DnaSelectionResult(id="x", chromosome=1, strand="+", start=5, end=4, seq="")
+    with pytest.raises(ValidationError, match="Strand must be either '\\+' or '-'"):
+        DnaSelectionResult(id="x", chromosome=1, strand="*", start=0, end=4, seq="")
+    with pytest.raises(ValidationError, match="-2 must be positive"):
+        DnaSelectionResult(id="x", chromosome=-2, strand="+", start=0, end=4, seq="")
+
+
+def test_parsed_genome_accepts_geneset_and_refuses_sortedset() -> None:
+    """Pydantic's instance check refuses a plain SortedSet before the field validator runs."""
+    parsed = ParsedGenome(gene_set=GeneSet(["YB", "YA"]))
+    assert list(parsed.gene_set) == ["YA", "YB"]
+    with pytest.raises(ValidationError, match="Input should be an instance of GeneSet"):
+        ParsedGenome.model_validate({"gene_set": SortedSet(["YA"])})
+
+
+def test_gene_and_genome_refuse_instantiation_without_abstract_methods() -> None:
+    """The ABCs name every abstract method a subclass must implement."""
+    abstract_gene: Any = Gene
+    abstract_genome: Any = Genome
+    with pytest.raises(TypeError) as gene_err:
+        abstract_gene()
+    assert str(gene_err.value) == (
+        "Can't instantiate abstract class Gene without an implementation for abstract "
+        "methods 'window', 'window_five_prime', 'window_three_prime'"
+    )
+    with pytest.raises(TypeError) as genome_err:
+        abstract_genome()
+    assert str(genome_err.value) == (
+        "Can't instantiate abstract class Genome without an implementation for abstract "
+        "methods '__getitem__', 'compute_gene_set', 'feature_types', "
+        "'gene_attribute_table', 'get_seq'"
+    )
+
+
+class _FiveBaseGene(Gene):
+    """A concrete gene whose windows are unused; only ``seq`` and ``__len__`` matter."""
+
+    def __init__(self, seq: str) -> None:
+        self.seq = seq
+
+    def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
+        raise NotImplementedError
+
+    def window_five_prime(
+        self, window_size: int, allow_undersize: bool = False
+    ) -> DnaWindowResult:
+        raise NotImplementedError
+
+    def window_three_prime(
+        self, window_size: int, allow_undersize: bool = False
+    ) -> DnaWindowResult:
+        raise NotImplementedError
+
+
+class _CountingGenome(Genome):
+    """A genome that records how often ``compute_gene_set`` runs."""
+
+    def __init__(self, data_root: str | None = None) -> None:
+        super().__init__(data_root)
+        self.compute_calls = 0
+
+    def compute_gene_set(self) -> GeneSet:
+        self.compute_calls += 1
+        return GeneSet(["YAL002W", "YAL001C"])
+
+    def get_seq(
+        self, chr: int | str, start: int, end: int, strand: str
+    ) -> DnaSelectionResult:
+        raise NotImplementedError
+
+    @property
+    def gene_attribute_table(self) -> pd.DataFrame:
+        raise NotImplementedError
+
+    @property
+    def feature_types(self) -> list[str]:
+        raise NotImplementedError
+
+    def __getitem__(self, item: str) -> Gene | None:
+        return None
+
+
+class _RecordingDb:
+    """Stands in for ``FeatureDB``: records each constructor path."""
+
+    opened: list[str] = []
+
+    def __init__(self, path: str) -> None:
+        _RecordingDb.opened.append(path)
+        self.path = path
+
+
+def test_gene_len_is_sequence_length() -> None:
+    """``Gene.__len__`` is ``len(self.seq)``."""
+    assert len(_FiveBaseGene("ATGCA")) == 5
+
+
+def test_genome_init_state_and_lazy_gene_set() -> None:
+    """The base init stores ``data_root`` and leaves every cache None; the gene set is
+
+    computed once on first access, cached, and ``len(genome)`` is its size (2).
+    """
+    genome = _CountingGenome(data_root="/nowhere")
+    assert genome.data_root == "/nowhere"
+    assert (
+        genome.fasta_sequences,
+        genome.chr_to_nc,
+        genome.nc_to_chr,
+        genome.chr_to_len,
+        genome._fasta_path,
+        genome._gff_path,
+    ) == (None, None, None, None, None, None)
+    assert genome.db is None
+    assert genome.compute_calls == 0
+    assert list(genome.gene_set) == ["YAL001C", "YAL002W"]
+    assert len(genome) == 2
+    assert genome.compute_calls == 1
+
+
+def test_genome_gene_set_setter_bypasses_compute() -> None:
+    """Assigning a gene set replaces the cache; ``compute_gene_set`` never runs."""
+    genome = _CountingGenome()
+    genome.gene_set = GeneSet(["YBR001C"])
+    assert list(genome.gene_set) == ["YBR001C"]
+    assert len(genome) == 1
+    assert genome.compute_calls == 0
+
+
+def test_genome_db_opens_once_through_the_connection_manager(tmp_path: Path) -> None:
+    """``db`` delegates to the manager, which opens the file once per thread."""
+    db_file = tmp_path / "genes.db"
+    db_file.write_text("")
+    _RecordingDb.opened = []
+    genome = _CountingGenome()
+    genome._db_connection_manager = DatabaseConnectionManager(
+        str(db_file), cast(Any, _RecordingDb)
+    )
+    first = genome.db
+    second = genome.db
+    assert _RecordingDb.opened == [str(db_file)]
+    assert isinstance(first, _RecordingDb) and first.path == str(db_file)
+    assert second == first
+
+
+def test_genome_db_missing_file_refused(tmp_path: Path) -> None:
+    """A manager pointed at a missing file raises the manager's exact FileNotFoundError."""
+    genome = _CountingGenome()
+    missing = tmp_path / "absent.db"
+    genome._db_connection_manager = DatabaseConnectionManager(str(missing))
+    with pytest.raises(FileNotFoundError) as err:
+        _ = genome.db
+    assert str(err.value) == f"Database not found at {missing}"
 
 
 if __name__ == "__main__":

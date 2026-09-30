@@ -13,6 +13,15 @@ non-JSON branch's ``NamedTemporaryFile`` is redirected into tmp_path via
 
 Endpoint URLs are ``osp.join(sgd_url, locusID, endpoint)``, so for ``YAL001C`` the
 ``go_details`` URL is ``https://www.yeastgenome.org/backend/locus/YAL001C/go_details``.
+
+2026.09.30 (Phase 16). Added: two concurrent ``fetch_data`` calls on one gene share one
+download (11 GETs, not 22) and a later call issues none; ``max_retries=0`` returns None
+without a GET; a download whose every endpoint fails still writes the 11 keys as JSON
+``null`` (with the default 10 retries: 110 GETs and backoff delays ``2**0 .. 2**8`` per
+endpoint, 9 sleeps each, 99 in all), and ``download_genes`` then skips that locus as
+already cached (Finding); ``main_get_all_genes`` builds ``SCerevisiaeGenome()`` with its
+defaults and runs one ``download_gene_chunk`` per 50 loci, so 120 loci give chunks of
+50, 50 and 20 with ``create_gene`` and ``is_validated=False``.
 """
 
 import asyncio
@@ -321,3 +330,104 @@ def test_download_gene_chunk_skips_cached_and_fetches_the_rest(  # test-quality:
         e: {"url": f"{BASE}/YAL002W/{e}"} for e in ENDPOINTS
     }
     assert (gene_dir / "YAL002W.json").read_text() == json.dumps(expected, indent=4)
+
+
+def test_concurrent_fetches_share_one_download(
+    tmp_path: Path, session: type[FakeSession]
+) -> None:
+    """The second ``fetch_data`` awaits the pending task instead of scheduling another.
+
+    A third call after completion issues no GET at all.
+    """
+    gene = Gene(locusID="YAL001C", is_validated=False, base_data_dir=str(tmp_path))
+
+    async def twice() -> None:
+        await asyncio.gather(gene.fetch_data(), gene.fetch_data())
+
+    asyncio.run(twice())
+    assert len(session.urls) == 11
+    assert session.urls[0] == f"{BASE}/YAL001C"
+    asyncio.run(gene.fetch_data())
+    assert len(session.urls) == 11
+    assert gene.data["go_details"] == {"url": f"{BASE}/YAL001C/go_details"}
+
+
+def test_zero_retries_returns_none_without_a_request(
+    tmp_path: Path, session: type[FakeSession]
+) -> None:
+    """``max_retries=0`` skips the loop: None, and the session is never opened."""
+    gene = Gene(locusID="YAL001C", base_data_dir=str(tmp_path))
+    assert asyncio.run(gene._get_data(f"{BASE}/YAL001C", max_retries=0)) is None
+    assert session.urls == []
+
+
+def test_failed_download_is_cached_as_nulls_and_then_skipped(  # test-quality: allow returns None; asserts the file, GETs, sleeps and factory calls it causes
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    session: type[FakeSession],
+    sleeps: list[float],
+) -> None:
+    """Finding: a download where every GET fails still writes ``<locus>.json``.
+
+    ``fetch_data`` only raises when ``_data`` is empty, but ``download_data`` stores a
+    None under each of the 11 keys (sgd.py lines 100 to 113), so the locus is written
+    as nulls and ``download_genes`` later skips it as "already exists" (line 265).
+    Pinned until a failed endpoint aborts the write.
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    gene_dir = tmp_path / "data/sgd/genome/genes"
+    session.mode = "error"
+    gene = sgd.create_gene("YAL001C", False)
+    asyncio.run(gene.fetch_data())
+    assert len(session.urls) == 11 * 10
+    assert sleeps == [2**i for i in range(9)] * 11
+    nulls = {key: None for key in ["locus", *ENDPOINTS]}
+    assert json.loads((gene_dir / "YAL001C.json").read_text()) == nulls
+    session.urls = []
+    made: list[str] = []
+
+    def factory(locus: str, validated: bool) -> Gene:
+        made.append(locus)
+        return sgd.create_gene(locus, validated)
+
+    asyncio.run(sgd.download_genes(["YAL001C"], factory, False))
+    assert (made, session.urls) == ([], [])
+
+
+class _GenomeStub:
+    """Records its constructor arguments; holds 120 locus ids."""
+
+    calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        _GenomeStub.calls.append((args, kwargs))
+        self.gene_set = [f"Y{i:03d}" for i in range(120)]
+
+
+def test_main_get_all_genes_chunks_by_fifty(  # test-quality: allow returns None; asserts the constructor call and chunks it causes
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Finding: ``SCerevisiaeGenome()`` is built with no arguments (sgd.py line 299).
+
+    That is the relative ``data/sgd/genome`` root with ``overwrite=True`` (memory note
+    genome-overwrite-true-rebuild-race). The 120 loci go out as chunks of 50, 50, 20,
+    each with ``create_gene`` and validation off. Pinned until ``main_get_all_genes``
+    takes a root and builds with ``overwrite=False``.
+    """
+    import torchcell.sequence.genome.scerevisiae.s288c as s288c
+
+    _GenomeStub.calls = []
+    monkeypatch.setattr(s288c, "SCerevisiaeGenome", _GenomeStub)
+    seen: list[tuple[list[str], object, bool]] = []
+
+    async def fake_chunk(
+        chunk: list[str], create_gene_fn: object, validate_flag: bool
+    ) -> None:
+        seen.append((chunk, create_gene_fn, validate_flag))
+
+    monkeypatch.setattr(sgd, "download_gene_chunk", fake_chunk)
+    sgd.main_get_all_genes()
+    assert _GenomeStub.calls == [((), {})]
+    ids = [f"Y{i:03d}" for i in range(120)]
+    assert [chunk for chunk, _, _ in seen] == [ids[:50], ids[50:100], ids[100:]]
+    assert {(fn, flag) for _, fn, flag in seen} == {(sgd.create_gene, False)}

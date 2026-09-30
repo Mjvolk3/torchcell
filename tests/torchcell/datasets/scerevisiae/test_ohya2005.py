@@ -23,16 +23,53 @@ Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV
 ``wt122data.tsv`` (NAME + the same features): wt1 1.0 3.0 0.25 0.5; wt2 3.0 5.0 0.75 1.0;
 wt3 5.0 7.0 n.d. 1.5. Means: A101_A 3.0, C103_A1B 5.0, ACV103_A1B (0.25 + 0.75) / 2 = 0.5
 with ``n.d.`` coerced to NaN and skipped, CCV103_A1B 1.0.
+
+2026.09.30 (Phase 16): the same matrices, plus
+
+- the ledger (lines 260 and 274): "Ohya 2005: dropping 1 mutant row(s) with missing
+  CalMorph values: ['YDR001C']", "Ohya 2005: 6 non-essential deletion strains (0 dropped
+  for naming)", then "Processing Ohya 2005 CalMorph morphology data..."; with 21
+  incomplete rows the count is 21 and the list stops at the first 20 (``[:20]``).
+- ``transform_item`` round trips through ``CalMorphExperiment`` and
+  ``CalMorphExperimentReference``.
+- a clean two-feature matrix (``A101_A`` and ``ACV103_A1B``) with YAL001C (1.0, 0.1) and
+  ``yal001c`` (2.0, 0.2); WT w1 (1.0, 0.3) and w2 (3.0, 0.5), so the reference is
+  A101_A (1.0 + 3.0) / 2 = 2.0 and ACV103_A1B (0.3 + 0.5) / 2 = 0.4. No drop warning.
+- a ``TCV101_X`` column is routed to the CV traits and refused by the phenotype
+  validator: "Invalid CalMorph CV parameter: TCV101_X. Must be one of the 220 CV
+  parameters in CALMORPH_STATISTICS."
+- a non-numeric mutant cell ("x") refuses with "could not convert string to float: 'x'"
+  (``float(row[col])``, line 330).
+- ``genome=None`` calls ``default_genome()`` once (line 268).
+- ``download`` with ``_RAW_FILES`` replaced by pins for the synthetic matrices: both are
+  copied from ``$DATA_ROOT/<_MIRROR_DIR>`` and a second call with the mirror removed
+  re-verifies the raw copies without error.
+
+Findings pinned here: the same ORF in two spellings gives two records with identical
+genotypes (``reconcile_systematic_names`` maps unique names, nothing checks duplicate
+rows); ``TCV`` is in ``_CV_PREFIXES`` (line 105) although the 2026.09.29 verification
+(``notes/torchcell.datasets.scerevisiae.ohya2005.md``, #494) records that no TCV
+parameter exists, so any ``TCV*`` column is classed as a CV trait (and then refused by
+the schema); ``create_experiment``
+is a bare ``pass`` returning None (line 292) where the sibling Ohnuki 2022 raises
+``NotImplementedError``; the publication is Ohya 2005 (PMID 16365294) while the same
+verification records that the distributed matrices are the Suzuki 2018 CalMorph 1.2
+re-analysis of the 2005 images (#491); a non-numeric mutant cell raises a bare
+``ValueError`` from inside the open write transaction.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
+import pandas as pd
+import pydantic
 import pytest
 
 from torchcell.datamodels.schema import (
@@ -53,6 +90,15 @@ from torchcell.sequence.genome.scerevisiae.s288c import (
     GeneNameStatus,
     SCerevisiaeGenome,
 )
+
+
+@pytest.fixture(autouse=True)
+def _no_tc_data_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every build here reads ``raw/``; an inherited ``TC_DATA_URL`` would send it to
+    the tc-data endpoint instead (``ExperimentDataset._download``).
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+
 
 _FEATURES = ["A101_A", "C103_A1B", "ACV103_A1B", "CCV103_A1B"]
 _MUTANT_ROWS = [
@@ -199,8 +245,6 @@ def test_side_files(dataset: m.ScmdOhya2005Dataset) -> None:
     """``data.csv`` is the retained mutant matrix with the source ORF spelling kept and
     the two resolved-name columns appended; the gene set is the six stored names.
     """
-    assert dataset.experiment_class is CalMorphExperiment
-    assert dataset.reference_class is CalMorphExperimentReference
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "data.csv").read_text() == (
         "ORF,A101_A,C103_A1B,ACV103_A1B,CCV103_A1B,systematic_gene_name,"
@@ -256,3 +300,273 @@ def test_download_verifies_present_files_and_needs_the_mirror(
         ),
     ):
         m.ScmdOhya2005Dataset(root=str(tmp_path / "empty"), genome=_genome())
+
+
+def test_items_retype_through_the_calmorph_classes(
+    dataset: m.ScmdOhya2005Dataset,
+) -> None:
+    """``transform_item`` rebuilds each stored item through the declared classes (lines
+    149 to 157), dumping back to exactly the stored dictionaries. A fitness class would
+    drop the ``calmorph`` traits and fail the round trip.
+    """
+    for index in range(6):
+        item = dataset[index]
+        typed = dataset.transform_item(item)
+        assert type(typed["experiment"]) is CalMorphExperiment
+        assert type(typed["reference"]) is CalMorphExperimentReference
+        assert typed["experiment"].model_dump() == item["experiment"]
+        assert typed["reference"].model_dump() == item["reference"]
+        assert typed["publication"].model_dump() == _PUBLICATION
+
+
+def test_generic_hooks_are_inert_and_create_experiment_returns_none(
+    dataset: m.ScmdOhya2005Dataset,
+) -> None:
+    """``preprocess_raw`` returns its frame unchanged.
+
+    Finding: ``create_experiment`` is a bare ``pass`` (line 292) and returns None instead
+    of raising ``NotImplementedError`` as the sibling Ohnuki 2022 loader does, so a
+    caller of the generic hook gets nothing back silently. Pinned until it raises.
+    """
+    frame = pd.DataFrame({"ORF": ["YAL001C"], "A101_A": [1.0]})
+    returned = dataset.preprocess_raw(frame)
+    assert returned is frame
+    assert returned.to_dict("list") == {"ORF": ["YAL001C"], "A101_A": [1.0]}
+    hook: Callable[[], object] = dataset.create_experiment
+    assert hook() is None
+
+
+def test_publication_is_ohya_2005_although_the_matrix_is_the_suzuki_reanalysis(
+    dataset: m.ScmdOhya2005Dataset,
+) -> None:
+    """Finding: every record cites Ohya 2005 (PMID 16365294, PNAS doi URL), as the module
+    docstring claims ("Suzuki et al. 2018 ... merely REUSED this same dataset"). The
+    2026.09.29 verification in ``notes/torchcell.datasets.scerevisiae.ohya2005.md``
+    records that the distributed matrices are the Suzuki 2018 CalMorph 1.2 re-analysis
+    (PMID 29458326) of the 2005 images (#491). Pinned until the loader records both.
+    """
+    publication = dataset[0]["publication"]
+    assert publication == {
+        "pubmed_id": "16365294",
+        "pubmed_url": "https://pubmed.ncbi.nlm.nih.gov/16365294/",
+        "doi": "10.1073/pnas.0509436102",
+        "doi_url": "https://www.pnas.org/doi/10.1073/pnas.0509436102",
+    }
+
+
+def test_drop_ledger_is_logged_before_the_strain_count(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The incomplete YDR001C row is named as a warning, then the six kept strains, then
+    the processing line.
+    """
+    with caplog.at_level(logging.INFO, logger=m.log.name):
+        m.ScmdOhya2005Dataset(root=str(_root(tmp_path)), genome=_genome())
+    assert [
+        (r.levelname, r.getMessage()) for r in caplog.records if r.name == m.log.name
+    ] == [
+        (
+            "WARNING",
+            "Ohya 2005: dropping 1 mutant row(s) with missing CalMorph values: "
+            "['YDR001C']",
+        ),
+        ("INFO", "Ohya 2005: 6 non-essential deletion strains (0 dropped for naming)"),
+        ("INFO", "Processing Ohya 2005 CalMorph morphology data..."),
+    ]
+
+
+def test_drop_warning_counts_every_incomplete_row_but_lists_the_first_20(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """21 incomplete rows (Y00..Y20, blank A101_A) and one complete row: the warning says
+    21 and names Y00 to Y19 only (``tolist()[:20]``, line 263); one strain is kept.
+    """
+    root = tmp_path / "many_blank"
+    (root / "raw").mkdir(parents=True)
+    rows = [[f"Y{k:02d}", ""] for k in range(21)] + [["YAL001C", "1.0"]]
+    _write_tsv(root / "raw" / "mt4718data.tsv", ["ORF", "A101_A"], rows)
+    _write_tsv(root / "raw" / "wt122data.tsv", ["NAME", "A101_A"], [["wt1", "2.0"]])
+    with caplog.at_level(logging.INFO, logger=m.log.name):
+        dataset = m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
+    warnings = [
+        r.getMessage()
+        for r in caplog.records
+        if r.name == m.log.name and r.levelname == "WARNING"
+    ]
+    assert warnings == [
+        "Ohya 2005: dropping 21 mutant row(s) with missing CalMorph values: "
+        f"{[f'Y{k:02d}' for k in range(20)]}"
+    ]
+    assert len(dataset) == 1
+    dataset.close_lmdb()
+
+
+def test_clean_matrix_keeps_duplicate_spellings(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """No drop warning when every row is complete; the reference is A101_A
+    (1.0 + 3.0) / 2 = 2.0 and ACV103_A1B (0.3 + 0.5) / 2 = 0.4.
+
+    Finding: YAL001C and ``yal001c`` give two records with the same genotype (the
+    reconciler maps unique names and nothing checks duplicate rows). Pinned until the
+    loader refuses a duplicated strain.
+    """
+    root = tmp_path / "clean"
+    (root / "raw").mkdir(parents=True)
+    _write_tsv(
+        root / "raw" / "mt4718data.tsv",
+        ["ORF", "A101_A", "ACV103_A1B"],
+        [["YAL001C", "1.0", "0.1"], ["yal001c", "2.0", "0.2"]],
+    )
+    _write_tsv(
+        root / "raw" / "wt122data.tsv",
+        ["NAME", "A101_A", "ACV103_A1B"],
+        [["w1", "1.0", "0.3"], ["w2", "3.0", "0.5"]],
+    )
+    with caplog.at_level(logging.INFO, logger=m.log.name):
+        dataset = m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
+    assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
+        "Ohya 2005: 2 non-essential deletion strains (0 dropped for naming)",
+        "Processing Ohya 2005 CalMorph morphology data...",
+    ]
+    genotype = Genotype(
+        perturbations=[
+            KanMxDeletionPerturbation(
+                systematic_gene_name="YAL001C", perturbed_gene_name="YAL001C"
+            )
+        ]
+    )
+    reference = CalMorphExperimentReference(
+        dataset_name="ScmdOhya2005Dataset",
+        genome_reference=ReferenceGenome(
+            species="Saccharomyces cerevisiae", strain="BY4741"
+        ),
+        environment_reference=_ENVIRONMENT,
+        phenotype_reference=CalMorphPhenotype(
+            calmorph={"A101_A": 2.0},
+            calmorph_coefficient_of_variation={"ACV103_A1B": 0.4},
+        ),
+    ).model_dump()
+    for index, (base, cv) in enumerate(((1.0, 0.1), (2.0, 0.2))):
+        assert dataset[index]["experiment"] == (
+            CalMorphExperiment(
+                dataset_name="ScmdOhya2005Dataset",
+                genotype=genotype,
+                environment=_ENVIRONMENT,
+                phenotype=CalMorphPhenotype(
+                    calmorph={"A101_A": base},
+                    calmorph_coefficient_of_variation={"ACV103_A1B": cv},
+                ),
+            ).model_dump()
+        )
+        assert dataset[index]["reference"] == reference
+    dataset.close_lmdb()
+
+
+def test_a_tcv_column_is_routed_to_the_cv_traits_and_refused_by_the_schema(
+    tmp_path: Path,
+) -> None:
+    """Finding: ``TCV`` is in ``_CV_PREFIXES`` (line 105) although the 2026.09.29
+    verification (``notes/torchcell.datasets.scerevisiae.ohya2005.md``, #494) records
+    that no TCV parameter exists (CCV 60 + ACV 33 + DCV 127 = 220). A ``TCV101_X`` column
+    is therefore classed as a CV trait, and the phenotype validator refuses it by name.
+    Pinned until the prefix is removed.
+    """
+    root = tmp_path / "tcv"
+    (root / "raw").mkdir(parents=True)
+    _write_tsv(
+        root / "raw" / "mt4718data.tsv",
+        ["ORF", "A101_A", "TCV101_X"],
+        [["YAL001C", "1.0", "0.1"]],
+    )
+    _write_tsv(
+        root / "raw" / "wt122data.tsv",
+        ["NAME", "A101_A", "TCV101_X"],
+        [["w1", "1.0", "0.3"]],
+    )
+    with pytest.raises(pydantic.ValidationError) as info:
+        m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
+    assert [(e["loc"], e["msg"]) for e in info.value.errors()] == [
+        (
+            ("calmorph_coefficient_of_variation",),
+            "Value error, Invalid CalMorph CV parameter: TCV101_X. Must be one of the "
+            "220 CV parameters in CALMORPH_STATISTICS.",
+        )
+    ]
+
+
+def test_non_numeric_mutant_cell_refuses(tmp_path: Path) -> None:
+    """A mutant cell "x" passes the completeness check (it is not NaN) and then fails
+    ``float(row[col])`` (line 330) with Python's own message.
+    """
+    root = tmp_path / "bad_cell"
+    (root / "raw").mkdir(parents=True)
+    _write_tsv(
+        root / "raw" / "mt4718data.tsv",
+        ["ORF", "A101_A"],
+        [["YAL001C", "1.0"], ["YCR001W", "x"]],
+    )
+    _write_tsv(root / "raw" / "wt122data.tsv", ["NAME", "A101_A"], [["wt1", "2.0"]])
+    with pytest.raises(ValueError, match=r"^could not convert string to float: 'x'$"):
+        m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
+
+
+def test_missing_genome_is_built_once_by_default_genome(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With ``genome=None`` the build calls ``default_genome()`` exactly once (line 268)
+    and reconciles with what it returns, so the records match the stubbed build.
+    """
+    stub: object = _StubGenome()
+    calls: list[None] = []
+
+    def fake_default_genome() -> object:
+        calls.append(None)
+        return stub
+
+    monkeypatch.setattr(m, "default_genome", fake_default_genome)
+    dataset = m.ScmdOhya2005Dataset(root=str(_root(tmp_path)))
+    assert calls == [None]
+    assert dataset.genome is stub
+    assert [
+        dataset[i]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
+        for i in range(len(dataset))
+    ] == ["YAL001C", "YBR001C", "YCR001W", "YER001W", "YER002W", "YFR001W"]
+
+
+def test_download_copies_both_pinned_matrices_then_reverifies_in_place(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With ``_RAW_FILES`` pinned to the synthetic matrices, an empty root copies both
+    from ``$DATA_ROOT/<_MIRROR_DIR>`` byte for byte and builds six records; a second
+    ``download`` with the mirror removed only re-hashes the raw copies.
+    """
+    source = _root(tmp_path, "source") / "raw"
+    data_root = tmp_path / "data_root"
+    mirror = data_root / m._MIRROR_DIR
+    mirror.mkdir(parents=True)
+    content: dict[str, bytes] = {}
+    for name in ("mt4718data.tsv", "wt122data.tsv"):
+        content[name] = (source / name).read_bytes()
+        (mirror / name).write_bytes(content[name])
+    monkeypatch.setattr(
+        m,
+        "_RAW_FILES",
+        {
+            name: {
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "id_column": m._RAW_FILES[name]["id_column"],
+            }
+            for name, data in content.items()
+        },
+    )
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    dataset = m.ScmdOhya2005Dataset(root=str(tmp_path / "fresh"), genome=_genome())
+    raw = tmp_path / "fresh" / "raw"
+    assert {name: (raw / name).read_bytes() for name in content} == content
+    assert len(dataset) == 6
+    for name in content:
+        (mirror / name).unlink()
+    dataset.download()
+    assert {name: (raw / name).read_bytes() for name in content} == content

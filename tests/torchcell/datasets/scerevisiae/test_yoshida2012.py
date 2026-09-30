@@ -17,17 +17,50 @@ SE = SD / sqrt(3) per analyte; ``target_metabolite_ids`` covers the five acids o
 Reference = the WT row for every record: acetate 4.21 +/- 0.30, citrate 0.10 +/- 0.04,
 malate 0.15 +/- 0.01, pyruvate 0.18 +/- 0.05, succinate 1.29 +/- 0.05, phosphate 0.69
 +/- 0.11, same SE rule; BY4742, static liquid YPD at 25 C.
+
+2026.09.30 (Phase 16): the full build as above, plus
+
+- the two ledger lines (lines 387 and 415): "Yoshida2012: 17 deletion strains, WT
+  reference over 6 analytes, 5 organic acids mapped to Yeast9 s_NNNN" and "Wrote 17
+  Yoshida2012 organic-acid experiments to LMDB".
+- ``transform_item`` round trips through ``MetaboliteExperiment`` and
+  ``MetaboliteExperimentReference`` for all 17 records.
+- ``create_experiment`` on a built dataset with a strain row measuring only acetate
+  (4.0 +/- 0.3) and phosphate (0.5 +/- 0.06): the reference is the WT row restricted to
+  those two analytes (4.21 / 0.30 and 0.69 / 0.11), SE = SD / sqrt(3), and the target
+  ids cover acetate only; a phosphate-only row has ``target_metabolite_ids`` None
+  (``targets or None``, line 441).
+- a synthetic ``TABLE_3`` (module literal replaced; ``process`` reads it at call time,
+  line 382): WT as released; ASM4 as released; ``YDL088C`` (the ASM4 ORF written
+  systematically) with citrate (nan, nan); ``yal999w`` (systematic-shaped, not in the
+  genome stub) and ``AMB`` whose alias maps to two ORFs, [YBR001C, YCR001W]. Four
+  records in that order, with ORFs YDL088C, YDL088C, YAL999W and YBR001C.
+- a negative SD (acetate (4.0, -0.3)) refuses in the phenotype validator with "SE for
+  acetate must be non-negative" (-0.3 / sqrt(3) < 0).
+- ``download`` with ``PDF_SHA256`` replaced by the digest of a synthetic PDF: the
+  mirror file is copied and "Staged <dest> (<n> bytes, sha256 verified)" is logged.
+- ``main`` with ``load_dotenv`` stubbed and the genome and dataset classes as recorders.
+
+Findings pinned here: a systematic-shaped name is accepted by the regex (line 358)
+without consulting the genome, so a nonexistent ORF such as YAL999W is stored; an alias
+with several candidate ORFs silently takes the first (line 364); the same ORF reached by
+its common and its systematic name gives two records with identical genotypes; a NaN
+cell is stored as a NaN level and SE instead of being refused or dropped; the perturbed
+name is the raw table key, so ``yal999w`` stays lowercase.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import math
 import re
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
+import pandas as pd
+import pydantic
 import pytest
 
 from torchcell.datamodels.schema import (
@@ -44,6 +77,15 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.scerevisiae import yoshida2012 as m
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+
+@pytest.fixture(autouse=True)
+def _no_tc_data_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every build here reads ``raw/``; an inherited ``TC_DATA_URL`` would send it to
+    the tc-data endpoint instead (``ExperimentDataset._download``).
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+
 
 _ORF_BY_NAME = {
     "ASM4": "YDL088C",
@@ -200,8 +242,6 @@ def test_seventeen_records_in_table_order_with_one_shared_reference(
     ]
     assert stored == [(_ORF_BY_NAME.get(g, g), g) for g in genes]
     assert stored[-1] == ("YDR379C-A", "YDR379C-A")
-    assert dataset.experiment_class is MetaboliteExperiment
-    assert dataset.reference_class is MetaboliteExperimentReference
     preprocess = Path(dataset.root) / "preprocess"
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
     assert [entry["member_indices"] for entry in index] == [list(range(17))]
@@ -276,3 +316,266 @@ def test_download_stages_the_mirror_pdf_only_after_verifying_it(
     assert hashlib.sha256(dest.read_bytes()).hexdigest() != m.PDF_SHA256
     dataset.download()
     assert dest.read_bytes() == b"%PDF-1.4 synthetic placeholder"
+
+
+def test_items_retype_through_the_metabolite_classes(
+    dataset: m.OrganicAcidYoshida2012Dataset,
+) -> None:
+    """``transform_item`` rebuilds every stored item through the declared classes (lines
+    311 to 319): a ``MetaboliteExperiment`` and a ``MetaboliteExperimentReference`` that
+    dump back to exactly the stored dictionaries. A fitness class would drop
+    ``metabolite_level`` and fail the round trip.
+    """
+    for index in range(17):
+        item = dataset[index]
+        typed = dataset.transform_item(item)
+        assert type(typed["experiment"]) is MetaboliteExperiment
+        assert type(typed["reference"]) is MetaboliteExperimentReference
+        assert typed["experiment"].model_dump() == item["experiment"]
+        assert typed["reference"].model_dump() == item["reference"]
+        assert typed["publication"].model_dump() == _PUBLICATION
+
+
+def test_build_logs_the_strain_analyte_and_mapping_counts(
+    tmp_path: Path, s_id_calls: list[dict[str, str]], caplog: pytest.LogCaptureFixture
+) -> None:
+    """17 strains (18 rows minus WT), 6 reference analytes (OD dropped), 5 mapped acids,
+    then the written count.
+    """
+    with caplog.at_level(logging.INFO, logger=m.log.name):
+        m.OrganicAcidYoshida2012Dataset(root=str(_root(tmp_path)), genome=_genome())
+    assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
+        "Yoshida2012: 17 deletion strains, WT reference over 6 analytes, "
+        "5 organic acids mapped to Yeast9 s_NNNN",
+        "Wrote 17 Yoshida2012 organic-acid experiments to LMDB",
+    ]
+
+
+def test_reference_is_restricted_to_the_analytes_the_strain_measured(
+    dataset: m.OrganicAcidYoshida2012Dataset,
+) -> None:
+    """A row measuring acetate and phosphate gets a WT reference over those two analytes
+    only, and target ids for acetate only; a phosphate-only row has no target ids at all
+    (``targets or None``). ``preprocess_raw`` returns its frame unchanged.
+    """
+    experiment, reference, publication = dataset.create_experiment(
+        {
+            "orf": "YDL088C",
+            "gene": "ASM4",
+            "analytes": {"acetate": (4.0, 0.3), "phosphate": (0.5, 0.06)},
+        }
+    )
+    assert experiment.phenotype.model_dump() == (
+        MetabolitePhenotype(
+            metabolite_level={"acetate": 4.0, "phosphate": 0.5},
+            metabolite_level_se={
+                "acetate": 0.3 / math.sqrt(3),
+                "phosphate": 0.06 / math.sqrt(3),
+            },
+            n_replicates={"acetate": 3, "phosphate": 3},
+            measurement_type="hplc_organic_acid_titer_mM",
+            target_metabolite_ids={"acetate": "s_0001"},
+        ).model_dump()
+    )
+    assert reference.phenotype_reference.model_dump() == (
+        MetabolitePhenotype(
+            metabolite_level={"acetate": 4.21, "phosphate": 0.69},
+            metabolite_level_se={
+                "acetate": 0.30 / math.sqrt(3),
+                "phosphate": 0.11 / math.sqrt(3),
+            },
+            n_replicates={"acetate": 3, "phosphate": 3},
+            measurement_type="hplc_organic_acid_titer_mM",
+            target_metabolite_ids={"acetate": "s_0001"},
+        ).model_dump()
+    )
+    assert publication.model_dump() == _PUBLICATION
+    phosphate_only, phosphate_reference, _ = dataset.create_experiment(
+        {"orf": "YDL088C", "gene": "ASM4", "analytes": {"phosphate": (0.5, 0.06)}}
+    )
+    assert phosphate_only.phenotype.target_metabolite_ids is None
+    assert phosphate_reference.phenotype_reference.metabolite_level == {
+        "phosphate": 0.69
+    }
+    frame = pd.DataFrame({"orf": ["YDL088C"], "gene": ["ASM4"]})
+    returned = dataset.preprocess_raw(frame)
+    assert returned is frame
+    assert returned.to_dict("list") == {"orf": ["YDL088C"], "gene": ["ASM4"]}
+
+
+def _row(means: list[float], sds: list[float]) -> list[tuple[float, float]]:
+    """A Table 3 row in column order OD, acetate, citrate, malate, phosphate, pyruvate,
+    succinate.
+    """
+    return list(zip(means, sds, strict=True))
+
+
+def test_synthetic_table_keeps_duplicates_unchecked_orfs_and_nan_cells(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, s_id_calls: list[dict[str, str]]
+) -> None:
+    """Finding: ``YDL088C`` resolves by the regex (line 358) to the same ORF as ASM4, so
+    the two give identical genotypes and both are stored; ``yal999w`` also passes the
+    regex and is stored as YAL999W without the genome ever being asked; ``AMB``, whose
+    alias lists two ORFs, silently takes the first, YBR001C (line 364); citrate
+    (nan, nan) is stored as a NaN level and a NaN SE. Pinned until the loader refuses a
+    duplicate, an unknown ORF, an ambiguous alias and a missing cell.
+    """
+    asm4 = m.TABLE_3["ASM4"]
+    nan_citrate = [asm4[0], asm4[1], (math.nan, math.nan), *asm4[3:]]
+    other = _row(
+        [3.0, 2.0, 0.2, 0.3, 0.4, 0.5, 0.6], [0.1, 0.2, 0.02, 0.03, 0.04, 0.05, 0.06]
+    )
+    monkeypatch.setattr(
+        m,
+        "TABLE_3",
+        {
+            "WT": m.TABLE_3["WT"],
+            "ASM4": asm4,
+            "YDL088C": nan_citrate,
+            "yal999w": other,
+            "AMB": other,
+        },
+    )
+    genome = cast(SCerevisiaeGenome, _StubGenome(_ORF_BY_NAME))
+    genome.alias_to_systematic["AMB"] = ["YBR001C", "YCR001W"]
+    root = _root(tmp_path, "synthetic_table")
+    dataset = m.OrganicAcidYoshida2012Dataset(root=str(root), genome=genome)
+    items = [dataset[i]["experiment"] for i in range(len(dataset))]
+    assert [
+        (
+            e["genotype"]["perturbations"][0]["systematic_gene_name"],
+            e["genotype"]["perturbations"][0]["perturbed_gene_name"],
+        )
+        for e in items
+    ] == [
+        ("YDL088C", "ASM4"),
+        ("YDL088C", "YDL088C"),
+        ("YAL999W", "yal999w"),
+        ("YBR001C", "AMB"),
+    ]
+    assert (
+        items[1]["genotype"]["perturbations"]
+        == (
+            Genotype(
+                perturbations=[
+                    KanMxDeletionPerturbation(
+                        systematic_gene_name="YDL088C", perturbed_gene_name="YDL088C"
+                    )
+                ]
+            ).model_dump()["perturbations"]
+        )
+    )
+    duplicate = items[1]["phenotype"]
+    assert math.isnan(duplicate["metabolite_level"]["citrate"])
+    assert math.isnan(duplicate["metabolite_level_se"]["citrate"])
+    assert {
+        k: v for k, v in duplicate["metabolite_level"].items() if k != "citrate"
+    } == {
+        "acetate": 4.02,
+        "malate": 0.15,
+        "pyruvate": 0.13,
+        "succinate": 1.31,
+        "phosphate": 0.78,
+    }
+    assert items[3]["phenotype"] == (
+        _phenotype(
+            [2.0, 0.2, 0.3, 0.5, 0.6, 0.4], [0.2, 0.02, 0.03, 0.05, 0.06, 0.04]
+        ).model_dump()
+    )
+    assert json.loads((root / "preprocess" / "gene_set.json").read_text()) == [
+        "YAL999W",
+        "YBR001C",
+        "YDL088C",
+    ]
+    dataset.close_lmdb()
+
+
+def test_negative_sd_is_refused_by_the_phenotype_validator(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, s_id_calls: list[dict[str, str]]
+) -> None:
+    """A negative SD becomes a negative SE (-0.3 / sqrt(3)) and the phenotype validator
+    refuses it with "SE for acetate must be non-negative".
+    """
+    wt = m.TABLE_3["WT"]
+    bad = [wt[0], (4.0, -0.3), *wt[2:]]
+    monkeypatch.setattr(m, "TABLE_3", {"WT": wt, "ASM4": bad})
+    with pytest.raises(pydantic.ValidationError) as info:
+        m.OrganicAcidYoshida2012Dataset(
+            root=str(_root(tmp_path, "negative")), genome=_genome()
+        )
+    assert [e["msg"] for e in info.value.errors()] == [
+        "Value error, SE for acetate must be non-negative"
+    ]
+
+
+def test_download_copies_a_verified_mirror_pdf(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    s_id_calls: list[dict[str, str]],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """With the pin set to the synthetic PDF's digest, an empty root copies the mirror
+    PDF byte for byte, logs the staged path and byte count, and builds 17 records.
+    """
+    content = b"%PDF-1.4 synthetic mirror copy"
+    data_root = tmp_path / "data_root"
+    mirror = data_root / "torchcell-library" / m.LIBRARY_CITATION_KEY / m.PDF_FILENAME
+    mirror.parent.mkdir(parents=True)
+    mirror.write_bytes(content)
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    monkeypatch.setattr(m, "PDF_SHA256", hashlib.sha256(content).hexdigest())
+    with caplog.at_level(logging.INFO, logger=m.log.name):
+        dataset = m.OrganicAcidYoshida2012Dataset(
+            root=str(tmp_path / "fresh"), genome=_genome()
+        )
+    dest = tmp_path / "fresh" / "raw" / m.PDF_FILENAME
+    assert dest.read_bytes() == content
+    staged = [
+        r.getMessage()
+        for r in caplog.records
+        if r.name == m.log.name and r.getMessage().startswith("Staged")
+    ]
+    assert staged == [f"Staged {dest} ({len(content)} bytes, sha256 verified)"]
+    assert len(dataset) == 17
+
+
+def test_main_builds_genome_and_dataset_under_data_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``main`` builds the genome from ``$DATA_ROOT/data/sgd/genome`` and ``data/go`` with
+    ``overwrite=False``, then the dataset at
+    ``$DATA_ROOT/data/torchcell/organic_acid_yoshida2012`` with that genome, and prints
+    its length and first item. Both classes are recorders.
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    calls: list[tuple[str, dict[str, Any]]] = []
+
+    class _Genome:
+        def __init__(self, **kwargs: Any) -> None:
+            calls.append(("genome", kwargs))
+
+    class _Dataset:
+        def __init__(self, **kwargs: Any) -> None:
+            calls.append(("dataset", kwargs))
+
+        def __len__(self) -> int:
+            return 17
+
+        def __getitem__(self, index: int) -> str:
+            return f"item[{index}]"
+
+    monkeypatch.setattr(m, "SCerevisiaeGenome", _Genome)
+    monkeypatch.setattr(m, "OrganicAcidYoshida2012Dataset", _Dataset)
+    m.main()
+    assert [name for name, _ in calls] == ["genome", "dataset"]
+    assert calls[0][1] == {
+        "genome_root": f"{tmp_path}/data/sgd/genome",
+        "go_root": f"{tmp_path}/data/go",
+        "overwrite": False,
+    }
+    assert list(calls[1][1]) == ["root", "genome"]
+    assert calls[1][1]["root"] == f"{tmp_path}/data/torchcell/organic_acid_yoshida2012"
+    assert type(calls[1][1]["genome"]) is _Genome
+    assert capsys.readouterr().out == "len = 17\nitem[0]\n"

@@ -19,16 +19,43 @@ Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV
 ``wt114data.tsv`` (NAME + the same features): wt1 1.0 3.0 0.25 0.5; wt2 3.0 5.0 0.75 1.0;
 wt3 5.0 7.0 n.d. 1.5. Means: A101_A 3.0, C103_A1B 5.0, ACV103_A1B 0.5 (``n.d.`` coerced
 to NaN and skipped), CCV103_A1B 1.0.
+
+2026.09.30 (Phase 16): the same matrices, plus
+
+- the ledger (lines 236 and 188): "Ohnuki 2018: 4 essential-gene heterozygote strains
+  (0 dropped for naming)" then "Processing Ohnuki 2018 CalMorph morphology data...".
+- ``transform_item`` round trips through ``CalMorphExperiment`` and
+  ``CalMorphExperimentReference``.
+- an edge matrix (``A101_A``, ``ACV103_A1B``): YAL001C (1.0, 0.1), ``yal001c `` (2.0,
+  0.2), a blank ORF (3.0, 0.3) and a whitespace-only ORF (4.0, 0.4); WT w1 (1.0, 0.3),
+  w2 (3.0, 0.5), so the reference is A101_A 2.0 and ACV103_A1B (0.3 + 0.5) / 2 = 0.4.
+  Two records, both YAL001C; the count line says 2.
+- a WT feature that is "n.d." in every row has a NaN mean and the reference phenotype is
+  refused: "CV measurement ACV103_A1B cannot be NaN".
+- ``genome=None`` calls ``default_genome()`` once (line 230).
+- ``download`` with ``_RAW_FILES`` replaced by pins for the synthetic matrices: both are
+  copied from ``$DATA_ROOT/<_MIRROR_DIR>`` and a second call with the mirror removed
+  re-verifies the raw copies.
+
+Findings pinned here: the same ORF in two spellings gives two records with identical
+genotypes; a row whose ORF is blank or whitespace only is dropped silently (lines 224 to
+226, no log line, the count reads "0 dropped for naming"), although the module says
+"no record is dropped for a naming reason"; ``create_experiment`` is a bare ``pass``
+returning None (line 254).
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
+import pandas as pd
+import pydantic
 import pytest
 
 from torchcell.datamodels.schema import (
@@ -49,6 +76,15 @@ from torchcell.sequence.genome.scerevisiae.s288c import (
     GeneNameStatus,
     SCerevisiaeGenome,
 )
+
+
+@pytest.fixture(autouse=True)
+def _no_tc_data_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every build here reads ``raw/``; an inherited ``TC_DATA_URL`` would send it to
+    the tc-data endpoint instead (``ExperimentDataset._download``).
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+
 
 _FEATURES = ["A101_A", "C103_A1B", "ACV103_A1B", "CCV103_A1B"]
 _MUTANT_ROWS = [
@@ -184,8 +220,6 @@ def test_side_files(dataset: m.ScmdOhnuki2018Dataset) -> None:
     """``data.csv`` keeps the blank cell blank (the 0.0 is introduced only in the record);
     one reference covers all four records; the gene set is the four stored names.
     """
-    assert dataset.experiment_class is CalMorphExperiment
-    assert dataset.reference_class is CalMorphExperimentReference
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "data.csv").read_text() == (
         "ORF,A101_A,C103_A1B,ACV103_A1B,CCV103_A1B,systematic_gene_name,"
@@ -235,3 +269,194 @@ def test_download_verifies_present_files_and_needs_the_mirror(
         ),
     ):
         m.ScmdOhnuki2018Dataset(root=str(tmp_path / "empty"), genome=_genome())
+
+
+def test_items_retype_through_the_calmorph_classes(
+    dataset: m.ScmdOhnuki2018Dataset,
+) -> None:
+    """``transform_item`` rebuilds each stored item through the declared classes (lines
+    136 to 144), dumping back to exactly the stored dictionaries, copy-number
+    perturbation and diploid reference included.
+    """
+    for index in range(4):
+        item = dataset[index]
+        typed = dataset.transform_item(item)
+        assert type(typed["experiment"]) is CalMorphExperiment
+        assert type(typed["reference"]) is CalMorphExperimentReference
+        assert typed["experiment"].model_dump() == item["experiment"]
+        assert typed["reference"].model_dump() == item["reference"]
+        assert typed["publication"].model_dump() == _PUBLICATION
+
+
+def test_generic_hooks_are_inert_and_create_experiment_returns_none(
+    dataset: m.ScmdOhnuki2018Dataset,
+) -> None:
+    """``preprocess_raw`` returns its frame unchanged.
+
+    Finding: ``create_experiment`` is a bare ``pass`` (line 254) returning None rather
+    than raising ``NotImplementedError``. Pinned until it raises.
+    """
+    frame = pd.DataFrame({"ORF": ["YAL001C"], "A101_A": [1.0]})
+    returned = dataset.preprocess_raw(frame)
+    assert returned is frame
+    assert returned.to_dict("list") == {"ORF": ["YAL001C"], "A101_A": [1.0]}
+    hook: Callable[[], object] = dataset.create_experiment
+    assert hook() is None
+
+
+def test_build_logs_the_strain_count_then_processing(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """All four rows are kept, so the count line says 4."""
+    with caplog.at_level(logging.INFO, logger=m.log.name):
+        m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)), genome=_genome())
+    assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
+        "Ohnuki 2018: 4 essential-gene heterozygote strains (0 dropped for naming)",
+        "Processing Ohnuki 2018 CalMorph morphology data...",
+    ]
+
+
+def test_duplicate_spellings_are_kept_and_blank_orfs_dropped_silently(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Finding: YAL001C and ``yal001c `` give two records with the same genotype (the
+    reconciler maps unique names; nothing checks duplicate rows). Finding: the blank
+    and the whitespace-only ORF rows are dropped by the ``notna`` and ``!= ""`` filters
+    (lines 224 to 226) with no log line, and the count reads "(0 dropped for naming)".
+    Pinned until duplicates are refused and blank names are logged.
+    """
+    root = tmp_path / "edges"
+    (root / "raw").mkdir(parents=True)
+    _write_tsv(
+        root / "raw" / "ess1112data.tsv",
+        ["ORF", "A101_A", "ACV103_A1B"],
+        [
+            ["YAL001C", "1.0", "0.1"],
+            ["yal001c ", "2.0", "0.2"],
+            ["", "3.0", "0.3"],
+            ["  ", "4.0", "0.4"],
+        ],
+    )
+    _write_tsv(
+        root / "raw" / "wt114data.tsv",
+        ["NAME", "A101_A", "ACV103_A1B"],
+        [["w1", "1.0", "0.3"], ["w2", "3.0", "0.5"]],
+    )
+    with caplog.at_level(logging.INFO, logger=m.log.name):
+        dataset = m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
+    assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
+        "Ohnuki 2018: 2 essential-gene heterozygote strains (0 dropped for naming)",
+        "Processing Ohnuki 2018 CalMorph morphology data...",
+    ]
+    reference = CalMorphExperimentReference(
+        dataset_name="ScmdOhnuki2018Dataset",
+        genome_reference=ReferenceGenome(
+            species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
+        ),
+        environment_reference=_ENVIRONMENT,
+        phenotype_reference=CalMorphPhenotype(
+            calmorph={"A101_A": 2.0},
+            calmorph_coefficient_of_variation={"ACV103_A1B": 0.4},
+        ),
+    ).model_dump()
+    assert len(dataset) == 2
+    for index, (base, cv) in enumerate(((1.0, 0.1), (2.0, 0.2))):
+        experiment = dataset[index]["experiment"]
+        assert (
+            experiment["genotype"] == _experiment("YAL001C", [0, 0, 0, 0])["genotype"]
+        )
+        assert experiment["phenotype"] == (
+            CalMorphPhenotype(
+                calmorph={"A101_A": base},
+                calmorph_coefficient_of_variation={"ACV103_A1B": cv},
+            ).model_dump()
+        )
+        assert dataset[index]["reference"] == reference
+    dataset.close_lmdb()
+
+
+def test_a_wt_feature_with_no_numeric_cell_refuses_the_reference(
+    tmp_path: Path,
+) -> None:
+    """Every WT cell of ACV103_A1B is "n.d.", so its coerced mean is NaN and the reference
+    ``CalMorphPhenotype`` refuses it by name.
+    """
+    root = tmp_path / "nd"
+    (root / "raw").mkdir(parents=True)
+    _write_tsv(
+        root / "raw" / "ess1112data.tsv",
+        ["ORF", "A101_A", "ACV103_A1B"],
+        [["YAL001C", "1.0", "0.1"]],
+    )
+    _write_tsv(
+        root / "raw" / "wt114data.tsv",
+        ["NAME", "A101_A", "ACV103_A1B"],
+        [["w1", "1.0", "n.d."], ["w2", "3.0", "n.d."]],
+    )
+    with pytest.raises(pydantic.ValidationError) as info:
+        m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
+    assert [(e["loc"], e["msg"]) for e in info.value.errors()] == [
+        (
+            ("calmorph_coefficient_of_variation",),
+            "Value error, CV measurement ACV103_A1B cannot be NaN",
+        )
+    ]
+
+
+def test_missing_genome_is_built_once_by_default_genome(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With ``genome=None`` the build calls ``default_genome()`` exactly once (line 230)
+    and reconciles with what it returns, so YBR002C is stored as YBR001C as in the
+    stubbed build.
+    """
+    stub: object = _StubGenome()
+    calls: list[None] = []
+
+    def fake_default_genome() -> object:
+        calls.append(None)
+        return stub
+
+    monkeypatch.setattr(m, "default_genome", fake_default_genome)
+    dataset = m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)))
+    assert calls == [None]
+    assert dataset.genome is stub
+    assert dataset[1]["experiment"] == _experiment("YBR001C", [3.0, 4.0, 0.25, 0.5])
+
+
+def test_download_copies_both_pinned_matrices_then_reverifies_in_place(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With ``_RAW_FILES`` pinned to the synthetic matrices, an empty root copies both
+    from ``$DATA_ROOT/<_MIRROR_DIR>`` byte for byte and builds four records; a second
+    ``download`` with the mirror removed only re-hashes the raw copies.
+    """
+    source = _root(tmp_path, "source") / "raw"
+    data_root = tmp_path / "data_root"
+    mirror = data_root / m._MIRROR_DIR
+    mirror.mkdir(parents=True)
+    content: dict[str, bytes] = {}
+    for name in ("ess1112data.tsv", "wt114data.tsv"):
+        content[name] = (source / name).read_bytes()
+        (mirror / name).write_bytes(content[name])
+    monkeypatch.setattr(
+        m,
+        "_RAW_FILES",
+        {
+            name: {
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "id_column": m._RAW_FILES[name]["id_column"],
+            }
+            for name, data in content.items()
+        },
+    )
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    dataset = m.ScmdOhnuki2018Dataset(root=str(tmp_path / "fresh"), genome=_genome())
+    raw = tmp_path / "fresh" / "raw"
+    assert {name: (raw / name).read_bytes() for name in content} == content
+    assert len(dataset) == 4
+    for name in content:
+        (mirror / name).unlink()
+    dataset.download()
+    assert {name: (raw / name).read_bytes() for name in content} == content

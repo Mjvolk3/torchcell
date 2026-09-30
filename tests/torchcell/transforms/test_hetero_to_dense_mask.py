@@ -6,6 +6,19 @@
 Genes 0 -> 1 and 1 -> 2 are the only edges; reactions r0 -> {m0, m1} and r1 -> {m1} the
 only incidences. Padding genes to 4 nodes must extend every gene tensor by one zero row,
 mark the fourth gene as padding, and leave the sparse indices untouched.
+
+2026.09.30, Phase 16: a second hand-written graph, ``_edge_case_graph``, has the same
+three genes with ``pos = [[0, 1], [2, 3], [4, 5]]``, a per-gene ``[3, 3]`` matrix
+``pair = arange(9).view(3, 3)``, a length-5 tensor ``other = arange(5)``, a Python list
+``names`` and a ``node_ids`` tensor; a ``physical`` edge list ``[[0, 7], [1, 1]]`` (the
+second column names gene 7, which does not exist), a ``dead`` edge list ``[[7], [8]]``,
+a hyperedge list ``[[5], [0]]`` naming reaction 5 of 2, and an edge type carrying only an
+``edge_attr``. The validity filter is ``index < target count``, so with genes padded to 4
+the physical mask holds only (0, 1), the dead mask and the incidence mask are all False,
+and the attribute-only edge type gets neither mask. The node-attribute padding pads a
+tensor whose first dimension equals the ORIGINAL node count (``pos``, ``pair``) by
+``4 - 3 = 1`` zero row and leaves everything else (``other`` of length 5, the list, and
+``node_ids`` by name) as it was.
 """
 
 import pytest
@@ -80,3 +93,95 @@ def test_repr_names_the_overrides() -> None:
         repr(HeteroToDenseMask({"gene": 4}))
         == "HeteroToDenseMask(num_nodes_dict={'gene': 4})"
     )
+
+
+def _edge_case_graph() -> HeteroData:
+    data = HeteroData()
+    data["gene"].x = torch.tensor([[1.0], [2.0], [3.0]])
+    data["gene"].pos = torch.tensor([[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]])
+    data["gene"].pair = torch.arange(9.0).view(3, 3)
+    data["gene"].other = torch.arange(5)
+    data["gene"].names = ["a", "b", "c"]
+    data["gene"].node_ids = torch.tensor([7, 8, 9])
+    data["reaction"].num_nodes = 2
+    data["metabolite"].num_nodes = 2
+    data["gene", "physical", "gene"].edge_index = torch.tensor([[0, 7], [1, 1]])
+    data["gene", "dead", "gene"].edge_index = torch.tensor([[7], [8]])
+    data["reaction", "rmr", "metabolite"].hyperedge_index = torch.tensor([[5], [0]])
+    data["gene", "attr", "gene"].edge_attr = torch.tensor([1.0, 2.0])
+    return data
+
+
+def test_out_of_range_indices_are_dropped_from_the_masks_but_kept_in_the_index() -> (
+    None
+):
+    """Gene 7 and reaction 5 do not exist: only (0, 1) survives; the all-invalid lists
+    give all-False masks, and every sparse index is returned exactly as given.
+    """
+    out = HeteroToDenseMask(num_nodes_dict={"gene": 4})(_edge_case_graph())
+    expected = torch.zeros(4, 4, dtype=torch.bool)
+    expected[0, 1] = True
+    assert torch.equal(out["gene", "physical", "gene"].adj_mask, expected)
+    assert torch.equal(
+        out["gene", "dead", "gene"].adj_mask, torch.zeros(4, 4, dtype=torch.bool)
+    )
+    assert torch.equal(
+        out["reaction", "rmr", "metabolite"].inc_mask,
+        torch.zeros(2, 2, dtype=torch.bool),
+    )
+    assert torch.equal(
+        out["gene", "physical", "gene"].edge_index, torch.tensor([[0, 7], [1, 1]])
+    )
+    assert torch.equal(
+        out["reaction", "rmr", "metabolite"].hyperedge_index, torch.tensor([[5], [0]])
+    )
+
+
+def test_an_edge_type_without_an_index_gets_no_mask() -> None:
+    """An edge store holding only ``edge_attr`` is left with exactly that attribute."""
+    out = HeteroToDenseMask()(_edge_case_graph())
+    store = out["gene", "attr", "gene"]
+    assert list(store.keys()) == ["edge_attr"]
+    torch.testing.assert_close(store.edge_attr, torch.tensor([1.0, 2.0]))
+
+
+def test_padding_extends_pos_and_node_sized_tensors_and_leaves_the_rest() -> None:
+    """``pos`` and ``pair`` gain one zero row; ``other`` (length 5), the list of names
+    and ``node_ids`` (skipped by name) are unchanged.
+
+    Finding: the per-node test is ``value.size(0) == orig_num_nodes``
+    (``hetero_to_dense_mask.py:141``), so a gene-by-gene matrix is padded along its rows
+    only and comes back ``[4, 3]``, not ``[4, 4]``. Pinned until square per-node
+    attributes are padded on both axes or declared unsupported.
+    """
+    out = HeteroToDenseMask(num_nodes_dict={"gene": 4})(_edge_case_graph())
+    gene = out["gene"]
+    torch.testing.assert_close(
+        gene.pos, torch.tensor([[0.0, 1.0], [2.0, 3.0], [4.0, 5.0], [0.0, 0.0]])
+    )
+    torch.testing.assert_close(
+        gene.pair,
+        torch.tensor(
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0], [0.0, 0.0, 0.0]]
+        ),
+    )
+    assert torch.equal(gene.other, torch.arange(5))
+    assert gene.names == ["a", "b", "c"]
+    assert torch.equal(gene.node_ids, torch.tensor([7, 8, 9]))
+
+
+def test_an_edge_into_the_padding_row_passes_the_validity_filter() -> None:
+    """Finding: validity is checked against the PADDED count, not the original one.
+
+    With three genes padded to four, an edge ``3 -> 0`` names a gene that does not exist
+    in the input, yet ``3 < 4`` so it is written to ``adj_mask[3, 0]`` while
+    ``mask[3]`` marks row 3 as padding (``hetero_to_dense_mask.py:63-69``). Pinned until
+    the filter uses the original node count.
+    """
+    data = _graph()
+    data["gene", "physical", "gene"].edge_index = torch.tensor([[3], [0]])
+    out = HeteroToDenseMask(num_nodes_dict={"gene": 4})(data)
+    expected = torch.zeros(4, 4, dtype=torch.bool)
+    expected[3, 0] = True
+    assert torch.equal(out["gene", "physical", "gene"].adj_mask, expected)
+    assert torch.equal(out["gene"].mask, torch.tensor([True, True, True, False]))

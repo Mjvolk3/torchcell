@@ -31,6 +31,22 @@ Fixture (GFF coordinates are 1-based inclusive; Python slices are ``[start - 1:e
 ``go.obo`` holds ``GO:0000001`` (live) and ``GO:0000002`` (obsolete); ``GO:0000003`` is
 absent. ``GODag`` skips obsolete terms by default, so ``GO:0000002`` is also absent
 from the loaded DAG. Attribute lists come back in file order.
+
+2026.09.30 (Phase 16). ``_single_gene_genome`` builds a separate genome (same FASTA,
+``overwrite=False``) whose GFF holds only the rows of one gene ``G1``, so no other
+feature falls inside its region. Expected values, derived from the source:
+
+* A 1-bp CDS at the 5' end (``+`` at the gene start, ``-`` at the gene end) or a
+  ``five_prime_UTR_intron`` strictly inside the gene makes the constructor use the gene
+  row: ``+`` 31..45 gives ``CHR_I[30:45]`` = ``GGACTGCAATGTCTA``; ``-`` 5..16 gives
+  revcomp(``CHR_II[4:16]`` = ``AATTCATGCATG``) = ``CATGCATGAATT``.
+* Two CDS rows, one Verified (40..45): the Verified one, ``CHR_I[39:45]`` = ``TGTCTA``.
+* A 5' intron with no CDS, or two CDS with none Verified, leaves ``feature`` unbound
+  (UnboundLocalError); a CDS without ``orf_classification`` raises KeyError, which
+  ``__getitem__`` turns into None and the "not found" print (Findings).
+* A ``.`` strand leaves ``seq`` None and every window raises UnboundLocalError (Finding).
+* ``get_seq`` with an ``id`` supplied: ``-`` on chrI [0, 5) is revcomp(``GATTA``) =
+  ``TAATC``; a string chromosome fails ``DnaSelectionResult`` validation (Finding).
 """
 
 import os
@@ -38,15 +54,19 @@ import os.path as osp
 import pickle
 import re
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 import gffutils
 import pandas as pd
 import pytest
 from gffutils.exceptions import FeatureNotFoundError
+from pydantic import ValidationError
 from sortedcontainers import SortedDict, SortedSet
 
 import torchcell.sequence.genome.scerevisiae.s288c as s288c
-from torchcell.sequence import DnaWindowResult
+from torchcell.sequence import DnaSelectionResult, DnaWindowResult
+from torchcell.sequence.data import GeneSet
 from torchcell.sequence.genome.scerevisiae.s288c import (
     GeneNameResolution,
     GeneNameStatus,
@@ -923,3 +943,340 @@ def test_pickle_round_trip_drops_go_dag(genome: SCerevisiaeGenome) -> None:
         False,
     )
     assert list(restored.gene_set) == list(genome.gene_set)
+
+
+# --------------------------------------------------------------------------- #
+# 2026.09.30 (Phase 16): the CDS-selection branches on one-gene genomes, the strand
+# refusals, get_seq, the obsolete-term branch, and the caches.
+# --------------------------------------------------------------------------- #
+
+GffRow = tuple[str, str, int, int, str, str]
+
+
+def _single_gene_genome(
+    root: Path, monkeypatch: pytest.MonkeyPatch, rows: list[GffRow]
+) -> SCerevisiaeGenome:
+    """A genome over the fixture FASTA whose GFF is exactly ``rows``."""
+    release = root / "release"
+    release.mkdir(parents=True)
+    lines = ["##gff-version 3"]
+    for seqid, ftype, start, end, strand, attrs in rows:
+        lines.append(
+            "\t".join([seqid, "SGD", ftype, str(start), str(end), ".", strand, "."])
+            + "\t"
+            + attrs
+        )
+    texts = {
+        f"S288C_reference_sequence_{VERSION}.fsa": FASTA_DNA,
+        f"saccharomyces_cerevisiae_{VERSION}.gff": "\n".join(lines) + "\n",
+        f"orf_trans_all_{VERSION}.fasta": FASTA_PROTEIN,
+        f"orf_coding_all_{VERSION}.fasta": FASTA_CDS,
+    }
+    paths: dict[str, str] = {}
+    for name, text in texts.items():
+        (release / name).write_text(text)
+        paths[name] = str(release / name)
+    monkeypatch.setattr(
+        s288c, "resolve", lambda assembly_set, filename: paths[filename]
+    )
+    (root / "go").mkdir()
+    (root / "go" / "go.obo").write_text(GO_OBO)
+    build_db(paths[f"saccharomyces_cerevisiae_{VERSION}.gff"], root / "genome")
+    return SCerevisiaeGenome(
+        genome_root=str(root / "genome"), go_root=str(root / "go"), overwrite=False
+    )
+
+
+_GENE_PLUS: GffRow = ("chrI", "gene", 31, 45, "+", "ID=G1;Name=G1")
+_INTRON_START: GffRow = (
+    "chrI",
+    "five_prime_UTR_intron",
+    31,
+    33,
+    "+",
+    "ID=G1_i;Parent=G1",
+)
+
+
+def _cds(start: int, end: int, cls: str | None, strand: str = "+") -> GffRow:
+    tail = "" if cls is None else f";orf_classification={cls}"
+    return ("chrI", "CDS", start, end, strand, f"ID=G1_c{start};Parent=G1{tail}")
+
+
+def test_one_bp_five_prime_cds_on_plus_keeps_the_gene_row(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``+`` 31..45 with a 5' intron and a 1-bp CDS at 31: the gene row, 31..45."""
+    genome = _single_gene_genome(
+        tmp_path,
+        monkeypatch,
+        [_GENE_PLUS, _INTRON_START, _cds(31, 31, "Verified"), _cds(34, 45, "Verified")],
+    )
+    gene = genome["G1"]
+    assert gene is not None
+    assert (gene.start, gene.end, gene.strand, gene.seq) == (
+        31,
+        45,
+        "+",
+        "GGACTGCAATGTCTA",
+    )
+    assert CHR_I[30:45] == gene.seq
+
+
+def test_one_bp_five_prime_cds_on_minus_keeps_the_gene_row(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``-`` 5..16 with a 1-bp CDS at the gene end (its 5' end): the gene row."""
+    rows: list[GffRow] = [
+        ("chrII", "gene", 5, 16, "-", "ID=G1;Name=G1"),
+        ("chrII", "five_prime_UTR_intron", 14, 16, "-", "ID=G1_i;Parent=G1"),
+        ("chrII", "CDS", 16, 16, "-", "ID=G1_c0;Parent=G1;orf_classification=Verified"),
+        ("chrII", "CDS", 5, 13, "-", "ID=G1_c1;Parent=G1;orf_classification=Verified"),
+    ]
+    gene = _single_gene_genome(tmp_path, monkeypatch, rows)["G1"]
+    assert gene is not None
+    assert (gene.chromosome, gene.start, gene.end, gene.seq) == (
+        2,
+        5,
+        16,
+        "CATGCATGAATT",
+    )
+    assert CHR_II[4:16] == "AATTCATGCATG"
+
+
+def test_middle_five_prime_intron_keeps_the_gene_row(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An intron at 35..37, strictly inside 31..45, is not a 5' UTR intron: gene row."""
+    genome = _single_gene_genome(
+        tmp_path,
+        monkeypatch,
+        [
+            _GENE_PLUS,
+            ("chrI", "five_prime_UTR_intron", 35, 37, "+", "ID=G1_i;Parent=G1"),
+            _cds(38, 45, "Verified"),
+        ],
+    )
+    gene = genome["G1"]
+    assert gene is not None
+    assert (gene.start, gene.end, gene.seq) == (31, 45, "GGACTGCAATGTCTA")
+
+
+def test_two_cds_one_verified_selects_the_verified(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A Dubious 34..39 and a Verified 40..45: the gene is 40..45, CHR_I[39:45]."""
+    genome = _single_gene_genome(
+        tmp_path,
+        monkeypatch,
+        [_GENE_PLUS, _INTRON_START, _cds(34, 39, "Dubious"), _cds(40, 45, "Verified")],
+    )
+    gene = genome["G1"]
+    assert gene is not None
+    assert (gene.start, gene.end, gene.seq) == (40, 45, "TGTCTA")
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [[], [_cds(34, 39, "Dubious"), _cds(40, 45, "Dubious")]],
+    ids=["no_cds", "no_verified_cds"],
+)
+def test_five_prime_intron_without_a_usable_cds_is_unbound(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, extra: list[GffRow]
+) -> None:
+    """Finding: no CDS, or several with none Verified, leaves ``feature`` unbound.
+
+    s288c.py lines 141 to 161 bind ``feature`` only for one CDS or at least one Verified
+    CDS, so the ``assert isinstance(feature, Feature)`` raises UnboundLocalError. Pinned
+    until the gene row is the fallback or the case is refused by name.
+    """
+    genome = _single_gene_genome(
+        tmp_path, monkeypatch, [_GENE_PLUS, _INTRON_START, *extra]
+    )
+    with pytest.raises(UnboundLocalError, match="'feature'"):
+        genome["G1"]
+
+
+def test_cds_without_orf_classification_reads_as_not_found(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Finding: a missing ``orf_classification`` is a KeyError that ``__getitem__`` eats.
+
+    s288c.py line 151 indexes the attribute, and line 964 turns every KeyError into
+    None plus the "only systematic names" print, so a malformed CDS reads as an unknown
+    gene id. Pinned until the lookup names the missing attribute.
+    """
+    genome = _single_gene_genome(
+        tmp_path,
+        monkeypatch,
+        [_GENE_PLUS, _INTRON_START, _cds(34, 39, None), _cds(40, 45, None)],
+    )
+    assert genome["G1"] is None
+    assert capsys.readouterr().out == (
+        "Gene G1 not found in genome, only systematic names (ID) are supported.\n"
+    )
+
+
+def test_unstranded_gene_has_no_sequence_and_no_windows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Finding: a ``.`` strand builds a gene with ``seq`` None (s288c.py 183 to 188).
+
+    Every window method then reads an unbound ``seq`` (lines 256, 283, 344). Pinned
+    until an unstranded gene is refused at construction.
+    """
+    genome = _single_gene_genome(
+        tmp_path, monkeypatch, [("chrI", "gene", 31, 45, ".", "ID=G1;Name=G1")]
+    )
+    gene = genome["G1"]
+    assert gene is not None
+    assert gene.strand == "."
+    assert gene.seq is None
+    with pytest.raises(UnboundLocalError, match="'seq'"):
+        gene.window(20)
+    with pytest.raises(UnboundLocalError, match="'seq'"):
+        gene.window_five_prime(3)
+    with pytest.raises(UnboundLocalError, match="'seq'"):
+        gene.window_three_prime(3)
+
+
+def test_get_seq_with_an_id_reverse_complements_and_refuses_a_named_chromosome(
+    genome: SCerevisiaeGenome,
+) -> None:
+    """With an ``id`` supplied (the pinned AttributeError is otherwise first):
+
+    ``-`` on chrI [0, 5) is revcomp(GATTA) = TAATC; ``+`` on chrII [5, 9) is ATTC. A
+    FASTA key such as ``ref|NC_001133|`` is accepted as ``chr`` but passed on as the
+    ``chromosome`` int field, so validation fails (Finding, s288c.py line 868; pinned
+    until the key is mapped back through ``nc_to_chr``). A ``.`` strand binds no
+    ``seq`` and raises UnboundLocalError (Finding, lines 862 to 865).
+    """
+    vars(genome)["id"] = "S288C"
+    assert genome.get_seq(1, 0, 5, "-") == DnaSelectionResult(
+        id="S288C", chromosome=1, strand="-", start=0, end=5, seq="TAATC"
+    )
+    assert genome.get_seq(2, 5, 9, "+").seq == CHR_II[5:9] == "ATTC"
+    with pytest.raises(ValidationError, match="unable to parse string as an integer"):
+        genome.get_seq("ref|NC_001133|", 0, 5, "+")
+    with pytest.raises(UnboundLocalError, match="'seq'"):
+        genome.get_seq(1, 0, 5, ".")
+
+
+def test_remove_deprecated_go_terms_drops_an_obsolete_term(
+    genome: SCerevisiaeGenome,
+) -> None:
+    """With a DAG that marks GO:0000003 obsolete, YAL001C keeps only GO:0000001 + SO.
+
+    The real GODag never loads obsolete terms, so a two-term stand-in reaches the
+    ``is_obsolete`` branch; GO:0000002 (absent from it) is still stripped.
+    """
+    stand_in: Any = {
+        "GO:0000001": SimpleNamespace(is_obsolete=False),
+        "GO:0000003": SimpleNamespace(is_obsolete=True),
+    }
+    genome._go_dag = stand_in
+    genome.remove_deprecated_go_terms()
+    kept = {}
+    for gid in ["YAL001C", "YAL002W", "YBL002W"]:
+        gene = genome[gid]
+        assert gene is not None
+        kept[gid] = gene.ontology_term
+    assert kept == {
+        "YAL001C": ["GO:0000001", "SO:0000704"],
+        "YAL002W": None,
+        "YBL002W": ["GO:0000001"],
+    }
+
+
+def test_alias_map_is_computed_once(
+    genome: SCerevisiaeGenome, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The first access materializes all six genes; the second calls ``[]`` zero times."""
+    seen: list[str] = []
+    original = SCerevisiaeGenome.__getitem__
+
+    def counting(self: SCerevisiaeGenome, item: str) -> s288c.SCerevisiaeGene | None:
+        seen.append(item)
+        return original(self, item)
+
+    monkeypatch.setattr(SCerevisiaeGenome, "__getitem__", counting)
+    first = genome.alias_to_systematic
+    assert len(seen) == 6
+    assert genome.alias_to_systematic == first
+    assert len(seen) == 6
+
+
+def test_caches_go_stale_after_drop_chrmt(genome: SCerevisiaeGenome) -> None:
+    """Finding: ``drop_chrmt`` clears no cache (s288c.py lines 906 to 922).
+
+    After the drop, ``feature_index`` still lists Q0010, so the resolver calls it
+    CURRENT, and ``go_genes`` still maps GO:0000002 to Q0010, while the gene set and the
+    database no longer hold it. Pinned until the drops reset the derived caches.
+    """
+    assert genome.resolve_gene_name("Q0010").status is GeneNameStatus.CURRENT
+    assert list(genome.go_genes["GO:0000002"]) == ["Q0010", "YAL002W"]
+    genome.drop_chrmt()
+    assert "Q0010" not in genome.gene_set
+    assert genome.resolve_gene_name("Q0010").status is GeneNameStatus.CURRENT
+    assert list(genome.go_genes["GO:0000002"]) == ["Q0010", "YAL002W"]
+
+
+def test_drop_chrmt_before_the_gene_set_is_cached(genome: SCerevisiaeGenome) -> None:
+    """With no cached gene set, the drop only deletes rows; the set computed afterwards
+    comes from the database and already lacks Q0010.
+    """
+    genome.drop_chrmt()
+    assert list(genome.gene_set) == [
+        "YAL001C",
+        "YAL002W",
+        "YBL001W",
+        "YBL002W",
+        "YCL001W",
+    ]
+
+
+def test_go_subset_genes_merges_genes_sharing_a_term(genome: SCerevisiaeGenome) -> None:
+    """YAL001C and YBL002W both carry GO:0000001; only YAL001C carries GO:0000003."""
+    assert genome.go_subset_genes(SortedSet(["YAL001C", "YBL002W"])) == SortedDict(
+        {
+            "GO:0000001": SortedSet(["YAL001C", "YBL002W"]),
+            "GO:0000003": SortedSet(["YAL001C"]),
+        }
+    )
+
+
+class _RecordingGenome:
+    """Stands in for the genome class in ``main``: records the constructor kwargs."""
+
+    kwargs: list[dict[str, object]] = []
+
+    def __init__(self, **kwargs: object) -> None:
+        _RecordingGenome.kwargs.append(kwargs)
+        self.gene_set = GeneSet(["YAL001C", "YAL002W"])
+
+
+def test_main_builds_under_data_root_with_overwrite_true(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Finding: ``main`` builds with ``overwrite=True`` (s288c.py line 983).
+
+    The genome and GO roots are ``$DATA_ROOT/data/sgd/genome`` and ``$DATA_ROOT/data/go``;
+    the repo ``.env`` is not read (``load_dotenv`` stubbed). Pinned until ``main``
+    defaults to ``overwrite=False`` (memory: genome-overwrite-true-rebuild-race).
+    """
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    _RecordingGenome.kwargs = []
+    monkeypatch.setattr(s288c, "SCerevisiaeGenome", _RecordingGenome)
+    s288c.main()
+    assert _RecordingGenome.kwargs == [
+        {
+            "genome_root": f"{tmp_path}/data/sgd/genome",
+            "go_root": f"{tmp_path}/data/go",
+            "overwrite": True,
+        }
+    ]
+    assert capsys.readouterr().out == (
+        "genome.gene_set: GeneSet(size=2, items=['YAL001C', 'YAL002W'])\n\n"
+    )
+    assert os.listdir(tmp_path) == []

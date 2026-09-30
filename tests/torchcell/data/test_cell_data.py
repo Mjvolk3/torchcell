@@ -1,25 +1,55 @@
-"""Tests for cell data construction and metabolism graph integration."""
+# tests/torchcell/data/test_cell_data.py
+# [[tests.torchcell.data.test_cell_data]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/data/test_cell_data.py
+"""Tests for cell data construction and metabolism graph integration.
+
+The three stoichiometric-matrix tests build the 003-fit-int small-build
+Neo4jCellDataset through ``load_sample_data_batch``, which opens real LMDBs and the SGD
+genome under $DATA_ROOT, so each is data-gated with ``@pytest.mark.data`` and loads the
+repo ``.env`` itself (no import-time ``load_dotenv``: that would inject the developer's
+environment into every plain run).
+
+2026.09.30, Phase 16: the gene-ontology conversion, the strata printout, the cycle
+fallback and the metabolism leftovers on hand-built graphs, no data root. Genes
+YAL001C, YAL002W, YAL003W are indices 0, 1, 2; the base graph carries one edge
+YAL001C--YAL003W, which never becomes an edge type. The GO graph inserts GO:ROOT
+(all three genes), GO:A (YAL001C, YAL002W), GO:B (no ``gene_set``) and GO:C (YAL001C and
+the unknown YZZ999W), with edges child -> parent A -> ROOT, B -> ROOT, C -> A. Sorted,
+GO:A, GO:B, GO:C, GO:ROOT are 0, 1, 2, 3. Pairs follow node insertion order:
+ROOT gives [3, 0], [3, 1], [3, 2]; A gives [0, 0], [0, 1]; C gives [2, 0] (the unknown
+gene is skipped), so ``has_annotation`` is [[0, 1, 2, 0, 1, 0], [3, 3, 3, 0, 0, 2]] and
+``term_gene_counts`` [2, 0, 1, 3] with maximum 3. The edges come out A -> ROOT,
+B -> ROOT, C -> A: ``is_child_of`` [[0, 1, 2], [3, 3, 0]]. Strata number the root 0
+(``compute_strata`` starts from nodes with no parent): ROOT 0, A 1, B 1, C 2, i.e.
+tensor [1, 1, 2, 0] in sorted order, and each (term, gene) row of
+``go_gene_strata_state`` is [term, gene, stratum of term, 1.0].
+"""
 
 import os
 import os.path as osp
 
 import cobra
+import hypernetx as hnx
+import networkx as nx
 import numpy as np
 import pytest
 import torch
 from dotenv import load_dotenv
+from sortedcontainers import SortedDict
 
+from torchcell.data.cell_data import (
+    _process_metabolism_hypergraph,
+    compute_strata,
+    to_cell_data,
+)
+from torchcell.data.hetero_data import HeteroData
+from torchcell.graph.graph import GeneGraph, GeneMultiGraph
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.scratch.load_batch import load_sample_data_batch
-
-# Every test here builds the 003-fit-int small-build Neo4jCellDataset through
-# load_sample_data_batch, which opens real LMDBs and the SGD genome under $DATA_ROOT
-# (torchcell.graph.sgd itself resolves DATA_ROOT lazily and imports cleanly), so the
-# module is data-gated: it runs only with --data.
-load_dotenv()
-pytestmark = pytest.mark.data
+from torchcell.sequence import GeneSet
 
 
+@pytest.mark.data
 def test_stoichiometric_matrix_equivalence():
     """Test that our stoichiometric matrix implementation matches COBRApy's."""
     # Load the dataset and get the cell_graph
@@ -150,6 +180,7 @@ def test_stoichiometric_matrix_equivalence():
     print(our_S[:sample_rows, :sample_cols])
 
 
+@pytest.mark.data
 def test_stoichiometric_matrix_with_duplicate_detection():
     """Test equivalence after accounting for duplicate reactions."""
     # Load the dataset and get the cell_graph
@@ -277,6 +308,7 @@ def test_stoichiometric_matrix_with_duplicate_detection():
     )
 
 
+@pytest.mark.data
 def test_stoichiometric_matrix_exact_equivalence():
     """Test exact equivalence after accounting for duplicate and reversed reactions."""
     # Load the dataset and get the cell_graph
@@ -459,3 +491,219 @@ def test_stoichiometric_matrix_exact_equivalence():
     assert match_percentage > 85, (
         f"Matrices differ too much: only {match_percentage:.2f}% exact matches"
     )
+
+
+GENES = GeneSet(["YAL001C", "YAL002W", "YAL003W"])
+GENE_INDEX = {"YAL001C": 0, "YAL002W": 1, "YAL003W": 2}
+
+
+def _base_only() -> GeneMultiGraph:
+    base = nx.Graph()
+    base.add_nodes_from(GENES)
+    base.add_edge("YAL001C", "YAL003W")
+    return GeneMultiGraph(
+        graphs=SortedDict(
+            {"base": GeneGraph(name="base", graph=base, max_gene_set=GENES)}
+        )
+    )
+
+
+def _go_graph() -> nx.DiGraph:
+    go = nx.DiGraph()
+    go.add_node("GO:ROOT", gene_set=GeneSet(["YAL001C", "YAL002W", "YAL003W"]))
+    go.add_node("GO:A", gene_set=GeneSet(["YAL001C", "YAL002W"]))
+    go.add_node("GO:B")
+    go.add_node("GO:C", gene_set=GeneSet(["YAL001C", "YZZ999W"]))
+    go.add_edge("GO:A", "GO:ROOT")
+    go.add_edge("GO:B", "GO:ROOT")
+    go.add_edge("GO:C", "GO:A")
+    return go
+
+
+def test_base_graph_edges_never_become_an_edge_type() -> None:
+    """The base graph only defines the gene index; its YAL001C--YAL003W edge is dropped."""
+    data = to_cell_data(_base_only())
+    assert data.edge_types == []
+    assert data["gene"].node_ids == ["YAL001C", "YAL002W", "YAL003W"]
+
+
+def test_gene_ontology_indices_edges_and_counts(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Sorted term ids, gene-to-term and child-to-parent edges, per-term counts and the
+    term-to-gene dict exactly as derived in the module docstring; the strata summary is
+    printed, one line per stratum.
+    """
+    data = to_cell_data(_base_only(), incidence_graphs={"gene_ontology": _go_graph()})
+    assert data.edge_types == [
+        ("gene", "has_annotation", "gene_ontology"),
+        ("gene_ontology", "is_child_of", "gene_ontology"),
+    ]
+    go = data["gene_ontology"]
+    assert go.num_nodes == 4
+    assert go.node_ids == ["GO:A", "GO:B", "GO:C", "GO:ROOT"]
+    assert go.term_ids == ["GO:A", "GO:B", "GO:C", "GO:ROOT"]
+    assert go.term_gene_mapping.tolist() == [
+        [3, 0],
+        [3, 1],
+        [3, 2],
+        [0, 0],
+        [0, 1],
+        [2, 0],
+    ]
+    assert go.term_gene_counts.tolist() == [2, 0, 1, 3]
+    assert go.max_genes_per_term == 3
+    assert go.term_to_gene_dict == {3: [0, 1, 2], 0: [0, 1], 1: [], 2: [0]}
+    annotation = data["gene", "has_annotation", "gene_ontology"]
+    assert annotation.edge_index.tolist() == [[0, 1, 2, 0, 1, 0], [3, 3, 3, 0, 0, 2]]
+    assert annotation.num_edges == 6
+    hierarchy = data["gene_ontology", "is_child_of", "gene_ontology"]
+    assert hierarchy.edge_index.tolist() == [[0, 1, 2], [3, 3, 0]]
+    assert hierarchy.num_edges == 3
+    assert capsys.readouterr().out == (
+        "Computed 3 strata for 4 GO terms\n"
+        "  Stratum 0: 1 terms\n"
+        "  Stratum 1: 2 terms\n"
+        "  Stratum 2: 1 terms\n"
+    )
+
+
+def test_gene_ontology_feature_counts_genes_the_base_graph_lacks() -> None:
+    """Finding: ``x`` is ``len(gene_set)`` (``cell_data.py:324``), so GO:C reports 2
+    although only one of its genes is in the base graph and ``term_gene_counts`` says 1.
+    Pinned until the feature counts only indexed genes or is documented as the raw size.
+    """
+    data = to_cell_data(_base_only(), incidence_graphs={"gene_ontology": _go_graph()})
+    assert data["gene_ontology"].x.tolist() == [[2.0], [0.0], [2.0], [3.0]]
+    assert data["gene_ontology"].term_gene_counts[2].item() == 1
+
+
+def test_gene_ontology_strata_and_the_unperturbed_state_table() -> None:
+    """Strata [1, 1, 2, 0] in sorted order, stratum 0 -> [ROOT], 1 -> [A, B], 2 -> [C];
+    one ``[term, gene, stratum, 1.0]`` row per annotation pair.
+    """
+    data = to_cell_data(_base_only(), incidence_graphs={"gene_ontology": _go_graph()})
+    go = data["gene_ontology"]
+    assert go.strata.tolist() == [1, 1, 2, 0]
+    assert {k: v.tolist() for k, v in go.stratum_to_terms.items()} == {
+        0: [3],
+        1: [0, 1],
+        2: [2],
+    }
+    assert go.go_gene_strata_state.tolist() == [
+        [3.0, 0.0, 0.0, 1.0],
+        [3.0, 1.0, 0.0, 1.0],
+        [3.0, 2.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0, 1.0],
+        [2.0, 0.0, 2.0, 1.0],
+    ]
+
+
+def test_an_unannotated_single_term_gets_no_mapping_and_no_edges(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """One bare term: no annotation tables, no edge types, ``x`` [[0]], stratum 0."""
+    go = nx.DiGraph()
+    go.add_node("GO:X")
+    data = to_cell_data(_base_only(), incidence_graphs={"gene_ontology": go})
+    store = data["gene_ontology"]
+    assert data.edge_types == []
+    assert list(store.keys()) == [
+        "num_nodes",
+        "node_ids",
+        "x",
+        "max_genes_per_term",
+        "term_ids",
+        "strata",
+        "stratum_to_terms",
+    ]
+    assert store.x.tolist() == [[0.0]]
+    assert store.max_genes_per_term == 0
+    assert store.strata.tolist() == [0]
+    assert {k: v.tolist() for k, v in store.stratum_to_terms.items()} == {0: [0]}
+    assert capsys.readouterr().out == (
+        "Computed 1 strata for 1 GO terms\n  Stratum 0: 1 terms\n"
+    )
+
+
+def test_a_seven_level_chain_prints_five_strata_and_the_remainder(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """T6 -> T5 -> ... -> T0 gives strata 0..6 in sorted order; the printout stops after
+    five strata and reports the other two.
+    """
+    chain = nx.DiGraph([(f"T{i + 1}", f"T{i}") for i in range(6)])
+    data = to_cell_data(_base_only(), incidence_graphs={"gene_ontology": chain})
+    assert data["gene_ontology"].strata.tolist() == [0, 1, 2, 3, 4, 5, 6]
+    out = capsys.readouterr().out.splitlines()
+    assert out[0] == "Computed 7 strata for 7 GO terms"
+    assert out[1:6] == [f"  Stratum {i}: 1 terms" for i in range(5)]
+    assert out[6:] == ["  ... and 2 more strata"]
+
+
+def test_a_descendant_of_a_cycle_shares_the_cycle_stratum(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Finding: the sink-peeling loop in ``compute_strata`` (``cell_data.py:260-280``) can
+    never assign anything.
+
+    Every node Kahn's pass leaves unassigned still has an unassigned parent, so the
+    remaining subgraph has no node without an out-edge and the fallback assigns all of it
+    to one stratum at once. Z, a plain child of the cycle X <-> Y, therefore lands in the
+    cycle's stratum 2 instead of after it. Pinned until the fallback orders the acyclic
+    remainder.
+    """
+    graph = nx.DiGraph([("A", "ROOT"), ("X", "Y"), ("Y", "X"), ("Z", "X")])
+    assert compute_strata(graph) == {"ROOT": 0, "A": 1, "X": 2, "Y": 2, "Z": 2}
+    assert capsys.readouterr().out == (
+        "Warning: 3 nodes not assigned to strata due to cycles in the GO graph.\n"
+    )
+
+
+def test_hypergraph_reaction_without_genes_gives_no_gpr_edge() -> None:
+    """r0 carries stoichiometry but no ``genes`` property and r1 only an unknown gene:
+    ``reaction_to_genes`` holds r1 alone and no ``gpr`` edge type is created.
+    """
+    hypergraph = hnx.Hypergraph(
+        {"r0": ["m_a"], "r1": ["m_b"]},
+        edge_properties={
+            "r0": {"stoich_coefficient-m_a": -1.0},
+            "r1": {"genes": {"YZZ999W"}, "stoich_coefficient-m_b": 1.0},
+        },
+    )
+    data = HeteroData()
+    _process_metabolism_hypergraph(data, hypergraph, GENE_INDEX)
+    hyper = data["metabolite", "reaction", "metabolite"]
+    assert hyper.hyperedge_index.tolist() == [[0, 1], [0, 1]]
+    assert hyper.stoichiometry.tolist() == [-1.0, 1.0]
+    assert hyper.reaction_to_genes == {1: ["YZZ999W"]}
+    assert hyper.reaction_to_genes_indices == {1: [-1]}
+    assert data.edge_types == [("metabolite", "reaction", "metabolite")]
+
+
+@pytest.mark.parametrize(
+    ("genes", "expected_indices"), [(None, {}), ({"YZZ999W"}, {0: [-1]})]
+)
+def test_bipartite_reactions_without_known_genes_give_no_gpr_edge(
+    genes: set[str] | None, expected_indices: dict[int, list[int]]
+) -> None:
+    """A reaction with no genes, or only a gene the base graph lacks, still gets its
+    signed ``rmr`` edge (reactant -2.0) but no ``gpr`` edge type.
+    """
+    bipartite = nx.DiGraph()
+    if genes is None:
+        bipartite.add_node("r_A", node_type="reaction", subsystem="Growth")
+    else:
+        bipartite.add_node("r_A", node_type="reaction", subsystem="Growth", genes=genes)
+    bipartite.add_node("m_x", node_type="metabolite")
+    bipartite.add_edge("r_A", "m_x", edge_type="reactant", stoichiometry=2.0)
+    data = to_cell_data(
+        _base_only(), incidence_graphs={"metabolism_bipartite": bipartite}
+    )
+    assert data.edge_types == [("reaction", "rmr", "metabolite")]
+    rmr = data["reaction", "rmr", "metabolite"]
+    assert rmr.hyperedge_index.tolist() == [[0], [0]]
+    assert rmr.stoichiometry.tolist() == [-2.0]
+    assert rmr.reaction_to_genes_indices == expected_indices
+    assert data["reaction"].w_growth.tolist() == [1.0]

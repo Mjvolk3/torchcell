@@ -19,11 +19,28 @@ Derived by hand: ``len`` 3; the reference index groups by dataset name since the
 reference differs only there, ``toy_a`` -> [0, 1], ``toy_b`` -> [2]; the gene set is the
 three deleted genes sorted; the value ``process()`` stores under ``data_0`` is exactly
 the JSON written out literally in ``EXPECTED_RECORD_0``.
+
+2026.09.30 (Phase 17): ``fetch_data`` against a recording fake ``GraphDatabase`` (the
+module attribute is replaced, so no driver is ever opened) and a fake
+``releases.list_databases`` that serves one online database ``torchcell`` with the
+aliases ``latest`` and ``pinned``, so the real ``resolve_database`` runs its alias
+pass-through with ``probe=False``. The expected call sequence is driver(uri, auth), then
+``session(database=<resolved>, fetch_size=1000)``, ``run(query, **cypher_kwargs)``, the
+session exit, then ``driver.close()``; the version is the instance's own when set and
+``TORCHCELL_KG_VERSION`` otherwise. A consumer that stops after the first record never
+reaches ``driver.close()`` (a Finding). A construction whose query returns no records
+writes an empty store and an empty reference index, then fails in the gene-set setter
+(a Finding). ``parallel_hash_computation`` returns ``(idx, sha256(json.dumps(ref,
+sort_keys=True)))``, recomputed here with ``hashlib``; ``_get_record`` on a missing key
+raises ``Record not found for key: data_9``; and a cached reference index is returned
+without rewriting a deleted JSON file.
 """
 
+import hashlib
 import json
 import multiprocessing
 import pickle
+import types
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -31,10 +48,13 @@ from typing import Any
 import lmdb
 import pytest
 
+import torchcell.data.neo4j_query_raw as neo4j_query_raw
+import torchcell.knowledge_graphs.releases as releases
 from torchcell.data.neo4j_query_raw import (
     Neo4jQueryRaw,
     compute_experiment_reference_index,
     compute_experiment_reference_index_parallel,
+    parallel_hash_computation,
 )
 from torchcell.datamodels.schema import (
     Environment,
@@ -422,3 +442,204 @@ def test_parallel_and_sequential_paths_give_the_same_index(
         assert [(e.reference.dataset_name, e.member_indices) for e in index] == expected
     assert [e.model_dump() for e in parallel] == [e.model_dump() for e in sequential]
     assert [e.model_dump() for e in helper] == [e.model_dump() for e in sequential]
+
+
+def test_parallel_hash_computation_hashes_the_sorted_reference_json() -> None:
+    """The worker returns its index untouched and the sha256 of the reference dump with
+    sorted keys; a record that carries only ``reference`` (the dataset item key) is a
+    ``KeyError`` on ``experiment_reference``.
+    """
+    reference = RECORDS[2]["experiment_reference"]
+    expected = hashlib.sha256(
+        json.dumps(reference.model_dump(), sort_keys=True).encode()
+    ).hexdigest()
+    assert parallel_hash_computation((7, RECORDS[2])) == (7, expected)
+    assert parallel_hash_computation((0, RECORDS[0]))[1] != expected
+    with pytest.raises(KeyError, match="experiment_reference"):
+        parallel_hash_computation((0, {"reference": reference}))
+
+
+def test_get_record_by_key_refuses_a_missing_key(view: Neo4jQueryRaw) -> None:
+    """The slice reader's per-key helper names the missing key; a present key rebuilds."""
+    view._init_lmdb()
+    assert view._get_record(b"data_1") == RECORDS[1]
+    with pytest.raises(IndexError, match="Record not found for key: data_9"):
+        view._get_record(b"data_9")
+
+
+def test_cached_reference_index_is_returned_without_rewriting_a_deleted_file(
+    store_root: Path, view: Neo4jQueryRaw
+) -> None:
+    """Once computed, the index is held on the instance: deleting the JSON file and
+    reading again returns the same groups and does not recreate the file.
+    """
+    first = view.experiment_reference_index
+    path = store_root / "raw" / "experiment_reference_index.json"
+    path.unlink()
+    again = view.experiment_reference_index
+    assert [e.model_dump() for e in again] == [e.model_dump() for e in first]
+    assert [e.member_indices for e in again] == [[0, 1], [2]]
+    assert not path.exists()
+
+
+class _FakeNeo4j:
+    """Records every driver, session and run call; ``run`` returns ``records``."""
+
+    def __init__(self, records: list[dict[str, Any]]) -> None:
+        self.records = records
+        self.calls: list[tuple[Any, ...]] = []
+        self.listings: list[tuple[Any, ...]] = []
+
+    def driver(self, uri: str, auth: tuple[str, str]) -> "_FakeNeo4j":
+        self.calls.append(("driver", uri, auth))
+        return self
+
+    def session(self, **kwargs: Any) -> "_FakeNeo4j":
+        self.calls.append(("session", kwargs))
+        return self
+
+    def __enter__(self) -> "_FakeNeo4j":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.calls.append(("session_exit",))
+
+    def run(self, query: str, **kwargs: Any) -> Iterator[dict[str, Any]]:
+        self.calls.append(("run", query, kwargs))
+        return iter(self.records)
+
+    def close(self) -> None:
+        self.calls.append(("close",))
+
+
+_SERVED = [
+    releases.ServedDatabase(
+        name="torchcell", aliases=["latest", "pinned"], default=True, status="online"
+    )
+]
+
+
+def _property_shape(record: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "e_serialized": json.dumps(record["experiment"].model_dump()),
+        "ref_serialized": json.dumps(record["experiment_reference"].model_dump()),
+    }
+
+
+@pytest.fixture
+def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> Iterator[_FakeNeo4j]:
+    """Replace the module's ``GraphDatabase`` and the served-database listing."""
+    fake = _FakeNeo4j([_property_shape(RECORDS[0]), _property_shape(RECORDS[2])])
+
+    def list_databases(
+        uri: str, user: str, password: str, *, probe: bool = True
+    ) -> list[releases.ServedDatabase]:
+        fake.listings.append((uri, user, password, probe))
+        return _SERVED
+
+    monkeypatch.setattr(neo4j_query_raw, "GraphDatabase", fake)
+    monkeypatch.setattr(releases, "list_databases", list_databases)
+    yield fake
+
+
+def test_fetch_data_resolves_the_env_version_and_closes_the_driver_after_the_last_record(
+    view: Neo4jQueryRaw, fake_neo4j: _FakeNeo4j, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With no instance version, ``TORCHCELL_KG_VERSION=pinned`` is resolved (an alias of
+    the served database, so it passes through) and opened with ``fetch_size=1000``; the
+    query runs with no parameters; both records are yielded in order; the session exits
+    and the driver closes exactly once, after the last record.
+    """
+    monkeypatch.setenv("TORCHCELL_KG_VERSION", "pinned")
+    records = list(view.fetch_data())
+    assert records == fake_neo4j.records
+    assert fake_neo4j.listings == [(URI, "u", "p", False)]
+    assert fake_neo4j.calls == [
+        ("driver", URI, ("u", "p")),
+        ("session", {"database": "pinned", "fetch_size": 1000}),
+        ("run", QUERY, {}),
+        ("session_exit",),
+        ("close",),
+    ]
+
+
+def test_a_query_built_store_uses_the_instance_version_and_cypher_parameters(
+    tmp_path: Path, fake_neo4j: _FakeNeo4j, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A fresh root runs the real ``fetch_data``: the instance version ``torchcell`` (a
+    database name) wins over ``TORCHCELL_KG_VERSION``, ``cypher_kwargs`` reach ``run``
+    as keyword parameters, and the two property-shape rows are stored as ``data_0`` and
+    ``data_1``.
+    """
+    monkeypatch.setenv("TORCHCELL_KG_VERSION", "latest")
+    raw = Neo4jQueryRaw(
+        uri=URI,
+        username="u",
+        password="p",
+        root_dir=str(tmp_path),
+        query=QUERY,
+        cypher_kwargs={"gene_set": ["YAL001C", "YAL003W"]},
+        version="torchcell",
+    )
+    assert fake_neo4j.listings == [(URI, "u", "p", False)]
+    assert fake_neo4j.calls == [
+        ("driver", URI, ("u", "p")),
+        ("session", {"database": "torchcell", "fetch_size": 1000}),
+        ("run", QUERY, {"gene_set": ["YAL001C", "YAL003W"]}),
+        ("session_exit",),
+        ("close",),
+    ]
+    assert len(raw) == 2
+    assert raw[0:2] == [RECORDS[0], RECORDS[2]]
+    raw.close_lmdb()
+
+
+def test_a_consumer_that_stops_early_leaves_the_driver_open(
+    view: Neo4jQueryRaw, fake_neo4j: _FakeNeo4j
+) -> None:
+    """Finding: ``driver.close()`` (neo4j_query_raw.py line 194) sits after the ``with``
+    block of the generator, not in a ``finally``, so closing the generator after one
+    record exits the session but never closes the driver. Pinned until the close moves
+    into a ``finally``.
+    """
+    records = view.fetch_data()
+    assert isinstance(records, types.GeneratorType)
+    assert next(records) == fake_neo4j.records[0]
+    records.close()
+    assert [call[0] for call in fake_neo4j.calls] == [
+        "driver",
+        "session",
+        "run",
+        "session_exit",
+    ]
+
+
+def test_a_query_with_no_records_fails_after_writing_an_empty_store(
+    tmp_path: Path, fake_neo4j: _FakeNeo4j
+) -> None:
+    """Finding: with zero records ``process()`` writes an empty ``data.mdb`` and an empty
+    reference index, then the gene-set setter (line 494) refuses the empty set, so the
+    constructor raises with the store left on disk. The next construction on that root
+    would find ``data.mdb`` and skip the query (line 162). Pinned until an empty result is
+    refused before the store is written. The store is not reopened here: the failed
+    constructor still holds its write handle.
+    """
+    fake_neo4j.records = []
+    with pytest.raises(
+        ValueError, match="Cannot set an empty or None value for gene_set"
+    ):
+        Neo4jQueryRaw(
+            uri=URI,
+            username="u",
+            password="p",
+            root_dir=str(tmp_path),
+            query=QUERY,
+            version="latest",
+        )
+    raw = tmp_path / "raw"
+    assert sorted(p.name for p in raw.iterdir()) == [
+        "experiment_reference_index.json",
+        "lmdb",
+    ]
+    assert (raw / "experiment_reference_index.json").read_text() == "[]"
+    assert (raw / "lmdb" / "data.mdb").is_file()

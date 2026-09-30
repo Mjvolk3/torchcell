@@ -1,8 +1,21 @@
 # tests/torchcell/verification/test_metabolite_verification.py
-"""Unit tests for the WS8 metabolite verifier + MetabolitePhenotype (synthetic)."""
+"""Unit tests for the WS8 metabolite verifier + MetabolitePhenotype (synthetic).
+
+2026.09.30 (Phase 17): every level's verdict and exact message on the three-strain
+good table (levels 1.5, -0.8, 0.3 on one metabolite, SE 0.1, reference 0), then one
+table per failure mode, each built by mutating one stored dump so only the level under
+test moves. The ``reference_finite`` path (``reference_centered=False``) is pinned on a
+proper-subset reference (passes), an empty reference, a reference key the strain did not
+measure, and an infinite reference (each fails with ``n_bad`` 1; the infinite value is
+counted in ``n_values``, the other two are not). A NaN SE is dropped before the
+non-negativity check while a negative SE fails it. A ``gene_addition`` perturbation is
+outside the strain signature and the L4 gene set, so two strains differing only in a
+cassette are one deletion set.
+"""
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import pytest
@@ -167,3 +180,134 @@ def test_absolute_reference_passes_when_not_centered():
     rf = [r for r in report.results if r.name == "reference_finite"]
     assert rf and rf[0].passed
     assert not any(r.name == "reference_zero" for r in report.results)
+
+
+# --- Phase 17: exact messages per level and per failure mode ------------------ #
+def _result(records: list[dict[str, Any]], name: str, **kwargs: Any) -> Any:
+    report = verify_metabolite_dataset(
+        records,
+        dataset_name="t",
+        provenance=PROV,
+        expected_count=len(records),
+        **kwargs,
+    )
+    return next(r for r in report.results if r.name == name)
+
+
+def test_good_dataset_exact_results_in_order() -> None:
+    """Seven results, in the order the verifier adds them, each with its exact message."""
+    report = verify_metabolite_dataset(
+        _good_records(), dataset_name="good", provenance=PROV, expected_count=3
+    )
+    assert [(r.level, r.name, r.passed, r.message) for r in report.results] == [
+        (Level.L0, "structural", True, "3 records validated"),
+        (Level.L1, "count", True, "observed 3, expected 3"),
+        (
+            Level.L1,
+            "genotype_uniqueness",
+            True,
+            "3 unique strains (deletion sets), one record each",
+        ),
+        (Level.L2, "value_fidelity", True, "3 values checked"),
+        (Level.L2, "se_nonnegative", True, "3 values checked"),
+        (
+            Level.L3,
+            "reference_zero",
+            True,
+            "reference metabolite level == 0 for all 3 values",
+        ),
+        (
+            Level.L3,
+            "measurement_type_consistent",
+            True,
+            f"single measurement_type: {MTYPE!r}",
+        ),
+    ]
+
+
+def test_failure_messages_for_duplicate_nonzero_reference_and_mixed_type() -> None:
+    """Duplicate strain, a 0.7 reference and a second assay, each with its message."""
+    records = _good_records() + [_record("YMR056C", 2.0)]
+    dup = _result(records, "genotype_uniqueness")
+    assert dup.message == "1 deletion sets appear in multiple records"
+    assert dup.details == {"n_strains": 3, "n_duplicated": 1}
+
+    records = _good_records() + [_record("YDR001C", 1.0, ref_level=-0.7)]
+    ref = _result(records, "reference_zero")
+    assert ref.message == "reference level not identically 0: max|v|=0.7"
+    assert ref.details == {"n_values": 4, "worst_abs": 0.7}
+
+    records = _good_records()
+    records[0]["experiment"]["phenotype"]["measurement_type"] = "ms_abundance"
+    mixed = _result(records, "measurement_type_consistent")
+    # sorted: "cri_spa_..." precedes "ms_abundance"
+    assert mixed.message == (
+        f"2 distinct measurement_types mixed: [{MTYPE!r}, 'ms_abundance']"
+    )
+
+
+def _absolute_records() -> list[dict[str, Any]]:
+    return [_record(g, lv, ref_level=5.0) for g, lv in zip(GENES, [7.5, 5.2, 6.1])]
+
+
+def test_reference_finite_accepts_a_proper_subset_reference() -> None:
+    """A strain measuring a metabolite the WT lacks still has a well-defined reference."""
+    records = _absolute_records()
+    phenotype = records[0]["experiment"]["phenotype"]
+    phenotype["metabolite_level"]["lycopene"] = 2.0
+    phenotype["metabolite_level_se"]["lycopene"] = 0.1
+    phenotype["n_replicates"]["lycopene"] = 8
+    result = _result(records, "reference_finite", reference_centered=False)
+    assert result.passed is True
+    assert result.message == "reference level finite + key-subset for all 3 values"
+
+
+@pytest.mark.parametrize(
+    ("reference_levels", "n_values"),
+    [({}, 2), ({"lycopene": 5.0}, 2), ({"betaxanthin": math.inf}, 3)],
+    ids=["empty", "not_a_subset", "infinite"],
+)
+def test_reference_finite_fails_each_malformed_reference(
+    reference_levels: dict[str, float], n_values: int
+) -> None:
+    """One bad reference out of three; only the infinite one is counted as a value."""
+    records = _absolute_records()
+    records[1]["reference"]["phenotype_reference"]["metabolite_level"] = (
+        reference_levels
+    )
+    result = _result(records, "reference_finite", reference_centered=False)
+    assert result.passed is False
+    assert result.message == "1 reference levels non-finite, empty, or not a key-subset"
+    assert result.details == {"n_values": n_values, "n_bad": 1}
+
+
+def test_se_nan_is_dropped_and_negative_se_fails() -> None:
+    """NaN SE (single replicate) is skipped; a negative SE is flagged ``< 0.0``."""
+    records = _good_records()
+    records[0]["experiment"]["phenotype"]["metabolite_level_se"] = {
+        "betaxanthin": math.nan
+    }
+    assert _result(records, "se_nonnegative").message == "2 values checked"
+
+    records = _good_records()
+    records[2]["experiment"]["phenotype"]["metabolite_level_se"] = {"betaxanthin": -0.1}
+    negative = _result(records, "se_nonnegative")
+    assert negative.passed is False
+    assert negative.message == "1/3 values invalid"
+    assert negative.details["bad"] == [{"index": 2, "value": -0.1, "reason": "< 0.0"}]
+
+
+def test_gene_addition_is_outside_the_strain_signature_and_gene_set() -> None:
+    """Two strains that differ only by an added cassette are one deletion set."""
+    records = [_record("YMR056C", 1.0), _record("YMR056C", 2.0)]
+    for i, record in enumerate(records):
+        record["experiment"]["genotype"]["perturbations"].append(
+            {
+                "systematic_gene_name": f"CASSETTE{i}",
+                "perturbed_gene_name": f"cassette{i}",
+                "perturbation_type": "gene_addition",
+            }
+        )
+    dup = _result(records, "genotype_uniqueness")
+    assert dup.message == "1 deletion sets appear in multiple records"
+    assert metabolite_gene_set(records) == {"YMR056C"}

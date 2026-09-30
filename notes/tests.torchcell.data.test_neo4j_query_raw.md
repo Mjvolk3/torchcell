@@ -13,3 +13,9 @@ Thirteen tests. The constructor does not connect when `raw/lmdb/data.mdb` alread
 ## 2026.09.27 - Three findings fixed, their tests flipped
 
 After the fix in [[torchcell.data.neo4j_query_raw]]: `len` closes the environment and a slice afterwards reopens it; `phenotype_label_index` computes `{"fitness": [0, 1, 2]}` and writes the JSON, and a file already on disk still wins; the sequential path, `num_workers=1` and the parallel helper return identical indices on the same records (`mp.cpu_count` patched to 1). The pickling test now checks the reopen through a record read, since `len` no longer leaves the store open.
+
+## 2026.09.30 - Phase 17: fetch_data on a fake driver, hashing, the missing key
+
+Twelve to nineteen tests, 94.5 to 100 percent. `fetch_data` on a fake driver with the real `resolve_database` alias pass-through (the version from the instance, else `TORCHCELL_KG_VERSION`; `fetch_size=1000`; `cypher_kwargs` reaching `run`; the driver closed once); a store built through the real `fetch_data`; `parallel_hash_computation` recomputed with hashlib; `_get_record` on a missing key refusing with `Record not found for key: data_9`; a cached reference index not rewritten after its JSON is deleted.
+
+Findings: `driver.close()` is not in a `finally`, so a consumer that stops early leaves the driver open (line 194); a query that returns no records writes an empty store then fails in the gene-set setter, and the next construction would reuse that store and skip the query (494, 162).

@@ -5,10 +5,21 @@ Builds records from the real pydantic models (so they are schema-valid by
 construction) and checks that a correct dataset passes every level and that each
 failure mode -- sign inversion, non-zero reference, wrong count, dropped gene --
 is caught by the level it belongs to.
+
+2026.09.30 (Phase 17): every level's verdict and exact message on the three-mutant good
+table (4 genes x 3 records = 12 log2 values, SEs and replicate counts; deleted-gene log2
+-3.0, -2.5, -4.0, so the median is -3.000 and all three are negative), then the exact
+message of each failure mode. The orientation rule is pinned at its boundary: deleted-gene
+values -1.0 and +1.0 have median 0.000, which is NOT < 0 and fails. A deleted gene
+missing from the platform map is counted as absent, a perturbation with no systematic
+name is not counted at all, and a table where no deleted gene is on the map fails with
+its own message. A NaN SE is allowed (single replicate) while a replicate count of 0
+fails ``n_replicates_ge_1``.
 """
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from torchcell.datamodels.schema import (
@@ -159,3 +170,115 @@ def test_dropped_gene_fails_completeness():
 
 def test_measured_gene_universe():
     assert measured_gene_universe(_good_records()) == set(GENES)
+
+
+# --- Phase 17: exact messages per level and per failure mode ------------------ #
+def _result(records: list[dict[str, Any]], name: str) -> Any:
+    report = verify_expression_dataset(
+        records, dataset_name="t", provenance=PROV, expected_count=len(records)
+    )
+    return next(r for r in report.results if r.name == name)
+
+
+def test_good_dataset_exact_results_in_order() -> None:
+    """Eight results in the order the verifier adds them, each with its exact message."""
+    report = verify_expression_dataset(
+        _good_records(), dataset_name="good", provenance=PROV, expected_count=3
+    )
+    assert [(r.level, r.name, r.passed, r.message) for r in report.results] == [
+        (Level.L0, "structural", True, "3 records validated"),
+        (Level.L1, "count", True, "observed 3, expected 3"),
+        (
+            Level.L1,
+            "gene_completeness",
+            True,
+            "all 3 records measure the full 4-gene universe",
+        ),
+        (Level.L2, "value_fidelity", True, "12 values checked"),
+        (Level.L2, "se_nonnegative", True, "12 values checked"),
+        (Level.L2, "n_replicates_ge_1", True, "12 values checked"),
+        (
+            Level.L3,
+            "reference_log2_zero",
+            True,
+            "reference log2(sample/ref) == 0 for all 12 values",
+        ),
+        (
+            Level.L3,
+            "deletion_downregulates",
+            True,
+            "median deleted-gene log2=-3.000 (<0 => correct orientation); "
+            "frac_neg=1.000 over 3 deleted genes (0 deleted genes absent from the "
+            "platform map)",
+        ),
+    ]
+
+
+def test_failure_messages_for_reference_count_and_dropped_gene() -> None:
+    records = _good_records()
+    records[1] = _record("YAL002W", {"YAL002W": -2.5}, ref_log2_nonzero=True)
+    assert _result(records, "reference_log2_zero").message == (
+        "reference log2 not identically zero: max|value|=0.5"
+    )
+
+    report = verify_expression_dataset(
+        _good_records(), dataset_name="t", provenance=PROV, expected_count=99
+    )
+    count = next(r for r in report.results if r.name == "count")
+    assert count.message == "observed 3, expected 99"
+
+    records = _good_records() + [
+        _record("YBR001C", {"YBR001C": -3.0}, drop_gene="YAL001C")
+    ]
+    completeness = _result(records, "gene_completeness")
+    assert completeness.message == "1/4 records missing genes vs the universe"
+    assert completeness.details["short"] == [{"index": 3, "n_missing": 1}]
+
+
+def test_orientation_median_of_exactly_zero_fails() -> None:
+    """-1.0 and +1.0 average to a median of 0.0, which the strict ``< 0`` rejects."""
+    records = [
+        _record("YAL001C", {"YAL001C": -1.0}),
+        _record("YAL002W", {"YAL002W": 1.0}),
+    ]
+    result = _result(records, "deletion_downregulates")
+    assert result.passed is False
+    assert result.message == (
+        "median deleted-gene log2=0.000 (<0 => correct orientation); frac_neg=0.500 "
+        "over 2 deleted genes (0 deleted genes absent from the platform map)"
+    )
+
+
+def test_orientation_counts_off_platform_deletions_and_skips_unnamed_ones() -> None:
+    """An off-map deletion is counted as absent; a nameless perturbation is not counted."""
+    unnamed = _record("YAL001C", {"YAL001C": -3.0})
+    unnamed["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"] = None
+    records = _good_records() + [_record("YDR001C", {}), unnamed]
+    result = _result(records, "deletion_downregulates")
+    assert result.passed is True
+    assert result.message == (
+        "median deleted-gene log2=-3.000 (<0 => correct orientation); frac_neg=1.000 "
+        "over 3 deleted genes (1 deleted genes absent from the platform map)"
+    )
+
+
+def test_orientation_fails_when_no_deleted_gene_is_on_the_map() -> None:
+    result = _result([_record("YDR001C", {})], "deletion_downregulates")
+    assert result.passed is False
+    assert result.message == "no deleted genes were present in any expression map"
+
+
+def test_nan_se_is_allowed_and_zero_replicates_fail() -> None:
+    """A NaN SE passes (``allow_nan=True``); ``n_replicates`` 0 is ``< 1.0``."""
+    records = _good_records()
+    records[0]["experiment"]["phenotype"]["expression_log2_ratio_se"]["YAL001C"] = (
+        math.nan
+    )
+    assert _result(records, "se_nonnegative").message == "12 values checked"
+
+    records = _good_records()
+    records[2]["experiment"]["phenotype"]["n_replicates"]["YBR001C"] = 0
+    replicates = _result(records, "n_replicates_ge_1")
+    assert replicates.passed is False
+    assert replicates.message == "1/12 values invalid"
+    assert replicates.details["bad"] == [{"index": 11, "value": 0.0, "reason": "< 1.0"}]

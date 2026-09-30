@@ -9,13 +9,31 @@ precedence over it; the canonical-name policy that collapses ``NaCl`` and
 ``sodium chloride`` onto one compound; mixtures that carry an identifier but no InChIKey;
 UNRESOLVED / PROPRIETARY rows carrying an audit reason; and the pinned-table sha256
 self-check plus lookup-key uniqueness.
+
+2026.09.30 (Phase 17): the table loader's two refusals and its indexing run on tiny
+tables written under ``tmp_path`` with ``_TABLE_PATH`` and ``_TABLE_SHA256`` patched (the
+loader reads both module globals at call time). The sha256 refusal quotes the digest of
+the bytes actually read; the collision refusal fires on ``sodium chloride`` versus
+``NaCl`` because ``_SYNONYMS`` folds ``nacl`` onto ``sodium chloride`` before indexing.
+A row's own name and synonyms folding onto one key is not a collision, and a CID shared
+by two rows keeps the FIRST row (``setdefault``). The resolver pins: a name match outranks
+the CID, the CID backs an unmatched name, ``known_proprietary`` only speaks when no row
+matches, an unparseable SMILES leaves the bare resolution, and caller-supplied fields
+win over the row while ``inchi`` and ``roles`` pass straight through. The furfural row
+values (InChIKey ``HYBBIBNJHNGZAN-UHFFFAOYSA-N``, ChEBI ``CHEBI:30976``, SMILES
+``C1=COC(=C1)C=O``) are the committed table's.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import re
+from pathlib import Path
 
+import pytest
+
+import torchcell.datamodels.compound_identity as compound_identity
 from torchcell.datamodels.compound_identity import (
     _BY_NAME,
     _TABLE_PATH,
@@ -301,3 +319,184 @@ def test_table_is_sorted_and_unique_by_name() -> None:
     names = [r.name for r in records]
     assert names == sorted(names, key=str.lower)
     assert len(names) == len(set(names))
+
+
+# --------------------------------------------------------------------------- #
+# Phase 17: normalization, route precedence, the SMILES misses, table refusals
+# --------------------------------------------------------------------------- #
+def test_normalize_folds_only_documented_spellings() -> None:
+    """Case and outer whitespace fold, the ``_SYNONYMS`` table applies, nothing else.
+
+    Internal whitespace is kept and a near-miss hyphenation is not folded, per the
+    "never a fuzzy near-miss" rule.
+    """
+    assert normalize_compound_name("  NaCl ") == "sodium chloride"
+    assert normalize_compound_name("Sodium Chloride (NaCl)") == "sodium chloride"
+    assert normalize_compound_name("EtOH") == "ethanol"
+    assert normalize_compound_name("N-Propanol") == "1-propanol"
+    assert normalize_compound_name("Foo  Bar") == "foo  bar"
+    assert normalize_compound_name("methyl-methanesulfonate") == (
+        "methyl-methanesulfonate"
+    )
+
+
+def test_name_match_outranks_cid_and_cid_backs_an_unmatched_name() -> None:
+    """Name first, then CID; ``known_proprietary`` speaks only when no row matched."""
+    tamoxifen_cid = resolve_compound_identity(name="tamoxifen").pubchem_cid
+    assert tamoxifen_cid is not None
+    by_name = resolve_compound_identity(name="furfural", pubchem_cid=tamoxifen_cid)
+    assert by_name.name == "furfural"
+    by_cid = resolve_compound_identity(name="zzz-no-row", pubchem_cid=tamoxifen_cid)
+    assert (by_cid.status, by_cid.name) == (
+        CompoundResolutionStatus.RESOLVED,
+        "tamoxifen",
+    )
+    row_wins = resolve_compound_identity(name="furfural", known_proprietary=True)
+    assert row_wins.status == CompoundResolutionStatus.RESOLVED
+    missing_cid = resolve_compound_identity(pubchem_cid=-1, known_proprietary=True)
+    assert missing_cid.model_dump() == {
+        "status": CompoundResolutionStatus.PROPRIETARY,
+        "name": None,
+        "inchikey": None,
+        "chebi_id": None,
+        "pubchem_cid": None,
+        "smiles": None,
+        "unresolved_reason": None,
+    }
+
+
+def test_smiles_route_with_an_unparseable_smiles_returns_the_bare_miss() -> None:
+    """No row and a SMILES RDKit rejects: the name miss comes back, SMILES not carried."""
+    resolution = resolve_compound_identity_from_smiles("zzz-no-row", "B1OC2C(O1)")
+    assert resolution.model_dump() == {
+        "status": CompoundResolutionStatus.UNRESOLVED_PUBLIC,
+        "name": None,
+        "inchikey": None,
+        "chebi_id": None,
+        "pubchem_cid": None,
+        "smiles": None,
+        "unresolved_reason": None,
+    }
+
+
+def test_resolved_compound_unparseable_smiles_keeps_the_caller_smiles_and_defers() -> (
+    None
+):
+    """The derivation miss leaves a recoverable gap and the caller's SMILES in place."""
+    compound = resolved_compound(
+        "zzz-no-row", smiles="B1OC2C(O1)", derive_from_smiles=True
+    )
+    assert compound.model_dump(mode="json") == {
+        "provenance_gaps": [
+            {
+                "field": "inchikey",
+                "reason": "deferred_pending_source_review",
+                "looked_in": None,
+                "resolve_with": None,
+                "note": None,
+            }
+        ],
+        "name": "zzz-no-row",
+        "inchikey": None,
+        "inchi": None,
+        "smiles": "B1OC2C(O1)",
+        "pubchem_cid": None,
+        "chebi_id": None,
+        "roles": [],
+    }
+
+
+def test_resolved_compound_caller_fields_win_and_pass_through() -> None:
+    """A caller CID and SMILES outrank the row; ``inchi`` and ``roles`` pass through."""
+    compound = resolved_compound(
+        "Furfural", pubchem_cid=1, smiles="O=Cc1ccco1", inchi="InChI=1S/x", roles=["r"]
+    )
+    assert compound.model_dump(mode="json") == {
+        "provenance_gaps": [],
+        "name": "furfural",
+        "inchikey": "HYBBIBNJHNGZAN-UHFFFAOYSA-N",
+        "inchi": "InChI=1S/x",
+        "smiles": "O=Cc1ccco1",
+        "pubchem_cid": 1,
+        "chebi_id": "CHEBI:30976",
+        "roles": ["r"],
+    }
+
+
+def _pin_table(
+    monkeypatch: pytest.MonkeyPatch, path: Path, records: list[dict[str, object]]
+) -> bytes:
+    """Write a table to ``path`` and point the loader at it with a matching digest."""
+    raw = json.dumps({"records": records}).encode()
+    path.write_bytes(raw)
+    monkeypatch.setattr(compound_identity, "_TABLE_PATH", path)
+    monkeypatch.setattr(
+        compound_identity, "_TABLE_SHA256", hashlib.sha256(raw).hexdigest()
+    )
+    return raw
+
+
+def test_load_table_refuses_bytes_that_miss_the_pinned_digest(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A table whose bytes do not hash to ``_TABLE_SHA256`` is refused, both digests named."""
+    path = tmp_path / "table.json"
+    raw = _pin_table(monkeypatch, path, [])
+    monkeypatch.setattr(compound_identity, "_TABLE_SHA256", "0" * 64)
+    with pytest.raises(RuntimeError) as excinfo:
+        _load_table()
+    assert str(excinfo.value) == (
+        f"compound_identity_table.json sha256 mismatch: got "
+        f"{hashlib.sha256(raw).hexdigest()}, expected {'0' * 64} (table tampered or "
+        "re-built -- re-pin _TABLE_SHA256)"
+    )
+
+
+def test_load_table_refuses_a_key_claimed_by_two_rows(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """``NaCl`` folds onto ``sodium chloride`` before indexing, so two rows collide."""
+    _pin_table(
+        monkeypatch,
+        tmp_path / "table.json",
+        [
+            {"name": "sodium chloride", "resolution_status": "RESOLVED"},
+            {"name": "NaCl", "resolution_status": "RESOLVED"},
+        ],
+    )
+    with pytest.raises(RuntimeError) as excinfo:
+        _load_table()
+    assert str(excinfo.value) == (
+        "compound_identity_table.json: lookup key 'sodium chloride' is claimed by "
+        "both 'sodium chloride' and 'NaCl'"
+    )
+
+
+def test_load_table_indexes_self_synonyms_once_and_keeps_the_first_cid(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A row's own spellings folding to one key are fine; a shared CID keeps row one."""
+    _pin_table(
+        monkeypatch,
+        tmp_path / "table.json",
+        [
+            {
+                "name": "hydrogen peroxide",
+                "synonyms": ["H2O2", "Hydrogen Peroxide"],
+                "pubchem_cid": 784,
+                "resolution_status": "RESOLVED",
+            },
+            {
+                "name": "peroxide dup",
+                "pubchem_cid": 784,
+                "resolution_status": "RESOLVED",
+            },
+        ],
+    )
+    records, by_name, by_cid = _load_table()
+    assert [r.name for r in records] == ["hydrogen peroxide", "peroxide dup"]
+    assert {key: row.name for key, row in by_name.items()} == {
+        "hydrogen peroxide": "hydrogen peroxide",
+        "peroxide dup": "peroxide dup",
+    }
+    assert {cid: row.name for cid, row in by_cid.items()} == {784: "hydrogen peroxide"}

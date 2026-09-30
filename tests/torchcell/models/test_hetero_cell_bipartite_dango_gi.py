@@ -28,20 +28,46 @@ attention layer, gating. Parameter count by component:
 * gate_mlp Linear(2, 8) 24 + Linear(8, 2) 18 = 42
 
 Total 1120. Component closed forms are derived in each test docstring.
+
+2026.09.30, Phase 17. Config flags each get a pinned consequence on the same fixture:
+the exact total for every encoder x aggregation pair (cross_attention +304, pairwise
++645, GATv2 with 2 heads +30), ``num_layers`` 2 (+322) and ``num_attention_layers`` 2
+(+289), a gradient reaching every parameter in all eight builds, and two masked-softmax
+identities (a two-gene HyperSAGNN sample and GATv2 nodes of in-degree 1 give their
+logit parameters a gradient of exactly 0; three genes or a second in-edge make it
+nonzero). Permuting the genotypes of a batch permutes the predictions. Because every
+stage check is ``isnan``, an infinite parameter is named at the first stage that turns
+inf into NaN, and a single infinite head under concat returns inf with no error. The
+training script ``main`` runs on the fixture with the genome, the graph builder, the
+loader, ``load_dotenv``, ``timestamp`` and ``plt.savefig`` faked: at lr 0 its printed
+final metrics are those of a fresh model under the same seed, the plot schedule is
+``epoch % n == 0`` or the last epoch, the warmup scheduler is stepped once per epoch,
+an unknown loss is refused before the plot directory exists, and the shipped
+Wasserstein loss dies with KeyError in epoch 1.
 """
 
+import os
+import os.path as osp
+import re
+import sys
+import types
+from pathlib import Path
 from typing import Any
 
 import networkx as nx
+import numpy as np
 import pytest
 import torch
 import torch.nn as nn
+from omegaconf import DictConfig, OmegaConf
 from sortedcontainers import SortedDict
 from torch_geometric.data import Batch, HeteroData
 from torch_geometric.nn import GATv2Conv, GCNConv, GINConv
 from torch_geometric.nn import LayerNorm as PygLayerNorm
 
+import torchcell.models.hetero_cell_bipartite_dango_gi as dango_module
 from torchcell.graph.graph import GeneGraph, GeneMultiGraph
+from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.models.hetero_cell_bipartite_dango_gi import (
     AttentionalGraphAggregation,
     AttentionConvWrapper,
@@ -57,6 +83,7 @@ from torchcell.models.hetero_cell_bipartite_dango_gi import (
     create_conv_layer,
     get_norm_layer,
 )
+from torchcell.scheduler.cosine_annealing_warmup import CosineAnnealingWarmupRestarts
 from torchcell.sequence import GeneSet
 
 N_GENES = 4
@@ -819,3 +846,638 @@ def test_a_nan_parameter_is_named_by_the_first_stage_it_reaches(
         dict(model.named_parameters())[poison].fill_(float("nan"))
     with pytest.raises(RuntimeError, match=f"NaN detected in {message}"):
         model(_cell_graph(), _batch([[0, 1], [2, 3]]))
+
+
+# ---------------------------------------------------------------- Phase 17: config flags
+
+
+def _grad_model(encoder: str, aggregation: str) -> GeneInteractionDango:
+    return _tiny(
+        gene_encoder_config={
+            "encoder_type": encoder,
+            "graph_aggregation_method": aggregation,
+            "heads": 2,
+            "graph_aggregation_config": {"num_heads": 2},
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    ("encoder", "aggregation", "total"),
+    [
+        ("gin", "sum", 1120),
+        ("gin", "mean", 1120),
+        ("gin", "cross_attention", 1120 + 304),
+        ("gin", "pairwise_interaction", 1120 + 645),
+        ("gatv2", "sum", 1120 + 30),
+        ("gatv2", "mean", 1120 + 30),
+        ("gatv2", "cross_attention", 1120 + 30 + 304),
+        ("gatv2", "pairwise_interaction", 1120 + 30 + 645),
+    ],
+)
+def test_encoder_and_aggregation_flags_add_their_exact_parameter_counts(
+    encoder: str, aggregation: str, total: int
+) -> None:
+    """Totals from the module docstring's 1120 plus each flag's own modules.
+
+    * cross_attention adds one ``SelfAttentionGraphAggregation`` per conv layer: 304
+      (MultiheadAttention 4d^2 + 4d = 288 plus 2 graph embeddings of d = 16).
+    * pairwise_interaction adds one ``PairwiseGraphAggregation``: 3 pair MLPs of 208
+      plus the attention head 21 = 645. sum and mean add nothing.
+    * gatv2 with heads 2 replaces each GIN conv (161 with its LayerNorm) by
+      GATv2Conv(8, 4, heads=2): lin_l 72 + lin_r 72 + att 2 * 4 = 8 + bias 8 = 160, plus
+      the wrapper LayerNorm 16 = 176, so +15 per graph and +30 for two graphs.
+
+    One backward from the summed prediction reaches every parameter (no ``None``
+    gradient) and every gradient is finite.
+    """
+    model = _grad_model(encoder, aggregation)
+    assert model.num_parameters["total"] == total
+    pred, _ = model(_cell_graph(), _batch([[0, 1], [2, 3]]))
+    pred.sum().backward()
+    grads = {n: p.grad for n, p in model.named_parameters()}
+    assert [n for n, g in grads.items() if g is None] == []
+    assert all(g is not None and torch.isfinite(g).all() for g in grads.values())
+
+
+def test_depth_flags_add_one_conv_block_or_one_attention_block_each() -> None:
+    """``num_layers`` 2 adds a second hetero conv layer: two GIN wrappers of 161 = 322,
+    total 1120 + 322 = 1442. ``num_attention_layers`` 2 adds one HyperSAGNN layer, q/k/v/
+    out Linear(8, 8) 4 * 72 = 288 plus its ReZero beta 1 = 289, total 1409, with every
+    beta initialized to exactly 0.01.
+    """
+    deep_conv = _tiny(num_layers=2)
+    assert len(deep_conv.convs) == 2
+    assert deep_conv.num_parameters["convs"] == 644
+    assert deep_conv.num_parameters["total"] == 1442
+    deep_head = _tiny(
+        local_predictor_config={"num_heads": 2, "num_attention_layers": 2}
+    )
+    assert deep_head.num_parameters["gene_interaction_predictor"] == 370 + 289
+    assert deep_head.num_parameters["total"] == 1409
+    betas = deep_head.gene_interaction_predictor.hyper_sagnn.beta_params
+    assert [b.item() for b in betas] == [pytest.approx(0.01)] * 2
+
+
+def test_single_candidate_softmaxes_give_exactly_zero_gradient_to_their_logits() -> (
+    None
+):
+    """Two masked-softmax identities.
+
+    HyperSAGNN masks the diagonal, so in a two-gene sample each gene attends to the
+    other with weight exactly 1 whatever q and k are: q_proj and k_proj get a gradient
+    of exactly zero. A three-gene sample {0, 1, 2} has two candidates per gene and the
+    same parameters get a nonzero gradient.
+
+    GATv2 (no self loops) normalizes over each node's incoming edges. In the wildtype
+    and both samples every node has in-degree at most 1, so the attention vector ``att``
+    and the target transform ``lin_r``, which only enter the logits, get exactly zero
+    gradient. Adding physical edge 3 -> 1 gives node 1 two in-edges in the wildtype and
+    both gradients become nonzero.
+    """
+    qk = [
+        "gene_interaction_predictor.hyper_sagnn.attention_layers.0.q_proj.weight",
+        "gene_interaction_predictor.hyper_sagnn.attention_layers.0.k_proj.weight",
+    ]
+    gat = [
+        "convs.0.convs.('gene', 'physical', 'gene').conv.att",
+        "convs.0.convs.('gene', 'physical', 'gene').conv.lin_r.weight",
+    ]
+
+    def grad_sums(
+        model: GeneInteractionDango, cell_graph: HeteroData, batch: Batch
+    ) -> dict[str, float]:
+        pred, _ = model(cell_graph, batch)
+        pred.sum().backward()
+        params = dict(model.named_parameters())
+        sums = {}
+        for name in qk + gat:
+            grad = params[name].grad
+            assert grad is not None
+            sums[name] = float(grad.abs().sum())
+        return sums
+
+    pairs = grad_sums(
+        _grad_model("gatv2", "sum"), _cell_graph(), _batch([[0, 1], [2, 3]])
+    )
+    assert pairs == dict.fromkeys(qk + gat, 0.0)
+
+    triple = grad_sums(_grad_model("gatv2", "sum"), _cell_graph(), _batch([[0, 1, 2]]))
+    assert all(triple[name] > 0.0 for name in qk)
+
+    fan_in = {**WILDTYPE_EDGES, "physical": [*WILDTYPE_EDGES["physical"], (3, 1)]}
+    merged = grad_sums(
+        _grad_model("gatv2", "sum"), _cell_graph(fan_in), _batch([[0, 1], [2, 3]])
+    )
+    assert all(merged[name] > 0.0 for name in gat)
+
+
+def test_permuting_the_genotypes_in_a_batch_permutes_the_predictions() -> None:
+    """Samples are independent apart from the shared LayerNorm statistics, which are a
+    mean and variance over all nodes and so do not depend on sample order. Reordering
+    the genotypes [{0, 1}, {2, 3}, {1}] as [{1}, {0, 1}, {2, 3}] reorders predictions,
+    gate weights and z_i rows the same way (eval mode, default layer norm).
+    """
+    model = _tiny().eval()
+    perts = [[0, 1], [2, 3], [1]]
+    order = [2, 0, 1]
+    with torch.no_grad():
+        pred, out = model(_cell_graph(), _batch(perts))
+        pred_perm, out_perm = model(_cell_graph(), _batch([perts[i] for i in order]))
+    torch.testing.assert_close(pred_perm, pred[order])
+    torch.testing.assert_close(out_perm["gate_weights"], out["gate_weights"][order])
+    torch.testing.assert_close(out_perm["z_i"], out["z_i"][order])
+    torch.testing.assert_close(out_perm["z_w"], out["z_w"])
+
+
+def test_shipped_006_encoder_flags_that_the_model_ignores_or_overrides() -> None:
+    """The 006 config sets ``activation: "gelu"``, ``graph_aggregation_config:
+    {aggregation_norm: "layer", dropout: 0.0}`` next to the model ``dropout``.
+
+    Finding: ``activation="gelu"`` builds no GELU anywhere; the preprocessor and every
+    conv wrapper fall back to SiLU (hetero_cell_bipartite_dango_gi.py:571, 645).
+    Finding: ``aggregation_norm`` is read by nothing, so the cross_attention model with it
+    has the same 1424 parameters as without it. Finding: the aggregation config's own
+    ``dropout`` is overwritten by the model dropout (``{**config, "dropout": dropout}``,
+    lines 814 to 817), so a requested 0.0 becomes 0.25 in the MultiheadAttention.
+    Pinned until the config keys are wired or removed.
+    """
+    model = _tiny(
+        dropout=0.25,
+        activation="gelu",
+        gene_encoder_config={
+            "encoder_type": "gin",
+            "graph_aggregation_method": "cross_attention",
+            "graph_aggregation_config": {
+                "num_heads": 2,
+                "aggregation_norm": "layer",
+                "dropout": 0.0,
+            },
+        },
+    )
+    assert not any(isinstance(m, nn.GELU) for m in model.modules())
+    wrappers = [m for m in model.modules() if isinstance(m, AttentionConvWrapper)]
+    assert [type(m.act) for m in [model.preprocessor, *wrappers]] == [nn.SiLU] * 3
+    assert model.num_parameters["total"] == 1424
+    aggregator = model.convs[0].aggregator
+    assert isinstance(aggregator, SelfAttentionGraphAggregation)
+    assert aggregator.multihead_attn.dropout == 0.25
+
+
+# ---------------------------------------------------------------- Phase 17: wrapper edges
+
+
+def test_wrapper_without_norm_is_act_of_proj_of_conv() -> None:
+    """Norm None skips the norm step: out = relu(W_proj conv(x, e) + b) exactly."""
+    torch.manual_seed(0)
+    wrapper = AttentionConvWrapper(GCNConv(4, 3), 6, norm=None, activation="relu")
+    wrapper.eval()
+    x = torch.randn(5, 4)
+    edges = _edge_index([(0, 1), (1, 2), (3, 4)])
+    expected = torch.relu(wrapper.proj(wrapper.conv(x, edges)))
+    assert torch.equal(wrapper(x, edges), expected)
+
+
+def test_wrapper_around_a_gin_mlp_with_no_linear_raises_unbound_local_error() -> None:
+    """Finding: when the GIN ``nn`` is a Sequential with no nn.Linear, the width search
+    (hetero_cell_bipartite_dango_gi.py:612 to 615) never assigns ``expected_dim`` and
+    the wrapper raises UnboundLocalError instead of a named error or the
+    ``target_dim`` fallback the non-Sequential branch uses. Pinned until the search
+    falls back or refuses by name.
+    """
+    with pytest.raises(UnboundLocalError, match="expected_dim"):
+        AttentionConvWrapper(GINConv(nn.Sequential(nn.ReLU())), 8)
+
+
+# ---------------------------------------------------------------- Phase 17: non-finite
+
+
+@pytest.mark.parametrize(
+    ("poisons", "combination", "message"),
+    [
+        (
+            {"global_aggregator.transform_nn.0.bias": float("inf")},
+            "gating",
+            r"perturbation difference \(z_p_global\)",
+        ),
+        ({"gate_mlp.3.bias": float("inf")}, "gating", "gate weights after softmax"),
+        (
+            {
+                "global_interaction_predictor.3.bias": float("inf"),
+                "gene_interaction_predictor.prediction_layer.bias": float("-inf"),
+            },
+            "concat",
+            "concatenated gene interaction",
+        ),
+    ],
+)
+def test_an_infinite_parameter_is_named_where_infinity_first_becomes_nan(
+    poisons: dict[str, float], combination: str, message: str
+) -> None:
+    """Every stage check is ``torch.isnan``, so +/-inf passes it and the error names the
+    first stage where the arithmetic turns inf into NaN:
+
+    * transform bias +inf makes z_w_global and z_i_global both +inf (a softmax-weighted
+      sum of +inf rows), which pass their checks; z_p = inf - inf = NaN.
+    * gate bias +inf gives logits [inf, inf], which are not NaN and pass the logit
+      check; softmax of two +inf is NaN.
+    * concat with global +inf and local -inf: 0.5 * inf + 0.5 * -inf = NaN.
+    """
+    model = _tiny(
+        local_predictor_config={
+            "combination_method": combination,
+            "num_heads": 2,
+            "num_attention_layers": 1,
+        }
+    ).eval()
+    params = dict(model.named_parameters())
+    with torch.no_grad():
+        for name, value in poisons.items():
+            params[name].fill_(value)
+    with pytest.raises(RuntimeError, match=f"NaN detected in {message}"):
+        model(_cell_graph(), _batch([[0, 1], [2, 3]]))
+
+
+def test_opposite_infinite_heads_under_gating_reach_the_final_output_check() -> None:
+    """Global head +inf, local head -inf, and a gate MLP whose first layer weights the
+    global column by -1 and the local column by +1: every hidden unit is
+    -inf + -inf = -inf, ReLU makes it 0, so the gate logits are the finite output bias
+    and both gate weights are positive. The weighted stack is [+inf, -inf] (no NaN
+    yet) and its row sum is NaN, caught by the last check.
+    """
+    model = _tiny().eval()
+    params = dict(model.named_parameters())
+    with torch.no_grad():
+        params["global_interaction_predictor.3.bias"].fill_(float("inf"))
+        params["gene_interaction_predictor.prediction_layer.bias"].fill_(float("-inf"))
+        params["gate_mlp.0.weight"][:, 0] = -1.0
+        params["gate_mlp.0.weight"][:, 1] = 1.0
+    with pytest.raises(
+        RuntimeError, match="NaN detected in final gene interaction output"
+    ):
+        model(_cell_graph(), _batch([[0, 1], [2, 3]]))
+
+
+def test_a_single_infinite_head_under_concat_returns_infinity_without_an_error() -> (
+    None
+):
+    """Finding: because every check is ``isnan``, a +inf global head in concat mode gives
+    0.5 * inf + 0.5 * local = +inf for every sample and the forward returns it with no
+    error (hetero_cell_bipartite_dango_gi.py:1098 to 1116). Pinned until the checks also
+    test ``isinf``.
+    """
+    model = _tiny(
+        local_predictor_config={
+            "combination_method": "concat",
+            "num_heads": 2,
+            "num_attention_layers": 1,
+        }
+    ).eval()
+    with torch.no_grad():
+        dict(model.named_parameters())["global_interaction_predictor.3.bias"].fill_(
+            float("inf")
+        )
+        pred, out = model(_cell_graph(), _batch([[0, 1], [2, 3]]))
+    assert pred.flatten().tolist() == [float("inf"), float("inf")]
+    assert torch.isfinite(out["local_interaction"]).all()
+
+
+# ---------------------------------------------------------------- Phase 17: the script
+
+
+MAIN_PERTS = [[0, 1], [2, 3], [1, 3]]
+MAIN_Y = [0.1, -0.2, 0.3]
+
+
+def _main_batch() -> Batch:
+    batch = _batch(MAIN_PERTS)
+    batch["gene"].phenotype_values = torch.tensor(MAIN_Y)
+    return batch
+
+
+def _main_cfg(
+    loss: str,
+    epochs: int = 4,
+    plot_every: int = 2,
+    lr: float = 1e-3,
+    scheduler: dict[str, Any] | None = None,
+) -> DictConfig:
+    """The tiny model of ``_tiny`` expressed as the script's config (CPU accelerator)."""
+    regression_task: dict[str, Any] = {
+        "loss": loss,
+        "lambda_dist": 0.1,
+        "lambda_supcr": 0.001,
+        "loss_config": {
+            "min_samples_for_dist": 2,
+            "min_samples_for_supcr": 2,
+            "min_samples_for_wasserstein": 2,
+            "buffer_size": 8,
+            "use_ddp_gather": False,
+        },
+        "optimizer": {"lr": lr, "weight_decay": 0.0},
+        "clip_grad_norm": True,
+        "clip_grad_norm_max_norm": 10.0,
+        "plot_every_n_epochs": plot_every,
+    }
+    if scheduler is not None:
+        regression_task["lr_scheduler"] = scheduler
+    return OmegaConf.create(
+        {
+            "trainer": {"accelerator": "cpu", "max_epochs": epochs},
+            "data_module": {"batch_size": 3, "num_workers": 0},
+            "cell_dataset": {
+                "graphs": ["physical", "regulatory"],
+                "learnable_embedding_input_channels": HIDDEN,
+            },
+            "model": {
+                "gene_num": N_GENES,
+                "hidden_channels": HIDDEN,
+                "num_layers": 1,
+                "dropout": 0.0,
+                "norm": "layer",
+                "activation": "relu",
+                "gene_encoder_config": {
+                    "encoder_type": "gin",
+                    "graph_aggregation_method": "sum",
+                },
+                "local_predictor_config": {
+                    "num_heads": 2,
+                    "num_attention_layers": 1,
+                    "combination_method": "gating",
+                },
+            },
+            "regression_task": regression_task,
+        }
+    )
+
+
+@pytest.fixture
+def fake_main(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str, Any]:
+    """Serve ``main`` the four-gene fixture without the genome, Neo4j or disk writes.
+
+    ``main`` imports its helpers at call time, so the module attributes are replaced:
+    ``load_sample_data_batch`` returns the wildtype graph and a 3-sample batch,
+    the genome and graph classes record their keyword arguments,
+    ``build_gene_multigraph`` returns the two-graph fixture, ``timestamp`` is "TS",
+    ``load_dotenv`` is a no-op and ``plt.savefig`` records the file name instead of
+    rendering. ``ASSET_IMAGES_DIR`` is ``tmp_path``.
+    """
+    import matplotlib.pyplot as plt
+
+    import torchcell.graph.graph as graph_module
+    import torchcell.sequence.genome.scerevisiae.s288c as s288c_module
+    import torchcell.timestamp as timestamp_module
+
+    calls: dict[str, Any] = {"saved": []}
+    loader = types.ModuleType("torchcell.scratch.load_batch_005")
+
+    def load_sample_data_batch(**kwargs: Any) -> tuple[Any, Batch, None, None]:
+        calls["loader"] = kwargs
+        return (
+            types.SimpleNamespace(cell_graph=_cell_graph()),
+            _main_batch(),
+            None,
+            None,
+        )
+
+    def genome(**kwargs: Any) -> str:
+        calls["genome"] = kwargs
+        return "genome"
+
+    def graph(**kwargs: Any) -> str:
+        calls["graph"] = kwargs
+        return "graph"
+
+    def build_gene_multigraph(graph: Any, graph_names: list[str]) -> GeneMultiGraph:
+        calls["multigraph"] = (graph, list(graph_names))
+        return _multigraph()
+
+    loader.__dict__["load_sample_data_batch"] = load_sample_data_batch
+    monkeypatch.setitem(sys.modules, "torchcell.scratch.load_batch_005", loader)
+    monkeypatch.setattr(s288c_module, "SCerevisiaeGenome", genome)
+    monkeypatch.setattr(graph_module, "SCerevisiaeGraph", graph)
+    monkeypatch.setattr(graph_module, "build_gene_multigraph", build_gene_multigraph)
+    monkeypatch.setattr(timestamp_module, "timestamp", lambda: "TS")
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: None)
+    monkeypatch.setattr(
+        plt, "savefig", lambda path, **_: calls["saved"].append(osp.basename(path))
+    )
+    monkeypatch.setenv("ASSET_IMAGES_DIR", str(tmp_path))
+    return calls
+
+
+def test_main_at_lr_zero_plots_on_schedule_and_reports_the_untrained_model(
+    fake_main: dict[str, Any], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """LogCosh, 4 epochs, ``plot_every_n_epochs`` 2, lr 0. ``main`` never seeds, so the
+    test seeds 0 before calling it and the model build is the first RNG consumer, which
+    is why the printed metrics equal a ``_tiny(seed=0)`` reference model.
+
+    Plot schedule: ``epoch % 2 == 0 or epoch == 3`` for epochs 0..3 fires at 0, 2 and 3,
+    saved as ``training_epoch_0001``, ``_0003``, ``_0004``, then ``final_results_TS``;
+    the epoch banner prints only for those epochs. The plot directory is
+    ``hetero_cell_bipartite_dango_gi_training_TS`` and stays empty (``savefig`` records).
+
+    The genome is built with ``overwrite=False`` under ``$DATA_ROOT`` (memory rule: never
+    ``overwrite=True``), the graph from that genome, and the multigraph from the config's
+    graph names.
+
+    At lr 0 AdamW moves nothing (step and decay both scale by lr), so the final eval
+    forward is the forward of a fresh model built under the same seed: the printed MSE,
+    MAE, RMSE and Pearson are those of that reference, and the printed final loss is
+    its LogCosh. The model is the 1120-parameter ``_tiny`` configuration.
+    """
+    torch.manual_seed(0)
+    dango_module.main(_main_cfg("logcosh", epochs=4, plot_every=2, lr=0.0))
+    out = capsys.readouterr().out
+
+    assert fake_main["saved"] == [
+        "training_epoch_0001.png",
+        "training_epoch_0003.png",
+        "training_epoch_0004.png",
+        "final_results_TS.png",
+    ]
+    assert [p.name for p in tmp_path.iterdir()] == [
+        "hetero_cell_bipartite_dango_gi_training_TS"
+    ]
+    assert (
+        list((tmp_path / "hetero_cell_bipartite_dango_gi_training_TS").iterdir()) == []
+    )
+    assert re.findall(r"^Epoch (\d+)/4$", out, flags=re.M) == ["1", "3", "4"]
+    assert re.findall(r"^LR: (.*)$", out, flags=re.M) == ["0.00e+00"] * 3
+
+    root = os.environ["DATA_ROOT"]
+    assert fake_main["loader"] == {
+        "batch_size": 3,
+        "num_workers": 0,
+        "config": "hetero_cell_bipartite",
+        "is_dense": False,
+    }
+    assert fake_main["genome"] == {
+        "genome_root": osp.join(root, "data/sgd/genome"),
+        "go_root": osp.join(root, "data/go"),
+        "overwrite": False,
+    }
+    assert fake_main["graph"] == {
+        "sgd_root": osp.join(root, "data/sgd/genome"),
+        "string_root": osp.join(root, "data/string"),
+        "tflink_root": osp.join(root, "data/tflink"),
+        "genome": "genome",
+    }
+    assert fake_main["multigraph"] == ("graph", ["physical", "regulatory"])
+    assert "Parameter count: 1120\n" in out and "Using LogCosh loss\n" in out
+
+    reference = _tiny(seed=0).eval()
+    with torch.no_grad():
+        pred, _ = reference(_cell_graph(), _main_batch())
+    y = torch.tensor(MAIN_Y)
+    pred_np, y_np = pred.squeeze().numpy(), y.numpy()
+    mse = np.mean((pred_np - y_np) ** 2)
+    expected = [
+        f"Final Pearson Correlation: {np.corrcoef(pred_np, y_np)[0, 1]:.6f}",
+        f"Final MSE: {mse:.6f}",
+        f"Final MAE: {np.mean(np.abs(pred_np - y_np)):.6f}",
+        f"Final RMSE: {np.sqrt(mse):.6f}",
+        f"Final LOGCOSH Loss: {LogCoshLoss()(pred.squeeze(), y).item():.6f}",
+    ]
+    lines = out.splitlines()
+    assert [line for line in expected if line not in lines] == []
+
+
+def test_main_steps_the_warmup_scheduler_once_per_epoch_after_the_optimizer(
+    fake_main: dict[str, Any], capsys: pytest.CaptureFixture[str]
+) -> None:
+    """With ``lr_scheduler`` of type CosineAnnealingWarmupRestarts (4-step cycle, 1
+    warmup step, max 1e-2, min 1e-4, ``cycle_mult`` and ``gamma`` absent), the printed
+    LR after epochs 1, 3 and 4 is the lr of the same scheduler replayed on a dummy
+    optimizer after 1, 3 and 4 steps; the banner reports the two absent keys at their
+    1.0 defaults.
+    """
+    schedule = {
+        "type": "CosineAnnealingWarmupRestarts",
+        "first_cycle_steps": 4,
+        "max_lr": 1e-2,
+        "min_lr": 1e-4,
+        "warmup_steps": 1,
+    }
+    dango_module.main(_main_cfg("logcosh", scheduler=schedule))
+    out = capsys.readouterr().out
+
+    optimizer = torch.optim.SGD([nn.Parameter(torch.zeros(1))], lr=1.0)
+    replay = CosineAnnealingWarmupRestarts(
+        optimizer,
+        first_cycle_steps=4,
+        cycle_mult=1.0,
+        max_lr=1e-2,
+        min_lr=1e-4,
+        warmup_steps=1,
+        gamma=1.0,
+    )
+    lrs = []
+    for _ in range(4):
+        optimizer.step()
+        replay.step()
+        lrs.append(f"{optimizer.param_groups[0]['lr']:.2e}")
+    assert re.findall(r"^LR: (.*)$", out, flags=re.M) == [lrs[0], lrs[2], lrs[3]]
+    assert len(set(lrs)) > 1
+    banner = out.split("Using CosineAnnealingWarmupRestarts scheduler with:\n")[1]
+    assert banner.splitlines()[:6] == [
+        "  - first_cycle_steps: 4",
+        "  - cycle_mult: 1.0",
+        "  - max_lr: 0.01",
+        "  - min_lr: 0.0001",
+        "  - warmup_steps: 1",
+        "  - gamma: 1.0",
+    ]
+
+
+def test_main_refuses_an_unknown_loss_before_it_creates_the_plot_directory(
+    fake_main: dict[str, Any], tmp_path: Path
+) -> None:
+    """The loss dispatch raises ``Unknown loss type: huber`` after the model is built
+    and before the plot directory exists, so nothing is written or plotted.
+    """
+    with pytest.raises(ValueError, match="^Unknown loss type: huber$"):
+        dango_module.main(_main_cfg("huber"))
+    assert list(tmp_path.iterdir()) == []
+    assert fake_main["saved"] == []
+
+
+@pytest.mark.parametrize(
+    ("loss", "name", "banner", "saved"),
+    [
+        (
+            "icloss",
+            "ICLoss",
+            "Using ICLoss with lambda_dist=0.1, lambda_supcr=0.001",
+            [
+                "training_epoch_0001.png",
+                "training_epoch_0002.png",
+                "loss_components_evolution_TS.png",
+                "final_results_TS.png",
+            ],
+        ),
+        (
+            "mle_dist_supcr",
+            "MleDistSupCR",
+            "Using MleDistSupCR with lambda_mse=1.0, lambda_dist=0.1, "
+            "lambda_supcr=0.001",
+            [
+                "training_epoch_0001.png",
+                "training_epoch_0002.png",
+                "final_results_TS.png",
+            ],
+        ),
+    ],
+)
+def test_main_composite_losses_print_their_components_every_epoch(
+    fake_main: dict[str, Any],
+    capsys: pytest.CaptureFixture[str],
+    loss: str,
+    name: str,
+    banner: str,
+    saved: list[str],
+) -> None:
+    """ICLoss and MleDistSupCR take z_p as a third argument and return (loss, dict); the
+    script prints one component line per epoch (2 of 2) and plots every epoch at
+    ``plot_every_n_epochs`` 1.
+
+    Finding: only "icloss" gets the final ``loss_components_evolution`` figure
+    (hetero_cell_bipartite_dango_gi.py:2775 tests ``loss_type == "icloss"``) although the
+    intermediate plots draw components for all three composite losses. Pinned until
+    the final figure covers the other two.
+    """
+    cfg = _main_cfg(loss, epochs=2, plot_every=1)
+    cfg.regression_task.is_weighted_phenotype_loss = True
+    dango_module.main(cfg)
+    out = capsys.readouterr().out
+    assert banner in out.splitlines()
+    component = rf"^  {name} components: mse=\d+\.\d{{4}}, dist=-?\d+\.\d{{4}}, supcr=-?\d+\.\d{{4}}$"
+    assert len(re.findall(component, out, flags=re.M)) == 2
+    assert fake_main["saved"] == saved
+
+
+def test_main_with_the_shipped_wasserstein_loss_dies_in_its_first_epoch(
+    fake_main: dict[str, Any], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Finding: the component print (hetero_cell_bipartite_dango_gi.py:2316) reads
+    ``loss_dict["weighted_dist"]``, but ``MleWassSupCR`` names that entry
+    ``weighted_wasserstein``, so "mle_wass_supcr", the loss the shipped
+    ``hetero_cell_bipartite_dango_gi.yaml`` selects, raises KeyError in epoch 1 before
+    any plot. The plot directory already exists and is empty. Pinned until the print
+    uses the loss's own key.
+    """
+    with pytest.raises(KeyError, match="weighted_dist"):
+        dango_module.main(_main_cfg("mle_wass_supcr"))
+    out = capsys.readouterr().out
+    assert (
+        "Using MleWassSupCR with lambda_mse=1.0, lambda_wasserstein=0.1, "
+        "lambda_supcr=0.001" in out.splitlines()
+    )
+    assert fake_main["saved"] == []
+    assert [p.name for p in tmp_path.iterdir()] == [
+        "hetero_cell_bipartite_dango_gi_training_TS"
+    ]
+    assert (
+        list((tmp_path / "hetero_cell_bipartite_dango_gi_training_TS").iterdir()) == []
+    )

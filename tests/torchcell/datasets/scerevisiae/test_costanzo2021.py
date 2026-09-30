@@ -1,16 +1,57 @@
 # tests/torchcell/datasets/scerevisiae/test_costanzo2021.py
+# [[tests.torchcell.datasets.scerevisiae.test_costanzo2021]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_costanzo2021.py
 """Costanzo 2021 loader: shared media, the ORF retention rule, and dose provenance.
 
 Every test is synthetic: the fitness sheet is monkeypatched and the genome is a stub
 resolver, so nothing here needs the raw mirror or a built LMDB.
+
+2026.09.30 (Phase 13): a real xlsx in the released layout (a decoy first sheet, then
+``Diff. Mutant fitness_Conditions`` with the four identity columns and two condition
+columns, one header written ``" benomyl "`` to exercise the strip + lower-case lookup),
+with ``_CONDITIONS`` cut to Benomyl and Galactose and a stub resolver (``_StubGenome``
+plus ``AMB1`` -> AMBIGUOUS and every unknown name -> RETIRED, as the real resolver does).
+Nine rows, in order, with (Benomyl, Galactose):
+
+1. YAL001C TFC3 dma1 (0.1, 0.2) -> records 0, 1 (KanMX deletion named TFC3)
+2. YFL039C ACT1 act1-101 tsa1 (-0.5, blank) -> record 2 (ts allele)
+3. YFL039C ACT1 act1-102 tsa2 (-0.25, 0.0) -> records 3, 4 (same ORF, a second
+   allele: the duplicate identifier; 0.0 is a value, not a blank)
+4. YAR044W (no gene name) dma2 (0.3, blank) -> record 5, stored as YAR042W with
+   ``perturbed_gene_name`` "YAR044W" (the source ORF, line 731)
+5. YER108C (0.9, 0.9) -> dropped, non_gene_feature, 2 cells
+6. YAR037W (0.8, blank) -> dropped, retired, 1 cell
+7. `` YAL001C `` TFC3 `` dma1 `` (0.1, 0.2) -> records 6, 7 (row 1 repeated, padded)
+8. blank Systematic Name (0.5, blank) -> dropped as ``"nan"``, retired, 1 cell
+9. AMB1 (0.7, 0.7) -> dropped, ambiguous, resolved_to None, 2 cells
+
+So 8 records from 5 of 9 strains; 4 strains and 2 + 1 + 1 + 2 = 6 cells dropped, by
+status {non_gene_feature: 1, retired: 2, ambiguous: 1}; the ledger is sorted by source
+name, "AMB1" < "YAR037W" < "YER108C" < "nan" (upper case sorts before lower). Every
+record shares the one reference (differential 0 on SGA_DM_SELECTION at 26 C), so the
+reference index is one entry over members 0..7. Records are compared whole against a
+hand-built ``EnvironmentResponseExperiment``: Benomyl 30 g/L (the "30 mg/mL" cell) on
+SGA_DM_SELECTION, 26.0 C (a derivation, recorded in ``_TEMPERATURE.note``), aerobic, a
+``duration_hours`` gap; ``n_samples`` 3 screens, no uncertainty (none released).
+
+Findings pinned (source lines in ``costanzo2021.py``): the sha256 pin is checked only
+inside ``download``, which PyG calls only when the raw file is absent (lines 595-622),
+so a failed check leaves the copied bytes in ``raw/`` and the next construction builds
+from them unverified; a refused ``deposit_raw_mirror`` has already created the mirror's
+``data/`` directory (line 516, before the check at 518); a blank Systematic Name is resolved as the string
+``"nan"`` (line 770); a repeated row is stored twice with no ledger entry (lines
+769-821); an AMBIGUOUS drop keeps no candidate list (lines 776-784).
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import os.path as osp
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import pandas as pd
 import pytest
@@ -18,12 +59,26 @@ import pytest
 from torchcell.datamodels.compound_identity import (
     CompoundResolutionStatus,
     resolve_compound_identity,
+    resolved_compound,
 )
 from torchcell.datamodels.media import SGA_DM_SELECTION, SGA_DM_SELECTION_GALACTOSE
 from torchcell.datamodels.schema import (
     AssayType,
+    Concentration,
+    ConcentrationUnit,
+    Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
+    EnvironmentResponsePhenotype,
+    Genotype,
     MeasurementType,
+    Publication,
+    ReferenceGenome,
+    SampleUnit,
+    SgaKanMxDeletionPerturbation,
+    SgaTsAllelePerturbation,
     SmallMoleculePerturbation,
+    Temperature,
 )
 from torchcell.datasets.scerevisiae import costanzo2021 as c
 from torchcell.sequence.genome.scerevisiae.s288c import (
@@ -31,6 +86,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import (
     GeneNameStatus,
     SCerevisiaeGenome,
 )
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 _RENAME = {"YAR044W": "YAR042W"}
 _NON_GENE = {"YER108C": ("YER109C", "blocked_reading_frame")}
@@ -205,3 +261,654 @@ def test_reference_is_the_standard_sga_condition_at_zero(
     assert reference["environment_reference"]["media"] == SGA_DM_SELECTION.model_dump()
     assert reference["environment_reference"]["perturbations"] == []
     assert reference["phenotype_reference"]["environment_response"] == 0.0
+
+
+# --------------------------------------------------------------------------- #
+# Phase 13: the real-xlsx build, the ledger, the refusals, the raw mirror
+# --------------------------------------------------------------------------- #
+_ID_COLUMNS = [
+    "Systematic Name",
+    "Gene Name",
+    "Allele (Essential genes only)",
+    "Strain ID",
+]
+_SHEET_ROWS: list[tuple[Any, ...]] = [
+    ("YAL001C", "TFC3", None, "dma1", 0.1, 0.2),
+    ("YFL039C", "ACT1", "act1-101", "tsa1", -0.5, None),
+    ("YFL039C", "ACT1", "act1-102", "tsa2", -0.25, 0.0),
+    ("YAR044W", None, None, "dma2", 0.3, None),
+    ("YER108C", None, None, "dma3", 0.9, 0.9),
+    ("YAR037W", None, None, "dma4", 0.8, None),
+    (" YAL001C ", "TFC3", None, " dma1 ", 0.1, 0.2),
+    (None, None, None, "dma9", 0.5, None),
+    ("AMB1", None, None, "dma8", 0.7, 0.7),
+]
+
+
+class _FullStub(_StubGenome):
+    """``_StubGenome`` plus the two statuses it lacks: AMBIGUOUS, and RETIRED for any
+    name it does not know (what the real resolver returns for an off-annotation name).
+    """
+
+    known = {"YAL001C", "YFL039C"} | set(_RENAME) | set(_NON_GENE) | _RETIRED
+
+    def resolve_gene_name(self, name: str) -> GeneNameResolution:
+        if name == "AMB1":
+            return GeneNameResolution(
+                input_name=name,
+                status=GeneNameStatus.AMBIGUOUS,
+                systematic_name=None,
+                candidates=["YAL001C", "YFL039C"],
+            )
+        if name.upper() not in self.known:
+            return GeneNameResolution(
+                input_name=name, status=GeneNameStatus.RETIRED, systematic_name=name
+            )
+        return super().resolve_gene_name(name)
+
+
+def _write_xlsx(path: Path, columns: list[str] | None = None) -> None:
+    """The released layout: a decoy first sheet, then the differential-fitness sheet."""
+    header = columns or [*_ID_COLUMNS, " benomyl ", "Galactose"]
+    frame = pd.DataFrame(_SHEET_ROWS, columns=header)
+    with pd.ExcelWriter(path) as writer:
+        pd.DataFrame({"Condition": ["Benomyl"]}).to_excel(
+            writer, sheet_name=c._CONDITIONS_SHEET, index=False
+        )
+        frame.to_excel(writer, sheet_name=c._FITNESS_SHEET, index=False)
+
+
+def _two_conditions(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        c,
+        "_CONDITIONS",
+        [s for s in c._CONDITIONS if s["col"] in {"Benomyl", "Galactose"}],
+    )
+
+
+@pytest.fixture
+def sheet_built(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> c.EnvChemgenCostanzo2021Dataset:
+    """The nine-row xlsx of the module docstring, read by the real ``pd.read_excel``."""
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    _two_conditions(monkeypatch)
+    (tmp_path / "raw").mkdir()
+    _write_xlsx(tmp_path / "raw" / c._S1_FILENAME)
+    return c.EnvChemgenCostanzo2021Dataset(
+        root=str(tmp_path), genome=cast(SCerevisiaeGenome, _FullStub())
+    )
+
+
+def _gap() -> list[ProvenanceGap]:
+    return [
+        ProvenanceGap(
+            field="duration_hours",
+            reason=ProvenanceGapReason.deferred_pending_source_review,
+        )
+    ]
+
+
+def _benomyl_environment() -> Environment:
+    return Environment(
+        media=SGA_DM_SELECTION,
+        temperature=Temperature(value=26.0),
+        perturbations=[
+            SmallMoleculePerturbation(
+                compound=resolved_compound("benomyl"),
+                concentration=Concentration(value=30.0, unit=ConcentrationUnit.g_per_l),
+            )
+        ],
+        aerobicity="aerobic",
+        provenance_gaps=_gap(),
+    )
+
+
+def _phenotype(value: float) -> EnvironmentResponsePhenotype:
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.differential_fitness,
+        assay_type=AssayType.colony_size_array,
+        environment_response=value,
+        n_samples=3,
+        sample_unit=SampleUnit.screen,
+        units=c.MEASUREMENT_UNITS,
+    )
+
+
+def _reference() -> dict[str, Any]:
+    return EnvironmentResponseExperimentReference(
+        dataset_name="EnvChemgenCostanzo2021Dataset",
+        genome_reference=ReferenceGenome(
+            species="Saccharomyces cerevisiae", strain="S288C"
+        ),
+        environment_reference=Environment(
+            media=SGA_DM_SELECTION,
+            temperature=Temperature(value=26.0),
+            perturbations=[],
+            aerobicity="aerobic",
+            provenance_gaps=_gap(),
+        ),
+        phenotype_reference=_phenotype(0.0),
+    ).model_dump()
+
+
+def test_sheet_build_writes_the_records_in_row_then_condition_order(
+    sheet_built: c.EnvChemgenCostanzo2021Dataset,
+) -> None:
+    """Rows 1, 2, 3, 4, 7 kept; within a row, Benomyl before Galactose; blanks skipped."""
+    got = [
+        (
+            p["systematic_gene_name"],
+            p["perturbed_gene_name"],
+            p["strain_id"],
+            r["experiment"]["environment"]["media"]["name"],
+            r["experiment"]["phenotype"]["environment_response"],
+        )
+        for r in (sheet_built[i] for i in range(len(sheet_built)))
+        for p in r["experiment"]["genotype"]["perturbations"]
+    ]
+    benomyl = SGA_DM_SELECTION.name
+    galactose = SGA_DM_SELECTION_GALACTOSE.name
+    assert got == [
+        ("YAL001C", "TFC3", "dma1", benomyl, 0.1),
+        ("YAL001C", "TFC3", "dma1", galactose, 0.2),
+        ("YFL039C", "act1-101", "tsa1", benomyl, -0.5),
+        ("YFL039C", "act1-102", "tsa2", benomyl, -0.25),
+        ("YFL039C", "act1-102", "tsa2", galactose, 0.0),
+        ("YAR042W", "YAR044W", "dma2", benomyl, 0.3),
+        ("YAL001C", "TFC3", "dma1", benomyl, 0.1),
+        ("YAL001C", "TFC3", "dma1", galactose, 0.2),
+    ]
+
+
+def test_full_deletion_record_equals_the_hand_built_experiment(
+    sheet_built: c.EnvChemgenCostanzo2021Dataset,
+) -> None:
+    """Record 0 (YAL001C, Benomyl 0.1): experiment, reference and publication whole."""
+    experiment = EnvironmentResponseExperiment(
+        dataset_name="EnvChemgenCostanzo2021Dataset",
+        genotype=Genotype(
+            perturbations=[
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name="YAL001C",
+                    perturbed_gene_name="TFC3",
+                    strain_id="dma1",
+                )
+            ]
+        ),
+        environment=_benomyl_environment(),
+        phenotype=_phenotype(0.1),
+    )
+    record = sheet_built[0]
+    assert record["experiment"] == experiment.model_dump()
+    assert record["reference"] == _reference()
+    assert (
+        record["publication"]
+        == Publication(
+            doi="10.1126/science.abf8424",
+            doi_url="https://doi.org/10.1126/science.abf8424",
+        ).model_dump()
+    )
+
+
+def test_ts_allele_edge_record_and_the_medium_condition_record(
+    sheet_built: c.EnvChemgenCostanzo2021Dataset,
+) -> None:
+    """Record 4: the second allele of an ORF on galactose, where 0.0 is a value."""
+    experiment = EnvironmentResponseExperiment(
+        dataset_name="EnvChemgenCostanzo2021Dataset",
+        genotype=Genotype(
+            perturbations=[
+                SgaTsAllelePerturbation(
+                    systematic_gene_name="YFL039C",
+                    perturbed_gene_name="act1-102",
+                    strain_id="tsa2",
+                )
+            ]
+        ),
+        environment=Environment(
+            media=SGA_DM_SELECTION_GALACTOSE,
+            temperature=Temperature(value=26.0),
+            perturbations=[],
+            aerobicity="aerobic",
+            provenance_gaps=_gap(),
+        ),
+        phenotype=_phenotype(0.0),
+    )
+    assert sheet_built[4]["experiment"] == experiment.model_dump()
+    phenotype = sheet_built[4]["experiment"]["phenotype"]
+    assert phenotype["environment_response_uncertainty"] is None
+    assert phenotype["environment_response_uncertainty_type"] is None
+
+
+def test_drop_log_is_written_exactly(
+    sheet_built: c.EnvChemgenCostanzo2021Dataset,
+) -> None:
+    """Finding: an AMBIGUOUS drop keeps no candidate list (``DroppedStrain`` has no
+    field for it), and a blank Systematic Name is resolved and logged as ``"nan"``
+    (``str(nan)``, line 770). Pinned until the ledger records candidates and a blank
+    identifier is refused rather than resolved.
+    """
+    log = json.loads((Path(sheet_built.root) / c._DROPPED_FILENAME).read_text())
+    assert log == {
+        "dataset": "EnvChemgenCostanzo2021Dataset",
+        "rule": c.DROP_RULE,
+        "n_source_strains": 9,
+        "n_kept_strains": 5,
+        "n_kept_records": 8,
+        "n_dropped_strains": 4,
+        "n_dropped_records": 6,
+        "dropped_by_status": {"non_gene_feature": 1, "retired": 2, "ambiguous": 1},
+        "dropped": [
+            {
+                "source_name": "AMB1",
+                "status": "ambiguous",
+                "resolved_to": None,
+                "feature_type": None,
+                "n_records": 2,
+            },
+            {
+                "source_name": "YAR037W",
+                "status": "retired",
+                "resolved_to": "YAR037W",
+                "feature_type": None,
+                "n_records": 1,
+            },
+            {
+                "source_name": "YER108C",
+                "status": "non_gene_feature",
+                "resolved_to": "YER109C",
+                "feature_type": "blocked_reading_frame",
+                "n_records": 2,
+            },
+            {
+                "source_name": "nan",
+                "status": "retired",
+                "resolved_to": "nan",
+                "feature_type": None,
+                "n_records": 1,
+            },
+        ],
+    }
+
+
+def test_a_repeated_row_is_stored_twice_under_one_reference(
+    sheet_built: c.EnvChemgenCostanzo2021Dataset,
+) -> None:
+    """Finding: row 7 repeats row 1 (padding stripped) and is written again as records
+    6 and 7, with no ledger entry; the loader never deduplicates a strain (lines
+    769-821). One shared reference covers all eight records. Pinned until a repeated
+    (strain, condition) cell is refused or merged.
+    """
+    assert sheet_built[6]["experiment"] == sheet_built[0]["experiment"]
+    assert sheet_built[7]["experiment"] == sheet_built[1]["experiment"]
+    index = sheet_built.experiment_reference_index
+    assert index is not None
+    (entry,) = index
+    assert entry.member_indices == [0, 1, 2, 3, 4, 5, 6, 7]
+    assert entry.reference.model_dump() == _reference()
+
+
+def test_side_files_gene_set_and_reference_index(
+    sheet_built: c.EnvChemgenCostanzo2021Dataset,
+) -> None:
+    """The gene set holds the CURRENT names only (YAR044W is stored as YAR042W)."""
+    preprocess = Path(sheet_built.preprocess_dir)
+    assert json.loads((preprocess / "gene_set.json").read_text()) == [
+        "YAL001C",
+        "YAR042W",
+        "YFL039C",
+    ]
+    stored = json.loads((preprocess / "experiment_reference_index.json").read_text())
+    assert [entry["member_indices"] for entry in stored] == [[0, 1, 2, 3, 4, 5, 6, 7]]
+
+
+def test_every_condition_dose_maps_to_its_typed_concentration() -> None:
+    """The 13 small-molecule doses as Concentrations (mg/mL recorded as g/L); galactose
+    is the derived medium and carries no perturbation.
+    """
+    table: dict[str, tuple[float, ConcentrationUnit]] = {}
+    for spec in c._CONDITIONS:
+        environment = _dataset()._environment(spec)
+        if spec["kind"] == "medium":
+            assert (spec["name"], environment.perturbations) == ("galactose", [])
+            continue
+        (entry,) = environment.perturbations
+        dose = cast(SmallMoleculePerturbation, entry).concentration
+        assert dose.value is not None and dose.unit is not None
+        table[spec["name"]] = (dose.value, dose.unit)
+    g_l, mm, nm = (
+        ConcentrationUnit.g_per_l,
+        ConcentrationUnit.millimolar,
+        ConcentrationUnit.nanomolar,
+    )
+    assert table == {
+        "actinomycin D": (20.0, mm),
+        "benomyl": (30.0, g_l),
+        "bortezomib": (1300.0, mm),
+        "caspofungin": (0.1, g_l),
+        "concanamycin A": (100.0, nm),
+        "cycloheximide": (0.1, g_l),
+        "fluconazole": (16.0, g_l),
+        "geldanamycin": (10.0, mm),
+        "methyl methanesulfonate": (0.01, ConcentrationUnit.percent_v_v),
+        "monensin": (50.0, g_l),
+        "rapamycin": (100.0, nm),
+        "sorbitol": (1.0, ConcentrationUnit.molar),
+        "tunicamycin": (1.0, g_l),
+    }
+
+
+def test_temperature_is_a_recorded_derivation_and_n_samples_counts_screens() -> None:
+    assert c._TEMPERATURE.value == 26.0
+    assert (c._TEMPERATURE.note or "").startswith("DERIVATION, not a quote")
+    assert c._N_SAMPLES.value == 3
+    assert c._N_SAMPLES.quote == c._TEMPERATURE.quote
+    assert c._VARIANCE_NOTE.value is None
+
+
+def test_process_refuses_without_a_genome(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    (tmp_path / "raw").mkdir()
+    (tmp_path / "raw" / c._S1_FILENAME).write_bytes(b"")
+    with pytest.raises(RuntimeError) as err:
+        c.EnvChemgenCostanzo2021Dataset(root=str(tmp_path), genome=None)
+    assert str(err.value) == (
+        "EnvChemgenCostanzo2021Dataset requires a genome for R64 ORF resolution; "
+        "inject SCerevisiaeGenome(...)"
+    )
+    assert not (tmp_path / "processed" / "lmdb").exists()
+
+
+def test_a_sheet_missing_a_condition_column_refuses_with_its_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The header lookup is strict: a condition absent from the sheet is a KeyError."""
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    _two_conditions(monkeypatch)
+    (tmp_path / "raw").mkdir()
+    _write_xlsx(
+        tmp_path / "raw" / c._S1_FILENAME, columns=[*_ID_COLUMNS, "Benomyl", "Glucose"]
+    )
+    with pytest.raises(KeyError, match="^'galactose'$"):
+        c.EnvChemgenCostanzo2021Dataset(
+            root=str(tmp_path), genome=cast(SCerevisiaeGenome, _FullStub())
+        )
+
+
+def test_a_workbook_without_the_fitness_sheet_refuses(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    (tmp_path / "raw").mkdir()
+    pd.DataFrame({"x": [1]}).to_excel(
+        tmp_path / "raw" / c._S1_FILENAME, sheet_name="Sheet1", index=False
+    )
+    with pytest.raises(
+        ValueError,
+        match="^Worksheet named 'Diff. Mutant fitness_Conditions' not found$",
+    ):
+        c.EnvChemgenCostanzo2021Dataset(
+            root=str(tmp_path), genome=cast(SCerevisiaeGenome, _FullStub())
+        )
+
+
+def test_download_refuses_when_the_mirror_file_is_absent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    data_root = tmp_path / "dr"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    dataset = _dataset()
+    dataset.root = str(tmp_path / "build")
+    mirror = osp.join(
+        str(data_root),
+        "torchcell-raw",
+        "costanzoEnvironmentalRobustnessGlobal2021",
+        "data",
+        c._S1_FILENAME,
+    )
+    with pytest.raises(RuntimeError) as err:
+        dataset.download()
+    assert str(err.value) == (
+        f"raw-mirror file not found: {mirror}. Costanzo 2021's Science SI is not "
+        "scriptable (403); deposit Data File S1 from "
+        "https://www.science.org/doi/10.1126/science.abf8424 into the raw mirror with "
+        "deposit_raw_mirror(), then rebuild (sha256 verified)."
+    )
+    assert os.listdir(tmp_path / "build" / "raw") == []
+
+
+def _mirror_file(data_root: Path) -> Path:
+    path = Path(c.raw_mirror_dir(str(data_root))) / c._S1_RAW_RELPATH
+    path.parent.mkdir(parents=True)
+    _write_xlsx(path)
+    return path
+
+
+def test_a_failed_sha256_check_leaves_bytes_the_next_build_uses_unverified(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Finding: ``download`` copies the mirror file into ``raw/`` BEFORE hashing it and
+    does not remove it on a mismatch (lines 616-622). PyG calls ``download`` only when
+    the raw file is missing, so the next construction skips the check and builds from
+    the unverified bytes. Pinned until a mismatch deletes the copy (or ``process``
+    verifies the pin itself).
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    _two_conditions(monkeypatch)
+    data_root = tmp_path / "dr"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    digest = hashlib.sha256(_mirror_file(data_root).read_bytes()).hexdigest()
+    root = str(tmp_path / "build")
+    genome = cast(SCerevisiaeGenome, _FullStub())
+
+    with pytest.raises(RuntimeError) as err:
+        c.EnvChemgenCostanzo2021Dataset(root=root, genome=genome)
+    assert str(err.value) == (
+        f"{c._S1_FILENAME} sha256 mismatch: got {digest}, expected "
+        "f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad"
+    )
+    left = Path(root) / "raw" / c._S1_FILENAME
+    assert hashlib.sha256(left.read_bytes()).hexdigest() == digest
+
+    rebuilt = c.EnvChemgenCostanzo2021Dataset(root=root, genome=genome)
+    assert len(rebuilt) == 8
+
+
+def test_download_copies_from_the_mirror_and_verifies_the_pin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With the pin set to the synthetic file's digest the build runs through download."""
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    _two_conditions(monkeypatch)
+    data_root = tmp_path / "dr"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    source = _mirror_file(data_root)
+    monkeypatch.setattr(
+        c, "_S1_SHA256", hashlib.sha256(source.read_bytes()).hexdigest()
+    )
+    root = tmp_path / "build"
+    built = c.EnvChemgenCostanzo2021Dataset(
+        root=str(root), genome=cast(SCerevisiaeGenome, _FullStub())
+    )
+    assert (root / "raw" / c._S1_FILENAME).read_bytes() == source.read_bytes()
+    assert len(built) == 8
+
+
+class _FrozenDatetime:
+    @staticmethod
+    def now(tz: Any = None) -> datetime:
+        return datetime(2026, 9, 30, 12, 0, tzinfo=UTC)
+
+
+def test_deposit_raw_mirror_writes_the_file_and_an_exact_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A first deposit copies the bytes and writes the manual-browser manifest; a
+    second deposit of the same bytes is a no-op on the file.
+    """
+    source = tmp_path / "S1.xlsx"
+    source.write_bytes(b"synthetic data file S1")
+    pin = hashlib.sha256(b"synthetic data file S1").hexdigest()
+    monkeypatch.setattr(c, "_S1_SHA256", pin)
+    monkeypatch.setattr(c, "datetime", _FrozenDatetime)
+    data_root = tmp_path / "dr"
+
+    root = c.deposit_raw_mirror(
+        source_xlsx=str(source), retrieved_at="2026-09-12", data_root=str(data_root)
+    )
+
+    assert root == str(
+        data_root / "torchcell-raw" / "costanzoEnvironmentalRobustnessGlobal2021"
+    )
+    dest = Path(root) / "data" / c._S1_FILENAME
+    assert dest.read_bytes() == b"synthetic data file S1"
+    url = "https://www.science.org/doi/10.1126/science.abf8424"
+    assert json.loads((Path(root) / "manifest.json").read_text()) == {
+        "version": 1,
+        "citation_key": "costanzoEnvironmentalRobustnessGlobal2021",
+        "doi": "10.1126/science.abf8424",
+        "title": "Environmental robustness of the global yeast genetic interaction "
+        "network",
+        "library_id": "6582362",
+        "zotero_item_key": "CJ5NIJI9",
+        "collections": [],
+        "files": [
+            {
+                "path": f"data/{c._S1_FILENAME}",
+                "role": "raw_data",
+                "bytes": 22,
+                "sha256": pin,
+                "source": url,
+                "zotero_md5": None,
+                "retrieval": {
+                    "method": "manual_browser",
+                    "source_url": url,
+                    "retriever": "manual",
+                    "params": {"retrieval_command": c.MANUAL_RECIPE},
+                    "sha256": pin,
+                    "retrieved_at": "2026-09-12",
+                    "last_check": None,
+                },
+                "processing": None,
+            }
+        ],
+        "si_data_sources": [url],
+        "si_expected": [
+            "Data file S1 (Costanzo et al_Data File S1_Conditions_Strains_Fitness.xlsx)",
+            "Supplementary Materials PDF (names the reference condition's solvent; NOT "
+            "mirrored, and the reason SmallMoleculePerturbation.solvent is None here)",
+        ],
+        "provenance_complete": True,
+        "created_at": "2026-09-30T12:00:00+00:00",
+    }
+    mtime = dest.stat().st_mtime_ns
+    c.deposit_raw_mirror(
+        source_xlsx=str(source), retrieved_at="2026-09-12", data_root=str(data_root)
+    )
+    assert dest.stat().st_mtime_ns == mtime
+
+
+def test_manual_recipe_names_the_url_the_file_and_the_real_pin() -> None:
+    assert c.MANUAL_RECIPE == (
+        "manual browser download -- science.org returns HTTP 403 behind a Cloudflare "
+        "challenge to any client (verified 2026-09-12), so: open "
+        "https://www.science.org/doi/10.1126/science.abf8424 in a signed-in browser, "
+        "follow 'Supplementary Materials', download 'Data file S1' "
+        "(Costanzo et al_Data File S1_Conditions_Strains_Fitness.xlsx), and verify "
+        "sha256 f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad"
+    )
+
+
+def test_deposit_refuses_a_source_off_the_pin_after_creating_the_mirror_dir(
+    tmp_path: Path,
+) -> None:
+    """Finding: ``deposit_raw_mirror`` makes ``<mirror>/data/`` (line 516) before it
+    checks the source digest (line 518), so a refused deposit leaves an empty mirror
+    directory behind. Pinned until the check runs first.
+    """
+    source = tmp_path / "S1.xlsx"
+    source.write_bytes(b"not the released file")
+    digest = hashlib.sha256(b"not the released file").hexdigest()
+    data_root = tmp_path / "dr"
+    with pytest.raises(RuntimeError) as err:
+        c.deposit_raw_mirror(
+            source_xlsx=str(source), retrieved_at="x", data_root=str(data_root)
+        )
+    assert str(err.value) == (
+        f"{source} sha256 {digest} != pinned "
+        "f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad; "
+        "refusing to deposit"
+    )
+    mirror = Path(c.raw_mirror_dir(str(data_root)))
+    assert os.listdir(mirror / "data") == []
+    assert not (mirror / "manifest.json").exists()
+
+
+def test_deposit_refuses_to_overwrite_a_differing_mirror_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "S1.xlsx"
+    source.write_bytes(b"synthetic data file S1")
+    monkeypatch.setattr(
+        c, "_S1_SHA256", hashlib.sha256(b"synthetic data file S1").hexdigest()
+    )
+    data_root = tmp_path / "dr"
+    dest = Path(c.raw_mirror_dir(str(data_root))) / c._S1_RAW_RELPATH
+    dest.parent.mkdir(parents=True)
+    dest.write_bytes(b"someone else's bytes")
+    with pytest.raises(RuntimeError) as err:
+        c.deposit_raw_mirror(
+            source_xlsx=str(source), retrieved_at="x", data_root=str(data_root)
+        )
+    assert str(err.value) == f"{dest} exists with a different sha256; refusing"
+    assert dest.read_bytes() == b"someone else's bytes"
+
+
+def test_raw_mirror_dir_uses_the_argument_then_data_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    key = "costanzoEnvironmentalRobustnessGlobal2021"
+    assert c.raw_mirror_dir("/a") == f"/a/torchcell-raw/{key}"
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    assert c.raw_mirror_dir() == f"{tmp_path}/torchcell-raw/{key}"
+
+
+def test_schema_classes_raw_file_and_the_inline_stubs() -> None:
+    """The class wiring; ``preprocess_raw`` is an identity and ``create_experiment``
+    refuses because both steps live inside ``process``.
+    """
+    dataset = _dataset()
+    assert dataset.experiment_class is EnvironmentResponseExperiment
+    assert dataset.reference_class is EnvironmentResponseExperimentReference
+    assert dataset.raw_file_names == [
+        "Costanzo et al_Data File S1_Conditions_Strains_Fitness.xlsx"
+    ]
+    frame = pd.DataFrame({"a": [1]})
+    assert dataset.preprocess_raw(frame) is frame
+    with pytest.raises(NotImplementedError):
+        dataset.create_experiment()
+
+
+def test_download_called_on_an_existing_raw_file_hashes_it_in_place(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Called directly, ``download`` skips the copy and still checks the pin (the
+    branch PyG never reaches, since it calls ``download`` only for a missing file).
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path / "no-mirror"))
+    dataset = _dataset()
+    dataset.root = str(tmp_path)
+    (tmp_path / "raw").mkdir()
+    (tmp_path / "raw" / c._S1_FILENAME).write_bytes(b"local bytes")
+    digest = hashlib.sha256(b"local bytes").hexdigest()
+    with pytest.raises(RuntimeError) as err:
+        dataset.download()
+    assert str(err.value) == (
+        f"{c._S1_FILENAME} sha256 mismatch: got {digest}, expected {c._S1_SHA256}"
+    )
+    monkeypatch.setattr(c, "_S1_SHA256", digest)
+    dataset.download()
+    assert (tmp_path / "raw" / c._S1_FILENAME).read_bytes() == b"local bytes"

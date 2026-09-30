@@ -17,6 +17,21 @@ g0, g1, g2 map to tokens 0, 1, 2. Closed forms: ``perturbed_gene_pool`` is a per
 mean over the listed tokens; a ``FluxMetaboliteHead`` is ``scale * log1p(max(omega, 0))
 + bias`` at the named metabolites (scale 1, bias 0 at init); a ``FluxScalarHead`` is
 ``precursor(log1p(max(omega_P, 0))) + dense(v)``.
+
+2026.09.30 - Phase 13 additions. Exact parameter counts on the Track A config
+(hidden 16, two layers): the parent tallies 128 + 16 + 6560 + 3280 + 545 = 10529; a
+scalar head with both pools reads 3 * 16 = 48 features, Linear(48, 16) + Linear(16, 1)
+= 784 + 17 = 801 (each of betaxanthin and beta_carotene); the 19-column vector head is
+784 + Linear(16, 19) = 784 + 323 = 1107; total 10529 + 801 + 801 + 1107 = 13238, equal
+to ``sum(p.numel())`` since no flux layer is attached. Structural identities on the
+fixture batch: permuting the samples (and relabeling ``perturbation_indices_batch``)
+permutes every output row; reordering the perturbed genes listed within a sample
+changes nothing; changing sample 2's genotype leaves samples 0 and 1 unchanged; a
+sample with no perturbed gene reads the zero pool, so its head output is exactly
+``mlp([h_CLS, mean_i H[b, i], 0])``. Closed forms on hidden 2 with hand-set weights pin
+the concatenation order ``[h_CLS, gene mean, perturbed pool]`` of ``ProductScalarHead``
+(35.5 and 0.5, derived in the test) and the ``view(B, F, param_dim)`` layout of
+``MetabolomeVectorHead`` (column k, parameter p is linear output ``k * param_dim + p``).
 """
 
 import math
@@ -204,12 +219,21 @@ def test_missing_kind_is_rejected() -> None:
 
 
 def test_num_parameters_includes_metabolism_heads() -> None:
-    """The parameter tally reports each metabolism head and a consistent total."""
+    """Exact tally (module docstring): the parent's 10529 plus heads 801, 801 and 1107
+    gives 13238, which is every parameter of the module when no flux layer is attached.
+    """
     model = _build(CellGraphTransformerMetabolism, _metabolism_heads_config())
+    parent = _build(CellGraphTransformer, None)
     counts = model.num_parameters
-    for name in ("betaxanthin_head", "beta_carotene_head", "mulleder19_head"):
-        assert counts[name] > 0
-    assert counts["total"] == sum(v for k, v in counts.items() if k != "total")
+    assert counts == {
+        **{k: v for k, v in parent.num_parameters.items() if k != "total"},
+        "betaxanthin_head": 801,
+        "beta_carotene_head": 801,
+        "mulleder19_head": 1107,
+        "total": 13238,
+    }
+    assert parent.num_parameters["total"] == 10529
+    assert sum(p.numel() for p in model.parameters()) == 13238
 
 
 def test_forward_accepts_every_parent_keyword() -> None:
@@ -502,3 +526,216 @@ def test_num_parameters_leaves_out_the_flux_layer() -> None:
     assert flux == 386
     assert [p.numel() for p in layer.parameters()] == [16, 320, 16, 16, 1, 16, 1]
     assert sum(p.numel() for p in model.parameters()) == 8449
+
+
+# --- 2026.09.30 Phase 13: structural identities and closed-form head wiring ---------- #
+def _track_a_outputs(
+    model: CellGraphTransformerMetabolism, indices: list[int], owners: list[int]
+) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    batch = HeteroData()
+    batch["gene"].perturbation_indices = torch.tensor(indices, dtype=torch.long)
+    batch["gene"].perturbation_indices_batch = torch.tensor(owners, dtype=torch.long)
+    with torch.no_grad():
+        pred, reps = model(_make_cell_graph(), batch)
+    return pred, reps["head_outputs"]
+
+
+def test_sample_permutation_permutes_every_output_row() -> None:
+    """Fixture samples {1, 2}, {3}, {0, 4, 5} reordered as ({0, 4, 5}, {1, 2}, {3}):
+    predictions and all three heads come back in row order [2, 0, 1].
+    """
+    model = _build(CellGraphTransformerMetabolism, _metabolism_heads_config()).eval()
+    pred, heads = _track_a_outputs(model, [1, 2, 3, 0, 4, 5], [0, 0, 1, 2, 2, 2])
+    pred_p, heads_p = _track_a_outputs(model, [0, 4, 5, 1, 2, 3], [0, 0, 0, 1, 1, 2])
+    order = [2, 0, 1]
+    torch.testing.assert_close(pred_p, pred[order])
+    assert set(heads_p) == {"betaxanthin", "beta_carotene", "mulleder19"}
+    for name, out in heads.items():
+        torch.testing.assert_close(heads_p[name], out[order])
+
+
+def test_gene_order_within_a_sample_is_irrelevant_and_samples_are_isolated() -> None:
+    """Listing each sample's genes in another order gives the same outputs; replacing
+    sample 2's genotype by {6} leaves rows 0 and 1 of every head unchanged.
+    """
+    model = _build(CellGraphTransformerMetabolism, _metabolism_heads_config()).eval()
+    pred, heads = _track_a_outputs(model, [1, 2, 3, 0, 4, 5], [0, 0, 1, 2, 2, 2])
+    pred_r, heads_r = _track_a_outputs(model, [2, 1, 3, 5, 0, 4], [0, 0, 1, 2, 2, 2])
+    torch.testing.assert_close(pred_r, pred)
+    for name, out in heads.items():
+        torch.testing.assert_close(heads_r[name], out)
+    _, heads_s = _track_a_outputs(model, [1, 2, 3, 6], [0, 0, 1, 2])
+    for name, out in heads.items():
+        torch.testing.assert_close(heads_s[name][:2], out[:2])
+        assert not torch.allclose(heads_s[name][2], out[2])
+
+
+def test_a_sample_without_perturbations_reads_the_zero_pool() -> None:
+    """Sample 1 lists no gene (owners [0, 0, 2]), so its perturbed pool is the zero
+    vector and the betaxanthin output is the head MLP on ``[h_CLS, gene mean, 0]``.
+    """
+    model = _build(CellGraphTransformerMetabolism, _metabolism_heads_config()).eval()
+    batch = HeteroData()
+    batch["gene"].perturbation_indices = torch.tensor([1, 2, 5])
+    batch["gene"].perturbation_indices_batch = torch.tensor([0, 0, 2])
+    with torch.no_grad():
+        _, reps = model(_make_cell_graph(), batch)
+        h = reps["H_genes_pert"]
+        head = model.betaxanthin_head
+        assert isinstance(head, ProductScalarHead)
+        expected = head.mlp(
+            torch.cat([reps["h_CLS"], h[1].mean(dim=0), torch.zeros(HIDDEN)])
+        )
+    assert h.shape == (3, GENE_NUM, HIDDEN)
+    torch.testing.assert_close(reps["head_outputs"]["betaxanthin"][1], expected)
+
+
+def test_seeded_build_is_deterministic_and_head_order_sets_head_init() -> None:
+    """Same seed and config: identical state and outputs. Listing the heads in the other
+    order leaves the encoder bit-identical (heads are built after the parent) but hands
+    betaxanthin a different slice of the RNG stream, so its weights differ.
+    """
+    config = _metabolism_heads_config()
+    first = _build(CellGraphTransformerMetabolism, config, seed=3).eval()
+    second = _build(CellGraphTransformerMetabolism, config, seed=3).eval()
+    for (name, a), (_, b) in zip(
+        first.state_dict().items(), second.state_dict().items()
+    ):
+        assert torch.equal(a, b), name
+    pred_a, heads_a = _track_a_outputs(first, [1, 2, 3, 0, 4, 5], [0, 0, 1, 2, 2, 2])
+    pred_b, heads_b = _track_a_outputs(second, [1, 2, 3, 0, 4, 5], [0, 0, 1, 2, 2, 2])
+    assert torch.equal(pred_a, pred_b)
+    assert all(torch.equal(heads_a[k], heads_b[k]) for k in heads_a)
+    swapped = _build(
+        CellGraphTransformerMetabolism, dict(reversed(config.items())), seed=3
+    )
+    assert swapped.metabolism_head_names == [
+        "mulleder19",
+        "beta_carotene",
+        "betaxanthin",
+    ]
+    assert torch.equal(swapped.gene_embedding.weight, first.gene_embedding.weight)
+    first_linear = first.betaxanthin_head.mlp[0]
+    swapped_linear = swapped.betaxanthin_head.mlp[0]
+    assert isinstance(first_linear, nn.Linear) and isinstance(swapped_linear, nn.Linear)
+    assert not torch.equal(first_linear.weight, swapped_linear.weight)
+
+
+def test_track_a_gradient_reaches_every_parameter() -> None:
+    """Train mode, loss = predictions plus all three heads: no parameter is left without
+    a gradient, the CLS token included (every pooled head reads it).
+    """
+    model = _build(CellGraphTransformerMetabolism, _metabolism_heads_config()).train()
+    pred, reps = model(_make_cell_graph(), _make_batch())
+    heads = reps["head_outputs"]
+    assert torch.isfinite(pred).all()
+    assert all(torch.isfinite(t).all() for t in heads.values())
+    (pred.sum() + sum(t.sum() for t in heads.values())).backward()
+    assert [n for n, p in model.named_parameters() if p.grad is None] == []
+
+
+def test_inherited_head_keys_are_left_to_the_parent() -> None:
+    """``global`` is built by the parent as ``global_head`` and is not a metabolism
+    head; the metabolism list and the output dict hold both entries.
+    """
+    model = _build(
+        CellGraphTransformerMetabolism,
+        {"global": {"output_dim": 3}, "bx": {"kind": "scalar"}},
+    ).eval()
+    assert model.metabolism_head_names == ["bx"]
+    assert model.flux_head_names == []
+    assert isinstance(model.bx_head, ProductScalarHead)
+    _, heads = _track_a_outputs(model, [1, 2, 3, 0, 4, 5], [0, 0, 1, 2, 2, 2])
+    assert {k: tuple(v.shape) for k, v in heads.items()} == {
+        "global": (3, 3),
+        "bx": (3, 1),
+    }
+
+
+@pytest.mark.parametrize(
+    ("spec", "shown"), [(None, "None"), ({"kind": "Scalar"}, "'Scalar'")]
+)
+def test_a_null_spec_or_a_miscased_kind_names_the_value(
+    spec: dict[str, str] | None, shown: str
+) -> None:
+    """A ``None`` spec becomes ``{}`` and fails on ``kind``; kinds are case-sensitive."""
+    message = (
+        "metabolism head 'x' needs kind in "
+        "{'scalar','vector','flux_scalar','flux_metabolite'} in its heads_config spec, "
+        f"got {shown}."
+    )
+    with pytest.raises(ValueError) as excinfo:
+        _build(CellGraphTransformerMetabolism, {"x": spec})
+    assert str(excinfo.value) == message
+
+
+def test_product_scalar_head_concatenates_cls_gene_mean_and_pert_pool() -> None:
+    """Hidden 2, so the input is 6 wide: [h_CLS (2), gene mean (2), pert pool (2)].
+
+    h_CLS = [1, 2]. Sample 0: genes [[1, 1], [3, 3]], mean [2, 2], pool [5, 6], input
+    [1, 2, 2, 2, 5, 6]. Sample 1: genes [[0, 0], [0, -4]], mean [0, -2], pool [7, -8],
+    input [1, 2, 0, -2, 7, -8]. Hidden unit 0 = x[0] + x[3] (CLS[0] + mean[1]): 3 and
+    -1 -> relu 3 and 0. Hidden unit 1 = x[5] - 1 (pool[1] - 1): 5 and -9 -> 5 and 0.
+    Output 10 * u0 + 1 * u1 + 0.5: sample 0 = 30 + 5 + 0.5 = 35.5, sample 1 = 0.5.
+    """
+    head = ProductScalarHead(2, dropout=0.0).eval()
+    with torch.no_grad():
+        first, last = head.mlp[0], head.mlp[3]
+        assert isinstance(first, nn.Linear) and isinstance(last, nn.Linear)
+        first.weight.copy_(torch.tensor([[1.0, 0, 0, 1, 0, 0], [0.0, 0, 0, 0, 0, 1]]))
+        first.bias.copy_(torch.tensor([0.0, -1.0]))
+        last.weight.copy_(torch.tensor([[10.0, 1.0]]))
+        last.bias.fill_(0.5)
+        out = head(
+            torch.tensor([1.0, 2.0]),
+            torch.tensor([[[1.0, 1.0], [3.0, 3.0]], [[0.0, 0.0], [0.0, -4.0]]]),
+            torch.tensor([[5.0, 6.0], [7.0, -8.0]]),
+        )
+    assert torch.equal(out, torch.tensor([[35.5], [0.5]]))
+
+
+def test_vector_head_without_gene_pool_lays_out_columns_then_params() -> None:
+    """Hidden 2, F = 2, param_dim = 3, gene pool off: input [h_CLS, pool] (4 wide).
+    Hidden units u0 = CLS[0] = 2 and u1 = relu(pool[1]): 3 for sample 0, 0 for sample
+    1. Linear output j = j * u0 + u1, so sample 0 is [3, 5, 7, 9, 11, 13] and sample 1
+    [0, 2, 4, 6, 8, 10]; ``view(B, 2, 3)`` puts outputs 0-2 in column 0 and 3-5 in
+    column 1. The gene tokens (all 100) are never read.
+    """
+    head = MetabolomeVectorHead(2, 2, use_gene_pool=False, dropout=0.0, param_dim=3)
+    head.eval()
+    with torch.no_grad():
+        first, last = head.mlp[0], head.mlp[3]
+        assert isinstance(first, nn.Linear) and isinstance(last, nn.Linear)
+        assert (first.in_features, last.out_features) == (4, 6)
+        first.weight.copy_(torch.tensor([[1.0, 0, 0, 0], [0.0, 0, 0, 1]]))
+        first.bias.zero_()
+        last.weight.copy_(torch.tensor([[float(j), 1.0] for j in range(6)]))
+        last.bias.zero_()
+        out = head(
+            torch.tensor([2.0, 9.0]),
+            torch.full((2, 5, 2), 100.0),
+            torch.tensor([[0.0, 3.0], [0.0, -1.0]]),
+        )
+    assert torch.equal(
+        out,
+        torch.tensor(
+            [[[3.0, 5.0, 7.0], [9.0, 11.0, 13.0]], [[0.0, 2.0, 4.0], [6.0, 8.0, 10.0]]]
+        ),
+    )
+
+
+def test_vector_head_without_pert_pool_ignores_the_pool_argument() -> None:
+    """``use_pert_pool=False``: the head is ``hidden * 2`` wide, runs with ``pert_pool``
+    None, and gives the same output when a pool is passed anyway.
+    """
+    torch.manual_seed(8)
+    head = MetabolomeVectorHead(HIDDEN, 4, use_pert_pool=False).eval()
+    first = head.mlp[0]
+    assert isinstance(first, nn.Linear) and first.in_features == 2 * HIDDEN
+    h_cls, h = torch.randn(HIDDEN), torch.randn(BATCH_SIZE, GENE_NUM, HIDDEN)
+    without = head(h_cls, h)
+    with_pool = head(h_cls, h, torch.randn(BATCH_SIZE, HIDDEN))
+    assert without.shape == (BATCH_SIZE, 4)
+    torch.testing.assert_close(with_pool, without)
+    expected = head.mlp(torch.cat([h_cls.expand(BATCH_SIZE, -1), h.mean(1)], dim=-1))
+    torch.testing.assert_close(without, expected)

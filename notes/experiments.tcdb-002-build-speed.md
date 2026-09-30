@@ -564,10 +564,14 @@ adapters took 4.40 h against 26.27 h, 6.0x.
 | container memory high-water mark | 124 GB at 32 workers (killed) | 211 GB at 64 workers |
 
 The census projected 90 GB of Experiment blobs; the measured 97.9 GB includes the
-CSV's quoting and the id columns. The round-trip verifier over all 52.7M rows is
-recorded below when it finishes; its first run reported a corrupt constant, which was
-the verifier un-doubling embedded quotes a second time after `csv.reader` already had
-(a compound name holding `''`), fixed in the script, the CSV itself was right.
+CSV's quoting and the id columns. `scripts/verify_pointer_roundtrip.py` over the
+kept output (`results/2959_pointer_roundtrip.csv`): all 52,743,047 Experiment rows
+re-hash to their node id after resolution, 0 failures; blob bytes 87.13 GB against
+564.20 GB inlined (the census projected 564.4), 6.5x; 21,025 constants (6,452
+environments, 14,573 genotypes: Bloom's segregants and Caudal's strains), 2.93 GB.
+Its first run reported a corrupt constant, which was the verifier un-doubling
+embedded quotes a second time after `csv.reader` already had (a compound name
+holding `''`); fixed in the script, the CSV itself was right.
 
 ### Utilization: where the 64 cores sit idle
 
@@ -616,3 +620,66 @@ recycling the pool exists because worker heaps ratchet across the chunks they ha
 
 <https://wandb.ai/zhao-group/tcdb/runs/g58g8qw1>
 <https://wandb.ai/zhao-group/tcdb/runs/m55ntcs2>
+
+### Specs table and two probes (2026.09.30)
+
+`scripts/bench_report.py` now writes `results/specs.csv` and `specs.md`: one row per
+job (32, failed ones included, state read live from sacct) with the box (cpus,
+mem_gb), the knobs parsed from the overrides (inprocess_max_records, single_pass,
+fast_writer, io_to_total_worker_ratio, single_pass_chunk_budget_mb,
+chunks_per_worker, completion_order, inprocess_max_mb), wall, slurm elapsed, peak
+memory, mean cores, rows and bytes; `arms.csv` gains mean cores, the share of samples
+under 4 / 4 to 16 / 16 to 32 / 32 or more cores, and mean parent cores;
+`arm_adapter_cores.csv` is mean cores per adapter per arm. Job 2959 reads 0.341 of
+its samples under 4 cores and Costanzo dmf / dmi at 18.6 / 18.3 mean cores. Every
+`chunks_per_worker=8` job so far failed (2920, 2921, 2995, 2996).
+
+`scripts/fork_cost_probe.py` (`results/fork_cost_probe.csv`; 8 workers, a parent
+ballasted with sets of 64-character strings at 0 / 4 / 8 / 16 GB, one real
+SmfKuzmin2018 single-pass chunk per worker, 40 GB cgroup):
+
+| ballast GB | fork: pool fork s | fork: teardown s | fork: worker Private_Dirty GB | forkserver: pool fork s | forkserver: worker Private_Dirty GB |
+|--:|--:|--:|--:|--:|--:|
+| 0 | 0.107 | 0.039 | 0.079 | 0.122 | 0.291 |
+| 4 | 0.456 | 0.101 | 0.079 | 0.117 | 0.291 |
+| 8 | 0.701 | 0.163 | 0.079 | 0.128 | 0.291 |
+| 16 | 1.058 | 0.282 | 0.079 | 0.122 | 0.291 |
+
+Worker private memory does NOT grow with the parent's size under fork, so the
+copy-on-write hypothesis of 2026.09.28 is not supported for an id-set parent (the
+real parent also holds BioCypher buffers, not modeled). Fork wall grows linearly,
+about 7.4 ms per GB per worker; `gc.freeze` itself costs under 1 ms after the first
+call. Extrapolation (linear, not measured): a 36 GB parent forking 64 workers spends
+about 17 s forking and 4 s tearing down per pool rebuild, which matches the 15 s
+dips in the full-build telemetry. Forkserver keeps the fork at about 1 s but adds
+0.21 GB per worker and sends the loader's children through the server unless the
+loader is pinned to fork (a chunk then took 8.9 s instead of 1.7 s). The Bloom
+36 to 92 GB growth inside the full build remains unexplained.
+
+`scripts/worker_heap_ratchet.py` (`results/worker_heap_ratchet.csv`, one emulated
+worker on the DmfCostanzo2016 dev LMDB, chunks of 6,280 records as the 128 MiB budget
+gives at the adapter's 21,371 bytes per record):
+
+| variant | node GB per chunk | RSS after chunk 1 / 8 / 16 (GB) |
+|---|--:|---|
+| freeze, 2M ladder subset | +0.082 | 1.28 / 1.86 / 2.50 |
+| freeze, half-length chunks | +0.082 | 1.13 / 1.68 / 2.35 |
+| freeze, gc.unfreeze + collect after each chunk | +0.002 | 1.24 / 1.29 / 1.29 |
+| freeze, full 20.7M dataset (no subset) | +0.002 | 1.12 / 1.12 / 1.14 |
+
+The ratchet is 0.08 GB per chunk with no plateau, per chunk not per record, and it
+comes from the chunk's task payload: with the ladder's 2M-record subset every chunk
+view carries the whole 2M-entry index list (10 MB pickled), tracemalloc attributes
+the growth to the child's `pickle.loads` of it, and live small objects rise by
+exactly 2.0M per chunk. Without the subset the payload is under 0.1 MB and the
+ratchet vanishes. Hypothesis (untested): the loader's per-chunk `gc.freeze` moves
+that payload into the frozen generation, where its cycles are never collected.
+Extrapolated to 22 workers at 8 chunks each this is about 11 GB more than at 2, so
+it does not explain jobs 2995 / 2996 on its own; their cause is unmeasured.
+
+What follows from the three: (1) the ladder's subset views should carry only their
+own slice of indices, which removes a ratchet the production build does not have
+and makes the ladder a faithful instrument; (2) fewer pool rebuilds (a larger group,
+or forkserver) are worth about 20 s per rebuild at the full build's parent size; (3)
+the group-size deaths need a run with telemetry that survives the failure before
+group size can go in the specs.

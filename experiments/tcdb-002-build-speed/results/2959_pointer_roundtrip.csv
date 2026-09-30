@@ -1,0 +1,4 @@
+job,label,rows,rows_failing_roundtrip,blob_bytes,inline_bytes,pointers_environment,pointers_genotype
+2959,Experiment,52743047,0,87125609799,564195199934,52693187,518883
+2959,InternedConstant:environment,6452,0,98054015,0,0,0
+2959,InternedConstant:genotype,14573,0,2829194187,0,0,0

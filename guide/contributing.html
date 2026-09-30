@@ -248,33 +248,40 @@ bypassing the hooks.</p>
 <section id="commit-messages-and-releases">
 <h2>Commit messages and releases<a class="headerlink" href="#commit-messages-and-releases" title="Link to this heading"></a></h2>
 <p>Versions are cut by python-semantic-release on every push to <code class="docutils literal notranslate"><span class="pre">main</span></code>
-(<code class="docutils literal notranslate"><span class="pre">.github/workflows/semantic-release.yaml</span></code>) with the <code class="docutils literal notranslate"><span class="pre">scipy</span></code> commit parser. A commit
-message starts with a tag from <code class="docutils literal notranslate"><span class="pre">allowed_tags</span></code> in <code class="docutils literal notranslate"><span class="pre">[tool.semantic_release]</span></code>, a colon and
-a space: <code class="docutils literal notranslate"><span class="pre">ENH:</span> <span class="pre">add</span> <span class="pre">the</span> <span class="pre">Mota</span> <span class="pre">2024</span> <span class="pre">loader</span></code>, or with a scope, <code class="docutils literal notranslate"><span class="pre">BUG:loader:</span> <span class="pre">fix</span> <span class="pre">the</span> <span class="pre">strain</span> <span class="pre">id</span></code>. The tag decides the version bump:</p>
+(<code class="docutils literal notranslate"><span class="pre">.github/workflows/semantic-release.yaml</span></code>) with the repo’s own parser,
+<code class="docutils literal notranslate"><span class="pre">scripts/release_parser.py</span></code>, which reads the <code class="docutils literal notranslate"><span class="pre">TAG(scope):</span> <span class="pre">subject</span></code> form most commits
+carry (<code class="docutils literal notranslate"><span class="pre">FIX(loaders):</span> <span class="pre">...</span></code>) as well as <code class="docutils literal notranslate"><span class="pre">TAG:</span> <span class="pre">subject</span></code>. A bump is a deliberate act, not a
+side effect of landing work: only three tags bump, and every other tag in
+<code class="docutils literal notranslate"><span class="pre">allowed_tags</span></code> (<code class="docutils literal notranslate"><span class="pre">[tool.semantic_release.commit_parser_options]</span></code> in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>)
+parses with no bump, so <code class="docutils literal notranslate"><span class="pre">main</span></code> is “latest” between releases.</p>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head text-left"><p>Bump</p></th>
 <th class="head text-left"><p>Tags</p></th>
+<th class="head text-left"><p>When</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td class="text-left"><p>major</p></td>
 <td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">API</span></code></p></td>
+<td class="text-left"><p>a public interface changes; also any tag with <code class="docutils literal notranslate"><span class="pre">!</span></code> or a <code class="docutils literal notranslate"><span class="pre">BREAKING</span> <span class="pre">CHANGE:</span></code> paragraph</p></td>
 </tr>
 <tr class="row-odd"><td class="text-left"><p>minor</p></td>
-<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">DEP</span></code>, <code class="docutils literal notranslate"><span class="pre">DEV</span></code>, <code class="docutils literal notranslate"><span class="pre">ENH</span></code>, <code class="docutils literal notranslate"><span class="pre">REV</span></code>, <code class="docutils literal notranslate"><span class="pre">FEAT</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">REL</span></code></p></td>
+<td class="text-left"><p>a source release, cut before a knowledge-graph build so the release names a tagged version</p></td>
 </tr>
 <tr class="row-even"><td class="text-left"><p>patch</p></td>
-<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">BLD</span></code>, <code class="docutils literal notranslate"><span class="pre">BUG</span></code>, <code class="docutils literal notranslate"><span class="pre">MAINT</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">DB</span></code></p></td>
+<td class="text-left"><p>a database compatibility change: a new release snapshot under <code class="docutils literal notranslate"><span class="pre">database/releases/</span></code>, a supported-query registry change, a schema closure change</p></td>
 </tr>
 <tr class="row-odd"><td class="text-left"><p>none</p></td>
-<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">BENCH</span></code>, <code class="docutils literal notranslate"><span class="pre">DOC</span></code>, <code class="docutils literal notranslate"><span class="pre">STY</span></code>, <code class="docutils literal notranslate"><span class="pre">TST</span></code>, <code class="docutils literal notranslate"><span class="pre">REL</span></code>, <code class="docutils literal notranslate"><span class="pre">TEST</span></code></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">FEAT</span></code>, <code class="docutils literal notranslate"><span class="pre">ENH</span></code>, <code class="docutils literal notranslate"><span class="pre">DEP</span></code>, <code class="docutils literal notranslate"><span class="pre">DEV</span></code>, <code class="docutils literal notranslate"><span class="pre">REV</span></code>, <code class="docutils literal notranslate"><span class="pre">FIX</span></code>, <code class="docutils literal notranslate"><span class="pre">BUG</span></code>, <code class="docutils literal notranslate"><span class="pre">BLD</span></code>, <code class="docutils literal notranslate"><span class="pre">MAINT</span></code>, <code class="docutils literal notranslate"><span class="pre">PERF</span></code>, <code class="docutils literal notranslate"><span class="pre">DOC</span></code>, <code class="docutils literal notranslate"><span class="pre">DOCS</span></code>, <code class="docutils literal notranslate"><span class="pre">NOTE</span></code>, <code class="docutils literal notranslate"><span class="pre">TST</span></code>, <code class="docutils literal notranslate"><span class="pre">TEST</span></code>, <code class="docutils literal notranslate"><span class="pre">STY</span></code>, <code class="docutils literal notranslate"><span class="pre">CI</span></code>, <code class="docutils literal notranslate"><span class="pre">BENCH</span></code></p></td>
+<td class="text-left"><p>everything else</p></td>
 </tr>
 </tbody>
 </table>
-<p>With python-semantic-release 10.4.1 (the version in the torchcell environment), a
-message whose tag is not in that list, or whose scope is written in parentheses
-(<code class="docutils literal notranslate"><span class="pre">ENH(loader):</span> <span class="pre">...</span></code>), does not parse and does not contribute to a release.</p>
+<p>A message whose tag is not in <code class="docutils literal notranslate"><span class="pre">allowed_tags</span></code>, or whose tag is lowercase, does not parse
+and does not contribute to a release.</p>
 </section>
 </section>
 

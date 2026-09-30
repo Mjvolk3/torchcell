@@ -519,7 +519,9 @@ def test_an_interned_store_emits_the_same_graph_as_the_inline_one(
 
     raw_env = lmdb.open(records_path, readonly=True, lock=False)
     with raw_env.begin() as txn:
-        stored = pickle.loads(txn.get(b"1"))
+        raw = txn.get(b"1")
+        assert raw is not None, "the record is missing from the store"
+        stored = pickle.loads(raw)
     raw_env.close()
     reference_digest = hashlib.sha256(
         json.dumps(REFERENCE.model_dump(mode="json"), sort_keys=True).encode()

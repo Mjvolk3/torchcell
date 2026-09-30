@@ -148,3 +148,52 @@ cell (mean of three biological replicates). Median served SE 0.138 against a res
    chemogenomic stores, excluding every Vanacloig compound. Wildenhain has 5,170 compounds on
    242 genes, Hillenmeyer heterozygous has 303 compounds and Hoepfner 148 with InChIKeys.
    Wildenhain shares 10 of the 41 Vanacloig compounds, and Hoepfner and Hillenmeyer 2 each.
+
+## 2026.09.29 - Audit of the ingestion, and what it changes for the scoring
+
+A full reread of the paper, Piotrowski 2017 and the GEO raw counts against the loader and the
+cell table (issue #501 holds the report; issue #500 the strain background). The parquet
+reproduces the loader's formula exactly, the sign is right (benomyl TUB3 is the most depleted
+strain), `response_ses` is the replicate SD over sqrt(3), and every InChIKey matches its
+name. Three findings bear on modeling:
+
+- Nine served compounds were never reported by the paper, and their replicate reliability is
+  near or below zero (sodium glyoxylate -0.91, sodium butyrate -0.43). They stay in the folds;
+  `compare_models.py` reports every model over all 41 and over the 32 published compounds
+  (`vanacloig_data.UNREPORTED_COMPOUNDS`).
+- The loader normalizes by library size (CPM) where the paper used TMM. That leaves a
+  compound-wide offset (crystal violet -2.8 log2 units) that a within-compound Spearman does
+  not see; per-compound rank agreement with an edgeR reconstruction is 0.975 median.
+- DMSO-delivered compounds carry the vehicle's own profile (r 0.58 to 0.67 with the DMSO
+  column) and no DMSO in their environment. Which compounds those are is in the unmirrored
+  Table S1.
+
+## 2026.09.29 - Round 2 results: nested ridge on FCFP4 is the bar, and nothing simple beats it
+
+`compare_models.py` over `results/ladder/ladder_r2_scores.csv` (slurm 3034) and
+`results/factorized/r2_table` (slurm 3035). Centered Spearman, median over 123
+compound-evaluations (41 compounds by fold seeds 0, 1, 2) for the ladder and 41 (fold seed 0)
+for the table models. "vs ridge" is the paired mean difference on the same compounds with a
+bootstrap 95% interval.
+
+| model | median, all 41 | median, 32 published | vs ridge (95% CI) |
+|---|---|---|---|
+| ridge on FCFP4 counts, nested penalty | 0.303 | 0.343 | reference |
+| kernel ridge, RBF on FCFP4 | 0.297 | 0.327 | +0.006 (-0.014, +0.027) |
+| kNN over the mean of all 12 RBF kernels | 0.298 | 0.326 | +0.002 (-0.024, +0.031) |
+| ladder's own nested pick, per fold | 0.269 | | -0.018 (-0.044, +0.009) |
+| best pretrained embedding (kNN, ChemBERTa-2 MTR) | 0.291 | 0.312 | -0.022 (-0.059, +0.015) |
+| gene table x compound MLP, raw FCFP4, seed ensemble | 0.287 | 0.301 | -0.003 (-0.052, +0.046) |
+| the same on a 64-dim PCA of FCFP4 | 0.233 | | |
+
+Every other embedding, kernel and table variant is below ridge, most with intervals clear of
+zero (`results/compare_models.csv`). The ladder's per-fold pick loses to fixed ridge because
+the inner leave-one-compound-out score over 32 compounds is itself noisy enough to pick a worse
+model about as often as a better one.
+
+What this says: with 28 to 32 training compounds the compound side is the limit, and a
+2,048-dimensional count fingerprint under ridge shrinkage is as good a compound representation
+as any pretrained embedding here. The gene side is not the limit: every gene is seen in
+training. So the cell graph transformer, which acts on the gene side, is not expected to move
+this number (hypothesis, being measured in round 2c, slurm 3038), and the lever is more
+compounds (round 3, slurm 3040).

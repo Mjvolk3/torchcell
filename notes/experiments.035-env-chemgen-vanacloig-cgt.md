@@ -235,3 +235,39 @@ nine networks (the ego net around the molecule's targets), and the deleted gene 
 over the compound as one more perturbation token; each with 0 or 2 layers of message passing
 (`r6_mix`, slurm 3053), and a sizing sweep over width, depth, heads, hops and temperature
 (`r6_size`, slurm 3054).
+
+## 2026.09.30 - Round 6: where the molecule enters, over 123 compound-evaluations
+
+`train_hit.py`, fold seeds 0 to 2 (slurm 3053, 3057, 3058), sizing on fold seed 0 (3054).
+Centered Spearman; "vs ridge" is the paired mean difference on the same compounds with a
+bootstrap 95% interval; each arm is the 3-seed ensemble.
+
+| how the molecule enters | message passing | median | vs ridge |
+|---|---|---|---|
+| attends over all genes, hit mass propagated 2 hops on the nine networks (`hit_prop`) | 2 layers | 0.278 | -0.011 (-0.037, +0.015) |
+| deleted gene attends over {itself, compound, null sink} (`gene_attend`) | 2 layers | 0.282 | -0.014 (-0.044, +0.017) |
+| readout only | 2 layers | 0.267 | -0.019 (-0.045, +0.008) |
+| attends over all genes, no propagation (`hit`) | 2 layers | 0.264 | -0.025 (-0.054, +0.003) |
+| `hit_prop` | none | 0.248 | -0.023 (-0.049, +0.002) |
+| `hit` | none | 0.265 | -0.029 (-0.054, -0.004) |
+| readout only | none | 0.252 | -0.030 (-0.055, -0.004) |
+| `gene_attend` | none | 0.251 | -0.031 (-0.062, +0.002) |
+
+Two layers of message passing over the union of the nine networks lift every mixing by
+0.01 to 0.02, from significantly below ridge to indistinguishable from it. Among the
+mixings at two layers the differences are within 0.01 and inside every interval; the
+molecule hitting genes and propagating is the best point estimate, and it is the only arm
+that matched ridge on a whole fold seed (0.304 on fold seed 1). Sizing on `hit_prop`: dim 64,
+two layers, eight heads, two hops is the best cell; one head (0.214), one hop (0.230), one
+layer (0.256), dim 128 (0.237), temperature 0.3 (0.222) and hidden 512 (0.238) are all
+below it (fold seed 0, ensembles).
+
+**Stacks (plain mean of saved predictions, `stack_predictions.py`), 123 evaluations:** ridge
+plus the ten-seed gene table +0.013 (-0.004, +0.030; 70 of 123 wins); ridge plus
+`gene_attend` +0.012 (-0.011, +0.035); ridge plus `hit_prop` +0.005; ridge plus Wildenhain
++0.013 (-0.013, +0.039). The ten-seed gene table alone matches ridge (+0.001).
+
+**Round 7, launched:** ten-seed ensembles of the three level-2 mixings on every fold seed
+(`r7a`, slurm 3064) and propagation over one network family at a time: physical, coexpression,
+regulatory plus TFLink, STRING experimental plus database (`r7b`, slurm 3065). The launcher
+now packs four configs per GPU, since each model uses 2 GB and left the card idle.

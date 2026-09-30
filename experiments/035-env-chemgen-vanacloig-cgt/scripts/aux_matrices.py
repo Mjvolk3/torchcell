@@ -56,11 +56,19 @@ def main() -> None:
     args = parser.parse_args()
     os.makedirs(OUT, exist_ok=True)
 
-    columns = ["dataset", "query_gene", "functional_dose", "n_compounds", "inchikeys"]
+    columns = [
+        "dataset",
+        "query_gene",
+        "functional_dose",
+        "n_compounds",
+        "n_with_inchikey",
+        "inchikeys",
+    ]
     vanacloig = pd.read_parquet(
         args.cell_table, columns=["inchikeys"], filters=[("dataset", "==", VANACLOIG)]
     )
-    excluded = {k[0] for k in vanacloig["inchikeys"]}
+    # ``inchikeys`` is one string, the compounds' keys joined by "|"
+    excluded = set(vanacloig["inchikeys"])
     assert len(excluded) == 41
 
     rows = []
@@ -73,14 +81,10 @@ def main() -> None:
         if dose is not None:
             t = t[t["functional_dose"] == dose]
         n_cells = len(t)
-        t = t[t["n_compounds"] == 1]
-        t = t[
-            t["inchikeys"].map(lambda k: k is not None and len(k) == 1 and k[0] != "")
-        ]
+        t = t[(t["n_compounds"] == 1) & (t["n_with_inchikey"] == 1)]
         # oriented so a sick strain is NEGATIVE, the Vanacloig convention
         t = t.assign(
-            inchikey=t["inchikeys"].map(lambda k: k[0]),
-            y=-sick_sign * t["responses"].map(np.mean),
+            inchikey=t["inchikeys"], y=-sick_sign * t["responses"].map(np.mean)
         )
         n_vanacloig = int(t["inchikey"].isin(excluded).sum())
         t = t[~t["inchikey"].isin(excluded)]

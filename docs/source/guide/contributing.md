@@ -69,18 +69,19 @@ bypassing the hooks.
 ## Commit messages and releases
 
 Versions are cut by python-semantic-release on every push to `main`
-(`.github/workflows/semantic-release.yaml`) with the `scipy` commit parser. A commit
-message starts with a tag from `allowed_tags` in `[tool.semantic_release]`, a colon and
-a space: `ENH: add the Mota 2024 loader`, or with a scope, `BUG:loader: fix the strain
-id`. The tag decides the version bump:
+(`.github/workflows/semantic-release.yaml`) with the repo's own parser,
+`scripts/release_parser.py`, which reads the `TAG(scope): subject` form most commits
+carry (`FIX(loaders): ...`) as well as `TAG: subject`. A bump is a deliberate act, not a
+side effect of landing work: only three tags bump, and every other tag in
+`allowed_tags` (`[tool.semantic_release.commit_parser_options]` in `pyproject.toml`)
+parses with no bump, so `main` is "latest" between releases.
 
-| Bump | Tags |
-| :-- | :-- |
-| major | `API` |
-| minor | `DEP`, `DEV`, `ENH`, `REV`, `FEAT` |
-| patch | `BLD`, `BUG`, `MAINT` |
-| none | `BENCH`, `DOC`, `STY`, `TST`, `REL`, `TEST` |
+| Bump | Tags | When |
+| :-- | :-- | :-- |
+| major | `API` | a public interface changes; also any tag with `!` or a `BREAKING CHANGE:` paragraph |
+| minor | `REL` | a source release, cut before a knowledge-graph build so the release names a tagged version |
+| patch | `DB` | a database compatibility change: a new release snapshot under `database/releases/`, a supported-query registry change, a schema closure change |
+| none | `FEAT`, `ENH`, `DEP`, `DEV`, `REV`, `FIX`, `BUG`, `BLD`, `MAINT`, `PERF`, `DOC`, `DOCS`, `NOTE`, `TST`, `TEST`, `STY`, `CI`, `BENCH` | everything else |
 
-With python-semantic-release 10.4.1 (the version in the torchcell environment), a
-message whose tag is not in that list, or whose scope is written in parentheses
-(`ENH(loader): ...`), does not parse and does not contribute to a release.
+A message whose tag is not in `allowed_tags`, or whose tag is lowercase, does not parse
+and does not contribute to a release.

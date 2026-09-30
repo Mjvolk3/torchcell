@@ -183,3 +183,25 @@ manifest, the `KgRelease` node and the committed snapshot,
 
 The bootstrapped snapshot for `2026.09.21-ab6d8c5d` records `1.2.0` with tag None: the
 build ran from `ab6d8c5d`, between `v1.2.0` (2026.07.01) and `v1.2.1` (2026.09.27).
+
+## 2026.09.29 - Bumps are deliberate: REL minor, DB patch, API major
+
+The first map of the day (`FEAT` minor, `FIX` patch) moved `main` from `1.2.1` to `1.5.0`
+in one evening, one bump per landed PR, and the version stopped meaning anything. The map
+is now the three tags below; every other allowed tag, `FEAT` and `FIX` included, parses
+with no bump, so `main` is "latest" between releases and a version is something we cut.
+
+| tag | bump | when |
+|---|---|---|
+| `API` | major | a public interface changes; also any tag with `!` or a `BREAKING CHANGE:` paragraph |
+| `REL` | minor | a source release, cut before a KG build so the release names a tagged version (step 1 of the section above) |
+| `DB` | patch | a database compatibility change: a new snapshot under `database/releases/`, a supported-query registry change (`docs_page` edits excepted), a schema closure change that alters what the served graph serializes |
+| `FEAT`, `ENH`, `DEP`, `DEV`, `REV`, `FIX`, `BUG`, `BLD`, `MAINT`, `PERF`, `DOC`, `DOCS`, `NOTE`, `TST`, `TEST`, `STY`, `CI`, `BENCH` | none | allowed, so the parser does not treat them as noise |
+
+`DB` is a patch because the compatibility matrix (`docs/source/database/compatibility.md`,
+`scripts/kg_compat_page.py`) is keyed by `major.minor`: a patch changes which KG releases
+a package version is checked against without changing what the package promises. The
+release-before-build recipe above is unchanged except that step 1 now reads `REL: ...`
+for the minor, `DB: ...` for the patch. `tests/scripts/test_release_parser.py` pins the
+map on the same 30 real subjects (now 28 no-release, 2 unparsed) and on one subject per
+bumping tag; `docs/source/guide/contributing.md` carries the same table.

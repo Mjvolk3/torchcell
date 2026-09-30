@@ -310,12 +310,14 @@ upload_to_pypi = "true"
 commit_parser = "scripts/release_parser.py:TorchcellCommitParser"
 
 [tool.semantic_release.commit_parser_options]
-# Tag map (notes/versioning.md, 2026.09.29): FIX is a patch tag so a bug fix bumps a
-# release instead of silently not releasing; PERF is a patch tag as in the conventional
-# default; DOCS, NOTE and CI are allowed with no bump so the parser stops treating them
-# as noise. A major bump is API, or any tag with "!" or a "BREAKING CHANGE:" paragraph.
-# Cut the source release BEFORE a KG build (plan.data-release-program.2026.09.29,
-# Decision 5) so the release names a tagged package version.
+# Tag map (notes/versioning.md, 2026.09.29, second section): a version bump is a
+# deliberate act, never a side effect of landing work. Only three tags bump: API (major),
+# REL (minor, a deliberate source release, cut before a KG build), DB (patch, a database
+# compatibility change: a new release snapshot, a supported-query registry change, a
+# schema closure change). Everything else, FEAT and FIX included, is allowed with no bump
+# so main stays "latest" between releases; the earlier map (FEAT minor, FIX patch) moved
+# main from 1.2.1 to 1.5.0 in one evening. "!" or a "BREAKING CHANGE:" paragraph on any
+# tag still forces a major.
 allowed_tags = [
     "API",
     "DEP",
@@ -328,6 +330,7 @@ allowed_tags = [
     "BENCH",
     "BLD",
     "CI",
+    "DB",
     "DEV",
     "DOC",
     "DOCS",
@@ -339,5 +342,5 @@ allowed_tags = [
     "TEST",
 ]
 major_tags = ["API"]
-minor_tags = ["DEP", "DEV", "ENH", "REV", "FEAT"]
-patch_tags = ["BLD", "BUG", "FIX", "MAINT", "PERF"]
+minor_tags = ["REL"]
+patch_tags = ["DB"]

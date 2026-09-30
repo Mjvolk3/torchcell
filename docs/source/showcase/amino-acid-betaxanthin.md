@@ -179,7 +179,7 @@ The cassette's *ARO4* and *ARO7* alleles are ectopic copies of native yeast gene
 ```{include} _generated/amino-acid-betaxanthin/cachera_sources.md
 ```
 
-No issue tracks the medium, temperature or measurement-type correction yet.
+Issue [#509](https://github.com/Mjvolk3/torchcell/issues/509) tracks the medium, temperature and measurement-type correction; it changes every served Cachera record, so it waits for the next full KG build.
 
 ## Provenance
 
